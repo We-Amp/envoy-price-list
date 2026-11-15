@@ -1,0 +1,36 @@
+six A/A runs (original direction)
+  label A2/A      n_shapes=6  IV mean +0.198% [-0.013, +0.409]  z_iv=+1.84  stouffer_t=+2.73
+  slot  1/0       n_shapes=6  IV mean +0.198% [-0.013, +0.409]  z_iv=+1.84  stouffer_t=+2.73
+  position 2nd/1st n_shapes=6  IV mean -0.073% [-0.281, +0.135]  z_iv=-0.69  stouffer_t=+0.13
+  middle/outer    n_shapes=6  IV mean -0.077% [-0.280, +0.125]  z_iv=-0.75  stouffer_t=+0.52
+all original-direction (six + aa-v2 s,fh,m)
+  label A2/A      n_shapes=9  IV mean +0.057% [-0.121, +0.234]  z_iv=+0.62  stouffer_t=+0.91
+  slot  1/0       n_shapes=9  IV mean +0.057% [-0.121, +0.234]  z_iv=+0.62  stouffer_t=+0.91
+  position 2nd/1st n_shapes=9  IV mean -0.104% [-0.282, +0.073]  z_iv=-1.15  stouffer_t=-0.62
+  middle/outer    n_shapes=9  IV mean -0.083% [-0.257, +0.092]  z_iv=-0.93  stouffer_t=-0.05
+swapped run (s,fh)
+  label A2/A      n_shapes=2  IV mean -0.155% [-0.529, +0.218]  z_iv=-0.82  stouffer_t=-0.73
+  slot  1/0       n_shapes=2  IV mean +0.155% [-0.218, +0.529]  z_iv=+0.82  stouffer_t=+0.73
+  position 2nd/1st n_shapes=2  IV mean +0.004% [-0.374, +0.381]  z_iv=+0.02  stouffer_t=+0.10
+  middle/outer    n_shapes=2  IV mean -0.045% [-0.421, +0.331]  z_iv=-0.23  stouffer_t=-0.37
+everything
+  label A2/A      n_shapes=11  IV mean +0.017% [-0.143, +0.178]  z_iv=+0.21  stouffer_t=+0.51
+  slot  1/0       n_shapes=11  IV mean +0.075% [-0.086, +0.235]  z_iv=+0.91  stouffer_t=+1.13
+  position 2nd/1st n_shapes=11  IV mean -0.085% [-0.245, +0.076]  z_iv=-1.04  stouffer_t=-0.52
+  middle/outer    n_shapes=11  IV mean -0.076% [-0.234, +0.082]  z_iv=-0.94  stouffer_t=-0.20
+
+aa-v2          s         label -0.82 (se 0.41)  slot -0.82  pos -0.40  mid -0.10
+aa-v2          fh        label -0.83 (se 0.62)  slot -0.83  pos -0.42  mid -0.62
+aa-v2          m         label -0.12 (se 0.20)  slot -0.12  pos -0.13  mid -0.05
+aa             s         label +0.60 (se 0.26)  slot +0.60  pos -0.04  mid -0.21
+aa             fh        label -0.02 (se 0.45)  slot -0.02  pos +0.40  mid +0.47
+aa             m         label +0.17 (se 0.26)  slot +0.17  pos +0.20  mid +0.18
+aa-tls         tls-ka    label +1.07 (se 0.37)  slot +1.07  pos +0.14  mid +0.73
+aa-tls         tls-hs-st label -0.13 (se 0.16)  slot -0.13  pos -0.25  mid -0.28
+aa-h2          fh2       label +0.86 (se 0.50)  slot +0.86  pos +0.10  mid +0.29
+aa-label-swap-20261114T214442Z s         label -0.18 (se 0.22)  slot +0.18  pos -0.04  mid +0.03
+aa-label-swap-20261114T214442Z fh        label -0.07 (se 0.37)  slot +0.07  pos +0.11  mid -0.23
+Q 24.49 df 10
+label: Q=24.49 df=10 tau=0.339%  random-effects mean +0.060% [-0.216, +0.337] z=+0.43
+slot: Q=23.70 df=10 tau=0.329%  random-effects mean +0.117% [-0.156, +0.389] z=+0.84
+median within-run se 0.371

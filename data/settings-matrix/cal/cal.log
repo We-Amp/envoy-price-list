@@ -1,0 +1,64 @@
+== 01-tls-cert rsa2048 tls-ka 4000,5200
+certificate ecdsa-p256 made
+certificate rsa2048 made
+origin container 7e4fa5e1ab35 (epl-origin-396825) started
+{"rps": 4000, "valid": false, "reasons": ["client overflow/pool-exhausted counters 547 (upstream_cx_overflow=547)", "client pending total 729 above 16 (queue absorbed a burst)"], "sut_busy": 0.256819, "client_headroom": 0.7584538072526339, "rate": 4000.434145544654, "ins_u_k": 181.37435878255502, "cyc_total_k": 563.322166485304, "p99_us": 853.471, "stats": {"cluster.origin.upstream_rq_total": 80159, "http.ingress_http.downstream_rq_2xx": 80159, "http.ingress_http.downstream_rq_total": 80158, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 729, "access_log_lines": null}
+{"rps": 5200, "valid": false, "reasons": ["client overflow/pool-exhausted counters 1304 (upstream_cx_overflow=1304)", "client pending total 1026 above 16 (queue absorbed a burst)"], "sut_busy": 0.318879, "client_headroom": 0.7484617061221417, "rate": 5200.5542259247195, "ins_u_k": 181.21931095380953, "cyc_total_k": 543.7097357632534, "p99_us": 1091.9669999999999, "stats": {"cluster.origin.upstream_rq_total": 104202, "http.ingress_http.downstream_rq_2xx": 104202, "http.ingress_http.downstream_rq_total": 104201, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 1026, "access_log_lines": null}
+origin container 7e4fa5e1ab35 stopped
+rc=0
+== 01-tls-cert rsa2048 tls-hs 1200,2400
+certificate ecdsa-p256 made
+certificate rsa2048 made
+origin container 97932156fc2a (epl-origin-397328) started
+{"rps": 1200, "valid": true, "reasons": [], "sut_busy": 0.141418125, "client_headroom": 0.7799297181783934, "rate": 1200.1066230221807, "ins_u_k": 834.5637574083188, "cyc_total_k": 944.0846925307399, "p99_us": 4918.527, "stats": {"cluster.origin.upstream_rq_total": 24049, "http.ingress_http.downstream_cx_destroy": 2048, "http.ingress_http.downstream_cx_total": 2048, "http.ingress_http.downstream_rq_2xx": 24049, "http.ingress_http.downstream_rq_total": 24049, "listener.127.0.0.1_10110.downstream_cx_total": 2048, "listener.127.0.0.1_10110.ssl.handshake": 2048, "listener.127.0.0.1_10110.ssl.no_certificate": 2048, "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 512, "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 512, "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 512, "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 512, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 84, "access_log_lines": null}
+{"rps": 2400, "valid": true, "reasons": [], "sut_busy": 0.257345375, "client_headroom": 0.7735056167068772, "rate": 2400.2417993389254, "ins_u_k": 915.7954923772301, "cyc_total_k": 934.753278239693, "p99_us": 13951.999, "stats": {"cluster.origin.upstream_rq_total": 48112, "http.ingress_http.downstream_cx_destroy": 4608, "http.ingress_http.downstream_cx_total": 4608, "http.ingress_http.downstream_rq_2xx": 48112, "http.ingress_http.downstream_rq_total": 48112, "listener.127.0.0.1_10110.downstream_cx_total": 4608, "listener.127.0.0.1_10110.ssl.handshake": 4608, "listener.127.0.0.1_10110.ssl.no_certificate": 4608, "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 1154, "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 1153, "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 1149, "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 1152, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 257, "access_log_lines": null}
+origin container 97932156fc2a stopped
+rc=0
+== 02-tls-resumption resumption-on tls-hs 2400
+certificate rsa2048 made
+origin container 660ab9f1df7f (epl-origin-397730) started
+{"rps": 2400, "valid": true, "reasons": [], "sut_busy": 0.252720125, "client_headroom": 0.7704470479923229, "rate": 2400.275530134187, "ins_u_k": 865.6449009976122, "cyc_total_k": 917.972842070685, "p99_us": 16293.887, "stats": {"cluster.origin.upstream_rq_total": 48098, "http.ingress_http.downstream_cx_destroy": 4608, "http.ingress_http.downstream_cx_total": 4608, "http.ingress_http.downstream_rq_2xx": 48099, "http.ingress_http.downstream_rq_total": 48099, "listener.127.0.0.1_10110.downstream_cx_total": 4608, "listener.127.0.0.1_10110.ssl.handshake": 4608, "listener.127.0.0.1_10110.ssl.no_certificate": 4608, "listener.127.0.0.1_10110.ssl.session_reused": 483, "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 1158, "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 1154, "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 1142, "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 1154, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 239, "access_log_lines": null}
+origin container 660ab9f1df7f stopped
+rc=0
+== 03-hpack hpack-default fh2 8000,16000
+{"rps": 8000, "valid": true, "reasons": [], "sut_busy": 0.32644387499999994, "client_headroom": 0.7324693888779454, "rate": 8000.812382655222, "ins_u_k": 242.1614510484256, "cyc_total_k": 362.9115982452758, "p99_us": 405.871, "stats": {"http.ingress_http.downstream_rq_2xx": 160297, "http.ingress_http.downstream_rq_total": 160296, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+{"rps": 16000, "valid": true, "reasons": [], "sut_busy": 0.565633125, "client_headroom": 0.682193148375152, "rate": 16001.550033718348, "ins_u_k": 242.0378672340419, "cyc_total_k": 317.8961712041062, "p99_us": 470.783, "stats": {"http.ingress_http.downstream_rq_2xx": 320729, "http.ingress_http.downstream_rq_total": 320730, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+rc=0
+== 04-tracing sampling-100 s 5200
+origin container 4e29c27b639a (epl-origin-398280) started
+collector container ea8eff640244 (epl-collector-398280) started
+{"rps": 5200, "valid": true, "reasons": [], "sut_busy": 0.40912224999999997, "client_headroom": 0.7590185851489548, "rate": 5200.508653329989, "ins_u_k": 315.23265374249087, "cyc_total_k": 701.4583035284734, "p99_us": 1232.831, "stats": {"cluster.origin.upstream_rq_total": 104235, "cluster.otel_collector.upstream_rq_total": 20854, "http.ingress_http.downstream_rq_2xx": 104234, "http.ingress_http.downstream_rq_total": 104234, "http.ingress_http.tracing.random_sampling": 104234, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1, "tracing.opentelemetry.spans_sent": 104232, "tracing.opentelemetry.timer_flushed": 20}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+collector container ea8eff640244 stopped
+origin container 4e29c27b639a stopped
+rc=0
+== 05-access-log log-json s 5200
+origin container c5bd9d91a080 (epl-origin-398720) started
+{"rps": 5200, "valid": true, "reasons": [], "sut_busy": 0.328334, "client_headroom": 0.7579878017835203, "rate": 5200.5676928494295, "ins_u_k": 173.74446786691615, "cyc_total_k": 554.9233697924976, "p99_us": 674.207, "stats": {"cluster.origin.upstream_rq_total": 104221, "http.ingress_http.downstream_rq_2xx": 104221, "http.ingress_http.downstream_rq_total": 104221, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": 156000}
+origin container c5bd9d91a080 stopped
+rc=0
+== 06-ext-authz authz-http s 5200
+origin container 540c987862b1 (epl-origin-398958) started
+{"rps": 5200, "valid": true, "reasons": [], "sut_busy": 0.47015912500000007, "client_headroom": 0.7539928277424509, "rate": 5200.5317414826595, "ins_u_k": 286.54660672740147, "cyc_total_k": 809.463057118048, "p99_us": 1922.111, "stats": {"cluster.ext_authz.upstream_rq_2xx": 104220, "cluster.ext_authz.upstream_rq_total": 104219, "cluster.origin.upstream_rq_total": 104220, "http.ingress_http.downstream_rq_2xx": 104219, "http.ingress_http.downstream_rq_total": 104220, "http.ingress_http.ext_authz.ok": 104219, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+origin container 540c987862b1 stopped
+rc=0
+== 07-retries retry-policy s 5200
+origin container bec44fffbbb6 (epl-origin-399253) started
+{"rps": 5200, "valid": true, "reasons": [], "sut_busy": 0.31382387500000003, "client_headroom": 0.749596355497983, "rate": 5200.564456600758, "ins_u_k": 165.8590616361277, "cyc_total_k": 530.2116555156241, "p99_us": 671.9350000000001, "stats": {"cluster.origin.upstream_rq_total": 104259, "http.ingress_http.downstream_rq_2xx": 104259, "http.ingress_http.downstream_rq_total": 104259, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+origin container bec44fffbbb6 stopped
+rc=0
+== 08-buffer-limit buffer-4k m 5440
+origin container 4056b9ba6059 (epl-origin-399547) started
+{"rps": 5440, "valid": true, "reasons": [], "sut_busy": 0.39600375, "client_headroom": 0.7425286792387085, "rate": 5440.628474908563, "ins_u_k": 181.9758834877324, "cyc_total_k": 651.3397692275903, "p99_us": 1441.471, "stats": {"cluster.origin.upstream_rq_total": 109035, "http.ingress_http.downstream_rq_2xx": 109036, "http.ingress_http.downstream_rq_total": 109035, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+origin container 4056b9ba6059 stopped
+rc=0
+== 09-tcmalloc-percpu rseq-off fh 8000
+origin container f1086f52159d (epl-origin-399787) started
+{"rps": 8000, "valid": true, "reasons": [], "sut_busy": 0.246222, "client_headroom": 0.7280944867369945, "rate": 8000.857145953834, "ins_u_k": 133.16520821632324, "cyc_total_k": 270.7821700948166, "p99_us": 367.807, "stats": {"http.ingress_http.downstream_rq_2xx": 160367, "http.ingress_http.downstream_rq_total": 160366, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null}
+origin container f1086f52159d stopped
+rc=0
+== 10-two-hop two-hop s 5200
+origin container 4797544d3080 (epl-origin-400079) started
+{"rps": 5200, "valid": false, "reasons": ["Envoy load uneven: busiest worker did 87.3% of worker CPU, limit 30.0% (4 workers)", "Envoy load uneven: least busy worker did 0.0% of worker CPU, floor 12.5% (4 workers)"], "sut_busy": 0.29315325, "client_headroom": 0.7595603903982674, "rate": 5200.728709180048, "ins_u_k": 163.11482009292237, "cyc_total_k": 497.3065647001932, "p99_us": 1155.903, "stats": {"cluster.origin.upstream_rq_total": 104256, "http.ingress_http.downstream_rq_2xx": 104257, "http.ingress_http.downstream_rq_total": 104256, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": 0.263020625, "pending_total": 16, "access_log_lines": null}
+origin container 4797544d3080 stopped
+rc=0
+CALDONE

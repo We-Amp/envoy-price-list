@@ -1,0 +1,53 @@
+2026-11-14T07:57:09Z run sm-hpack: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['hpack-default', 'hpack-0'], shapes ['fh2']
+2026-11-14T07:57:47Z r01-fh2-hpack-default VALID ins_u=242.2k cyc_tot=365.1k busy=32.9% rate=8000.8/8000 p99=397us 
+2026-11-14T07:58:24Z r01-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=397.6k busy=35.7% rate=8000.8/8000 p99=416us 
+2026-11-14T07:59:02Z r02-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=398.8k busy=35.9% rate=8000.8/8000 p99=359us 
+2026-11-14T07:59:40Z r02-fh2-hpack-default VALID ins_u=242.0k cyc_tot=354.0k busy=31.7% rate=8000.8/8000 p99=420us 
+2026-11-14T08:00:17Z r03-fh2-hpack-default VALID ins_u=242.1k cyc_tot=376.6k busy=33.9% rate=8000.8/8000 p99=410us 
+2026-11-14T08:00:55Z r03-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=389.6k busy=35.0% rate=8000.8/8000 p99=453us 
+2026-11-14T08:01:32Z r04-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=390.3k busy=35.2% rate=8000.8/8000 p99=341us 
+2026-11-14T08:02:10Z r04-fh2-hpack-default VALID ins_u=242.3k cyc_tot=375.6k busy=34.0% rate=8000.7/8000 p99=305us 
+2026-11-14T08:02:48Z r05-fh2-hpack-default VALID ins_u=242.1k cyc_tot=361.0k busy=32.5% rate=8000.8/8000 p99=416us 
+2026-11-14T08:03:25Z r05-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=379.8k busy=34.1% rate=8000.8/8000 p99=436us 
+2026-11-14T08:04:03Z r06-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=379.4k busy=34.0% rate=8000.8/8000 p99=449us 
+2026-11-14T08:04:40Z r06-fh2-hpack-default VALID ins_u=242.3k cyc_tot=370.8k busy=33.5% rate=8000.8/8000 p99=309us 
+2026-11-14T08:05:18Z r07-fh2-hpack-default VALID ins_u=242.1k cyc_tot=370.3k busy=33.3% rate=8000.8/8000 p99=397us 
+2026-11-14T08:05:56Z r07-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=394.4k busy=35.5% rate=8000.8/8000 p99=438us 
+2026-11-14T08:06:33Z r08-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=396.3k busy=35.7% rate=8000.8/8000 p99=435us 
+2026-11-14T08:07:11Z r08-fh2-hpack-default VALID ins_u=242.2k cyc_tot=361.2k busy=32.5% rate=8000.8/8000 p99=413us 
+2026-11-14T08:07:48Z r09-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=377.4k busy=33.8% rate=8000.8/8000 p99=458us 
+2026-11-14T08:08:26Z r09-fh2-hpack-default VALID ins_u=242.2k cyc_tot=341.8k busy=30.8% rate=8000.8/8000 p99=388us 
+2026-11-14T08:09:04Z r10-fh2-hpack-default VALID ins_u=242.3k cyc_tot=361.0k busy=32.5% rate=8000.8/8000 p99=399us 
+2026-11-14T08:09:41Z r10-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=378.9k busy=33.9% rate=8000.8/8000 p99=501us 
+2026-11-14T08:10:19Z r11-fh2-hpack-default VALID ins_u=242.2k cyc_tot=359.8k busy=32.4% rate=8000.8/8000 p99=414us 
+2026-11-14T08:10:57Z r11-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=390.6k busy=35.0% rate=8000.8/8000 p99=448us 
+2026-11-14T08:11:34Z r12-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=392.2k busy=35.3% rate=8000.8/8000 p99=440us 
+2026-11-14T08:12:12Z r12-fh2-hpack-default VALID ins_u=242.2k cyc_tot=332.8k busy=30.0% rate=8000.7/8000 p99=387us 
+2026-11-14T08:12:12Z after 12 rounds: widest cycles_total half-width 2.58% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:12:49Z r13-fh2-hpack-0 VALID ins_u=323.5k cyc_tot=405.3k busy=36.5% rate=8000.8/8000 p99=392us 
+2026-11-14T08:13:27Z r13-fh2-hpack-default VALID ins_u=242.2k cyc_tot=371.5k busy=33.6% rate=8000.8/8000 p99=393us 
+2026-11-14T08:14:05Z r14-fh2-hpack-default VALID ins_u=242.0k cyc_tot=356.7k busy=32.0% rate=8000.8/8000 p99=422us 
+2026-11-14T08:14:42Z r14-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=390.2k busy=35.1% rate=8000.8/8000 p99=442us 
+2026-11-14T08:15:20Z r15-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=374.6k busy=33.6% rate=8000.8/8000 p99=446us 
+2026-11-14T08:15:57Z r15-fh2-hpack-default VALID ins_u=242.2k cyc_tot=371.4k busy=33.4% rate=8000.7/8000 p99=401us 
+2026-11-14T08:16:35Z r16-fh2-hpack-default VALID ins_u=242.2k cyc_tot=368.2k busy=33.3% rate=8000.8/8000 p99=403us 
+2026-11-14T08:17:13Z r16-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=393.6k busy=35.4% rate=8000.8/8000 p99=483us 
+2026-11-14T08:17:50Z r17-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=373.0k busy=33.4% rate=8000.7/8000 p99=453us 
+2026-11-14T08:18:28Z r17-fh2-hpack-default VALID ins_u=242.2k cyc_tot=370.2k busy=33.4% rate=8000.8/8000 p99=403us 
+2026-11-14T08:19:05Z r18-fh2-hpack-default VALID ins_u=242.3k cyc_tot=369.9k busy=33.4% rate=8000.8/8000 p99=399us 
+2026-11-14T08:19:43Z r18-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=386.0k busy=34.7% rate=8000.8/8000 p99=440us 
+2026-11-14T08:19:43Z after 18 rounds: widest cycles_total half-width 2.00% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:20:21Z r19-fh2-hpack-default VALID ins_u=242.0k cyc_tot=352.7k busy=31.6% rate=8000.7/8000 p99=449us 
+2026-11-14T08:20:58Z r19-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=395.0k busy=35.4% rate=8000.8/8000 p99=493us 
+2026-11-14T08:21:36Z r20-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=381.9k busy=34.3% rate=8000.8/8000 p99=450us 
+2026-11-14T08:22:13Z r20-fh2-hpack-default VALID ins_u=242.1k cyc_tot=361.1k busy=32.5% rate=8000.8/8000 p99=417us 
+2026-11-14T08:22:51Z r21-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=373.3k busy=33.5% rate=8000.8/8000 p99=385us 
+2026-11-14T08:23:29Z r21-fh2-hpack-default VALID ins_u=242.1k cyc_tot=358.2k busy=32.2% rate=8000.8/8000 p99=407us 
+2026-11-14T08:24:06Z r22-fh2-hpack-default VALID ins_u=242.2k cyc_tot=356.9k busy=32.1% rate=8000.7/8000 p99=412us 
+2026-11-14T08:24:44Z r22-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=388.5k busy=34.8% rate=8000.8/8000 p99=453us 
+2026-11-14T08:25:22Z r23-fh2-hpack-default VALID ins_u=242.2k cyc_tot=373.2k busy=33.7% rate=8000.7/8000 p99=393us 
+2026-11-14T08:25:59Z r23-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=391.9k busy=35.3% rate=8000.8/8000 p99=357us 
+2026-11-14T08:26:37Z r24-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=405.7k busy=36.4% rate=8000.8/8000 p99=454us 
+2026-11-14T08:27:14Z r24-fh2-hpack-default VALID ins_u=242.3k cyc_tot=363.6k busy=32.7% rate=8000.8/8000 p99=397us 
+2026-11-14T08:27:15Z after 24 rounds: widest cycles_total half-width 1.59% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:27:16Z done: ~/epl/runs/sm/03-hpack/summary.md

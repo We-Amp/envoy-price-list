@@ -1,0 +1,41 @@
+2026-11-14T13:06:55Z run smf-ext-authz: rotate order, rounds 12..24 in blocks of 6 (adaptive True), arms ['authz-off', 'authz-http', 'authz-grpc'], shapes ['s']
+2026-11-14T13:06:55Z origin container f5ef81dd9007 (epl-origin-495501) started
+2026-11-14T13:07:35Z r01-s-authz-off VALID ins_u=163.9k cyc_tot=524.7k busy=31.2% rate=5200.5/5200 p99=610us 
+2026-11-14T13:08:13Z r01-s-authz-http VALID ins_u=286.7k cyc_tot=809.8k busy=47.1% rate=5200.3/5200 p99=2394us 
+2026-11-14T13:08:52Z r01-s-authz-grpc VALID ins_u=338.9k cyc_tot=949.4k busy=54.8% rate=5200.5/5200 p99=3042us 
+2026-11-14T13:09:31Z r02-s-authz-grpc VALID ins_u=338.6k cyc_tot=957.2k busy=55.2% rate=5200.5/5200 p99=2760us 
+2026-11-14T13:10:09Z r02-s-authz-http VALID ins_u=286.7k cyc_tot=809.9k busy=47.1% rate=5200.4/5200 p99=2207us 
+2026-11-14T13:10:48Z r02-s-authz-off VALID ins_u=163.8k cyc_tot=524.5k busy=31.1% rate=5200.5/5200 p99=619us 
+2026-11-14T13:11:27Z r03-s-authz-http VALID ins_u=286.6k cyc_tot=820.2k busy=47.6% rate=5200.6/5200 p99=2012us 
+2026-11-14T13:12:05Z r03-s-authz-grpc VALID ins_u=338.8k cyc_tot=952.4k busy=55.0% rate=5200.7/5200 p99=2256us 
+2026-11-14T13:12:44Z r03-s-authz-off VALID ins_u=163.7k cyc_tot=526.3k busy=31.1% rate=5200.6/5200 p99=617us 
+2026-11-14T13:13:22Z r04-s-authz-off VALID ins_u=163.9k cyc_tot=530.2k busy=31.6% rate=5200.5/5200 p99=616us 
+2026-11-14T13:14:01Z r04-s-authz-grpc VALID ins_u=337.6k cyc_tot=943.4k busy=54.4% rate=5200.7/5200 p99=3471us 
+2026-11-14T13:14:40Z r04-s-authz-http VALID ins_u=286.3k cyc_tot=799.5k busy=46.4% rate=5200.6/5200 p99=2119us 
+2026-11-14T13:15:18Z r05-s-authz-grpc VALID ins_u=338.4k cyc_tot=954.4k busy=55.1% rate=5200.5/5200 p99=2535us 
+2026-11-14T13:15:57Z r05-s-authz-off VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5200.5/5200 p99=619us 
+2026-11-14T13:16:35Z r05-s-authz-http VALID ins_u=286.7k cyc_tot=814.5k busy=47.3% rate=5200.5/5200 p99=1428us 
+2026-11-14T13:17:14Z r06-s-authz-http VALID ins_u=286.3k cyc_tot=809.0k busy=47.0% rate=5200.5/5200 p99=2185us 
+2026-11-14T13:17:52Z r06-s-authz-off VALID ins_u=163.9k cyc_tot=527.7k busy=31.4% rate=5200.6/5200 p99=633us 
+2026-11-14T13:18:31Z r06-s-authz-grpc VALID ins_u=339.0k cyc_tot=959.0k busy=55.4% rate=5200.5/5200 p99=2867us 
+2026-11-14T13:19:09Z r07-s-authz-off VALID ins_u=163.8k cyc_tot=520.6k busy=30.8% rate=5200.5/5200 p99=635us 
+2026-11-14T13:19:48Z r07-s-authz-http VALID ins_u=286.6k cyc_tot=806.2k busy=46.8% rate=5200.6/5200 p99=1969us 
+2026-11-14T13:20:27Z r07-s-authz-grpc VALID ins_u=338.3k cyc_tot=946.3k busy=54.6% rate=5200.8/5200 p99=3011us 
+2026-11-14T13:21:05Z r08-s-authz-grpc VALID ins_u=338.1k cyc_tot=954.5k busy=55.1% rate=5200.5/5200 p99=2869us 
+2026-11-14T13:21:44Z r08-s-authz-http VALID ins_u=286.4k cyc_tot=813.8k busy=47.3% rate=5200.3/5200 p99=2200us 
+2026-11-14T13:22:22Z r08-s-authz-off VALID ins_u=163.9k cyc_tot=520.2k busy=30.9% rate=5200.6/5200 p99=632us 
+2026-11-14T13:23:01Z r09-s-authz-off VALID ins_u=163.9k cyc_tot=525.9k busy=31.2% rate=5200.6/5200 p99=617us 
+2026-11-14T13:23:39Z r09-s-authz-grpc VALID ins_u=338.5k cyc_tot=948.3k busy=54.8% rate=5200.6/5200 p99=2616us 
+2026-11-14T13:24:18Z r09-s-authz-http VALID ins_u=286.7k cyc_tot=813.4k busy=47.3% rate=5200.5/5200 p99=1870us 
+2026-11-14T13:24:57Z r10-s-authz-http VALID ins_u=286.7k cyc_tot=807.4k busy=47.0% rate=5200.6/5200 p99=1915us 
+2026-11-14T13:25:35Z r10-s-authz-grpc VALID ins_u=338.7k cyc_tot=949.8k busy=54.8% rate=5200.6/5200 p99=2899us 
+2026-11-14T13:26:14Z r10-s-authz-off VALID ins_u=163.8k cyc_tot=530.7k busy=31.5% rate=5200.5/5200 p99=617us 
+2026-11-14T13:26:53Z r11-s-authz-grpc VALID ins_u=337.5k cyc_tot=935.3k busy=53.9% rate=5200.6/5200 p99=3926us 
+2026-11-14T13:27:31Z r11-s-authz-off VALID ins_u=163.8k cyc_tot=519.6k busy=30.7% rate=5200.6/5200 p99=628us 
+2026-11-14T13:28:10Z r11-s-authz-http VALID ins_u=286.6k cyc_tot=811.4k busy=47.2% rate=5200.4/5200 p99=1561us 
+2026-11-14T13:28:48Z r12-s-authz-http VALID ins_u=286.7k cyc_tot=820.3k busy=47.7% rate=5200.6/5200 p99=1369us 
+2026-11-14T13:29:27Z r12-s-authz-off VALID ins_u=163.8k cyc_tot=522.2k busy=31.0% rate=5200.5/5200 p99=620us 
+2026-11-14T13:30:05Z r12-s-authz-grpc VALID ins_u=337.7k cyc_tot=933.9k busy=53.8% rate=5200.9/5200 p99=2929us 
+2026-11-14T13:30:06Z after 12 rounds: widest cycles_total half-width 0.74% (s authz-http vs authz-off) <= target 1.50%
+2026-11-14T13:30:06Z origin container f5ef81dd9007 stopped
+2026-11-14T13:30:08Z done: ~/epl/runs/smf/f2-ext-authz/summary.md

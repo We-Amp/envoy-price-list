@@ -1,0 +1,42 @@
+[
+ {
+  "rps": 8000,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.32644387499999994,
+  "client_headroom": 0.7324693888779454,
+  "rate": 8000.812382655222,
+  "ins_u_k": 242.1614510484256,
+  "cyc_total_k": 362.9115982452758,
+  "p99_us": 405.871,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 160297,
+   "http.ingress_http.downstream_rq_total": 160296,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null
+ },
+ {
+  "rps": 16000,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.565633125,
+  "client_headroom": 0.682193148375152,
+  "rate": 16001.550033718348,
+  "ins_u_k": 242.0378672340419,
+  "cyc_total_k": 317.8961712041062,
+  "p99_us": 470.783,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 320729,
+   "http.ingress_http.downstream_rq_total": 320730,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null
+ }
+]

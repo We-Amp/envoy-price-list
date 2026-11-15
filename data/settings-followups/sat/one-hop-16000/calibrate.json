@@ -1,0 +1,30 @@
+[
+ {
+  "rps": 16000,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 302 (upstream_cx_overflow=302)",
+   "client pending total 181 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.7625783749999999,
+  "client_headroom": 0.7071374751465418,
+  "rate": 16001.31985665684,
+  "ins_u_k": 161.76043017621365,
+  "cyc_total_k": 432.9882373401633,
+  "p99_us": 1601.599,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 320728,
+   "http.ingress_http.downstream_rq_2xx": 320723,
+   "http.ingress_http.downstream_rq_total": 320727,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 181,
+  "access_log_lines": null,
+  "p50_us": 802.431,
+  "worker_max_share": 0.254,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

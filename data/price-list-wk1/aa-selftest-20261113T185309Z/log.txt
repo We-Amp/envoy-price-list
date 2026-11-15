@@ -1,0 +1,40 @@
+2026-11-13T18:53:13Z run aa-selftest: 36 legs, arms ['A', 'A2'], shapes ['s', 'fh', 'm']
+2026-11-13T18:53:14Z origin container deb972f42dc4 (epl-origin-171388) started
+2026-11-13T18:53:53Z r01-s-A VALID ins_u=162.6k cyc_tot=488.6k busy=28.2% rate=5200.0/5200 p99=703us 
+2026-11-13T18:54:31Z r01-s-A2 VALID ins_u=162.9k cyc_tot=497.2k busy=29.0% rate=5200.0/5200 p99=786us 
+2026-11-13T18:55:10Z r01-fh-A VALID ins_u=164.3k cyc_tot=274.3k busy=24.9% rate=8000.1/8000 p99=349us 
+2026-11-13T18:55:48Z r01-fh-A2 VALID ins_u=164.3k cyc_tot=290.6k busy=26.3% rate=8000.0/8000 p99=352us 
+2026-11-13T18:56:27Z r01-m-A VALID ins_u=166.4k cyc_tot=536.7k busy=32.8% rate=5440.1/5440 p99=685us 
+2026-11-13T18:57:05Z r01-m-A2 VALID ins_u=166.5k cyc_tot=552.1k busy=33.9% rate=5440.0/5440 p99=702us 
+2026-11-13T18:57:43Z r02-s-A2 VALID ins_u=162.8k cyc_tot=492.1k busy=28.7% rate=5200.0/5200 p99=775us 
+2026-11-13T18:58:22Z r02-s-A VALID ins_u=163.7k cyc_tot=560.9k busy=33.3% rate=5200.1/5200 p99=558us 
+2026-11-13T18:59:00Z r02-fh-A2 VALID ins_u=164.2k cyc_tot=261.0k busy=23.6% rate=8000.0/8000 p99=361us 
+2026-11-13T18:59:39Z r02-fh-A VALID ins_u=164.0k cyc_tot=291.4k busy=26.3% rate=8000.1/8000 p99=373us 
+2026-11-13T19:00:17Z r02-m-A2 VALID ins_u=166.4k cyc_tot=529.7k busy=32.4% rate=5440.1/5440 p99=650us 
+2026-11-13T19:00:56Z r02-m-A VALID ins_u=166.3k cyc_tot=557.6k busy=34.1% rate=5440.1/5440 p99=779us 
+2026-11-13T19:01:34Z r03-s-A VALID ins_u=163.1k cyc_tot=502.0k busy=29.4% rate=5200.0/5200 p99=556us 
+2026-11-13T19:02:13Z r03-s-A2 VALID ins_u=163.5k cyc_tot=535.6k busy=31.7% rate=5200.0/5200 p99=558us 
+2026-11-13T19:02:51Z r03-fh-A VALID ins_u=164.2k cyc_tot=267.9k busy=24.3% rate=8000.0/8000 p99=366us 
+2026-11-13T19:03:30Z r03-fh-A2 VALID ins_u=164.1k cyc_tot=262.2k busy=23.6% rate=8000.0/8000 p99=374us 
+2026-11-13T19:04:08Z r03-m-A VALID ins_u=166.4k cyc_tot=552.9k busy=33.9% rate=5440.0/5440 p99=597us 
+2026-11-13T19:04:47Z r03-m-A2 VALID ins_u=166.3k cyc_tot=506.0k busy=31.0% rate=5440.0/5440 p99=659us 
+2026-11-13T19:05:25Z r04-s-A2 VALID ins_u=163.1k cyc_tot=504.5k busy=29.4% rate=5200.0/5200 p99=617us 
+2026-11-13T19:06:03Z r04-s-A VALID ins_u=163.4k cyc_tot=565.2k busy=33.4% rate=5200.0/5200 p99=585us 
+2026-11-13T19:06:42Z r04-fh-A2 VALID ins_u=164.2k cyc_tot=250.2k busy=22.7% rate=8000.0/8000 p99=303us 
+2026-11-13T19:07:20Z r04-fh-A VALID ins_u=164.4k cyc_tot=286.2k busy=26.0% rate=8000.0/8000 p99=309us 
+2026-11-13T19:07:59Z r04-m-A2 VALID ins_u=166.7k cyc_tot=526.8k busy=32.7% rate=5440.0/5440 p99=596us 
+2026-11-13T19:08:37Z r04-m-A VALID ins_u=166.6k cyc_tot=559.7k busy=34.4% rate=5440.0/5440 p99=555us 
+2026-11-13T19:09:16Z r05-s-A VALID ins_u=162.9k cyc_tot=498.4k busy=29.0% rate=5200.0/5200 p99=686us 
+2026-11-13T19:09:54Z r05-s-A2 VALID ins_u=163.2k cyc_tot=495.9k busy=29.1% rate=5200.0/5200 p99=630us 
+2026-11-13T19:10:32Z r05-fh-A VALID ins_u=164.2k cyc_tot=256.7k busy=23.3% rate=8000.1/8000 p99=342us 
+2026-11-13T19:11:11Z r05-fh-A2 VALID ins_u=164.2k cyc_tot=250.4k busy=22.7% rate=8000.0/8000 p99=305us 
+2026-11-13T19:11:49Z r05-m-A VALID ins_u=166.1k cyc_tot=525.0k busy=31.9% rate=5440.1/5440 p99=710us 
+2026-11-13T19:12:28Z r05-m-A2 VALID ins_u=166.2k cyc_tot=543.0k busy=33.1% rate=5440.0/5440 p99=697us 
+2026-11-13T19:13:06Z r06-s-A2 VALID ins_u=163.2k cyc_tot=508.7k busy=29.8% rate=5200.1/5200 p99=813us 
+2026-11-13T19:13:45Z r06-s-A VALID ins_u=163.3k cyc_tot=519.0k busy=30.4% rate=5200.0/5200 p99=657us 
+2026-11-13T19:14:23Z r06-fh-A2 VALID ins_u=164.0k cyc_tot=267.5k busy=23.9% rate=8000.0/8000 p99=380us 
+2026-11-13T19:15:02Z r06-fh-A VALID ins_u=164.1k cyc_tot=259.8k busy=23.5% rate=8000.0/8000 p99=319us 
+2026-11-13T19:15:40Z r06-m-A2 VALID ins_u=166.3k cyc_tot=542.3k busy=33.2% rate=5440.1/5440 p99=670us 
+2026-11-13T19:16:18Z r06-m-A VALID ins_u=165.5k cyc_tot=516.5k busy=31.2% rate=5440.0/5440 p99=851us 
+2026-11-13T19:16:19Z origin container deb972f42dc4 stopped
+2026-11-13T19:16:20Z done: $HOME/epl/runs/aa-selftest-20261113T185309Z/summary.md

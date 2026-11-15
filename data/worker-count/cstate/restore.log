@@ -1,0 +1,3 @@
+2026-11-14T05:34:10Z trap: restoring idle states
+VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt
+2026-11-14T05:34:10Z trap: restore exit 0

@@ -1,0 +1,29 @@
+2026-11-14T09:47:21Z run sm-retries: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['no-retry-policy', 'retry-policy'], shapes ['s']
+2026-11-14T09:47:22Z origin container 00085f65894e (epl-origin-436501) started
+2026-11-14T09:48:01Z r01-s-no-retry-policy VALID ins_u=163.9k cyc_tot=521.7k busy=31.0% rate=5200.6/5200 p99=636us 
+2026-11-14T09:48:39Z r01-s-retry-policy VALID ins_u=165.9k cyc_tot=538.9k busy=32.0% rate=5200.5/5200 p99=628us 
+2026-11-14T09:49:18Z r02-s-retry-policy VALID ins_u=165.8k cyc_tot=538.6k busy=32.0% rate=5200.6/5200 p99=633us 
+2026-11-14T09:49:56Z r02-s-no-retry-policy VALID ins_u=163.9k cyc_tot=524.8k busy=31.1% rate=5200.5/5200 p99=630us 
+2026-11-14T09:50:35Z r03-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.6k busy=31.4% rate=5200.5/5200 p99=639us 
+2026-11-14T09:51:13Z r03-s-retry-policy VALID ins_u=165.9k cyc_tot=537.8k busy=31.9% rate=5200.5/5200 p99=639us 
+2026-11-14T09:51:52Z r04-s-retry-policy VALID ins_u=166.0k cyc_tot=541.9k busy=32.2% rate=5200.5/5200 p99=616us 
+2026-11-14T09:52:30Z r04-s-no-retry-policy VALID ins_u=163.9k cyc_tot=529.4k busy=31.5% rate=5200.5/5200 p99=637us 
+2026-11-14T09:53:09Z r05-s-no-retry-policy VALID ins_u=164.0k cyc_tot=536.2k busy=31.9% rate=5200.5/5200 p99=622us 
+2026-11-14T09:53:47Z r05-s-retry-policy VALID ins_u=165.8k cyc_tot=537.0k busy=31.7% rate=5200.5/5200 p99=647us 
+2026-11-14T09:54:26Z r06-s-retry-policy VALID ins_u=165.8k cyc_tot=534.9k busy=31.7% rate=5200.5/5200 p99=647us 
+2026-11-14T09:55:04Z r06-s-no-retry-policy VALID ins_u=163.8k cyc_tot=524.3k busy=31.0% rate=5200.5/5200 p99=635us 
+2026-11-14T09:55:42Z r07-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.9k busy=31.4% rate=5200.5/5200 p99=625us 
+2026-11-14T09:56:21Z r07-s-retry-policy VALID ins_u=165.8k cyc_tot=533.5k busy=31.6% rate=5200.5/5200 p99=639us 
+2026-11-14T09:57:00Z r08-s-retry-policy VALID ins_u=166.0k cyc_tot=530.5k busy=31.6% rate=5200.5/5200 p99=626us 
+2026-11-14T09:57:38Z r08-s-no-retry-policy VALID ins_u=163.9k cyc_tot=529.7k busy=31.5% rate=5200.5/5200 p99=613us 
+2026-11-14T09:58:16Z r09-s-retry-policy VALID ins_u=165.9k cyc_tot=536.7k busy=31.9% rate=5200.6/5200 p99=625us 
+2026-11-14T09:58:55Z r09-s-no-retry-policy VALID ins_u=163.9k cyc_tot=525.0k busy=31.2% rate=5200.5/5200 p99=628us 
+2026-11-14T09:59:33Z r10-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.5k busy=31.4% rate=5200.5/5200 p99=629us 
+2026-11-14T10:00:12Z r10-s-retry-policy VALID ins_u=165.9k cyc_tot=532.5k busy=31.6% rate=5200.5/5200 p99=624us 
+2026-11-14T10:00:50Z r11-s-no-retry-policy VALID ins_u=163.9k cyc_tot=526.4k busy=31.3% rate=5200.5/5200 p99=620us 
+2026-11-14T10:01:29Z r11-s-retry-policy VALID ins_u=165.9k cyc_tot=533.0k busy=31.6% rate=5200.5/5200 p99=619us 
+2026-11-14T10:02:07Z r12-s-retry-policy VALID ins_u=165.8k cyc_tot=527.6k busy=31.3% rate=5200.5/5200 p99=635us 
+2026-11-14T10:02:45Z r12-s-no-retry-policy VALID ins_u=163.9k cyc_tot=524.4k busy=31.2% rate=5200.6/5200 p99=611us 
+2026-11-14T10:02:45Z after 12 rounds: widest cycles_total half-width 0.64% (s retry-policy vs no-retry-policy) <= target 1.50%
+2026-11-14T10:02:46Z origin container 00085f65894e stopped
+2026-11-14T10:02:47Z done: ~/epl/runs/sm/07-retries/summary.md

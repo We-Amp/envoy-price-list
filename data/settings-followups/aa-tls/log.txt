@@ -1,0 +1,57 @@
+2026-11-14T14:16:33Z certificate rsa2048 made
+2026-11-14T14:16:38Z run smf-aa-tls: abba order, rounds 12..36 in blocks of 6 (adaptive True), arms ['A', 'A2'], shapes ['tls-ka', 'tls-hs-st']
+2026-11-14T14:16:38Z origin container c803867e4fcc (epl-origin-529310) started
+2026-11-14T14:17:18Z r01-tls-ka-A VALID ins_u=181.4k cyc_tot=561.7k busy=30.7% rate=4800.5/4800 p99=925us 
+2026-11-14T14:17:57Z r01-tls-ka-A2 VALID ins_u=181.4k cyc_tot=565.8k busy=31.0% rate=4800.5/4800 p99=898us 
+2026-11-14T14:18:35Z r01-tls-hs-st-A VALID ins_u=944.8k cyc_tot=955.5k busy=30.6% rate=2800.7/2800 p99=3032us 
+2026-11-14T14:19:14Z r01-tls-hs-st-A2 VALID ins_u=945.0k cyc_tot=954.0k busy=30.5% rate=2800.7/2800 p99=3018us 
+2026-11-14T14:19:53Z r02-tls-ka-A2 VALID ins_u=181.2k cyc_tot=553.1k busy=30.0% rate=4800.5/4800 p99=1550us 
+2026-11-14T14:20:32Z r02-tls-ka-A VALID ins_u=181.2k cyc_tot=552.3k busy=30.0% rate=4800.5/4800 p99=962us 
+2026-11-14T14:21:10Z r02-tls-hs-st-A2 VALID ins_u=945.4k cyc_tot=957.8k busy=30.7% rate=2800.8/2800 p99=3028us 
+2026-11-14T14:21:49Z r02-tls-hs-st-A VALID ins_u=945.0k cyc_tot=956.0k busy=30.6% rate=2800.7/2800 p99=3050us 
+2026-11-14T14:22:28Z r03-tls-ka-A VALID ins_u=181.3k cyc_tot=561.9k busy=30.6% rate=4800.5/4800 p99=911us 
+2026-11-14T14:23:07Z r03-tls-ka-A2 VALID ins_u=181.2k cyc_tot=562.0k busy=30.7% rate=4800.4/4800 p99=901us 
+2026-11-14T14:23:45Z r03-tls-hs-st-A VALID ins_u=945.2k cyc_tot=956.3k busy=30.5% rate=2800.8/2800 p99=3061us 
+2026-11-14T14:24:24Z r03-tls-hs-st-A2 VALID ins_u=944.9k cyc_tot=952.5k busy=30.5% rate=2800.9/2800 p99=2994us 
+2026-11-14T14:25:03Z r04-tls-ka-A2 VALID ins_u=181.3k cyc_tot=560.7k busy=30.6% rate=4800.4/4800 p99=921us 
+2026-11-14T14:25:42Z r04-tls-ka-A VALID ins_u=181.4k cyc_tot=562.2k busy=30.6% rate=4800.5/4800 p99=917us 
+2026-11-14T14:26:20Z r04-tls-hs-st-A2 VALID ins_u=945.6k cyc_tot=953.9k busy=30.5% rate=2800.7/2800 p99=3052us 
+2026-11-14T14:26:59Z r04-tls-hs-st-A VALID ins_u=944.6k cyc_tot=955.5k busy=30.6% rate=2800.7/2800 p99=3048us 
+2026-11-14T14:27:38Z r05-tls-ka-A VALID ins_u=181.2k cyc_tot=552.1k busy=30.0% rate=4800.5/4800 p99=943us 
+2026-11-14T14:28:17Z r05-tls-ka-A2 VALID ins_u=181.4k cyc_tot=563.2k busy=30.7% rate=4800.5/4800 p99=1122us 
+2026-11-14T14:28:55Z r05-tls-hs-st-A VALID ins_u=944.2k cyc_tot=959.7k busy=30.7% rate=2800.8/2800 p99=3033us 
+2026-11-14T14:29:33Z r05-tls-hs-st-A2 VALID ins_u=944.9k cyc_tot=949.1k busy=30.4% rate=2800.8/2800 p99=3048us 
+2026-11-14T14:30:12Z r06-tls-ka-A2 VALID ins_u=181.4k cyc_tot=561.6k busy=30.6% rate=4800.5/4800 p99=870us 
+2026-11-14T14:30:52Z r06-tls-ka-A VALID ins_u=181.1k cyc_tot=555.5k busy=30.1% rate=4800.5/4800 p99=969us 
+2026-11-14T14:31:30Z r06-tls-hs-st-A2 VALID ins_u=945.1k cyc_tot=955.7k busy=30.6% rate=2800.9/2800 p99=3054us 
+2026-11-14T14:32:08Z r06-tls-hs-st-A VALID ins_u=944.8k cyc_tot=949.7k busy=30.4% rate=2800.8/2800 p99=3007us 
+2026-11-14T14:32:47Z r07-tls-ka-A VALID ins_u=180.8k cyc_tot=539.3k busy=29.1% rate=4800.4/4800 p99=1343us 
+2026-11-14T14:33:27Z r07-tls-ka-A2 VALID ins_u=181.3k cyc_tot=561.9k busy=30.6% rate=4800.5/4800 p99=948us 
+2026-11-14T14:34:05Z r07-tls-hs-st-A VALID ins_u=944.8k cyc_tot=960.8k busy=30.7% rate=2800.8/2800 p99=3020us 
+2026-11-14T14:34:44Z r07-tls-hs-st-A2 VALID ins_u=944.3k cyc_tot=952.4k busy=30.5% rate=2800.8/2800 p99=3000us 
+2026-11-14T14:35:23Z r08-tls-ka-A2 VALID ins_u=181.0k cyc_tot=550.0k busy=29.8% rate=4800.5/4800 p99=897us 
+2026-11-14T14:36:02Z r08-tls-ka-A VALID ins_u=181.0k cyc_tot=541.2k busy=29.3% rate=4800.4/4800 p99=3808us 
+2026-11-14T14:36:40Z r08-tls-hs-st-A2 VALID ins_u=945.0k cyc_tot=954.4k busy=30.5% rate=2800.8/2800 p99=3023us 
+2026-11-14T14:37:18Z r08-tls-hs-st-A VALID ins_u=945.7k cyc_tot=953.7k busy=30.5% rate=2800.3/2800 p99=3026us 
+2026-11-14T14:37:57Z r09-tls-ka-A2 VALID ins_u=181.2k cyc_tot=556.1k busy=30.4% rate=4800.5/4800 p99=884us 
+2026-11-14T14:38:36Z r09-tls-ka-A VALID ins_u=181.1k cyc_tot=551.0k busy=29.9% rate=4800.5/4800 p99=885us 
+2026-11-14T14:39:15Z r09-tls-hs-st-A2 VALID ins_u=944.6k cyc_tot=959.6k busy=30.7% rate=2800.8/2800 p99=3032us 
+2026-11-14T14:39:53Z r09-tls-hs-st-A VALID ins_u=945.1k cyc_tot=954.1k busy=30.5% rate=2800.4/2800 p99=2991us 
+2026-11-14T14:40:32Z r10-tls-ka-A VALID ins_u=181.4k cyc_tot=560.3k busy=30.6% rate=4800.5/4800 p99=886us 
+2026-11-14T14:41:11Z r10-tls-ka-A2 VALID ins_u=181.3k cyc_tot=566.6k busy=30.9% rate=4800.5/4800 p99=921us 
+2026-11-14T14:41:50Z r10-tls-hs-st-A VALID ins_u=944.4k cyc_tot=955.1k busy=30.6% rate=2800.9/2800 p99=3014us 
+2026-11-14T14:42:28Z r10-tls-hs-st-A2 VALID ins_u=945.0k cyc_tot=958.3k busy=30.6% rate=2800.5/2800 p99=3051us 
+2026-11-14T14:43:07Z r11-tls-ka-A VALID ins_u=181.4k cyc_tot=561.8k busy=30.6% rate=4800.5/4800 p99=911us 
+2026-11-14T14:43:46Z r11-tls-ka-A2 INVALID ins_u=181.2k cyc_tot=554.5k busy=30.2% rate=4800.5/4800 p99=1937us client pending total 1043 above 1024 (queue absorbed a burst)
+2026-11-14T14:44:25Z r11-tls-hs-st-A VALID ins_u=944.3k cyc_tot=955.5k busy=30.6% rate=2800.9/2800 p99=3035us 
+2026-11-14T14:45:03Z r11-tls-hs-st-A2 VALID ins_u=944.7k cyc_tot=954.9k busy=30.5% rate=2800.9/2800 p99=3027us 
+2026-11-14T14:45:42Z r12-tls-ka-A2 VALID ins_u=181.3k cyc_tot=567.2k busy=30.9% rate=4800.5/4800 p99=945us 
+2026-11-14T14:46:21Z r12-tls-ka-A VALID ins_u=181.4k cyc_tot=555.4k busy=30.3% rate=4800.5/4800 p99=936us 
+2026-11-14T14:46:59Z r12-tls-hs-st-A2 VALID ins_u=944.7k cyc_tot=949.8k busy=30.4% rate=2800.7/2800 p99=3057us 
+2026-11-14T14:47:38Z r12-tls-hs-st-A VALID ins_u=945.2k cyc_tot=955.4k busy=30.5% rate=2800.8/2800 p99=3046us 
+2026-11-14T14:47:38Z re-running round 11 shape tls-ka (attempt 1): invalid ['r11-tls-ka-A2']
+2026-11-14T14:48:17Z r11-tls-ka-A.rr1 VALID ins_u=181.3k cyc_tot=562.2k busy=30.6% rate=4800.4/4800 p99=936us 
+2026-11-14T14:48:56Z r11-tls-ka-A2.rr1 VALID ins_u=181.4k cyc_tot=558.5k busy=30.6% rate=4800.5/4800 p99=891us 
+2026-11-14T14:48:56Z after 12 rounds: widest cycles_total half-width 0.82% (tls-ka A2 vs A) <= target 1.00%
+2026-11-14T14:48:56Z origin container c803867e4fcc stopped
+2026-11-14T14:48:58Z done: ~/epl/runs/smf/aa-tls/summary.md

@@ -1,0 +1,30 @@
+2026-11-14T07:41:22Z certificate rsa2048 made
+2026-11-14T07:41:27Z run sm-tls-resumption: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['resumption-off', 'resumption-on'], shapes ['tls-hs']
+2026-11-14T07:41:27Z origin container 70099b08ac13 (epl-origin-409011) started
+2026-11-14T07:42:07Z r01-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=933.9k busy=29.7% rate=2800.3/2800 p99=19126us 
+2026-11-14T07:42:45Z r01-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=760.5k busy=24.5% rate=2800.3/2800 p99=3321us 
+2026-11-14T07:43:24Z r02-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=761.5k busy=24.5% rate=2800.3/2800 p99=2733us 
+2026-11-14T07:44:03Z r02-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=938.4k busy=29.8% rate=2800.3/2800 p99=18836us 
+2026-11-14T07:44:42Z r03-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=925.4k busy=29.4% rate=2800.3/2800 p99=24978us 
+2026-11-14T07:45:21Z r03-tls-hs-resumption-on VALID ins_u=351.5k cyc_tot=730.6k busy=23.5% rate=2800.3/2800 p99=5398us 
+2026-11-14T07:46:00Z r04-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=769.5k busy=24.8% rate=2800.3/2800 p99=2715us 
+2026-11-14T07:46:39Z r04-tls-hs-resumption-off VALID ins_u=950.3k cyc_tot=932.4k busy=29.6% rate=2800.3/2800 p99=20586us 
+2026-11-14T07:47:18Z r05-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=934.8k busy=29.7% rate=2800.3/2800 p99=21594us 
+2026-11-14T07:47:57Z r05-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=755.9k busy=24.4% rate=2800.3/2800 p99=5433us 
+2026-11-14T07:48:36Z r06-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=762.6k busy=24.6% rate=2800.3/2800 p99=3002us 
+2026-11-14T07:49:15Z r06-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=930.9k busy=29.6% rate=2800.3/2800 p99=17324us 
+2026-11-14T07:49:54Z r07-tls-hs-resumption-off VALID ins_u=950.3k cyc_tot=936.1k busy=29.7% rate=2800.2/2800 p99=25331us 
+2026-11-14T07:50:33Z r07-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=764.7k busy=24.7% rate=2800.3/2800 p99=2753us 
+2026-11-14T07:51:12Z r08-tls-hs-resumption-on VALID ins_u=351.6k cyc_tot=758.0k busy=24.4% rate=2800.3/2800 p99=4328us 
+2026-11-14T07:51:51Z r08-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=937.3k busy=29.8% rate=2800.3/2800 p99=23729us 
+2026-11-14T07:52:30Z r09-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=763.9k busy=24.6% rate=2800.3/2800 p99=2238us 
+2026-11-14T07:53:09Z r09-tls-hs-resumption-off VALID ins_u=950.4k cyc_tot=941.3k busy=29.9% rate=2800.3/2800 p99=26632us 
+2026-11-14T07:53:48Z r10-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=934.0k busy=29.7% rate=2800.3/2800 p99=20535us 
+2026-11-14T07:54:27Z r10-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=778.4k busy=25.1% rate=2800.2/2800 p99=1978us 
+2026-11-14T07:55:06Z r11-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=935.9k busy=29.7% rate=2800.3/2800 p99=19026us 
+2026-11-14T07:55:45Z r11-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=772.2k busy=24.9% rate=2800.3/2800 p99=2625us 
+2026-11-14T07:56:24Z r12-tls-hs-resumption-on VALID ins_u=351.6k cyc_tot=758.1k busy=24.4% rate=2800.3/2800 p99=2178us 
+2026-11-14T07:57:03Z r12-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=940.3k busy=29.8% rate=2800.3/2800 p99=22185us 
+2026-11-14T07:57:03Z after 12 rounds: widest cycles_total half-width 0.88% (tls-hs resumption-on vs resumption-off) <= target 1.50%
+2026-11-14T07:57:03Z origin container 70099b08ac13 stopped
+2026-11-14T07:57:04Z done: ~/epl/runs/sm/02-tls-resumption/summary.md

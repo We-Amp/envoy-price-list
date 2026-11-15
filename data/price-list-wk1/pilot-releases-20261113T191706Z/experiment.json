@@ -1,0 +1,115 @@
+{
+ "alpha": 0.05,
+ "arms": [
+  {
+   "binary": "$HOME/epl/bin/envoy-1.32.13",
+   "name": "v1.32.13",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.32.13/envoy-1.32.13-linux-x86_64",
+   "source_sha256": "27150dfd35c89b69e5db38366bca4025f30311416d83ea5f5b83cabc76613265"
+  },
+  {
+   "binary": "$HOME/epl/bin/envoy-1.36.13",
+   "name": "v1.36.13",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.36.13/envoy-1.36.13-linux-x86_64",
+   "source_sha256": "df99ee307371c3e6f812844f23322732430d102775a73263cc3287984291f18c"
+  },
+  {
+   "binary": "$HOME/epl/bin/envoy-1.40.2",
+   "name": "v1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "v1.32.13",
+ "client": {
+  "binary": "$HOME/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3,40-43"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "poll_s": 5,
+  "procs": [
+   "(^|/)envoy[^/ ]*( |$)",
+   "(^|/)nighthawk_client( |$)",
+   "(^|/)h2load( |$)",
+   "(^|/)wrk2?( |$)",
+   "(^|/)fortio( |$)"
+  ],
+  "sample_s": 1.0,
+  "timeout_s": 600
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": [
+   "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+  ],
+  "window_s": 20
+ },
+ "name": "pilot-releases",
+ "order": "abba",
+ "origin": {
+  "image": "nginx:alpine",
+  "mode": "docker",
+  "port": 8092,
+  "workers": 8
+ },
+ "record_hostname": false,
+ "rounds": 6,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  },
+  {
+   "body_bytes": 128,
+   "kind": "direct_headers",
+   "name": "fh",
+   "path": "/fh",
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000
+  },
+  {
+   "body_bytes": 16384,
+   "kind": "proxied",
+   "name": "m",
+   "path": "/m",
+   "rps": 5440
+  }
+ ],
+ "validity": {
+  "max_non2xx": 0,
+  "max_overflow": 0,
+  "min_client_headroom": 0.25,
+  "rate_tolerance": 0.01
+ },
+ "workdir": "$HOME/epl/runs"
+}

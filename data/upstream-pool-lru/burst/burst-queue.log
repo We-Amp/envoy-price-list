@@ -1,0 +1,162 @@
+2026-11-15T07:02:23Z smoke start pid 656704 harness 0.1.0 0e1f33a83e3f
+2026-11-15T07:02:28Z run lru-burst-smoke: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo']
+2026-11-15T07:02:28Z origin container dbf3e9e48ed9 (epl-origin-656707) started
+2026-11-15T07:03:38Z r01-s-lo-mru INVALID ins_u=163.8k cyc_tot=500.5k busy=29.5% rate=5200.9/5200 p99=1041us client overflow/pool-exhausted counters 127 (upstream_cx_overflow=127); client pending total 93 above 16 (queue absorbed a burst)
+2026-11-15T07:04:47Z r01-s-lo-lru INVALID ins_u=163.3k cyc_tot=486.2k busy=28.4% rate=5200.9/5200 p99=1253us client overflow/pool-exhausted counters 120 (upstream_cx_overflow=120); client pending total 85 above 16 (queue absorbed a burst)
+2026-11-15T07:05:56Z r02-s-lo-lru INVALID ins_u=163.9k cyc_tot=503.7k busy=29.6% rate=5200.8/5200 p99=1124us client overflow/pool-exhausted counters 81 (upstream_cx_overflow=81); client pending total 67 above 16 (queue absorbed a burst)
+2026-11-15T07:07:05Z r02-s-lo-mru INVALID ins_u=163.6k cyc_tot=496.2k busy=29.2% rate=5200.8/5200 p99=1041us client overflow/pool-exhausted counters 33 (upstream_cx_overflow=33); client pending total 41 above 16 (queue absorbed a burst)
+2026-11-15T07:07:05Z re-running round 1 shape s-lo (attempt 1): invalid ['r01-s-lo-mru', 'r01-s-lo-lru']
+2026-11-15T07:08:14Z r01-s-lo-mru.rr1 INVALID ins_u=163.8k cyc_tot=507.2k busy=29.9% rate=5200.9/5200 p99=981us client overflow/pool-exhausted counters 12 (upstream_cx_overflow=12); client pending total 28 above 16 (queue absorbed a burst)
+2026-11-15T07:09:23Z r01-s-lo-lru.rr1 VALID ins_u=163.7k cyc_tot=507.2k busy=29.8% rate=5200.9/5200 p99=1070us 
+2026-11-15T07:09:23Z re-running round 2 shape s-lo (attempt 1): invalid ['r02-s-lo-lru', 'r02-s-lo-mru']
+2026-11-15T07:10:31Z r02-s-lo-lru.rr1 INVALID ins_u=163.9k cyc_tot=507.6k busy=29.8% rate=5200.8/5200 p99=1073us client overflow/pool-exhausted counters 99 (upstream_cx_overflow=99); client pending total 78 above 16 (queue absorbed a burst)
+2026-11-15T07:11:40Z r02-s-lo-mru.rr1 INVALID ins_u=163.4k cyc_tot=488.0k busy=28.7% rate=5200.9/5200 p99=1018us client overflow/pool-exhausted counters 9 (upstream_cx_overflow=9); client pending total 23 above 16 (queue absorbed a burst)
+2026-11-15T07:11:40Z after 2 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:11:41Z origin container dbf3e9e48ed9 stopped
+2026-11-15T07:11:42Z done: ~/epl/runs/lru/burst-smoke/summary.md
+$HOME/epl/runs/lru/burst-smoke/summary.md
+2026-11-15T07:11:42Z smoke end rc=0
+2026-11-15T07:13:15Z queue start pid 659875 harness 0.1.0 196755054242
+2026-11-15T07:13:15Z start sockets-two-hop (nofile 1024)
+2026-11-15T07:13:20Z run lru-two-hop: abba order, rounds 4..4 in blocks of 6 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo', 's-hi']
+2026-11-15T07:13:21Z origin container c64fd4f875d3 (epl-origin-659880) started
+2026-11-15T07:14:00Z r01-s-lo-mru VALID ins_u=163.1k cyc_tot=500.9k busy=29.5% rate=5201.6/5200 p99=1242us 
+2026-11-15T07:14:39Z r01-s-lo-lru VALID ins_u=163.3k cyc_tot=510.8k busy=30.1% rate=5201.6/5200 p99=1065us 
+2026-11-15T07:15:18Z r01-s-hi-mru VALID ins_u=163.0k cyc_tot=454.5k busy=41.0% rate=8002.5/8000 p99=1470us 
+2026-11-15T07:15:57Z r01-s-hi-lru VALID ins_u=163.0k cyc_tot=472.2k busy=42.4% rate=8002.7/8000 p99=1967us 
+2026-11-15T07:16:36Z r02-s-lo-lru VALID ins_u=163.3k cyc_tot=514.5k busy=30.3% rate=5201.6/5200 p99=1150us 
+2026-11-15T07:17:15Z r02-s-lo-mru VALID ins_u=163.1k cyc_tot=501.5k busy=29.6% rate=5201.6/5200 p99=1030us 
+2026-11-15T07:17:54Z r02-s-hi-lru VALID ins_u=163.0k cyc_tot=473.9k busy=42.6% rate=8002.7/8000 p99=1856us 
+2026-11-15T07:18:33Z r02-s-hi-mru VALID ins_u=163.0k cyc_tot=454.6k busy=41.0% rate=8002.6/8000 p99=1345us 
+2026-11-15T07:19:12Z r03-s-lo-mru VALID ins_u=163.1k cyc_tot=508.6k busy=29.9% rate=5201.6/5200 p99=1042us 
+2026-11-15T07:19:51Z r03-s-lo-lru VALID ins_u=163.3k cyc_tot=515.2k busy=30.3% rate=5201.6/5200 p99=1111us 
+2026-11-15T07:20:30Z r03-s-hi-mru VALID ins_u=162.5k cyc_tot=449.9k busy=40.5% rate=8003.2/8000 p99=5942us 
+2026-11-15T07:21:09Z r03-s-hi-lru VALID ins_u=163.2k cyc_tot=474.3k busy=42.6% rate=8002.5/8000 p99=1542us 
+2026-11-15T07:21:48Z r04-s-lo-lru VALID ins_u=163.2k cyc_tot=511.8k busy=30.1% rate=5201.6/5200 p99=1172us 
+2026-11-15T07:22:27Z r04-s-lo-mru VALID ins_u=163.0k cyc_tot=515.1k busy=30.3% rate=5201.6/5200 p99=1059us 
+2026-11-15T07:23:06Z r04-s-hi-lru VALID ins_u=163.1k cyc_tot=467.7k busy=42.1% rate=8002.3/8000 p99=1893us 
+2026-11-15T07:23:45Z r04-s-hi-mru VALID ins_u=163.0k cyc_tot=455.3k busy=41.0% rate=8002.6/8000 p99=1886us 
+2026-11-15T07:23:45Z after 4 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:23:45Z origin container c64fd4f875d3 stopped
+2026-11-15T07:23:46Z done: ~/epl/runs/lru/sockets-two-hop/summary.md
+$HOME/epl/runs/lru/sockets-two-hop/summary.md
+2026-11-15T07:23:46Z end sockets-two-hop rc=0
+2026-11-15T07:23:46Z start sockets-one-hop (nofile 1024)
+2026-11-15T07:23:51Z run lru-one-hop: abba order, rounds 4..4 in blocks of 6 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo', 's-hi']
+2026-11-15T07:23:51Z origin container e9a6e7dc08f9 (epl-origin-664403) started
+2026-11-15T07:24:31Z r01-s-lo-mru VALID ins_u=163.8k cyc_tot=528.3k busy=31.3% rate=5201.1/5200 p99=603us 
+2026-11-15T07:25:09Z r01-s-lo-lru VALID ins_u=164.1k cyc_tot=524.4k busy=31.2% rate=5201.0/5200 p99=642us 
+2026-11-15T07:25:48Z r01-s-hi-mru VALID ins_u=163.7k cyc_tot=490.6k busy=44.0% rate=8001.6/8000 p99=800us 
+2026-11-15T07:26:26Z r01-s-hi-lru VALID ins_u=164.2k cyc_tot=489.4k busy=44.0% rate=8001.7/8000 p99=747us 
+2026-11-15T07:27:05Z r02-s-lo-lru VALID ins_u=164.3k cyc_tot=532.6k busy=31.6% rate=5201.1/5200 p99=636us 
+2026-11-15T07:27:43Z r02-s-lo-mru VALID ins_u=163.9k cyc_tot=529.2k busy=31.4% rate=5201.0/5200 p99=629us 
+2026-11-15T07:28:22Z r02-s-hi-lru VALID ins_u=164.3k cyc_tot=489.6k busy=43.9% rate=8001.5/8000 p99=893us 
+2026-11-15T07:29:00Z r02-s-hi-mru VALID ins_u=164.1k cyc_tot=491.9k busy=44.2% rate=8001.5/8000 p99=854us 
+2026-11-15T07:29:39Z r03-s-lo-mru VALID ins_u=163.8k cyc_tot=526.1k busy=31.2% rate=5201.0/5200 p99=636us 
+2026-11-15T07:30:17Z r03-s-lo-lru VALID ins_u=164.1k cyc_tot=532.0k busy=31.6% rate=5201.0/5200 p99=654us 
+2026-11-15T07:30:56Z r03-s-hi-mru VALID ins_u=163.6k cyc_tot=491.8k busy=44.1% rate=8001.6/8000 p99=1184us 
+2026-11-15T07:31:35Z r03-s-hi-lru VALID ins_u=164.4k cyc_tot=493.5k busy=44.3% rate=8001.6/8000 p99=871us 
+2026-11-15T07:32:13Z r04-s-lo-lru VALID ins_u=164.0k cyc_tot=532.8k busy=31.6% rate=5201.0/5200 p99=686us 
+2026-11-15T07:32:52Z r04-s-lo-mru VALID ins_u=163.9k cyc_tot=535.6k busy=31.8% rate=5201.0/5200 p99=627us 
+2026-11-15T07:33:30Z r04-s-hi-lru VALID ins_u=163.9k cyc_tot=486.4k busy=43.7% rate=8001.7/8000 p99=914us 
+2026-11-15T07:34:09Z r04-s-hi-mru VALID ins_u=163.9k cyc_tot=488.5k busy=43.8% rate=8001.5/8000 p99=1203us 
+2026-11-15T07:34:09Z after 4 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:34:09Z origin container e9a6e7dc08f9 stopped
+2026-11-15T07:34:10Z done: ~/epl/runs/lru/sockets-one-hop/summary.md
+$HOME/epl/runs/lru/sockets-one-hop/summary.md
+2026-11-15T07:34:10Z end sockets-one-hop rc=0
+2026-11-15T07:34:10Z start burst-smoke2 (nofile 1048576)
+2026-11-15T07:34:15Z run lru-burst-smoke: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo']
+2026-11-15T07:34:15Z origin container ae45ad65ef0e (epl-origin-669302) started
+2026-11-15T07:35:25Z r01-s-lo-mru VALID ins_u=163.9k cyc_tot=504.3k busy=29.7% rate=5200.9/5200 p99=1044us 
+2026-11-15T07:36:34Z r01-s-lo-lru VALID ins_u=164.0k cyc_tot=517.2k busy=30.4% rate=5200.9/5200 p99=1090us 
+2026-11-15T07:37:43Z r02-s-lo-lru VALID ins_u=164.0k cyc_tot=517.4k busy=30.4% rate=5200.8/5200 p99=1056us 
+2026-11-15T07:38:52Z r02-s-lo-mru VALID ins_u=163.9k cyc_tot=506.2k busy=29.8% rate=5200.8/5200 p99=1022us 
+2026-11-15T07:38:52Z after 2 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:38:52Z origin container ae45ad65ef0e stopped
+2026-11-15T07:38:54Z done: ~/epl/runs/lru/burst-smoke2/summary.md
+$HOME/epl/runs/lru/burst-smoke2/summary.md
+2026-11-15T07:38:54Z end burst-smoke2 rc=0
+smoke2 first-attempt valid: 4 of 4
+2026-11-15T07:38:54Z start burst (nofile 1048576)
+2026-11-15T07:39:02Z run lru-burst: rotate order, rounds 12..12 in blocks of 12 (adaptive False), arms ['mru', 'lru', 'mru-maxreq', 'mru-maxdur', 'lru-noeb', 'mru-idle5'], shapes ['s-lo']
+2026-11-15T07:39:02Z origin container 3562a71e5952 (epl-origin-671515) started
+2026-11-15T07:41:47Z r01-s-lo-mru VALID ins_u=163.8k cyc_tot=504.5k busy=29.7% rate=5200.2/5200 p99=1041us 
+2026-11-15T07:44:31Z r01-s-lo-lru VALID ins_u=163.9k cyc_tot=514.0k busy=30.2% rate=5200.3/5200 p99=1082us 
+2026-11-15T07:47:15Z r01-s-lo-mru-maxreq VALID ins_u=163.8k cyc_tot=503.0k busy=29.6% rate=5200.2/5200 p99=1012us 
+2026-11-15T07:49:59Z r01-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=506.1k busy=29.8% rate=5200.2/5200 p99=969us 
+2026-11-15T07:52:43Z r01-s-lo-lru-noeb VALID ins_u=164.0k cyc_tot=522.4k busy=30.7% rate=5200.3/5200 p99=1066us 
+2026-11-15T07:55:27Z r01-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=501.9k busy=29.6% rate=5200.3/5200 p99=970us 
+2026-11-15T07:58:11Z r02-s-lo-mru-idle5 VALID ins_u=163.3k cyc_tot=499.4k busy=29.4% rate=5200.3/5200 p99=1105us 
+2026-11-15T08:00:55Z r02-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=517.9k busy=30.5% rate=5200.3/5200 p99=1078us 
+2026-11-15T08:03:39Z r02-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=507.4k busy=29.9% rate=5200.3/5200 p99=984us 
+2026-11-15T08:06:23Z r02-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=508.4k busy=30.0% rate=5200.3/5200 p99=1006us 
+2026-11-15T08:09:07Z r02-s-lo-lru VALID ins_u=163.9k cyc_tot=515.1k busy=30.3% rate=5200.3/5200 p99=1066us 
+2026-11-15T08:11:51Z r02-s-lo-mru VALID ins_u=163.8k cyc_tot=498.8k busy=29.4% rate=5200.3/5200 p99=1057us 
+2026-11-15T08:14:35Z r03-s-lo-mru VALID ins_u=163.8k cyc_tot=501.2k busy=29.5% rate=5200.3/5200 p99=1080us 
+2026-11-15T08:17:19Z r03-s-lo-mru-idle5 VALID ins_u=163.3k cyc_tot=500.7k busy=29.5% rate=5200.3/5200 p99=974us 
+2026-11-15T08:20:03Z r03-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=520.0k busy=30.6% rate=5200.3/5200 p99=1033us 
+2026-11-15T08:22:47Z r03-s-lo-mru-maxdur VALID ins_u=163.5k cyc_tot=499.1k busy=29.4% rate=5200.2/5200 p99=983us 
+2026-11-15T08:25:31Z r03-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=505.0k busy=29.8% rate=5200.2/5200 p99=1011us 
+2026-11-15T08:28:15Z r03-s-lo-lru VALID ins_u=163.9k cyc_tot=518.0k busy=30.5% rate=5200.3/5200 p99=1058us 
+2026-11-15T08:30:59Z r04-s-lo-lru VALID ins_u=163.9k cyc_tot=517.0k busy=30.4% rate=5200.2/5200 p99=1060us 
+2026-11-15T08:33:43Z r04-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=506.9k busy=29.9% rate=5200.3/5200 p99=1024us 
+2026-11-15T08:36:27Z r04-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=504.6k busy=29.7% rate=5200.3/5200 p99=985us 
+2026-11-15T08:39:10Z r04-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=517.5k busy=30.4% rate=5200.3/5200 p99=1046us 
+2026-11-15T08:41:54Z r04-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=503.9k busy=29.7% rate=5200.3/5200 p99=963us 
+2026-11-15T08:44:38Z r04-s-lo-mru VALID ins_u=163.9k cyc_tot=511.9k busy=30.2% rate=5200.2/5200 p99=1041us 
+2026-11-15T08:47:22Z r05-s-lo-lru VALID ins_u=163.9k cyc_tot=515.3k busy=30.3% rate=5200.3/5200 p99=1038us 
+2026-11-15T08:47:24Z not idle yet: load1=8.04 busy=0.0% procs=0 hot={}
+2026-11-15T08:50:13Z r05-s-lo-mru VALID ins_u=163.8k cyc_tot=500.1k busy=29.5% rate=5200.3/5200 p99=1000us 
+2026-11-15T08:52:57Z r05-s-lo-mru-idle5 VALID ins_u=163.3k cyc_tot=501.3k busy=29.5% rate=5200.2/5200 p99=998us 
+2026-11-15T08:55:41Z r05-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=517.2k busy=30.4% rate=5200.3/5200 p99=1057us 
+2026-11-15T08:58:25Z r05-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=503.5k busy=29.7% rate=5200.3/5200 p99=985us 
+2026-11-15T09:01:09Z r05-s-lo-mru-maxreq VALID ins_u=163.8k cyc_tot=500.7k busy=29.5% rate=5200.3/5200 p99=1010us 
+2026-11-15T09:03:53Z r06-s-lo-mru-maxreq VALID ins_u=163.8k cyc_tot=506.6k busy=29.8% rate=5200.3/5200 p99=1011us 
+2026-11-15T09:06:37Z r06-s-lo-mru-maxdur VALID ins_u=163.5k cyc_tot=513.5k busy=30.2% rate=5200.2/5200 p99=992us 
+2026-11-15T09:09:21Z r06-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=515.7k busy=30.3% rate=5200.2/5200 p99=1086us 
+2026-11-15T09:12:05Z r06-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=509.4k busy=30.0% rate=5200.2/5200 p99=997us 
+2026-11-15T09:14:49Z r06-s-lo-mru VALID ins_u=163.8k cyc_tot=503.4k busy=29.7% rate=5200.3/5200 p99=985us 
+2026-11-15T09:17:33Z r06-s-lo-lru VALID ins_u=163.9k cyc_tot=516.8k busy=30.4% rate=5200.3/5200 p99=1067us 
+2026-11-15T09:20:16Z r07-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=502.7k busy=29.6% rate=5200.2/5200 p99=990us 
+2026-11-15T09:23:00Z r07-s-lo-lru-noeb VALID ins_u=164.0k cyc_tot=515.7k busy=30.3% rate=5200.2/5200 p99=1074us 
+2026-11-15T09:25:44Z r07-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=503.8k busy=29.7% rate=5200.2/5200 p99=985us 
+2026-11-15T09:28:28Z r07-s-lo-mru VALID ins_u=163.8k cyc_tot=500.1k busy=29.5% rate=5200.2/5200 p99=1004us 
+2026-11-15T09:31:12Z r07-s-lo-lru VALID ins_u=163.9k cyc_tot=515.7k busy=30.3% rate=5200.3/5200 p99=1086us 
+2026-11-15T09:33:56Z r07-s-lo-mru-maxreq VALID ins_u=163.8k cyc_tot=503.1k busy=29.6% rate=5200.3/5200 p99=998us 
+2026-11-15T09:36:40Z r08-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=505.3k busy=29.8% rate=5200.2/5200 p99=1018us 
+2026-11-15T09:39:24Z r08-s-lo-lru VALID ins_u=163.9k cyc_tot=516.0k busy=30.3% rate=5200.3/5200 p99=1056us 
+2026-11-15T09:42:08Z r08-s-lo-mru VALID ins_u=163.8k cyc_tot=501.4k busy=29.6% rate=5200.3/5200 p99=975us 
+2026-11-15T09:44:52Z r08-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=502.1k busy=29.6% rate=5200.2/5200 p99=1045us 
+2026-11-15T09:47:36Z r08-s-lo-lru-noeb VALID ins_u=164.0k cyc_tot=511.4k busy=30.1% rate=5200.2/5200 p99=1080us 
+2026-11-15T09:50:20Z r08-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=502.4k busy=29.6% rate=5200.2/5200 p99=995us 
+2026-11-15T09:53:04Z r09-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=511.1k busy=30.1% rate=5200.2/5200 p99=1075us 
+2026-11-15T09:55:48Z r09-s-lo-mru-idle5 VALID ins_u=163.3k cyc_tot=509.5k busy=30.0% rate=5200.2/5200 p99=1021us 
+2026-11-15T09:58:32Z r09-s-lo-mru VALID ins_u=163.9k cyc_tot=506.3k busy=29.8% rate=5200.2/5200 p99=999us 
+2026-11-15T10:01:16Z r09-s-lo-lru VALID ins_u=164.0k cyc_tot=521.2k busy=30.7% rate=5200.3/5200 p99=1072us 
+2026-11-15T10:04:00Z r09-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=510.6k busy=30.1% rate=5200.2/5200 p99=1021us 
+2026-11-15T10:06:44Z r09-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=506.7k busy=29.9% rate=5200.2/5200 p99=1042us 
+2026-11-15T10:09:28Z r10-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=504.3k busy=29.7% rate=5200.2/5200 p99=998us 
+2026-11-15T10:12:12Z r10-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=506.2k busy=29.8% rate=5200.2/5200 p99=1030us 
+2026-11-15T10:14:56Z r10-s-lo-lru VALID ins_u=163.9k cyc_tot=511.8k busy=30.1% rate=5200.2/5200 p99=1062us 
+2026-11-15T10:17:40Z r10-s-lo-mru VALID ins_u=163.8k cyc_tot=504.2k busy=29.7% rate=5200.2/5200 p99=1012us 
+2026-11-15T10:20:24Z r10-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=510.0k busy=30.0% rate=5200.3/5200 p99=1000us 
+2026-11-15T10:20:25Z not idle yet: load1=8.54 busy=0.1% procs=0 hot={}
+2026-11-15T10:23:14Z r10-s-lo-lru-noeb VALID ins_u=164.0k cyc_tot=510.1k busy=30.0% rate=5200.3/5200 p99=1071us 
+2026-11-15T10:25:58Z r11-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=512.0k busy=30.1% rate=5200.3/5200 p99=1050us 
+2026-11-15T10:28:42Z r11-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=508.4k busy=29.9% rate=5200.3/5200 p99=993us 
+2026-11-15T10:31:26Z r11-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=505.1k busy=29.8% rate=5200.2/5200 p99=1064us 
+2026-11-15T10:34:11Z r11-s-lo-lru VALID ins_u=164.0k cyc_tot=519.1k busy=30.5% rate=5200.3/5200 p99=1080us 
+2026-11-15T10:36:55Z r11-s-lo-mru VALID ins_u=163.8k cyc_tot=504.4k busy=29.7% rate=5200.3/5200 p99=980us 
+2026-11-15T10:39:39Z r11-s-lo-mru-idle5 VALID ins_u=163.4k cyc_tot=506.4k busy=29.8% rate=5200.3/5200 p99=985us 
+2026-11-15T10:42:23Z r12-s-lo-mru-idle5 VALID ins_u=163.3k cyc_tot=499.4k busy=29.4% rate=5200.2/5200 p99=990us 
+2026-11-15T10:45:07Z r12-s-lo-mru VALID ins_u=163.9k cyc_tot=505.3k busy=29.8% rate=5200.2/5200 p99=1020us 
+2026-11-15T10:47:51Z r12-s-lo-lru VALID ins_u=163.9k cyc_tot=519.6k busy=30.6% rate=5200.3/5200 p99=1056us 
+2026-11-15T10:50:35Z r12-s-lo-mru-maxreq VALID ins_u=163.9k cyc_tot=505.2k busy=29.7% rate=5200.3/5200 p99=1084us 
+2026-11-15T10:53:19Z r12-s-lo-mru-maxdur VALID ins_u=163.6k cyc_tot=501.2k busy=29.6% rate=5200.3/5200 p99=993us 
+2026-11-15T10:56:03Z r12-s-lo-lru-noeb VALID ins_u=163.9k cyc_tot=520.9k busy=30.6% rate=5200.2/5200 p99=1069us 
+2026-11-15T10:56:03Z after 12 rounds: widest cycles_total_all half-width 1.19% (s-lo lru-noeb vs mru) <= target 1.50%
+2026-11-15T10:56:03Z origin container 3562a71e5952 stopped
+2026-11-15T10:56:07Z done: ~/epl/runs/lru/burst/summary.md
+$HOME/epl/runs/lru/burst/summary.md
+2026-11-15T10:56:07Z end burst rc=0

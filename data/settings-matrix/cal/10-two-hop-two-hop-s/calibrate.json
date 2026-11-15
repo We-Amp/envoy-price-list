@@ -1,0 +1,26 @@
+[
+ {
+  "rps": 5200,
+  "valid": false,
+  "reasons": [
+   "Envoy load uneven: busiest worker did 87.3% of worker CPU, limit 30.0% (4 workers)",
+   "Envoy load uneven: least busy worker did 0.0% of worker CPU, floor 12.5% (4 workers)"
+  ],
+  "sut_busy": 0.29315325,
+  "client_headroom": 0.7595603903982674,
+  "rate": 5200.728709180048,
+  "ins_u_k": 163.11482009292237,
+  "cyc_total_k": 497.3065647001932,
+  "p99_us": 1155.903,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 104256,
+   "http.ingress_http.downstream_rq_2xx": 104257,
+   "http.ingress_http.downstream_rq_total": 104256,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": 0.263020625,
+  "pending_total": 16,
+  "access_log_lines": null
+ }
+]

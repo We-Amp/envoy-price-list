@@ -1,0 +1,27 @@
+[
+ {
+  "rps": 6400,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.34638575,
+  "client_headroom": 0.7515655622271562,
+  "rate": 6400.678822980866,
+  "ins_u_k": 162.96470343191254,
+  "cyc_total_k": 478.9103660215265,
+  "p99_us": 1291.519,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 128307,
+   "http.ingress_http.downstream_rq_2xx": 128305,
+   "http.ingress_http.downstream_rq_total": 128307,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": 0.334879375,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 729.471,
+  "worker_max_share": 0.2507,
+  "hop2_worker_max_share": 0.613,
+  "hop2_worker_max_busy": 0.8201
+ }
+]

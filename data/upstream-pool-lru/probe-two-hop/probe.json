@@ -1,0 +1,1032 @@
+[
+ {
+  "arm": "mru",
+  "rps": 5200,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 5201.495185150701,
+  "sut_busy": 0.29784462500000003,
+  "hop2_busy": 0.268187,
+  "client_headroom": 0.7600123562082755,
+  "p50_us": 841.3109999999999,
+  "p99_us": 1244.6709999999998,
+  "cyc_total_k": 505.74179712016485,
+  "cyc_all_k": 971.7466960518886,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.8688,
+   "worker_min_share": 0.0005,
+   "worker_share": [
+    0.1302,
+    0.8688,
+    0.0005,
+    0.0005
+   ],
+   "worker_max_busy": 0.932,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.3019,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 669
+ },
+ {
+  "arm": "lru",
+  "rps": 5200,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 5201.623807827951,
+  "sut_busy": 0.302787375,
+  "hop2_busy": 0.30138275,
+  "client_headroom": 0.7655937725627888,
+  "p50_us": 691.103,
+  "p99_us": 1126.335,
+  "cyc_total_k": 514.2921740849744,
+  "cyc_all_k": 1029.6067264880419,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2533,
+   "worker_min_share": 0.2434,
+   "worker_share": [
+    0.2533,
+    0.2517,
+    0.2517,
+    0.2434
+   ],
+   "worker_max_busy": 0.3057,
+   "worker_min_busy": 0.2938
+  },
+  "envoy_worker_max_busy": 0.3047,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 6400,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 6402.0015960257815,
+  "sut_busy": 0.355404125,
+  "hop2_busy": 0.353730125,
+  "client_headroom": 0.7431498845507092,
+  "p50_us": 717.7909999999999,
+  "p99_us": 1297.983,
+  "cyc_total_k": 492.52248057191866,
+  "cyc_all_k": 984.8688967469305,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2538,
+   "worker_min_share": 0.2457,
+   "worker_share": [
+    0.2538,
+    0.2534,
+    0.2471,
+    0.2457
+   ],
+   "worker_max_busy": 0.3591,
+   "worker_min_busy": 0.3476
+  },
+  "envoy_worker_max_busy": 0.3591,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 6400,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 6402.366235055202,
+  "sut_busy": 0.34708249999999996,
+  "hop2_busy": 0.30297887500000004,
+  "client_headroom": 0.7470702155924303,
+  "p50_us": 1512.895,
+  "p99_us": 3053.951,
+  "cyc_total_k": 479.29812485548035,
+  "cyc_all_k": 910.0524609554398,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.8236,
+   "worker_min_share": 0.0,
+   "worker_share": [
+    0.8236,
+    0.0,
+    0.176,
+    0.0004
+   ],
+   "worker_max_busy": 0.9992,
+   "worker_min_busy": 0.0
+  },
+  "envoy_worker_max_busy": 0.3487,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 645
+ },
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.367358480633,
+  "sut_busy": 0.415621375,
+  "hop2_busy": 0.445398375,
+  "client_headroom": 0.7406443936295971,
+  "p50_us": 747.2629999999999,
+  "p99_us": 1428.735,
+  "cyc_total_k": 461.6819914277798,
+  "cyc_all_k": 957.955036140141,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4388,
+   "worker_min_share": 0.103,
+   "worker_share": [
+    0.103,
+    0.2863,
+    0.1718,
+    0.4388
+   ],
+   "worker_max_busy": 0.7821,
+   "worker_min_busy": 0.1835
+  },
+  "envoy_worker_max_busy": 0.418,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 687
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.539347719233,
+  "sut_busy": 0.422784125,
+  "hop2_busy": 0.41199700000000006,
+  "client_headroom": 0.7361432978513301,
+  "p50_us": 829.759,
+  "p99_us": 1814.079,
+  "cyc_total_k": 469.9398246972473,
+  "cyc_all_k": 932.5298490755792,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2614,
+   "worker_min_share": 0.2418,
+   "worker_share": [
+    0.2418,
+    0.2454,
+    0.2614,
+    0.2514
+   ],
+   "worker_max_busy": 0.4309,
+   "worker_min_busy": 0.3985
+  },
+  "envoy_worker_max_busy": 0.424,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 9602.897541411403,
+  "sut_busy": 0.4928096249999999,
+  "hop2_busy": 0.48536899999999994,
+  "client_headroom": 0.7281511775486337,
+  "p50_us": 850.943,
+  "p99_us": 1751.039,
+  "cyc_total_k": 458.48915963784066,
+  "cyc_all_k": 912.8373470453188,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2571,
+   "worker_min_share": 0.2363,
+   "worker_share": [
+    0.2571,
+    0.2537,
+    0.2363,
+    0.253
+   ],
+   "worker_max_busy": 0.4993,
+   "worker_min_busy": 0.4589
+  },
+  "envoy_worker_max_busy": 0.4953,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 9603.079299157314,
+  "sut_busy": 0.46971375000000004,
+  "hop2_busy": 0.5141484999999999,
+  "client_headroom": 0.7272249144922911,
+  "p50_us": 788.255,
+  "p99_us": 1392.575,
+  "cyc_total_k": 436.3262661714859,
+  "cyc_all_k": 915.9596992260458,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3884,
+   "worker_min_share": 0.0582,
+   "worker_share": [
+    0.3605,
+    0.0582,
+    0.3884,
+    0.193
+   ],
+   "worker_max_busy": 0.7989,
+   "worker_min_busy": 0.1197
+  },
+  "envoy_worker_max_busy": 0.4727,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 811
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 2 (upstream_cx_overflow=2)",
+   "client pending total 18 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.430914035282,
+  "sut_busy": 0.529180625,
+  "hop2_busy": 0.557414875,
+  "client_headroom": 0.7167059721595338,
+  "p50_us": 844.4789999999999,
+  "p99_us": 1616.703,
+  "cyc_total_k": 422.52078338518623,
+  "cyc_all_k": 870.1735303367534,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3608,
+   "worker_min_share": 0.0002,
+   "worker_share": [
+    0.2836,
+    0.3608,
+    0.3554,
+    0.0002
+   ],
+   "worker_max_busy": 0.8045,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.5327,
+  "client_overflow": {
+   "upstream_cx_overflow": 2
+  },
+  "client_pending_total": 18,
+  "hop2_conns": 808
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 4 (upstream_cx_overflow=4)",
+   "client pending total 20 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.441686839895,
+  "sut_busy": 0.5589226249999999,
+  "hop2_busy": 0.562415375,
+  "client_headroom": 0.7206746206922959,
+  "p50_us": 888.3829999999999,
+  "p99_us": 1762.559,
+  "cyc_total_k": 447.47809732779336,
+  "cyc_all_k": 898.8113746089697,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2516,
+   "worker_min_share": 0.2458,
+   "worker_share": [
+    0.2512,
+    0.2458,
+    0.2516,
+    0.2514
+   ],
+   "worker_max_busy": 0.5661,
+   "worker_min_busy": 0.5532
+  },
+  "envoy_worker_max_busy": 0.5621,
+  "client_overflow": {
+   "upstream_cx_overflow": 4
+  },
+  "client_pending_total": 20,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 5200,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 5201.536968784041,
+  "sut_busy": 0.308318625,
+  "hop2_busy": 0.30035325,
+  "client_headroom": 0.7540986416314552,
+  "p50_us": 694.879,
+  "p99_us": 1125.567,
+  "cyc_total_k": 524.0024470473321,
+  "cyc_all_k": 1037.2629405460648,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2515,
+   "worker_min_share": 0.2485,
+   "worker_share": [
+    0.249,
+    0.251,
+    0.2515,
+    0.2485
+   ],
+   "worker_max_busy": 0.3023,
+   "worker_min_busy": 0.2988
+  },
+  "envoy_worker_max_busy": 0.3112,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 5200,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 5201.59139673284,
+  "sut_busy": 0.29535100000000003,
+  "hop2_busy": 0.323246875,
+  "client_headroom": 0.7556299343816787,
+  "p50_us": 660.767,
+  "p99_us": 971.903,
+  "cyc_total_k": 500.939684023749,
+  "cyc_all_k": 1049.6592632649704,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3418,
+   "worker_min_share": 0.1132,
+   "worker_share": [
+    0.3418,
+    0.3125,
+    0.1132,
+    0.2325
+   ],
+   "worker_max_busy": 0.4429,
+   "worker_min_busy": 0.1466
+  },
+  "envoy_worker_max_busy": 0.2987,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 638
+ },
+ {
+  "arm": "mru",
+  "rps": 6400,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 6401.889288924572,
+  "sut_busy": 0.345603875,
+  "hop2_busy": 0.34109724999999996,
+  "client_headroom": 0.7490492127114622,
+  "p50_us": 704.351,
+  "p99_us": 1134.271,
+  "cyc_total_k": 477.77317852739856,
+  "cyc_all_k": 953.8331732968439,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.5221,
+   "worker_min_share": 0.0004,
+   "worker_share": [
+    0.0004,
+    0.0004,
+    0.5221,
+    0.4771
+   ],
+   "worker_max_busy": 0.7119,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.3477,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 670
+ },
+ {
+  "arm": "lru",
+  "rps": 6400,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 6402.035534841109,
+  "sut_busy": 0.355407875,
+  "hop2_busy": 0.352867375,
+  "client_headroom": 0.7500783248045851,
+  "p50_us": 732.2869999999999,
+  "p99_us": 1284.159,
+  "cyc_total_k": 491.7432923430553,
+  "cyc_all_k": 984.0088708452241,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2541,
+   "worker_min_share": 0.2442,
+   "worker_share": [
+    0.2541,
+    0.2442,
+    0.2488,
+    0.253
+   ],
+   "worker_max_busy": 0.3587,
+   "worker_min_busy": 0.3447
+  },
+  "envoy_worker_max_busy": 0.3607,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.315571400307,
+  "sut_busy": 0.42489837500000005,
+  "hop2_busy": 0.411123375,
+  "client_headroom": 0.7340627739778431,
+  "p50_us": 908.639,
+  "p99_us": 1779.7749999999999,
+  "cyc_total_k": 472.50705197924924,
+  "cyc_all_k": 935.8081868782865,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2578,
+   "worker_min_share": 0.2411,
+   "worker_share": [
+    0.2578,
+    0.2411,
+    0.2475,
+    0.2536
+   ],
+   "worker_max_busy": 0.4241,
+   "worker_min_busy": 0.3967
+  },
+  "envoy_worker_max_busy": 0.4271,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.98282495609,
+  "sut_busy": 0.41215699999999994,
+  "hop2_busy": 0.41977737500000006,
+  "client_headroom": 0.7396041267194571,
+  "p50_us": 777.663,
+  "p99_us": 1955.3909999999998,
+  "cyc_total_k": 456.85252936551944,
+  "cyc_all_k": 927.9162887920785,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.5328,
+   "worker_min_share": 0.0003,
+   "worker_share": [
+    0.1325,
+    0.5328,
+    0.0003,
+    0.3344
+   ],
+   "worker_max_busy": 0.8949,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.4135,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 737
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 9602.718249045158,
+  "sut_busy": 0.47962974999999997,
+  "hop2_busy": 0.5065455,
+  "client_headroom": 0.7311992928614655,
+  "p50_us": 766.143,
+  "p99_us": 1461.951,
+  "cyc_total_k": 445.48378043637456,
+  "cyc_all_k": 917.464547132374,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3789,
+   "worker_min_share": 0.0522,
+   "worker_share": [
+    0.2537,
+    0.3789,
+    0.3152,
+    0.0522
+   ],
+   "worker_max_busy": 0.768,
+   "worker_min_busy": 0.1057
+  },
+  "envoy_worker_max_busy": 0.4807,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 837
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 136 (upstream_cx_overflow=136)",
+   "client pending total 98 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 9603.058617253766,
+  "sut_busy": 0.490750375,
+  "hop2_busy": 0.490926875,
+  "client_headroom": 0.7286003196187749,
+  "p50_us": 824.735,
+  "p99_us": 1812.5430000000001,
+  "cyc_total_k": 456.7995422488089,
+  "cyc_all_k": 915.4623306531554,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2531,
+   "worker_min_share": 0.2416,
+   "worker_share": [
+    0.2531,
+    0.2416,
+    0.2525,
+    0.2528
+   ],
+   "worker_max_busy": 0.4964,
+   "worker_min_busy": 0.474
+  },
+  "envoy_worker_max_busy": 0.4919,
+  "client_overflow": {
+   "upstream_cx_overflow": 136
+  },
+  "client_pending_total": 98,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 31 (upstream_cx_overflow=31)",
+   "client pending total 36 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.488689059684,
+  "sut_busy": 0.55357775,
+  "hop2_busy": 0.570157625,
+  "client_headroom": 0.7176228336684517,
+  "p50_us": 899.423,
+  "p99_us": 1666.6870000000001,
+  "cyc_total_k": 442.6152847989529,
+  "cyc_all_k": 900.9659178311888,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2519,
+   "worker_min_share": 0.2458,
+   "worker_share": [
+    0.2519,
+    0.2458,
+    0.2515,
+    0.2508
+   ],
+   "worker_max_busy": 0.5742,
+   "worker_min_busy": 0.5603
+  },
+  "envoy_worker_max_busy": 0.5568,
+  "client_overflow": {
+   "upstream_cx_overflow": 31
+  },
+  "client_pending_total": 36,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 486 (upstream_cx_overflow=486)",
+   "client pending total 274 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.461446549625,
+  "sut_busy": 0.5321262499999999,
+  "hop2_busy": 0.5744914999999999,
+  "client_headroom": 0.7281609121261565,
+  "p50_us": 914.9110000000001,
+  "p99_us": 2837.2470000000003,
+  "cyc_total_k": 424.5194628723207,
+  "cyc_all_k": 886.0747322165588,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4126,
+   "worker_min_share": 0.1089,
+   "worker_share": [
+    0.4126,
+    0.3015,
+    0.1089,
+    0.177
+   ],
+   "worker_max_busy": 0.9487,
+   "worker_min_busy": 0.2504
+  },
+  "envoy_worker_max_busy": 0.5322,
+  "client_overflow": {
+   "upstream_cx_overflow": 486
+  },
+  "client_pending_total": 274,
+  "hop2_conns": 953
+ },
+ {
+  "arm": "mru",
+  "rps": 5200,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 5204.94763238939,
+  "sut_busy": 0.297883875,
+  "hop2_busy": 0.287511125,
+  "client_headroom": 0.7555964524382814,
+  "p50_us": 687.455,
+  "p99_us": 1089.279,
+  "cyc_total_k": 505.41933733007727,
+  "cyc_all_k": 998.0339695493359,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.6797,
+   "worker_min_share": 0.0004,
+   "worker_share": [
+    0.0004,
+    0.3195,
+    0.6797,
+    0.0004
+   ],
+   "worker_max_busy": 0.7821,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.2998,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 654
+ },
+ {
+  "arm": "lru",
+  "rps": 5200,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 5201.485898872159,
+  "sut_busy": 0.3006185,
+  "hop2_busy": 0.30641850000000004,
+  "client_headroom": 0.7521320780728258,
+  "p50_us": 683.391,
+  "p99_us": 1087.551,
+  "cyc_total_k": 511.1780051112948,
+  "cyc_all_k": 1033.9196931238625,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2536,
+   "worker_min_share": 0.2483,
+   "worker_share": [
+    0.2491,
+    0.2536,
+    0.2491,
+    0.2483
+   ],
+   "worker_max_busy": 0.3112,
+   "worker_min_busy": 0.3047
+  },
+  "envoy_worker_max_busy": 0.3042,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 6400,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 6401.85941395768,
+  "sut_busy": 0.35574325,
+  "hop2_busy": 0.337130375,
+  "client_headroom": 0.7475969406683352,
+  "p50_us": 832.927,
+  "p99_us": 1780.799,
+  "cyc_total_k": 493.3466115194636,
+  "cyc_all_k": 966.5104637505406,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2582,
+   "worker_min_share": 0.2297,
+   "worker_share": [
+    0.2582,
+    0.2553,
+    0.2568,
+    0.2297
+   ],
+   "worker_max_busy": 0.3482,
+   "worker_min_busy": 0.3098
+  },
+  "envoy_worker_max_busy": 0.3582,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 6400,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 6402.028348905049,
+  "sut_busy": 0.350237875,
+  "hop2_busy": 0.33264324999999995,
+  "client_headroom": 0.751033616794325,
+  "p50_us": 802.591,
+  "p99_us": 1738.8790000000001,
+  "cyc_total_k": 484.54454302448573,
+  "cyc_all_k": 951.5755942320887,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.6592,
+   "worker_min_share": 0.0004,
+   "worker_share": [
+    0.3401,
+    0.0004,
+    0.0004,
+    0.6592
+   ],
+   "worker_max_busy": 0.8771,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.3532,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 611
+ },
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.616576151234,
+  "sut_busy": 0.41653400000000007,
+  "hop2_busy": 0.40782474999999996,
+  "client_headroom": 0.7405861944968244,
+  "p50_us": 866.847,
+  "p99_us": 2249.727,
+  "cyc_total_k": 461.99807191413913,
+  "cyc_all_k": 921.4491693223721,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.5686,
+   "worker_min_share": 0.0003,
+   "worker_share": [
+    0.5686,
+    0.0825,
+    0.3485,
+    0.0003
+   ],
+   "worker_max_busy": 0.9279,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.4181,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 678
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.657313658214,
+  "sut_busy": 0.42869337500000004,
+  "hop2_busy": 0.40419900000000003,
+  "client_headroom": 0.7420814996720176,
+  "p50_us": 887.807,
+  "p99_us": 1813.887,
+  "cyc_total_k": 476.5576835823113,
+  "cyc_all_k": 931.272448119262,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2541,
+   "worker_min_share": 0.2445,
+   "worker_share": [
+    0.2538,
+    0.2476,
+    0.2445,
+    0.2541
+   ],
+   "worker_max_busy": 0.4111,
+   "worker_min_busy": 0.3956
+  },
+  "envoy_worker_max_busy": 0.4305,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 210 (upstream_cx_overflow=210)",
+   "client pending total 128 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 9603.069934392897,
+  "sut_busy": 0.494621,
+  "hop2_busy": 0.49734737500000004,
+  "client_headroom": 0.72914111168031,
+  "p50_us": 839.231,
+  "p99_us": 1753.983,
+  "cyc_total_k": 460.3267938066376,
+  "cyc_all_k": 925.0861456536527,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2546,
+   "worker_min_share": 0.243,
+   "worker_share": [
+    0.2518,
+    0.243,
+    0.2506,
+    0.2546
+   ],
+   "worker_max_busy": 0.5063,
+   "worker_min_busy": 0.4834
+  },
+  "envoy_worker_max_busy": 0.4948,
+  "client_overflow": {
+   "upstream_cx_overflow": 210
+  },
+  "client_pending_total": 128,
+  "hop2_conns": 1024
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 13 (upstream_cx_overflow=13)",
+   "client pending total 26 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 9602.81694416642,
+  "sut_busy": 0.48003712500000006,
+  "hop2_busy": 0.5232473750000001,
+  "client_headroom": 0.7316227615317485,
+  "p50_us": 786.783,
+  "p99_us": 1598.847,
+  "cyc_total_k": 445.99141035919956,
+  "cyc_all_k": 933.3328614990077,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4057,
+   "worker_min_share": 0.1446,
+   "worker_share": [
+    0.2804,
+    0.1694,
+    0.1446,
+    0.4057
+   ],
+   "worker_max_busy": 0.8495,
+   "worker_min_busy": 0.3028
+  },
+  "envoy_worker_max_busy": 0.4814,
+  "client_overflow": {
+   "upstream_cx_overflow": 13
+  },
+  "client_pending_total": 26,
+  "hop2_conns": 891
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 534 (upstream_cx_overflow=534)",
+   "client pending total 294 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.405513967515,
+  "sut_busy": 0.537296875,
+  "hop2_busy": 0.51253975,
+  "client_headroom": 0.723232334038753,
+  "p50_us": 2904.063,
+  "p99_us": 5748.479,
+  "cyc_total_k": 429.0654525766315,
+  "cyc_all_k": 842.9126571136434,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4878,
+   "worker_min_share": 0.07,
+   "worker_share": [
+    0.07,
+    0.4878,
+    0.3436,
+    0.0985
+   ],
+   "worker_max_busy": 1.0004,
+   "worker_min_busy": 0.1436
+  },
+  "envoy_worker_max_busy": 0.5495,
+  "client_overflow": {
+   "upstream_cx_overflow": 534
+  },
+  "client_pending_total": 294,
+  "hop2_conns": 888
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 11203.432580793817,
+  "sut_busy": 0.5674556249999999,
+  "hop2_busy": 0.564121,
+  "client_headroom": 0.7191747121422343,
+  "p50_us": 903.615,
+  "p99_us": 1766.3990000000001,
+  "cyc_total_k": 454.2986115858226,
+  "cyc_all_k": 907.4390140329349,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2519,
+   "worker_min_share": 0.248,
+   "worker_share": [
+    0.2499,
+    0.2519,
+    0.2502,
+    0.248
+   ],
+   "worker_max_busy": 0.5681,
+   "worker_min_busy": 0.5592
+  },
+  "envoy_worker_max_busy": 0.5691,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1024
+ }
+]

@@ -1,0 +1,105 @@
+2026-11-14T15:39:40Z run lru-two-hop: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['mru', 'lru'], shapes ['s-lo', 's-hi']
+2026-11-14T15:39:41Z origin container 7fe548f18e2f (epl-origin-568312) started
+2026-11-14T15:40:20Z r01-s-lo-mru VALID ins_u=163.1k cyc_tot=504.6k busy=29.7% rate=5200.7/5200 p99=1029us 
+2026-11-14T15:40:22Z not idle yet: load1=4.75 busy=0.3% procs=0 hot={'43': 6.9}
+2026-11-14T15:41:05Z r01-s-lo-lru VALID ins_u=163.3k cyc_tot=513.9k busy=30.2% rate=5200.6/5200 p99=1108us 
+2026-11-14T15:41:45Z r01-s-hi-mru VALID ins_u=162.8k cyc_tot=458.6k busy=41.3% rate=8001.6/8000 p99=4584us 
+2026-11-14T15:42:24Z r01-s-hi-lru VALID ins_u=163.0k cyc_tot=467.5k busy=42.0% rate=8001.0/8000 p99=1604us 
+2026-11-14T15:43:03Z r02-s-lo-lru VALID ins_u=163.3k cyc_tot=511.5k busy=30.1% rate=5200.7/5200 p99=1128us 
+2026-11-14T15:43:41Z r02-s-lo-mru VALID ins_u=163.0k cyc_tot=499.9k busy=29.5% rate=5200.2/5200 p99=1356us 
+2026-11-14T15:44:21Z r02-s-hi-lru VALID ins_u=163.0k cyc_tot=480.0k busy=43.1% rate=8001.0/8000 p99=1974us 
+2026-11-14T15:44:22Z not idle yet: load1=6.23 busy=0.6% procs=0 hot={'5': 37.8}
+2026-11-14T15:45:06Z r02-s-hi-mru VALID ins_u=162.9k cyc_tot=454.3k busy=40.9% rate=8001.1/8000 p99=1402us 
+2026-11-14T15:45:45Z r03-s-lo-mru VALID ins_u=163.1k cyc_tot=504.2k busy=29.7% rate=5200.6/5200 p99=1013us 
+2026-11-14T15:46:24Z r03-s-lo-lru VALID ins_u=163.3k cyc_tot=514.1k busy=30.2% rate=5200.7/5200 p99=1173us 
+2026-11-14T15:47:03Z r03-s-hi-mru VALID ins_u=163.0k cyc_tot=460.2k busy=41.4% rate=8001.0/8000 p99=1162us 
+2026-11-14T15:47:42Z r03-s-hi-lru VALID ins_u=163.1k cyc_tot=475.9k busy=42.8% rate=8000.9/8000 p99=1947us 
+2026-11-14T15:48:21Z r04-s-lo-lru VALID ins_u=163.3k cyc_tot=514.6k busy=30.3% rate=5200.7/5200 p99=1075us 
+2026-11-14T15:49:00Z r04-s-lo-mru VALID ins_u=163.0k cyc_tot=504.9k busy=29.8% rate=5200.6/5200 p99=989us 
+2026-11-14T15:49:39Z r04-s-hi-lru VALID ins_u=163.0k cyc_tot=470.7k busy=42.2% rate=8001.0/8000 p99=1478us 
+2026-11-14T15:50:18Z r04-s-hi-mru VALID ins_u=163.1k cyc_tot=453.5k busy=40.9% rate=8001.0/8000 p99=1232us 
+2026-11-14T15:50:56Z r05-s-lo-mru VALID ins_u=163.1k cyc_tot=503.8k busy=29.7% rate=5200.7/5200 p99=1183us 
+2026-11-14T15:51:35Z r05-s-lo-lru VALID ins_u=163.3k cyc_tot=519.0k busy=30.5% rate=5200.6/5200 p99=1194us 
+2026-11-14T15:52:14Z r05-s-hi-mru VALID ins_u=163.0k cyc_tot=459.3k busy=41.4% rate=8000.8/8000 p99=1597us 
+2026-11-14T15:52:53Z r05-s-hi-lru VALID ins_u=163.2k cyc_tot=469.7k busy=42.2% rate=8001.0/8000 p99=1812us 
+2026-11-14T15:53:32Z r06-s-lo-lru VALID ins_u=163.3k cyc_tot=514.2k busy=30.3% rate=5200.7/5200 p99=1120us 
+2026-11-14T15:54:11Z r06-s-lo-mru VALID ins_u=163.1k cyc_tot=504.8k busy=29.7% rate=5200.7/5200 p99=1098us 
+2026-11-14T15:54:50Z r06-s-hi-lru VALID ins_u=163.2k cyc_tot=471.5k busy=42.4% rate=8001.0/8000 p99=1673us 
+2026-11-14T15:55:29Z r06-s-hi-mru VALID ins_u=163.0k cyc_tot=452.3k busy=40.7% rate=8001.0/8000 p99=1987us 
+2026-11-14T15:56:08Z r07-s-lo-lru VALID ins_u=163.3k cyc_tot=520.6k busy=30.6% rate=5200.7/5200 p99=1136us 
+2026-11-14T15:56:47Z r07-s-lo-mru VALID ins_u=162.8k cyc_tot=503.1k busy=29.7% rate=5200.7/5200 p99=1229us 
+2026-11-14T15:57:26Z r07-s-hi-lru VALID ins_u=163.1k cyc_tot=478.1k busy=42.9% rate=8001.2/8000 p99=1571us 
+2026-11-14T15:58:05Z r07-s-hi-mru VALID ins_u=163.0k cyc_tot=458.4k busy=41.3% rate=8000.9/8000 p99=1306us 
+2026-11-14T15:58:44Z r08-s-lo-mru VALID ins_u=162.7k cyc_tot=503.7k busy=29.7% rate=5200.6/5200 p99=1020us 
+2026-11-14T15:59:23Z r08-s-lo-lru VALID ins_u=163.3k cyc_tot=513.0k busy=30.2% rate=5200.6/5200 p99=1142us 
+2026-11-14T16:00:02Z r08-s-hi-mru VALID ins_u=163.0k cyc_tot=459.5k busy=41.4% rate=8001.2/8000 p99=1704us 
+2026-11-14T16:00:41Z r08-s-hi-lru VALID ins_u=163.2k cyc_tot=474.1k busy=42.7% rate=8001.1/8000 p99=1507us 
+2026-11-14T16:01:20Z r09-s-lo-mru VALID ins_u=163.0k cyc_tot=504.4k busy=29.7% rate=5200.4/5200 p99=1328us 
+2026-11-14T16:01:59Z r09-s-lo-lru VALID ins_u=163.3k cyc_tot=512.0k busy=30.1% rate=5200.7/5200 p99=1160us 
+2026-11-14T16:02:38Z r09-s-hi-mru VALID ins_u=163.0k cyc_tot=453.3k busy=40.9% rate=8001.1/8000 p99=1300us 
+2026-11-14T16:03:17Z r09-s-hi-lru VALID ins_u=163.2k cyc_tot=469.1k busy=42.2% rate=8001.1/8000 p99=1813us 
+2026-11-14T16:03:56Z r10-s-lo-lru VALID ins_u=163.3k cyc_tot=523.3k busy=30.8% rate=5200.6/5200 p99=1075us 
+2026-11-14T16:04:35Z r10-s-lo-mru VALID ins_u=163.0k cyc_tot=504.3k busy=29.7% rate=5200.4/5200 p99=1291us 
+2026-11-14T16:05:14Z r10-s-hi-lru VALID ins_u=163.1k cyc_tot=475.4k busy=42.8% rate=8001.0/8000 p99=1945us 
+2026-11-14T16:05:53Z r10-s-hi-mru VALID ins_u=162.8k cyc_tot=454.5k busy=40.9% rate=8000.9/8000 p99=1518us 
+2026-11-14T16:06:31Z r11-s-lo-mru VALID ins_u=163.1k cyc_tot=503.5k busy=29.7% rate=5200.6/5200 p99=1088us 
+2026-11-14T16:07:10Z r11-s-lo-lru VALID ins_u=163.3k cyc_tot=515.7k busy=30.3% rate=5200.7/5200 p99=1174us 
+2026-11-14T16:07:49Z r11-s-hi-mru VALID ins_u=162.9k cyc_tot=461.1k busy=41.5% rate=8000.9/8000 p99=1950us 
+2026-11-14T16:08:28Z r11-s-hi-lru VALID ins_u=163.1k cyc_tot=469.0k busy=42.1% rate=8000.9/8000 p99=1785us 
+2026-11-14T16:09:07Z r12-s-lo-lru VALID ins_u=163.3k cyc_tot=521.2k busy=30.6% rate=5200.7/5200 p99=1114us 
+2026-11-14T16:09:46Z r12-s-lo-mru VALID ins_u=163.1k cyc_tot=511.4k busy=30.1% rate=5200.8/5200 p99=1243us 
+2026-11-14T16:10:25Z r12-s-hi-lru VALID ins_u=163.2k cyc_tot=468.7k busy=42.2% rate=8001.0/8000 p99=1560us 
+2026-11-14T16:11:04Z r12-s-hi-mru VALID ins_u=162.9k cyc_tot=460.8k busy=41.4% rate=8001.3/8000 p99=1631us 
+2026-11-14T16:11:04Z after 12 rounds: widest cycles_total_all half-width 2.42% (s-lo lru vs mru) > target 1.50%
+2026-11-14T16:11:43Z r13-s-lo-mru VALID ins_u=162.9k cyc_tot=498.7k busy=29.4% rate=5204.3/5200 p99=1092us 
+2026-11-14T16:12:22Z r13-s-lo-lru VALID ins_u=163.3k cyc_tot=521.2k busy=30.7% rate=5200.6/5200 p99=1111us 
+2026-11-14T16:13:01Z r13-s-hi-mru VALID ins_u=162.7k cyc_tot=453.6k busy=40.8% rate=8001.4/8000 p99=4963us 
+2026-11-14T16:13:40Z r13-s-hi-lru VALID ins_u=163.1k cyc_tot=479.1k busy=43.0% rate=8001.0/8000 p99=2035us 
+2026-11-14T16:14:19Z r14-s-lo-lru VALID ins_u=163.3k cyc_tot=515.9k busy=30.4% rate=5200.7/5200 p99=1149us 
+2026-11-14T16:14:58Z r14-s-lo-mru VALID ins_u=163.1k cyc_tot=505.5k busy=29.8% rate=5200.7/5200 p99=979us 
+2026-11-14T16:15:37Z r14-s-hi-lru VALID ins_u=163.0k cyc_tot=475.6k busy=42.7% rate=8001.1/8000 p99=1756us 
+2026-11-14T16:16:16Z r14-s-hi-mru VALID ins_u=162.9k cyc_tot=459.8k busy=41.3% rate=8001.1/8000 p99=1845us 
+2026-11-14T16:16:55Z r15-s-lo-mru VALID ins_u=163.1k cyc_tot=508.9k busy=30.0% rate=5200.7/5200 p99=1152us 
+2026-11-14T16:17:34Z r15-s-lo-lru VALID ins_u=163.3k cyc_tot=517.0k busy=30.4% rate=5200.6/5200 p99=1206us 
+2026-11-14T16:18:13Z r15-s-hi-mru VALID ins_u=163.0k cyc_tot=463.1k busy=41.7% rate=8001.0/8000 p99=1319us 
+2026-11-14T16:18:52Z r15-s-hi-lru VALID ins_u=163.2k cyc_tot=470.1k busy=42.3% rate=8001.2/8000 p99=1652us 
+2026-11-14T16:19:31Z r16-s-lo-lru VALID ins_u=163.3k cyc_tot=513.2k busy=30.2% rate=5200.7/5200 p99=1112us 
+2026-11-14T16:20:10Z r16-s-lo-mru VALID ins_u=163.1k cyc_tot=504.7k busy=29.8% rate=5200.7/5200 p99=1010us 
+2026-11-14T16:20:49Z r16-s-hi-lru VALID ins_u=163.2k cyc_tot=470.7k busy=42.4% rate=8001.0/8000 p99=1721us 
+2026-11-14T16:21:28Z r16-s-hi-mru VALID ins_u=162.9k cyc_tot=459.1k busy=41.3% rate=8000.6/8000 p99=2206us 
+2026-11-14T16:22:07Z r17-s-lo-lru VALID ins_u=163.4k cyc_tot=511.0k busy=30.1% rate=5200.6/5200 p99=1065us 
+2026-11-14T16:22:46Z r17-s-lo-mru VALID ins_u=163.1k cyc_tot=510.0k busy=30.1% rate=5200.7/5200 p99=1107us 
+2026-11-14T16:23:25Z r17-s-hi-lru VALID ins_u=163.2k cyc_tot=484.8k busy=43.6% rate=8000.9/8000 p99=1813us 
+2026-11-14T16:24:04Z r17-s-hi-mru VALID ins_u=162.9k cyc_tot=454.3k busy=40.9% rate=8001.0/8000 p99=1498us 
+2026-11-14T16:24:43Z r18-s-lo-mru VALID ins_u=163.1k cyc_tot=509.4k busy=30.0% rate=5200.5/5200 p99=1157us 
+2026-11-14T16:25:22Z r18-s-lo-lru VALID ins_u=163.4k cyc_tot=515.1k busy=30.3% rate=5200.7/5200 p99=1108us 
+2026-11-14T16:26:01Z r18-s-hi-mru VALID ins_u=162.9k cyc_tot=454.4k busy=40.9% rate=8001.1/8000 p99=1513us 
+2026-11-14T16:26:40Z r18-s-hi-lru VALID ins_u=163.1k cyc_tot=471.3k busy=42.4% rate=8001.0/8000 p99=1769us 
+2026-11-14T16:26:40Z after 18 rounds: widest cycles_total_all half-width 1.83% (s-lo lru vs mru) > target 1.50%
+2026-11-14T16:27:19Z r19-s-lo-lru VALID ins_u=163.3k cyc_tot=516.4k busy=30.4% rate=5200.6/5200 p99=1105us 
+2026-11-14T16:27:58Z r19-s-lo-mru VALID ins_u=163.1k cyc_tot=506.3k busy=29.8% rate=5200.6/5200 p99=1154us 
+2026-11-14T16:28:37Z r19-s-hi-lru VALID ins_u=163.1k cyc_tot=473.4k busy=42.6% rate=8000.9/8000 p99=1895us 
+2026-11-14T16:29:16Z r19-s-hi-mru VALID ins_u=162.9k cyc_tot=457.6k busy=41.2% rate=8001.1/8000 p99=1362us 
+2026-11-14T16:29:55Z r20-s-lo-mru VALID ins_u=162.8k cyc_tot=508.7k busy=30.0% rate=5200.7/5200 p99=1224us 
+2026-11-14T16:30:34Z r20-s-lo-lru VALID ins_u=163.3k cyc_tot=514.4k busy=30.3% rate=5200.7/5200 p99=1079us 
+2026-11-14T16:31:13Z r20-s-hi-mru VALID ins_u=162.8k cyc_tot=457.3k busy=41.1% rate=8001.1/8000 p99=1476us 
+2026-11-14T16:31:52Z r20-s-hi-lru VALID ins_u=163.2k cyc_tot=469.0k busy=42.2% rate=8000.9/8000 p99=2101us 
+2026-11-14T16:32:31Z r21-s-lo-lru VALID ins_u=163.0k cyc_tot=516.9k busy=30.4% rate=5200.7/5200 p99=1050us 
+2026-11-14T16:33:09Z r21-s-lo-mru VALID ins_u=163.1k cyc_tot=511.9k busy=30.2% rate=5200.7/5200 p99=1021us 
+2026-11-14T16:33:48Z r21-s-hi-lru VALID ins_u=163.2k cyc_tot=471.8k busy=42.4% rate=8001.1/8000 p99=1507us 
+2026-11-14T16:34:27Z r21-s-hi-mru VALID ins_u=162.9k cyc_tot=457.1k busy=41.2% rate=8000.9/8000 p99=1872us 
+2026-11-14T16:35:06Z r22-s-lo-mru VALID ins_u=163.1k cyc_tot=508.7k busy=30.0% rate=5200.6/5200 p99=1009us 
+2026-11-14T16:35:45Z r22-s-lo-lru VALID ins_u=163.3k cyc_tot=516.1k busy=30.4% rate=5200.7/5200 p99=1120us 
+2026-11-14T16:36:24Z r22-s-hi-mru VALID ins_u=162.6k cyc_tot=450.1k busy=40.5% rate=8001.3/8000 p99=5820us 
+2026-11-14T16:37:03Z r22-s-hi-lru VALID ins_u=163.1k cyc_tot=475.7k busy=42.7% rate=8001.3/8000 p99=1925us 
+2026-11-14T16:37:42Z r23-s-lo-lru VALID ins_u=163.3k cyc_tot=510.9k busy=30.0% rate=5200.7/5200 p99=1083us 
+2026-11-14T16:38:21Z r23-s-lo-mru VALID ins_u=163.0k cyc_tot=504.6k busy=29.7% rate=5200.7/5200 p99=1069us 
+2026-11-14T16:39:00Z r23-s-hi-lru VALID ins_u=163.1k cyc_tot=477.6k busy=42.9% rate=8001.0/8000 p99=2193us 
+2026-11-14T16:39:39Z r23-s-hi-mru VALID ins_u=162.9k cyc_tot=453.7k busy=40.9% rate=8001.0/8000 p99=1342us 
+2026-11-14T16:40:18Z r24-s-lo-mru VALID ins_u=163.1k cyc_tot=505.5k busy=29.8% rate=5200.7/5200 p99=1067us 
+2026-11-14T16:40:57Z r24-s-lo-lru VALID ins_u=163.3k cyc_tot=523.7k busy=30.8% rate=5200.8/5200 p99=1152us 
+2026-11-14T16:41:36Z r24-s-hi-mru VALID ins_u=162.9k cyc_tot=458.7k busy=41.3% rate=8000.9/8000 p99=2095us 
+2026-11-14T16:42:15Z r24-s-hi-lru VALID ins_u=163.2k cyc_tot=469.5k busy=42.2% rate=8001.0/8000 p99=1779us 
+2026-11-14T16:42:15Z after 24 rounds: widest cycles_total_all half-width 1.35% (s-lo lru vs mru) <= target 1.50%
+2026-11-14T16:42:15Z origin container 7fe548f18e2f stopped
+2026-11-14T16:42:17Z done: ~/epl/runs/lru/two-hop/summary.md

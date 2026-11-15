@@ -1,0 +1,133 @@
+2026-11-14T04:31:32Z condition A set: rc 0  readback mismatches 0
+2026-11-14T04:31:37Z round 1 cond A arm default attempt 1 rates [8000, 2000]
+2026-11-14T04:34:11Z   c01-A-default 8000 rps: 111.46 us/req (u 93.3 s 18.1) p50 172 vcs/req 1.042 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.469 ins/req 113981 busy max/med 0.035/0.022 invalid=[]
+2026-11-14T04:35:28Z   c01-A-default 2000 rps: 124.75 us/req (u 92.4 s 32.3) p50 161 vcs/req 1.256 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.503 ins/req 135778 busy max/med 0.010/0.006 invalid=[]
+2026-11-14T04:35:29Z   c01-A-default idle 0.0062 CPUs rss 69512 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.000942000111, 'p50_us': 166.599} invalid=[] []
+2026-11-14T04:35:29Z round 1 cond A arm req attempt 1 rates [8000, 2000]
+2026-11-14T04:38:04Z   c01-A-req 8000 rps: 102.75 us/req (u 60.3 s 42.4) p50 166 vcs/req 0.872 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.492 ins/req 111986 busy max/med 0.436/0.411 invalid=[]
+2026-11-14T04:39:20Z   c01-A-req 2000 rps: 116.05 us/req (u 80.7 s 35.4) p50 157 vcs/req 1.004 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.523 ins/req 133676 busy max/med 0.121/0.116 invalid=[]
+2026-11-14T04:39:21Z   c01-A-req idle 0.0007 CPUs rss 66564 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 16}, 'rate_2xx': 7999.9999404, 'p50_us': 160.535} invalid=[] []
+2026-11-14T04:39:22Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+2026-11-14T04:39:27Z round 2 cond B arm req attempt 1 rates [8000, 2000]
+2026-11-14T04:42:01Z   c02-B-req 8000 rps: 105.75 us/req (u 23.1 s 82.6) p50 170 vcs/req 0.853 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.478 ins/req 111602 busy max/med 0.440/0.423 invalid=[]
+2026-11-14T04:43:18Z   c02-B-req 2000 rps: 190.16 us/req (u 190.2 s 0.0) p50 244 vcs/req 1.005 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.374 ins/req 137555 busy max/med 0.192/0.190 invalid=[]
+2026-11-14T04:43:18Z   c02-B-req idle 0.0015 CPUs rss 66880 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 20}, 'rate_2xx': 7999.999312000059, 'p50_us': 167.11100000000002} invalid=[] []
+2026-11-14T04:43:18Z round 2 cond B arm default attempt 1 rates [8000, 2000]
+2026-11-14T04:45:54Z   c02-B-default 8000 rps: 153.95 us/req (u 43.4 s 110.5) p50 239 vcs/req 1.025 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.342 ins/req 114217 busy max/med 0.044/0.031 invalid=[]
+2026-11-14T04:47:10Z   c02-B-default 2000 rps: 192.92 us/req (u 80.6 s 112.3) p50 239 vcs/req 1.238 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.357 ins/req 135717 busy max/med 0.019/0.009 invalid=[]
+2026-11-14T04:47:11Z   c02-B-default idle 0.0147 CPUs rss 69184 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.000228800007, 'p50_us': 236.751} invalid=[] []
+2026-11-14T04:47:11Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+2026-11-14T04:47:16Z round 3 cond B arm default attempt 1 rates [2000, 8000]
+2026-11-14T04:49:51Z   c03-B-default 2000 rps: 199.67 us/req (u 42.6 s 157.1) p50 238 vcs/req 1.238 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.363 ins/req 136541 busy max/med 0.015/0.010 invalid=[]
+2026-11-14T04:51:07Z   c03-B-default 8000 rps: 153.47 us/req (u 135.2 s 18.2) p50 240 vcs/req 1.025 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.341 ins/req 113666 busy max/med 0.053/0.031 invalid=[]
+2026-11-14T04:51:08Z   c03-B-default idle 0.0157 CPUs rss 69320 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 7999.999990800001, 'p50_us': 235.367} invalid=[] []
+2026-11-14T04:51:08Z round 3 cond B arm req attempt 1 rates [2000, 8000]
+2026-11-14T04:53:43Z   c03-B-req 2000 rps: 187.35 us/req (u 86.6 s 100.7) p50 237 vcs/req 1.004 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.380 ins/req 134450 busy max/med 0.191/0.187 invalid=[]
+2026-11-14T04:55:00Z   c03-B-req 8000 rps: 108.71 us/req (u 70.2 s 38.5) p50 169 vcs/req 0.874 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.469 ins/req 112641 busy max/med 0.454/0.434 invalid=[]
+2026-11-14T04:55:00Z   c03-B-req idle 0.0017 CPUs rss 66268 kB workers=2 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 7999.997952000524, 'p50_us': 164.039} invalid=[] []
+2026-11-14T04:55:01Z condition A set: rc 0  readback mismatches 0
+2026-11-14T04:55:06Z round 4 cond A arm req attempt 1 rates [2000, 8000]
+2026-11-14T04:57:41Z   c04-A-req 2000 rps: 120.85 us/req (u 120.9 s 0.0) p50 164 vcs/req 1.004 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.516 ins/req 137817 busy max/med 0.130/0.121 invalid=[]
+2026-11-14T04:58:57Z   c04-A-req 8000 rps: 103.96 us/req (u 45.1 s 58.8) p50 168 vcs/req 0.906 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.489 ins/req 112694 busy max/med 0.429/0.416 invalid=[]
+2026-11-14T04:58:58Z   c04-A-req idle 0.0007 CPUs rss 66176 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 446}, 'rate_2xx': 7999.998103200449, 'p50_us': 163.479} invalid=[] []
+2026-11-14T04:58:58Z round 4 cond A arm default attempt 1 rates [2000, 8000]
+2026-11-14T05:01:33Z   c04-A-default 2000 rps: 124.96 us/req (u 26.3 s 98.7) p50 164 vcs/req 1.247 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.501 ins/req 135633 busy max/med 0.009/0.006 invalid=[]
+2026-11-14T05:02:49Z   c04-A-default 8000 rps: 111.74 us/req (u 16.9 s 94.9) p50 171 vcs/req 1.048 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.468 ins/req 114003 busy max/med 0.044/0.021 invalid=[]
+2026-11-14T05:02:50Z   c04-A-default idle 0.0056 CPUs rss 69336 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 7999.999937600001, 'p50_us': 165.647} invalid=[] []
+2026-11-14T05:02:50Z condition A set: rc 0  readback mismatches 0
+2026-11-14T05:02:55Z round 5 cond A arm default attempt 1 rates [8000, 2000]
+2026-11-14T05:05:30Z   c05-A-default 8000 rps: 113.17 us/req (u 92.8 s 20.4) p50 173 vcs/req 1.047 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.462 ins/req 114165 busy max/med 0.032/0.022 invalid=[]
+2026-11-14T05:06:47Z   c05-A-default 2000 rps: 131.35 us/req (u 131.3 s 0.0) p50 165 vcs/req 1.248 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.489 ins/req 139380 busy max/med 0.012/0.007 invalid=[]
+2026-11-14T05:06:47Z   c05-A-default idle 0.0060 CPUs rss 69328 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.001092800148, 'p50_us': 167.071} invalid=[] []
+2026-11-14T05:06:48Z round 5 cond A arm req attempt 1 rates [8000, 2000]
+2026-11-14T05:09:23Z   c05-A-req 8000 rps: 102.06 us/req (u 67.8 s 34.3) p50 164 vcs/req 0.896 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.498 ins/req 112596 busy max/med 0.442/0.408 invalid=[]
+2026-11-14T05:10:39Z   c05-A-req 2000 rps: 116.69 us/req (u 89.4 s 27.3) p50 159 vcs/req 1.004 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.520 ins/req 133661 busy max/med 0.124/0.116 invalid=[]
+2026-11-14T05:10:40Z   c05-A-req idle 0.0007 CPUs rss 66284 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 6}, 'rate_2xx': 7999.997894000555, 'p50_us': 160.551} invalid=[] []
+2026-11-14T05:10:40Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+2026-11-14T05:10:45Z round 6 cond B arm req attempt 1 rates [8000, 2000]
+2026-11-14T05:13:20Z   c06-B-req 8000 rps: 106.11 us/req (u 101.6 s 4.5) p50 167 vcs/req 0.871 ivcs/req 0.000 C1 0.00 C6 0.93 POLL 0.000 ipc 0.482 ins/req 112764 busy max/med 0.442/0.424 invalid=[]
+2026-11-14T05:14:37Z   c06-B-req 2000 rps: 188.95 us/req (u 92.3 s 96.6) p50 242 vcs/req 1.005 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.375 ins/req 137013 busy max/med 0.194/0.188 invalid=[]
+2026-11-14T05:14:37Z   c06-B-req idle 0.0018 CPUs rss 66252 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 44}, 'rate_2xx': 7999.999616000018, 'p50_us': 164.487} invalid=[] []
+2026-11-14T05:14:37Z round 6 cond B arm default attempt 1 rates [8000, 2000]
+2026-11-14T05:17:12Z   c06-B-default 8000 rps: 154.03 us/req (u 115.6 s 38.4) p50 242 vcs/req 1.009 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.340 ins/req 113566 busy max/med 0.048/0.031 invalid=[]
+2026-11-14T05:18:29Z   c06-B-default 2000 rps: 193.23 us/req (u 126.6 s 66.5) p50 237 vcs/req 1.256 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.357 ins/req 136000 busy max/med 0.015/0.010 invalid=[]
+2026-11-14T05:18:30Z   c06-B-default idle 0.0195 CPUs rss 69064 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.000205200005, 'p50_us': 237.055} invalid=[] []
+2026-11-14T05:18:30Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+2026-11-14T05:18:35Z round 7 cond B arm req attempt 1 rates [2000, 8000]
+2026-11-14T05:21:10Z   c07-B-req 2000 rps: 185.31 us/req (u 22.2 s 163.1) p50 237 vcs/req 1.004 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.382 ins/req 134552 busy max/med 0.187/0.185 invalid=[]
+2026-11-14T05:22:26Z   c07-B-req 8000 rps: 107.05 us/req (u 107.0 s 0.0) p50 168 vcs/req 0.864 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.476 ins/req 112688 busy max/med 0.434/0.428 invalid=[]
+2026-11-14T05:22:27Z   c07-B-req idle 0.0019 CPUs rss 66228 kB workers=2 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 7999.998647600229, 'p50_us': 160.68699999999998} invalid=[] []
+2026-11-14T05:22:27Z round 7 cond B arm default attempt 1 rates [2000, 8000]
+2026-11-14T05:25:02Z   c07-B-default 2000 rps: 194.13 us/req (u 95.0 s 99.1) p50 241 vcs/req 1.253 ivcs/req 0.000 C1 0.00 C6 0.97 POLL 0.000 ipc 0.360 ins/req 136054 busy max/med 0.020/0.009 invalid=[]
+2026-11-14T05:26:18Z   c07-B-default 8000 rps: 152.17 us/req (u 109.8 s 42.4) p50 240 vcs/req 1.004 ivcs/req 0.000 C1 0.00 C6 0.94 POLL 0.000 ipc 0.344 ins/req 113600 busy max/med 0.042/0.030 invalid=[]
+2026-11-14T05:26:19Z   c07-B-default idle 0.0186 CPUs rss 69320 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.001328800221, 'p50_us': 237.719} invalid=[] []
+2026-11-14T05:26:20Z condition A set: rc 0  readback mismatches 0
+2026-11-14T05:26:25Z round 8 cond A arm default attempt 1 rates [2000, 8000]
+2026-11-14T05:28:59Z   c08-A-default 2000 rps: 125.04 us/req (u 19.8 s 105.2) p50 162 vcs/req 1.252 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.501 ins/req 135642 busy max/med 0.010/0.006 invalid=[]
+2026-11-14T05:30:16Z   c08-A-default 8000 rps: 112.14 us/req (u 95.8 s 16.3) p50 172 vcs/req 1.046 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.465 ins/req 113762 busy max/med 0.033/0.022 invalid=[]
+2026-11-14T05:30:17Z   c08-A-default idle 0.0062 CPUs rss 68840 kB workers=40 warm={'exit': 0, 'overflow': {}, 'rate_2xx': 8000.001250000195, 'p50_us': 167.359} invalid=[] []
+2026-11-14T05:30:17Z round 8 cond A arm req attempt 1 rates [2000, 8000]
+2026-11-14T05:32:52Z   c08-A-req 2000 rps: 119.24 us/req (u 47.5 s 71.7) p50 161 vcs/req 1.004 ivcs/req 0.000 C1 0.99 C6 0.00 POLL 0.000 ipc 0.509 ins/req 133608 busy max/med 0.125/0.119 invalid=[]
+2026-11-14T05:34:08Z   c08-A-req 8000 rps: 108.10 us/req (u 31.2 s 76.9) p50 169 vcs/req 0.862 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.469 ins/req 112594 busy max/med 0.450/0.432 invalid=[]
+2026-11-14T05:34:09Z   c08-A-req idle 0.0007 CPUs rss 66520 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 260}, 'rate_2xx': 8000.001403600246, 'p50_us': 165.655} invalid=[] []
+2026-11-14T05:34:10Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+{
+ "8000-A": {
+  "cpu_us_per_req": [
+   7.62,
+   2.97,
+   12.48
+  ],
+  "p50_us": [
+   3.24,
+   0.51,
+   6.04
+  ]
+ },
+ "8000-B": {
+  "cpu_us_per_req": [
+   43.5,
+   40.07,
+   47.02
+  ],
+  "p50_us": [
+   42.85,
+   40.09,
+   45.67
+  ]
+ },
+ "8000-interaction": {
+  "mean": -28.78,
+  "lo": -32.16,
+  "hi": -25.39
+ },
+ "2000-A": {
+  "cpu_us_per_req": [
+   7.02,
+   0.86,
+   13.56
+  ],
+  "p50_us": [
+   1.75,
+   -1.32,
+   4.93
+  ]
+ },
+ "2000-B": {
+  "cpu_us_per_req": [
+   3.74,
+   0.09,
+   7.53
+  ],
+  "p50_us": [
+   -0.56,
+   -3.3,
+   2.25
+  ]
+ },
+ "2000-interaction": {
+  "mean": 3.11,
+  "lo": -5.88,
+  "hi": 12.11
+ }
+}

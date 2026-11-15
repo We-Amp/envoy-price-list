@@ -1,0 +1,27 @@
+[
+ {
+  "rps": 5200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.40912224999999997,
+  "client_headroom": 0.7590185851489548,
+  "rate": 5200.508653329989,
+  "ins_u_k": 315.23265374249087,
+  "cyc_total_k": 701.4583035284734,
+  "p99_us": 1232.831,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 104235,
+   "cluster.otel_collector.upstream_rq_total": 20854,
+   "http.ingress_http.downstream_rq_2xx": 104234,
+   "http.ingress_http.downstream_rq_total": 104234,
+   "http.ingress_http.tracing.random_sampling": 104234,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1,
+   "tracing.opentelemetry.spans_sent": 104232,
+   "tracing.opentelemetry.timer_flushed": 20
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null
+ }
+]

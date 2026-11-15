@@ -1,0 +1,6 @@
+2026-11-14T02:34:17Z   r00-req 2000 rps: 169.66 us/req (sched 169.66) envoy 0.339 CPUs p50 229 p99 354 hot conns 512/512 workers busy max/med/min 0.175/0.163/0.163 node_other 0.145 invalid=[]
+2026-11-14T02:35:03Z   r00-req 8000 rps: 101.93 us/req (sched 101.93) envoy 0.815 CPUs p50 162 p99 300 hot conns 512/512 workers busy max/med/min 0.416/0.399/0.399 node_other 0.127 invalid=[]
+2026-11-14T02:35:04Z   r00-req idle 0.0020 CPUs (sched 0.0020) rss 66872 kB after-load rss 76864 kB workers=2 invalid=[] []
+2026-11-14T02:36:16Z   r00-default 2000 rps: 186.32 us/req (sched 186.34) envoy 0.373 CPUs p50 228 p99 357 hot conns 512/512 workers busy max/med/min 0.015/0.009/0.005 node_other 0.150 invalid=[]
+2026-11-14T02:37:02Z   r00-default 8000 rps: 147.61 us/req (sched 147.61) envoy 1.181 CPUs p50 237 p99 299 hot conns 512/512 workers busy max/med/min 0.045/0.028/0.018 node_other 0.134 invalid=[]
+2026-11-14T02:37:03Z   r00-default idle 0.0195 CPUs (sched 0.0195) rss 69300 kB after-load rss 82552 kB workers=40 invalid=[] []

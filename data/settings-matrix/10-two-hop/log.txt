@@ -1,0 +1,29 @@
+2026-11-14T10:49:16Z run sm-two-hop: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['one-hop', 'two-hop'], shapes ['s']
+2026-11-14T10:49:17Z origin container 8c889b6782ff (epl-origin-450014) started
+2026-11-14T10:49:56Z r01-s-one-hop VALID ins_u=163.9k cyc_tot=529.8k busy=31.5% rate=5200.5/5200 p99=637us 
+2026-11-14T10:50:35Z r01-s-two-hop VALID ins_u=163.0k cyc_tot=500.9k busy=29.5% rate=5200.6/5200 p99=1222us 
+2026-11-14T10:51:14Z r02-s-two-hop VALID ins_u=163.1k cyc_tot=505.4k busy=29.8% rate=5200.7/5200 p99=1170us 
+2026-11-14T10:51:52Z r02-s-one-hop VALID ins_u=163.8k cyc_tot=526.9k busy=31.2% rate=5200.6/5200 p99=636us 
+2026-11-14T10:52:31Z r03-s-one-hop VALID ins_u=163.8k cyc_tot=528.0k busy=31.3% rate=5200.6/5200 p99=650us 
+2026-11-14T10:53:09Z r03-s-two-hop VALID ins_u=163.1k cyc_tot=503.3k busy=29.6% rate=5200.6/5200 p99=1144us 
+2026-11-14T10:53:48Z r04-s-two-hop VALID ins_u=163.0k cyc_tot=501.1k busy=29.5% rate=5200.5/5200 p99=1220us 
+2026-11-14T10:54:27Z r04-s-one-hop VALID ins_u=163.9k cyc_tot=524.3k busy=31.1% rate=5200.5/5200 p99=622us 
+2026-11-14T10:55:06Z r05-s-one-hop VALID ins_u=163.9k cyc_tot=525.5k busy=31.2% rate=5200.6/5200 p99=653us 
+2026-11-14T10:55:44Z r05-s-two-hop VALID ins_u=163.0k cyc_tot=499.3k busy=29.4% rate=5200.6/5200 p99=1178us 
+2026-11-14T10:56:23Z r06-s-two-hop VALID ins_u=163.0k cyc_tot=498.1k busy=29.3% rate=5200.5/5200 p99=1324us 
+2026-11-14T10:57:02Z r06-s-one-hop VALID ins_u=163.7k cyc_tot=520.7k busy=30.7% rate=5200.6/5200 p99=611us 
+2026-11-14T10:57:40Z r07-s-one-hop VALID ins_u=164.0k cyc_tot=520.9k busy=31.0% rate=5200.5/5200 p99=627us 
+2026-11-14T10:58:19Z r07-s-two-hop VALID ins_u=163.0k cyc_tot=503.4k busy=29.7% rate=5200.6/5200 p99=1242us 
+2026-11-14T10:58:58Z r08-s-two-hop VALID ins_u=163.2k cyc_tot=505.4k busy=29.8% rate=5200.6/5200 p99=1595us 
+2026-11-14T10:59:36Z r08-s-one-hop VALID ins_u=164.0k cyc_tot=521.4k busy=31.0% rate=5200.5/5200 p99=613us 
+2026-11-14T11:00:15Z r09-s-two-hop VALID ins_u=163.1k cyc_tot=509.8k busy=30.0% rate=5200.6/5200 p99=1194us 
+2026-11-14T11:00:54Z r09-s-one-hop VALID ins_u=163.8k cyc_tot=524.5k busy=31.0% rate=5200.5/5200 p99=626us 
+2026-11-14T11:01:32Z r10-s-one-hop VALID ins_u=163.9k cyc_tot=527.0k busy=31.3% rate=5200.6/5200 p99=613us 
+2026-11-14T11:02:11Z r10-s-two-hop VALID ins_u=163.0k cyc_tot=505.8k busy=29.8% rate=5200.6/5200 p99=1398us 
+2026-11-14T11:02:50Z r11-s-one-hop VALID ins_u=164.0k cyc_tot=525.9k busy=31.3% rate=5200.6/5200 p99=619us 
+2026-11-14T11:03:29Z r11-s-two-hop VALID ins_u=163.0k cyc_tot=508.1k busy=29.9% rate=5200.7/5200 p99=1179us 
+2026-11-14T11:04:07Z r12-s-two-hop VALID ins_u=163.1k cyc_tot=500.5k busy=29.5% rate=5200.7/5200 p99=1012us 
+2026-11-14T11:04:46Z r12-s-one-hop VALID ins_u=163.9k cyc_tot=525.4k busy=31.2% rate=5200.5/5200 p99=640us 
+2026-11-14T11:04:46Z after 12 rounds: widest cycles_total_per_hop half-width 1.25% (s two-hop vs one-hop) <= target 1.50%
+2026-11-14T11:04:46Z origin container 8c889b6782ff stopped
+2026-11-14T11:04:47Z done: ~/epl/runs/sm/10-two-hop/summary.md

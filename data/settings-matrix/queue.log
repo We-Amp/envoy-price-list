@@ -1,0 +1,451 @@
+2026-11-14T07:10:08Z queue start pid 402138 harness 0.1.0 7e3abbe874af rows: 01-tls-cert 02-tls-resumption 03-hpack 04-tracing 05-access-log 06-ext-authz 07-retries 08-buffer-limit 09-tcmalloc-percpu 10-two-hop
+2026-11-14T07:10:08Z start 01-tls-cert
+2026-11-14T07:10:08Z certificate ecdsa-p256 made
+2026-11-14T07:10:09Z certificate rsa2048 made
+2026-11-14T07:10:14Z run sm-tls-cert: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['rsa2048', 'ecdsa-p256'], shapes ['tls-ka', 'tls-hs']
+2026-11-14T07:10:14Z origin container 2d1507552c42 (epl-origin-402147) started
+2026-11-14T07:10:54Z r01-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=567.1k busy=30.9% rate=4800.5/4800 p99=963us 
+2026-11-14T07:11:32Z r01-tls-ka-ecdsa-p256 VALID ins_u=181.4k cyc_tot=557.1k busy=30.5% rate=4800.5/4800 p99=711us 
+2026-11-14T07:12:11Z r01-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=931.9k busy=29.7% rate=2800.3/2800 p99=18748us 
+2026-11-14T07:12:50Z r01-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=766.5k busy=24.8% rate=2800.3/2800 p99=1518us 
+2026-11-14T07:13:29Z r02-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=562.3k busy=30.8% rate=4800.5/4800 p99=702us 
+2026-11-14T07:14:08Z r02-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=563.5k busy=30.9% rate=4800.5/4800 p99=889us 
+2026-11-14T07:14:46Z r02-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=765.2k busy=24.7% rate=2800.3/2800 p99=1617us 
+2026-11-14T07:15:25Z r02-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=936.3k busy=29.7% rate=2800.3/2800 p99=16400us 
+2026-11-14T07:16:04Z r03-tls-ka-rsa2048 VALID ins_u=181.5k cyc_tot=562.2k busy=30.7% rate=4800.5/4800 p99=857us 
+2026-11-14T07:16:43Z r03-tls-ka-ecdsa-p256 VALID ins_u=181.0k cyc_tot=559.1k busy=30.5% rate=4800.5/4800 p99=736us 
+2026-11-14T07:17:22Z r03-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=927.2k busy=29.5% rate=2800.3/2800 p99=20754us 
+2026-11-14T07:18:01Z r03-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=765.6k busy=24.7% rate=2800.3/2800 p99=1358us 
+2026-11-14T07:18:40Z r04-tls-ka-ecdsa-p256 VALID ins_u=181.0k cyc_tot=554.5k busy=30.2% rate=4800.5/4800 p99=769us 
+2026-11-14T07:19:19Z r04-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=563.0k busy=30.8% rate=4800.5/4800 p99=898us 
+2026-11-14T07:19:57Z r04-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=764.4k busy=24.7% rate=2800.3/2800 p99=1723us 
+2026-11-14T07:20:36Z r04-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=936.5k busy=29.7% rate=2800.2/2800 p99=21284us 
+2026-11-14T07:21:15Z r05-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=556.9k busy=30.3% rate=4800.5/4800 p99=888us 
+2026-11-14T07:21:54Z r05-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=554.7k busy=30.2% rate=4800.5/4800 p99=740us 
+2026-11-14T07:22:33Z r05-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=930.4k busy=29.6% rate=2800.3/2800 p99=16583us 
+2026-11-14T07:23:12Z r05-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=762.1k busy=24.6% rate=2800.3/2800 p99=1800us 
+2026-11-14T07:23:51Z r06-tls-ka-ecdsa-p256 VALID ins_u=180.9k cyc_tot=546.2k busy=29.7% rate=4800.5/4800 p99=780us 
+2026-11-14T07:24:30Z r06-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=557.7k busy=30.4% rate=4800.5/4800 p99=890us 
+2026-11-14T07:25:09Z r06-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=767.9k busy=24.8% rate=2800.3/2800 p99=1504us 
+2026-11-14T07:25:47Z r06-tls-hs-rsa2048 VALID ins_u=950.5k cyc_tot=940.7k busy=29.9% rate=2800.3/2800 p99=18781us 
+2026-11-14T07:26:26Z r07-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=568.0k busy=31.1% rate=4800.5/4800 p99=859us 
+2026-11-14T07:27:05Z r07-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=561.6k busy=30.8% rate=4800.5/4800 p99=677us 
+2026-11-14T07:27:44Z r07-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=933.7k busy=29.7% rate=2800.3/2800 p99=21396us 
+2026-11-14T07:28:23Z r07-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=769.2k busy=24.9% rate=2800.3/2800 p99=1303us 
+2026-11-14T07:29:02Z r08-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=560.6k busy=30.6% rate=4800.5/4800 p99=671us 
+2026-11-14T07:29:41Z r08-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=557.7k busy=30.4% rate=4800.5/4800 p99=1229us 
+2026-11-14T07:30:19Z r08-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=769.6k busy=24.9% rate=2800.3/2800 p99=1588us 
+2026-11-14T07:30:58Z r08-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=934.5k busy=29.7% rate=2800.3/2800 p99=17630us 
+2026-11-14T07:31:37Z r09-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=564.2k busy=30.7% rate=4800.5/4800 p99=738us 
+2026-11-14T07:32:16Z r09-tls-ka-rsa2048 VALID ins_u=181.2k cyc_tot=547.9k busy=29.8% rate=4800.6/4800 p99=904us 
+2026-11-14T07:32:55Z r09-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=766.6k busy=24.8% rate=2800.3/2800 p99=1299us 
+2026-11-14T07:33:34Z r09-tls-hs-rsa2048 VALID ins_u=950.5k cyc_tot=936.7k busy=29.8% rate=2800.3/2800 p99=23500us 
+2026-11-14T07:34:13Z r10-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=557.3k busy=30.4% rate=4800.5/4800 p99=867us 
+2026-11-14T07:34:51Z r10-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=553.8k busy=30.2% rate=4800.5/4800 p99=708us 
+2026-11-14T07:35:30Z r10-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=933.5k busy=29.6% rate=2800.3/2800 p99=15859us 
+2026-11-14T07:36:09Z r10-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=765.5k busy=24.7% rate=2800.3/2800 p99=1592us 
+2026-11-14T07:36:48Z r11-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=561.4k busy=30.5% rate=4800.5/4800 p99=949us 
+2026-11-14T07:37:27Z r11-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=558.5k busy=30.4% rate=4800.5/4800 p99=761us 
+2026-11-14T07:38:06Z r11-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=928.2k busy=29.5% rate=2800.3/2800 p99=15309us 
+2026-11-14T07:38:45Z r11-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=764.4k busy=24.7% rate=2800.3/2800 p99=1420us 
+2026-11-14T07:39:23Z r12-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=564.4k busy=31.0% rate=4800.5/4800 p99=684us 
+2026-11-14T07:40:02Z r12-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=558.1k busy=30.4% rate=4800.5/4800 p99=919us 
+2026-11-14T07:40:41Z r12-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=763.3k busy=24.6% rate=2800.3/2800 p99=1730us 
+2026-11-14T07:41:20Z r12-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=939.2k busy=29.9% rate=2800.3/2800 p99=20666us 
+2026-11-14T07:41:20Z after 12 rounds: widest cycles_total half-width 0.87% (tls-ka ecdsa-p256 vs rsa2048) <= target 1.50%
+2026-11-14T07:41:20Z origin container 2d1507552c42 stopped
+2026-11-14T07:41:22Z done: ~/epl/runs/sm/01-tls-cert/summary.md
+~/epl/runs/sm/01-tls-cert/summary.md
+2026-11-14T07:41:22Z end 01-tls-cert rc=0
+2026-11-14T07:41:22Z start 02-tls-resumption
+2026-11-14T07:41:22Z certificate rsa2048 made
+2026-11-14T07:41:27Z run sm-tls-resumption: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['resumption-off', 'resumption-on'], shapes ['tls-hs']
+2026-11-14T07:41:27Z origin container 70099b08ac13 (epl-origin-409011) started
+2026-11-14T07:42:07Z r01-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=933.9k busy=29.7% rate=2800.3/2800 p99=19126us 
+2026-11-14T07:42:45Z r01-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=760.5k busy=24.5% rate=2800.3/2800 p99=3321us 
+2026-11-14T07:43:24Z r02-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=761.5k busy=24.5% rate=2800.3/2800 p99=2733us 
+2026-11-14T07:44:03Z r02-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=938.4k busy=29.8% rate=2800.3/2800 p99=18836us 
+2026-11-14T07:44:42Z r03-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=925.4k busy=29.4% rate=2800.3/2800 p99=24978us 
+2026-11-14T07:45:21Z r03-tls-hs-resumption-on VALID ins_u=351.5k cyc_tot=730.6k busy=23.5% rate=2800.3/2800 p99=5398us 
+2026-11-14T07:46:00Z r04-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=769.5k busy=24.8% rate=2800.3/2800 p99=2715us 
+2026-11-14T07:46:39Z r04-tls-hs-resumption-off VALID ins_u=950.3k cyc_tot=932.4k busy=29.6% rate=2800.3/2800 p99=20586us 
+2026-11-14T07:47:18Z r05-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=934.8k busy=29.7% rate=2800.3/2800 p99=21594us 
+2026-11-14T07:47:57Z r05-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=755.9k busy=24.4% rate=2800.3/2800 p99=5433us 
+2026-11-14T07:48:36Z r06-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=762.6k busy=24.6% rate=2800.3/2800 p99=3002us 
+2026-11-14T07:49:15Z r06-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=930.9k busy=29.6% rate=2800.3/2800 p99=17324us 
+2026-11-14T07:49:54Z r07-tls-hs-resumption-off VALID ins_u=950.3k cyc_tot=936.1k busy=29.7% rate=2800.2/2800 p99=25331us 
+2026-11-14T07:50:33Z r07-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=764.7k busy=24.7% rate=2800.3/2800 p99=2753us 
+2026-11-14T07:51:12Z r08-tls-hs-resumption-on VALID ins_u=351.6k cyc_tot=758.0k busy=24.4% rate=2800.3/2800 p99=4328us 
+2026-11-14T07:51:51Z r08-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=937.3k busy=29.8% rate=2800.3/2800 p99=23729us 
+2026-11-14T07:52:30Z r09-tls-hs-resumption-on VALID ins_u=351.7k cyc_tot=763.9k busy=24.6% rate=2800.3/2800 p99=2238us 
+2026-11-14T07:53:09Z r09-tls-hs-resumption-off VALID ins_u=950.4k cyc_tot=941.3k busy=29.9% rate=2800.3/2800 p99=26632us 
+2026-11-14T07:53:48Z r10-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=934.0k busy=29.7% rate=2800.3/2800 p99=20535us 
+2026-11-14T07:54:27Z r10-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=778.4k busy=25.1% rate=2800.2/2800 p99=1978us 
+2026-11-14T07:55:06Z r11-tls-hs-resumption-off VALID ins_u=950.2k cyc_tot=935.9k busy=29.7% rate=2800.3/2800 p99=19026us 
+2026-11-14T07:55:45Z r11-tls-hs-resumption-on VALID ins_u=351.8k cyc_tot=772.2k busy=24.9% rate=2800.3/2800 p99=2625us 
+2026-11-14T07:56:24Z r12-tls-hs-resumption-on VALID ins_u=351.6k cyc_tot=758.1k busy=24.4% rate=2800.3/2800 p99=2178us 
+2026-11-14T07:57:03Z r12-tls-hs-resumption-off VALID ins_u=950.1k cyc_tot=940.3k busy=29.8% rate=2800.3/2800 p99=22185us 
+2026-11-14T07:57:03Z after 12 rounds: widest cycles_total half-width 0.88% (tls-hs resumption-on vs resumption-off) <= target 1.50%
+2026-11-14T07:57:03Z origin container 70099b08ac13 stopped
+2026-11-14T07:57:04Z done: ~/epl/runs/sm/02-tls-resumption/summary.md
+~/epl/runs/sm/02-tls-resumption/summary.md
+2026-11-14T07:57:04Z end 02-tls-resumption rc=0
+2026-11-14T07:57:04Z start 03-hpack
+2026-11-14T07:57:09Z run sm-hpack: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['hpack-default', 'hpack-0'], shapes ['fh2']
+2026-11-14T07:57:47Z r01-fh2-hpack-default VALID ins_u=242.2k cyc_tot=365.1k busy=32.9% rate=8000.8/8000 p99=397us 
+2026-11-14T07:58:24Z r01-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=397.6k busy=35.7% rate=8000.8/8000 p99=416us 
+2026-11-14T07:59:02Z r02-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=398.8k busy=35.9% rate=8000.8/8000 p99=359us 
+2026-11-14T07:59:40Z r02-fh2-hpack-default VALID ins_u=242.0k cyc_tot=354.0k busy=31.7% rate=8000.8/8000 p99=420us 
+2026-11-14T08:00:17Z r03-fh2-hpack-default VALID ins_u=242.1k cyc_tot=376.6k busy=33.9% rate=8000.8/8000 p99=410us 
+2026-11-14T08:00:55Z r03-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=389.6k busy=35.0% rate=8000.8/8000 p99=453us 
+2026-11-14T08:01:32Z r04-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=390.3k busy=35.2% rate=8000.8/8000 p99=341us 
+2026-11-14T08:02:10Z r04-fh2-hpack-default VALID ins_u=242.3k cyc_tot=375.6k busy=34.0% rate=8000.7/8000 p99=305us 
+2026-11-14T08:02:48Z r05-fh2-hpack-default VALID ins_u=242.1k cyc_tot=361.0k busy=32.5% rate=8000.8/8000 p99=416us 
+2026-11-14T08:03:25Z r05-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=379.8k busy=34.1% rate=8000.8/8000 p99=436us 
+2026-11-14T08:04:03Z r06-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=379.4k busy=34.0% rate=8000.8/8000 p99=449us 
+2026-11-14T08:04:40Z r06-fh2-hpack-default VALID ins_u=242.3k cyc_tot=370.8k busy=33.5% rate=8000.8/8000 p99=309us 
+2026-11-14T08:05:18Z r07-fh2-hpack-default VALID ins_u=242.1k cyc_tot=370.3k busy=33.3% rate=8000.8/8000 p99=397us 
+2026-11-14T08:05:56Z r07-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=394.4k busy=35.5% rate=8000.8/8000 p99=438us 
+2026-11-14T08:06:33Z r08-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=396.3k busy=35.7% rate=8000.8/8000 p99=435us 
+2026-11-14T08:07:11Z r08-fh2-hpack-default VALID ins_u=242.2k cyc_tot=361.2k busy=32.5% rate=8000.8/8000 p99=413us 
+2026-11-14T08:07:48Z r09-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=377.4k busy=33.8% rate=8000.8/8000 p99=458us 
+2026-11-14T08:08:26Z r09-fh2-hpack-default VALID ins_u=242.2k cyc_tot=341.8k busy=30.8% rate=8000.8/8000 p99=388us 
+2026-11-14T08:09:04Z r10-fh2-hpack-default VALID ins_u=242.3k cyc_tot=361.0k busy=32.5% rate=8000.8/8000 p99=399us 
+2026-11-14T08:09:41Z r10-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=378.9k busy=33.9% rate=8000.8/8000 p99=501us 
+2026-11-14T08:10:19Z r11-fh2-hpack-default VALID ins_u=242.2k cyc_tot=359.8k busy=32.4% rate=8000.8/8000 p99=414us 
+2026-11-14T08:10:57Z r11-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=390.6k busy=35.0% rate=8000.8/8000 p99=448us 
+2026-11-14T08:11:34Z r12-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=392.2k busy=35.3% rate=8000.8/8000 p99=440us 
+2026-11-14T08:12:12Z r12-fh2-hpack-default VALID ins_u=242.2k cyc_tot=332.8k busy=30.0% rate=8000.7/8000 p99=387us 
+2026-11-14T08:12:12Z after 12 rounds: widest cycles_total half-width 2.58% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:12:49Z r13-fh2-hpack-0 VALID ins_u=323.5k cyc_tot=405.3k busy=36.5% rate=8000.8/8000 p99=392us 
+2026-11-14T08:13:27Z r13-fh2-hpack-default VALID ins_u=242.2k cyc_tot=371.5k busy=33.6% rate=8000.8/8000 p99=393us 
+2026-11-14T08:14:05Z r14-fh2-hpack-default VALID ins_u=242.0k cyc_tot=356.7k busy=32.0% rate=8000.8/8000 p99=422us 
+2026-11-14T08:14:42Z r14-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=390.2k busy=35.1% rate=8000.8/8000 p99=442us 
+2026-11-14T08:15:20Z r15-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=374.6k busy=33.6% rate=8000.8/8000 p99=446us 
+2026-11-14T08:15:57Z r15-fh2-hpack-default VALID ins_u=242.2k cyc_tot=371.4k busy=33.4% rate=8000.7/8000 p99=401us 
+2026-11-14T08:16:35Z r16-fh2-hpack-default VALID ins_u=242.2k cyc_tot=368.2k busy=33.3% rate=8000.8/8000 p99=403us 
+2026-11-14T08:17:13Z r16-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=393.6k busy=35.4% rate=8000.8/8000 p99=483us 
+2026-11-14T08:17:50Z r17-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=373.0k busy=33.4% rate=8000.7/8000 p99=453us 
+2026-11-14T08:18:28Z r17-fh2-hpack-default VALID ins_u=242.2k cyc_tot=370.2k busy=33.4% rate=8000.8/8000 p99=403us 
+2026-11-14T08:19:05Z r18-fh2-hpack-default VALID ins_u=242.3k cyc_tot=369.9k busy=33.4% rate=8000.8/8000 p99=399us 
+2026-11-14T08:19:43Z r18-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=386.0k busy=34.7% rate=8000.8/8000 p99=440us 
+2026-11-14T08:19:43Z after 18 rounds: widest cycles_total half-width 2.00% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:20:21Z r19-fh2-hpack-default VALID ins_u=242.0k cyc_tot=352.7k busy=31.6% rate=8000.7/8000 p99=449us 
+2026-11-14T08:20:58Z r19-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=395.0k busy=35.4% rate=8000.8/8000 p99=493us 
+2026-11-14T08:21:36Z r20-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=381.9k busy=34.3% rate=8000.8/8000 p99=450us 
+2026-11-14T08:22:13Z r20-fh2-hpack-default VALID ins_u=242.1k cyc_tot=361.1k busy=32.5% rate=8000.8/8000 p99=417us 
+2026-11-14T08:22:51Z r21-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=373.3k busy=33.5% rate=8000.8/8000 p99=385us 
+2026-11-14T08:23:29Z r21-fh2-hpack-default VALID ins_u=242.1k cyc_tot=358.2k busy=32.2% rate=8000.8/8000 p99=407us 
+2026-11-14T08:24:06Z r22-fh2-hpack-default VALID ins_u=242.2k cyc_tot=356.9k busy=32.1% rate=8000.7/8000 p99=412us 
+2026-11-14T08:24:44Z r22-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=388.5k busy=34.8% rate=8000.8/8000 p99=453us 
+2026-11-14T08:25:22Z r23-fh2-hpack-default VALID ins_u=242.2k cyc_tot=373.2k busy=33.7% rate=8000.7/8000 p99=393us 
+2026-11-14T08:25:59Z r23-fh2-hpack-0 VALID ins_u=323.3k cyc_tot=391.9k busy=35.3% rate=8000.8/8000 p99=357us 
+2026-11-14T08:26:37Z r24-fh2-hpack-0 VALID ins_u=323.2k cyc_tot=405.7k busy=36.4% rate=8000.8/8000 p99=454us 
+2026-11-14T08:27:14Z r24-fh2-hpack-default VALID ins_u=242.3k cyc_tot=363.6k busy=32.7% rate=8000.8/8000 p99=397us 
+2026-11-14T08:27:15Z after 24 rounds: widest cycles_total half-width 1.59% (fh2 hpack-0 vs hpack-default) > target 1.50%
+2026-11-14T08:27:16Z done: ~/epl/runs/sm/03-hpack/summary.md
+~/epl/runs/sm/03-hpack/summary.md
+2026-11-14T08:27:16Z end 03-hpack rc=0
+2026-11-14T08:27:16Z start 04-tracing
+2026-11-14T08:27:22Z run sm-tracing: rotate order, rounds 16..32 in blocks of 8 (adaptive True), arms ['no-tracer', 'sampling-0', 'sampling-1', 'sampling-100'], shapes ['s']
+2026-11-14T08:27:23Z origin container 8bead885d5f3 (epl-origin-418923) started
+2026-11-14T08:27:23Z collector container 41000df44bf7 (epl-collector-418923) started
+2026-11-14T08:28:02Z r01-s-no-tracer VALID ins_u=163.9k cyc_tot=523.6k busy=31.1% rate=5200.6/5200 p99=624us 
+2026-11-14T08:28:41Z r01-s-sampling-0 VALID ins_u=185.1k cyc_tot=561.9k busy=33.0% rate=5200.5/5200 p99=677us 
+2026-11-14T08:29:19Z r01-s-sampling-1 VALID ins_u=186.7k cyc_tot=564.2k busy=33.3% rate=5200.5/5200 p99=675us 
+2026-11-14T08:29:58Z r01-s-sampling-100 VALID ins_u=315.2k cyc_tot=705.0k busy=41.1% rate=5200.7/5200 p99=1024us 
+2026-11-14T08:30:36Z r02-s-sampling-100 VALID ins_u=315.2k cyc_tot=704.2k busy=41.1% rate=5200.6/5200 p99=1065us 
+2026-11-14T08:31:15Z r02-s-sampling-1 VALID ins_u=186.9k cyc_tot=569.9k busy=33.6% rate=5200.5/5200 p99=685us 
+2026-11-14T08:31:53Z r02-s-sampling-0 VALID ins_u=185.1k cyc_tot=559.2k busy=33.0% rate=5200.5/5200 p99=765us 
+2026-11-14T08:32:31Z r02-s-no-tracer VALID ins_u=163.9k cyc_tot=520.0k busy=30.9% rate=5200.5/5200 p99=605us 
+2026-11-14T08:33:10Z r03-s-sampling-0 VALID ins_u=185.4k cyc_tot=555.5k busy=32.9% rate=5200.6/5200 p99=674us 
+2026-11-14T08:33:48Z r03-s-sampling-1 VALID ins_u=186.5k cyc_tot=556.5k busy=32.7% rate=5200.6/5200 p99=735us 
+2026-11-14T08:34:27Z r03-s-sampling-100 VALID ins_u=315.2k cyc_tot=700.2k busy=40.8% rate=5200.4/5200 p99=1080us 
+2026-11-14T08:35:05Z r03-s-no-tracer VALID ins_u=163.9k cyc_tot=523.2k busy=31.1% rate=5200.5/5200 p99=610us 
+2026-11-14T08:35:44Z r04-s-no-tracer VALID ins_u=164.0k cyc_tot=532.0k busy=31.6% rate=5200.5/5200 p99=627us 
+2026-11-14T08:36:22Z r04-s-sampling-100 VALID ins_u=315.4k cyc_tot=709.2k busy=41.4% rate=5200.6/5200 p99=984us 
+2026-11-14T08:37:01Z r04-s-sampling-1 VALID ins_u=186.6k cyc_tot=563.5k busy=33.3% rate=5200.5/5200 p99=738us 
+2026-11-14T08:37:39Z r04-s-sampling-0 VALID ins_u=185.3k cyc_tot=563.1k busy=33.2% rate=5200.5/5200 p99=671us 
+2026-11-14T08:38:18Z r05-s-sampling-1 VALID ins_u=186.7k cyc_tot=561.2k busy=33.1% rate=5200.5/5200 p99=681us 
+2026-11-14T08:38:56Z r05-s-sampling-100 VALID ins_u=315.1k cyc_tot=703.5k busy=41.0% rate=5200.4/5200 p99=1256us 
+2026-11-14T08:39:35Z r05-s-no-tracer VALID ins_u=164.0k cyc_tot=519.3k busy=30.9% rate=5200.6/5200 p99=629us 
+2026-11-14T08:40:13Z r05-s-sampling-0 VALID ins_u=185.4k cyc_tot=560.5k busy=33.1% rate=5200.5/5200 p99=744us 
+2026-11-14T08:40:52Z r06-s-sampling-0 VALID ins_u=185.3k cyc_tot=560.0k busy=33.1% rate=5200.5/5200 p99=682us 
+2026-11-14T08:41:30Z r06-s-no-tracer VALID ins_u=163.9k cyc_tot=524.4k busy=31.1% rate=5200.5/5200 p99=616us 
+2026-11-14T08:42:09Z r06-s-sampling-100 VALID ins_u=315.1k cyc_tot=701.7k busy=40.9% rate=5200.5/5200 p99=1144us 
+2026-11-14T08:42:47Z r06-s-sampling-1 VALID ins_u=186.7k cyc_tot=559.4k busy=33.1% rate=5200.5/5200 p99=657us 
+2026-11-14T08:43:26Z r07-s-sampling-100 VALID ins_u=315.3k cyc_tot=706.9k busy=41.3% rate=5200.6/5200 p99=1036us 
+2026-11-14T08:44:04Z r07-s-no-tracer VALID ins_u=163.9k cyc_tot=524.7k busy=31.2% rate=5200.5/5200 p99=622us 
+2026-11-14T08:44:43Z r07-s-sampling-0 VALID ins_u=185.2k cyc_tot=562.3k busy=33.1% rate=5200.5/5200 p99=708us 
+2026-11-14T08:45:21Z r07-s-sampling-1 VALID ins_u=186.7k cyc_tot=568.0k busy=33.5% rate=5200.5/5200 p99=781us 
+2026-11-14T08:46:00Z r08-s-sampling-1 VALID ins_u=186.7k cyc_tot=560.3k busy=33.2% rate=5200.5/5200 p99=668us 
+2026-11-14T08:46:38Z r08-s-sampling-0 VALID ins_u=185.3k cyc_tot=562.1k busy=33.2% rate=5200.5/5200 p99=637us 
+2026-11-14T08:47:16Z r08-s-no-tracer VALID ins_u=163.9k cyc_tot=522.9k busy=31.0% rate=5200.5/5200 p99=635us 
+2026-11-14T08:47:55Z r08-s-sampling-100 VALID ins_u=315.2k cyc_tot=708.4k busy=41.3% rate=5200.5/5200 p99=994us 
+2026-11-14T08:48:33Z r09-s-sampling-100 VALID ins_u=315.3k cyc_tot=701.8k busy=40.9% rate=5200.5/5200 p99=971us 
+2026-11-14T08:49:12Z r09-s-sampling-1 VALID ins_u=186.6k cyc_tot=563.2k busy=33.1% rate=5200.6/5200 p99=767us 
+2026-11-14T08:49:50Z r09-s-sampling-0 VALID ins_u=185.2k cyc_tot=560.0k busy=33.0% rate=5200.6/5200 p99=687us 
+2026-11-14T08:50:29Z r09-s-no-tracer VALID ins_u=163.9k cyc_tot=528.7k busy=31.4% rate=5200.5/5200 p99=631us 
+2026-11-14T08:51:07Z r10-s-no-tracer VALID ins_u=163.9k cyc_tot=526.1k busy=31.3% rate=5200.5/5200 p99=631us 
+2026-11-14T08:51:46Z r10-s-sampling-0 VALID ins_u=185.3k cyc_tot=565.3k busy=33.3% rate=5200.5/5200 p99=756us 
+2026-11-14T08:52:24Z r10-s-sampling-1 VALID ins_u=186.6k cyc_tot=562.3k busy=33.2% rate=5200.5/5200 p99=682us 
+2026-11-14T08:53:03Z r10-s-sampling-100 VALID ins_u=315.2k cyc_tot=700.9k busy=40.8% rate=5200.4/5200 p99=1059us 
+2026-11-14T08:53:41Z r11-s-sampling-0 VALID ins_u=185.2k cyc_tot=560.9k busy=33.0% rate=5200.5/5200 p99=729us 
+2026-11-14T08:54:20Z r11-s-sampling-1 VALID ins_u=186.5k cyc_tot=560.9k busy=33.0% rate=5200.6/5200 p99=793us 
+2026-11-14T08:54:58Z r11-s-sampling-100 VALID ins_u=315.2k cyc_tot=707.3k busy=41.2% rate=5200.6/5200 p99=1124us 
+2026-11-14T08:55:37Z r11-s-no-tracer VALID ins_u=163.9k cyc_tot=531.5k busy=31.5% rate=5200.5/5200 p99=613us 
+2026-11-14T08:56:15Z r12-s-no-tracer VALID ins_u=164.0k cyc_tot=529.9k busy=31.6% rate=5200.5/5200 p99=612us 
+2026-11-14T08:56:54Z r12-s-sampling-100 VALID ins_u=315.3k cyc_tot=704.4k busy=41.1% rate=5200.5/5200 p99=1097us 
+2026-11-14T08:57:32Z r12-s-sampling-1 VALID ins_u=186.6k cyc_tot=567.1k busy=33.5% rate=5200.5/5200 p99=713us 
+2026-11-14T08:58:11Z r12-s-sampling-0 VALID ins_u=185.3k cyc_tot=568.9k busy=33.6% rate=5200.6/5200 p99=675us 
+2026-11-14T08:58:49Z r13-s-sampling-0 VALID ins_u=185.2k cyc_tot=559.7k busy=32.9% rate=5200.6/5200 p99=728us 
+2026-11-14T08:59:28Z r13-s-no-tracer VALID ins_u=163.9k cyc_tot=525.6k busy=31.2% rate=5200.6/5200 p99=617us 
+2026-11-14T09:00:06Z r13-s-sampling-100 VALID ins_u=315.2k cyc_tot=699.8k busy=40.8% rate=5200.7/5200 p99=940us 
+2026-11-14T09:00:45Z r13-s-sampling-1 VALID ins_u=186.7k cyc_tot=560.7k busy=33.1% rate=5200.5/5200 p99=745us 
+2026-11-14T09:01:23Z r14-s-sampling-1 VALID ins_u=186.7k cyc_tot=566.4k busy=33.4% rate=5200.5/5200 p99=711us 
+2026-11-14T09:02:02Z r14-s-sampling-100 VALID ins_u=315.3k cyc_tot=706.4k busy=41.2% rate=5200.5/5200 p99=977us 
+2026-11-14T09:02:40Z r14-s-no-tracer VALID ins_u=163.9k cyc_tot=531.3k busy=31.5% rate=5200.6/5200 p99=630us 
+2026-11-14T09:03:18Z r14-s-sampling-0 VALID ins_u=185.3k cyc_tot=556.5k busy=32.8% rate=5200.6/5200 p99=704us 
+2026-11-14T09:03:57Z r15-s-sampling-1 VALID ins_u=186.6k cyc_tot=565.4k busy=33.3% rate=5200.5/5200 p99=734us 
+2026-11-14T09:04:35Z r15-s-sampling-0 VALID ins_u=185.3k cyc_tot=561.1k busy=33.1% rate=5200.5/5200 p99=675us 
+2026-11-14T09:05:14Z r15-s-no-tracer VALID ins_u=163.9k cyc_tot=532.5k busy=31.6% rate=5200.5/5200 p99=627us 
+2026-11-14T09:05:52Z r15-s-sampling-100 VALID ins_u=315.3k cyc_tot=702.8k busy=41.1% rate=5200.5/5200 p99=936us 
+2026-11-14T09:06:31Z r16-s-sampling-100 VALID ins_u=315.2k cyc_tot=701.7k busy=40.9% rate=5200.6/5200 p99=1149us 
+2026-11-14T09:07:09Z r16-s-no-tracer VALID ins_u=164.0k cyc_tot=525.1k busy=31.3% rate=5200.5/5200 p99=622us 
+2026-11-14T09:07:48Z r16-s-sampling-0 VALID ins_u=185.4k cyc_tot=568.8k busy=33.6% rate=5200.5/5200 p99=658us 
+2026-11-14T09:08:26Z r16-s-sampling-1 VALID ins_u=186.5k cyc_tot=561.0k busy=33.0% rate=5200.6/5200 p99=730us 
+2026-11-14T09:08:26Z after 16 rounds: widest cycles_total half-width 0.51% (s sampling-0 vs no-tracer) <= target 1.50%
+2026-11-14T09:08:26Z collector container 41000df44bf7 stopped
+2026-11-14T09:08:27Z origin container 8bead885d5f3 stopped
+2026-11-14T09:08:29Z done: ~/epl/runs/sm/04-tracing/summary.md
+~/epl/runs/sm/04-tracing/summary.md
+2026-11-14T09:08:29Z end 04-tracing rc=0
+2026-11-14T09:08:29Z start 05-access-log
+2026-11-14T09:08:35Z run sm-access-log: rotate order, rounds 12..24 in blocks of 6 (adaptive True), arms ['log-off', 'log-text', 'log-json'], shapes ['s']
+2026-11-14T09:08:35Z origin container 275f5d6648fa (epl-origin-427894) started
+2026-11-14T09:09:14Z r01-s-log-off VALID ins_u=163.8k cyc_tot=517.8k busy=30.7% rate=5200.5/5200 p99=648us 
+2026-11-14T09:09:53Z r01-s-log-text VALID ins_u=170.5k cyc_tot=549.2k busy=32.5% rate=5200.5/5200 p99=637us 
+2026-11-14T09:10:31Z r01-s-log-json VALID ins_u=173.7k cyc_tot=545.6k busy=32.2% rate=5200.6/5200 p99=657us 
+2026-11-14T09:11:10Z r02-s-log-json VALID ins_u=173.7k cyc_tot=548.0k busy=32.4% rate=5200.5/5200 p99=662us 
+2026-11-14T09:11:48Z r02-s-log-text VALID ins_u=170.5k cyc_tot=541.5k busy=32.0% rate=5200.6/5200 p99=674us 
+2026-11-14T09:12:27Z r02-s-log-off VALID ins_u=164.0k cyc_tot=528.6k busy=31.5% rate=5200.5/5200 p99=610us 
+2026-11-14T09:13:05Z r03-s-log-text VALID ins_u=170.6k cyc_tot=541.3k busy=32.2% rate=5200.6/5200 p99=627us 
+2026-11-14T09:13:44Z r03-s-log-json VALID ins_u=173.6k cyc_tot=548.0k busy=32.4% rate=5200.5/5200 p99=656us 
+2026-11-14T09:14:22Z r03-s-log-off VALID ins_u=163.9k cyc_tot=528.8k busy=31.4% rate=5200.4/5200 p99=625us 
+2026-11-14T09:15:01Z r04-s-log-off VALID ins_u=163.9k cyc_tot=522.0k busy=31.1% rate=5200.5/5200 p99=613us 
+2026-11-14T09:15:39Z r04-s-log-json VALID ins_u=173.6k cyc_tot=545.7k busy=32.3% rate=5200.5/5200 p99=650us 
+2026-11-14T09:16:18Z r04-s-log-text VALID ins_u=170.4k cyc_tot=553.1k busy=32.7% rate=5200.5/5200 p99=702us 
+2026-11-14T09:16:56Z r05-s-log-json VALID ins_u=173.5k cyc_tot=550.2k busy=32.4% rate=5200.6/5200 p99=694us 
+2026-11-14T09:17:35Z r05-s-log-off VALID ins_u=163.7k cyc_tot=523.9k busy=31.0% rate=5200.5/5200 p99=677us 
+2026-11-14T09:18:13Z r05-s-log-text VALID ins_u=170.5k cyc_tot=549.7k busy=32.4% rate=5200.5/5200 p99=781us 
+2026-11-14T09:18:52Z r06-s-log-text VALID ins_u=170.5k cyc_tot=548.7k busy=32.5% rate=5200.6/5200 p99=636us 
+2026-11-14T09:19:30Z r06-s-log-off VALID ins_u=163.8k cyc_tot=531.5k busy=31.5% rate=5200.5/5200 p99=622us 
+2026-11-14T09:20:09Z r06-s-log-json VALID ins_u=173.7k cyc_tot=554.0k busy=32.7% rate=5200.5/5200 p99=657us 
+2026-11-14T09:20:47Z r07-s-log-off VALID ins_u=163.9k cyc_tot=523.7k busy=31.1% rate=5200.6/5200 p99=641us 
+2026-11-14T09:21:26Z r07-s-log-text VALID ins_u=170.4k cyc_tot=540.1k busy=31.9% rate=5200.5/5200 p99=644us 
+2026-11-14T09:22:04Z r07-s-log-json VALID ins_u=173.5k cyc_tot=546.9k busy=32.3% rate=5200.6/5200 p99=653us 
+2026-11-14T09:22:43Z r08-s-log-json VALID ins_u=173.6k cyc_tot=559.0k busy=32.9% rate=5200.5/5200 p99=705us 
+2026-11-14T09:23:21Z r08-s-log-text VALID ins_u=170.5k cyc_tot=545.7k busy=32.3% rate=5200.6/5200 p99=647us 
+2026-11-14T09:24:00Z r08-s-log-off VALID ins_u=163.8k cyc_tot=523.8k busy=31.0% rate=5200.6/5200 p99=618us 
+2026-11-14T09:24:38Z r09-s-log-off VALID ins_u=163.8k cyc_tot=529.6k busy=31.4% rate=5200.5/5200 p99=634us 
+2026-11-14T09:25:17Z r09-s-log-json VALID ins_u=173.7k cyc_tot=554.1k busy=32.8% rate=5200.6/5200 p99=646us 
+2026-11-14T09:25:55Z r09-s-log-text VALID ins_u=170.5k cyc_tot=546.3k busy=32.3% rate=5200.6/5200 p99=666us 
+2026-11-14T09:26:34Z r10-s-log-text VALID ins_u=170.5k cyc_tot=546.2k busy=32.3% rate=5200.5/5200 p99=703us 
+2026-11-14T09:27:12Z r10-s-log-json VALID ins_u=173.6k cyc_tot=551.5k busy=32.6% rate=5200.6/5200 p99=655us 
+2026-11-14T09:27:51Z r10-s-log-off VALID ins_u=163.9k cyc_tot=531.1k busy=31.5% rate=5200.5/5200 p99=622us 
+2026-11-14T09:28:30Z r11-s-log-json VALID ins_u=173.7k cyc_tot=548.5k busy=32.5% rate=5200.5/5200 p99=646us 
+2026-11-14T09:29:08Z r11-s-log-off VALID ins_u=163.8k cyc_tot=535.0k busy=31.7% rate=5200.5/5200 p99=673us 
+2026-11-14T09:29:46Z r11-s-log-text VALID ins_u=170.5k cyc_tot=544.7k busy=32.2% rate=5200.5/5200 p99=663us 
+2026-11-14T09:30:25Z r12-s-log-text VALID ins_u=170.5k cyc_tot=541.3k busy=32.0% rate=5200.5/5200 p99=653us 
+2026-11-14T09:31:03Z r12-s-log-off VALID ins_u=163.7k cyc_tot=523.8k busy=31.0% rate=5200.5/5200 p99=628us 
+2026-11-14T09:31:42Z r12-s-log-json VALID ins_u=173.6k cyc_tot=553.4k busy=32.7% rate=5200.5/5200 p99=644us 
+2026-11-14T09:31:42Z after 12 rounds: widest cycles_total half-width 0.85% (s log-text vs log-off) <= target 1.50%
+2026-11-14T09:31:42Z origin container 275f5d6648fa stopped
+2026-11-14T09:31:44Z done: ~/epl/runs/sm/05-access-log/summary.md
+~/epl/runs/sm/05-access-log/summary.md
+2026-11-14T09:31:44Z end 05-access-log rc=0
+2026-11-14T09:31:44Z start 06-ext-authz
+2026-11-14T09:31:49Z run sm-ext-authz: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['authz-off', 'authz-http'], shapes ['s']
+2026-11-14T09:31:49Z origin container af4c32f3844f (epl-origin-432999) started
+2026-11-14T09:32:28Z r01-s-authz-off VALID ins_u=163.9k cyc_tot=534.5k busy=31.7% rate=5200.5/5200 p99=665us 
+2026-11-14T09:33:07Z r01-s-authz-http VALID ins_u=286.9k cyc_tot=808.5k busy=47.1% rate=5200.6/5200 p99=1849us 
+2026-11-14T09:33:46Z r02-s-authz-http VALID ins_u=286.6k cyc_tot=810.7k busy=47.2% rate=5200.5/5200 p99=1783us 
+2026-11-14T09:34:24Z r02-s-authz-off VALID ins_u=163.9k cyc_tot=528.6k busy=31.5% rate=5200.6/5200 p99=626us 
+2026-11-14T09:35:03Z r03-s-authz-off VALID ins_u=163.9k cyc_tot=530.4k busy=31.5% rate=5200.5/5200 p99=617us 
+2026-11-14T09:35:41Z r03-s-authz-http VALID ins_u=286.6k cyc_tot=810.1k busy=47.0% rate=5200.6/5200 p99=1819us 
+2026-11-14T09:36:20Z r04-s-authz-http VALID ins_u=286.5k cyc_tot=816.6k busy=47.5% rate=5200.8/5200 p99=2271us 
+2026-11-14T09:36:58Z r04-s-authz-off VALID ins_u=163.9k cyc_tot=522.1k busy=31.0% rate=5200.5/5200 p99=637us 
+2026-11-14T09:37:37Z r05-s-authz-off VALID ins_u=163.9k cyc_tot=530.7k busy=31.5% rate=5200.5/5200 p99=641us 
+2026-11-14T09:38:15Z r05-s-authz-http VALID ins_u=286.7k cyc_tot=810.4k busy=47.2% rate=5200.7/5200 p99=1341us 
+2026-11-14T09:38:54Z r06-s-authz-http VALID ins_u=286.6k cyc_tot=817.7k busy=47.5% rate=5200.5/5200 p99=2139us 
+2026-11-14T09:39:32Z r06-s-authz-off VALID ins_u=163.9k cyc_tot=531.7k busy=31.5% rate=5200.5/5200 p99=644us 
+2026-11-14T09:40:11Z r07-s-authz-off VALID ins_u=163.8k cyc_tot=524.8k busy=31.1% rate=5200.5/5200 p99=625us 
+2026-11-14T09:40:50Z r07-s-authz-http VALID ins_u=287.0k cyc_tot=827.2k busy=48.2% rate=5200.5/5200 p99=1273us 
+2026-11-14T09:41:28Z r08-s-authz-http VALID ins_u=286.3k cyc_tot=806.3k busy=46.8% rate=5200.6/5200 p99=2523us 
+2026-11-14T09:42:07Z r08-s-authz-off VALID ins_u=163.7k cyc_tot=524.4k busy=30.9% rate=5200.6/5200 p99=619us 
+2026-11-14T09:42:45Z r09-s-authz-http VALID ins_u=286.2k cyc_tot=809.1k busy=46.9% rate=5200.2/5200 p99=2455us 
+2026-11-14T09:43:24Z r09-s-authz-off VALID ins_u=163.8k cyc_tot=523.6k busy=31.1% rate=5200.5/5200 p99=600us 
+2026-11-14T09:44:02Z r10-s-authz-off VALID ins_u=163.8k cyc_tot=531.1k busy=31.4% rate=5200.5/5200 p99=646us 
+2026-11-14T09:44:41Z r10-s-authz-http VALID ins_u=286.6k cyc_tot=809.9k busy=47.0% rate=5200.4/5200 p99=2147us 
+2026-11-14T09:45:19Z r11-s-authz-off VALID ins_u=163.8k cyc_tot=525.3k busy=31.1% rate=5200.6/5200 p99=640us 
+2026-11-14T09:45:58Z r11-s-authz-http VALID ins_u=286.8k cyc_tot=818.2k busy=47.6% rate=5200.5/5200 p99=1950us 
+2026-11-14T09:46:37Z r12-s-authz-http VALID ins_u=286.5k cyc_tot=804.2k busy=46.7% rate=5200.6/5200 p99=2059us 
+2026-11-14T09:47:15Z r12-s-authz-off VALID ins_u=163.8k cyc_tot=522.6k busy=30.9% rate=5200.5/5200 p99=618us 
+2026-11-14T09:47:15Z after 12 rounds: widest cycles_total half-width 0.74% (s authz-http vs authz-off) <= target 1.50%
+2026-11-14T09:47:15Z origin container af4c32f3844f stopped
+2026-11-14T09:47:17Z done: ~/epl/runs/sm/06-ext-authz/summary.md
+~/epl/runs/sm/06-ext-authz/summary.md
+2026-11-14T09:47:17Z end 06-ext-authz rc=0
+2026-11-14T09:47:17Z start 07-retries
+2026-11-14T09:47:21Z run sm-retries: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['no-retry-policy', 'retry-policy'], shapes ['s']
+2026-11-14T09:47:22Z origin container 00085f65894e (epl-origin-436501) started
+2026-11-14T09:48:01Z r01-s-no-retry-policy VALID ins_u=163.9k cyc_tot=521.7k busy=31.0% rate=5200.6/5200 p99=636us 
+2026-11-14T09:48:39Z r01-s-retry-policy VALID ins_u=165.9k cyc_tot=538.9k busy=32.0% rate=5200.5/5200 p99=628us 
+2026-11-14T09:49:18Z r02-s-retry-policy VALID ins_u=165.8k cyc_tot=538.6k busy=32.0% rate=5200.6/5200 p99=633us 
+2026-11-14T09:49:56Z r02-s-no-retry-policy VALID ins_u=163.9k cyc_tot=524.8k busy=31.1% rate=5200.5/5200 p99=630us 
+2026-11-14T09:50:35Z r03-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.6k busy=31.4% rate=5200.5/5200 p99=639us 
+2026-11-14T09:51:13Z r03-s-retry-policy VALID ins_u=165.9k cyc_tot=537.8k busy=31.9% rate=5200.5/5200 p99=639us 
+2026-11-14T09:51:52Z r04-s-retry-policy VALID ins_u=166.0k cyc_tot=541.9k busy=32.2% rate=5200.5/5200 p99=616us 
+2026-11-14T09:52:30Z r04-s-no-retry-policy VALID ins_u=163.9k cyc_tot=529.4k busy=31.5% rate=5200.5/5200 p99=637us 
+2026-11-14T09:53:09Z r05-s-no-retry-policy VALID ins_u=164.0k cyc_tot=536.2k busy=31.9% rate=5200.5/5200 p99=622us 
+2026-11-14T09:53:47Z r05-s-retry-policy VALID ins_u=165.8k cyc_tot=537.0k busy=31.7% rate=5200.5/5200 p99=647us 
+2026-11-14T09:54:26Z r06-s-retry-policy VALID ins_u=165.8k cyc_tot=534.9k busy=31.7% rate=5200.5/5200 p99=647us 
+2026-11-14T09:55:04Z r06-s-no-retry-policy VALID ins_u=163.8k cyc_tot=524.3k busy=31.0% rate=5200.5/5200 p99=635us 
+2026-11-14T09:55:42Z r07-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.9k busy=31.4% rate=5200.5/5200 p99=625us 
+2026-11-14T09:56:21Z r07-s-retry-policy VALID ins_u=165.8k cyc_tot=533.5k busy=31.6% rate=5200.5/5200 p99=639us 
+2026-11-14T09:57:00Z r08-s-retry-policy VALID ins_u=166.0k cyc_tot=530.5k busy=31.6% rate=5200.5/5200 p99=626us 
+2026-11-14T09:57:38Z r08-s-no-retry-policy VALID ins_u=163.9k cyc_tot=529.7k busy=31.5% rate=5200.5/5200 p99=613us 
+2026-11-14T09:58:16Z r09-s-retry-policy VALID ins_u=165.9k cyc_tot=536.7k busy=31.9% rate=5200.6/5200 p99=625us 
+2026-11-14T09:58:55Z r09-s-no-retry-policy VALID ins_u=163.9k cyc_tot=525.0k busy=31.2% rate=5200.5/5200 p99=628us 
+2026-11-14T09:59:33Z r10-s-no-retry-policy VALID ins_u=163.9k cyc_tot=528.5k busy=31.4% rate=5200.5/5200 p99=629us 
+2026-11-14T10:00:12Z r10-s-retry-policy VALID ins_u=165.9k cyc_tot=532.5k busy=31.6% rate=5200.5/5200 p99=624us 
+2026-11-14T10:00:50Z r11-s-no-retry-policy VALID ins_u=163.9k cyc_tot=526.4k busy=31.3% rate=5200.5/5200 p99=620us 
+2026-11-14T10:01:29Z r11-s-retry-policy VALID ins_u=165.9k cyc_tot=533.0k busy=31.6% rate=5200.5/5200 p99=619us 
+2026-11-14T10:02:07Z r12-s-retry-policy VALID ins_u=165.8k cyc_tot=527.6k busy=31.3% rate=5200.5/5200 p99=635us 
+2026-11-14T10:02:45Z r12-s-no-retry-policy VALID ins_u=163.9k cyc_tot=524.4k busy=31.2% rate=5200.6/5200 p99=611us 
+2026-11-14T10:02:45Z after 12 rounds: widest cycles_total half-width 0.64% (s retry-policy vs no-retry-policy) <= target 1.50%
+2026-11-14T10:02:46Z origin container 00085f65894e stopped
+2026-11-14T10:02:47Z done: ~/epl/runs/sm/07-retries/summary.md
+~/epl/runs/sm/07-retries/summary.md
+2026-11-14T10:02:47Z end 07-retries rc=0
+2026-11-14T10:02:47Z start 08-buffer-limit
+2026-11-14T10:02:52Z run sm-buffer-limit: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['buffer-default', 'buffer-4k'], shapes ['m']
+2026-11-14T10:02:52Z origin container 20eac7e30ce4 (epl-origin-439892) started
+2026-11-14T10:03:31Z r01-m-buffer-default VALID ins_u=166.4k cyc_tot=538.6k busy=33.1% rate=5440.6/5440 p99=803us 
+2026-11-14T10:04:10Z r01-m-buffer-4k VALID ins_u=182.0k cyc_tot=645.2k busy=39.2% rate=5440.5/5440 p99=997us 
+2026-11-14T10:04:48Z r02-m-buffer-4k VALID ins_u=182.0k cyc_tot=642.3k busy=39.1% rate=5440.6/5440 p99=903us 
+2026-11-14T10:05:27Z r02-m-buffer-default VALID ins_u=166.5k cyc_tot=537.5k busy=33.2% rate=5440.5/5440 p99=617us 
+2026-11-14T10:06:05Z r03-m-buffer-default VALID ins_u=166.5k cyc_tot=539.1k busy=33.3% rate=5440.5/5440 p99=653us 
+2026-11-14T10:06:44Z r03-m-buffer-4k VALID ins_u=182.2k cyc_tot=657.2k busy=40.0% rate=5440.5/5440 p99=1355us 
+2026-11-14T10:07:22Z r04-m-buffer-4k VALID ins_u=181.8k cyc_tot=646.3k busy=39.2% rate=5440.6/5440 p99=1337us 
+2026-11-14T10:08:01Z r04-m-buffer-default VALID ins_u=166.6k cyc_tot=534.6k busy=33.0% rate=5440.6/5440 p99=629us 
+2026-11-14T10:08:40Z r05-m-buffer-default VALID ins_u=166.6k cyc_tot=533.8k busy=33.1% rate=5440.5/5440 p99=632us 
+2026-11-14T10:09:18Z r05-m-buffer-4k VALID ins_u=181.9k cyc_tot=645.8k busy=39.3% rate=5440.5/5440 p99=1116us 
+2026-11-14T10:09:57Z r06-m-buffer-4k VALID ins_u=182.0k cyc_tot=644.3k busy=39.2% rate=5440.5/5440 p99=985us 
+2026-11-14T10:10:35Z r06-m-buffer-default VALID ins_u=166.5k cyc_tot=531.9k busy=32.8% rate=5440.5/5440 p99=708us 
+2026-11-14T10:11:14Z r07-m-buffer-default VALID ins_u=166.5k cyc_tot=537.8k busy=33.2% rate=5440.5/5440 p99=648us 
+2026-11-14T10:11:52Z r07-m-buffer-4k VALID ins_u=182.0k cyc_tot=650.7k busy=39.6% rate=5440.5/5440 p99=855us 
+2026-11-14T10:12:31Z r08-m-buffer-4k VALID ins_u=182.1k cyc_tot=647.1k busy=39.4% rate=5440.6/5440 p99=989us 
+2026-11-14T10:13:09Z r08-m-buffer-default VALID ins_u=166.5k cyc_tot=540.8k busy=33.3% rate=5440.6/5440 p99=651us 
+2026-11-14T10:13:48Z r09-m-buffer-4k VALID ins_u=182.4k cyc_tot=643.4k busy=39.1% rate=5440.6/5440 p99=926us 
+2026-11-14T10:14:26Z r09-m-buffer-default VALID ins_u=166.7k cyc_tot=536.6k busy=33.1% rate=5440.6/5440 p99=649us 
+2026-11-14T10:15:05Z r10-m-buffer-default VALID ins_u=166.6k cyc_tot=544.2k busy=33.6% rate=5440.5/5440 p99=627us 
+2026-11-14T10:15:44Z r10-m-buffer-4k VALID ins_u=182.0k cyc_tot=640.4k busy=38.9% rate=5440.6/5440 p99=1788us 
+2026-11-14T10:16:22Z r11-m-buffer-default VALID ins_u=166.5k cyc_tot=539.4k busy=33.3% rate=5440.5/5440 p99=695us 
+2026-11-14T10:17:01Z r11-m-buffer-4k VALID ins_u=182.0k cyc_tot=648.1k busy=39.5% rate=5440.6/5440 p99=977us 
+2026-11-14T10:17:39Z r12-m-buffer-4k VALID ins_u=181.8k cyc_tot=637.3k busy=38.7% rate=5440.5/5440 p99=1470us 
+2026-11-14T10:18:18Z r12-m-buffer-default VALID ins_u=166.5k cyc_tot=537.5k busy=33.2% rate=5440.6/5440 p99=618us 
+2026-11-14T10:18:18Z after 12 rounds: widest cycles_total half-width 0.63% (m buffer-4k vs buffer-default) <= target 1.50%
+2026-11-14T10:18:18Z origin container 20eac7e30ce4 stopped
+2026-11-14T10:18:19Z done: ~/epl/runs/sm/08-buffer-limit/summary.md
+~/epl/runs/sm/08-buffer-limit/summary.md
+2026-11-14T10:18:19Z end 08-buffer-limit rc=0
+2026-11-14T10:18:19Z start 09-tcmalloc-percpu
+2026-11-14T10:18:24Z run sm-tcmalloc-percpu: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['tcmalloc-default', 'rseq-off'], shapes ['s', 'fh']
+2026-11-14T10:18:24Z origin container 94536f30bc0e (epl-origin-443346) started
+2026-11-14T10:19:04Z r01-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5200.6/5200 p99=639us 
+2026-11-14T10:19:42Z r01-s-rseq-off VALID ins_u=147.2k cyc_tot=522.3k busy=31.1% rate=5200.6/5200 p99=608us 
+2026-11-14T10:20:21Z r01-fh-tcmalloc-default VALID ins_u=164.7k cyc_tot=282.8k busy=25.7% rate=8000.8/8000 p99=377us 
+2026-11-14T10:20:59Z r01-fh-rseq-off VALID ins_u=133.5k cyc_tot=282.6k busy=25.6% rate=8000.8/8000 p99=375us 
+2026-11-14T10:21:37Z r02-s-rseq-off VALID ins_u=147.2k cyc_tot=517.5k busy=30.8% rate=5200.5/5200 p99=591us 
+2026-11-14T10:22:16Z r02-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=531.7k busy=31.6% rate=5200.5/5200 p99=637us 
+2026-11-14T10:22:54Z r02-fh-rseq-off VALID ins_u=133.0k cyc_tot=283.7k busy=25.8% rate=8000.8/8000 p99=371us 
+2026-11-14T10:23:33Z r02-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=274.9k busy=25.0% rate=8000.8/8000 p99=361us 
+2026-11-14T10:24:11Z r03-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=524.8k busy=31.2% rate=5200.5/5200 p99=621us 
+2026-11-14T10:24:50Z r03-s-rseq-off VALID ins_u=147.1k cyc_tot=525.1k busy=31.2% rate=5200.5/5200 p99=627us 
+2026-11-14T10:25:28Z r03-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=281.5k busy=25.6% rate=8000.8/8000 p99=366us 
+2026-11-14T10:26:06Z r03-fh-rseq-off VALID ins_u=132.8k cyc_tot=281.0k busy=25.5% rate=8000.8/8000 p99=369us 
+2026-11-14T10:26:45Z r04-s-rseq-off VALID ins_u=147.2k cyc_tot=528.2k busy=31.4% rate=5200.5/5200 p99=626us 
+2026-11-14T10:27:23Z r04-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=529.7k busy=31.4% rate=5200.5/5200 p99=635us 
+2026-11-14T10:28:02Z r04-fh-rseq-off VALID ins_u=133.0k cyc_tot=280.1k busy=25.5% rate=8000.8/8000 p99=372us 
+2026-11-14T10:28:40Z r04-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=277.6k busy=25.2% rate=8000.8/8000 p99=366us 
+2026-11-14T10:29:19Z r05-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=534.9k busy=31.8% rate=5200.5/5200 p99=613us 
+2026-11-14T10:29:57Z r05-s-rseq-off VALID ins_u=147.1k cyc_tot=520.3k busy=30.9% rate=5200.5/5200 p99=618us 
+2026-11-14T10:30:35Z r05-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=279.6k busy=25.4% rate=8000.8/8000 p99=374us 
+2026-11-14T10:31:14Z r05-fh-rseq-off VALID ins_u=133.3k cyc_tot=282.3k busy=25.7% rate=8000.8/8000 p99=370us 
+2026-11-14T10:31:52Z r06-s-rseq-off VALID ins_u=147.3k cyc_tot=522.3k busy=31.1% rate=5200.5/5200 p99=635us 
+2026-11-14T10:32:31Z r06-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=523.3k busy=31.1% rate=5200.5/5200 p99=625us 
+2026-11-14T10:33:09Z r06-fh-rseq-off VALID ins_u=132.8k cyc_tot=290.3k busy=26.4% rate=8000.8/8000 p99=382us 
+2026-11-14T10:33:48Z r06-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=281.0k busy=25.6% rate=8000.8/8000 p99=372us 
+2026-11-14T10:34:26Z r07-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=524.6k busy=31.2% rate=5200.6/5200 p99=623us 
+2026-11-14T10:35:05Z r07-s-rseq-off VALID ins_u=147.2k cyc_tot=518.0k busy=30.8% rate=5200.5/5200 p99=613us 
+2026-11-14T10:35:43Z r07-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=278.7k busy=25.3% rate=8000.8/8000 p99=370us 
+2026-11-14T10:36:21Z r07-fh-rseq-off VALID ins_u=133.1k cyc_tot=276.6k busy=25.1% rate=8000.8/8000 p99=367us 
+2026-11-14T10:37:00Z r08-s-rseq-off VALID ins_u=147.2k cyc_tot=526.3k busy=31.4% rate=5200.5/5200 p99=625us 
+2026-11-14T10:37:38Z r08-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=528.3k busy=31.4% rate=5200.5/5200 p99=633us 
+2026-11-14T10:38:17Z r08-fh-rseq-off VALID ins_u=133.0k cyc_tot=289.0k busy=26.2% rate=8000.8/8000 p99=372us 
+2026-11-14T10:38:55Z r08-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=282.9k busy=25.7% rate=8000.8/8000 p99=368us 
+2026-11-14T10:39:33Z r09-s-rseq-off VALID ins_u=147.1k cyc_tot=531.0k busy=31.6% rate=5200.5/5200 p99=622us 
+2026-11-14T10:40:12Z r09-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=531.4k busy=31.6% rate=5200.5/5200 p99=648us 
+2026-11-14T10:40:50Z r09-fh-rseq-off VALID ins_u=133.4k cyc_tot=278.4k busy=25.3% rate=8000.8/8000 p99=375us 
+2026-11-14T10:41:29Z r09-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=282.9k busy=25.7% rate=8000.8/8000 p99=372us 
+2026-11-14T10:42:07Z r10-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=530.3k busy=31.6% rate=5200.5/5200 p99=615us 
+2026-11-14T10:42:46Z r10-s-rseq-off VALID ins_u=147.1k cyc_tot=519.8k busy=30.9% rate=5200.5/5200 p99=637us 
+2026-11-14T10:43:24Z r10-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=272.9k busy=24.8% rate=8000.8/8000 p99=363us 
+2026-11-14T10:44:02Z r10-fh-rseq-off VALID ins_u=133.0k cyc_tot=282.0k busy=25.6% rate=8000.8/8000 p99=368us 
+2026-11-14T10:44:41Z r11-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5200.5/5200 p99=615us 
+2026-11-14T10:45:19Z r11-s-rseq-off VALID ins_u=147.0k cyc_tot=519.0k busy=30.7% rate=5200.6/5200 p99=604us 
+2026-11-14T10:45:58Z r11-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=270.0k busy=24.6% rate=8000.9/8000 p99=367us 
+2026-11-14T10:46:36Z r11-fh-rseq-off VALID ins_u=133.0k cyc_tot=281.4k busy=25.6% rate=8000.8/8000 p99=368us 
+2026-11-14T10:47:15Z r12-s-rseq-off VALID ins_u=147.3k cyc_tot=526.9k busy=31.3% rate=5200.5/5200 p99=602us 
+2026-11-14T10:47:53Z r12-s-tcmalloc-default VALID ins_u=163.8k cyc_tot=518.1k busy=30.7% rate=5200.5/5200 p99=661us 
+2026-11-14T10:48:31Z r12-fh-rseq-off VALID ins_u=133.0k cyc_tot=281.1k busy=25.5% rate=8000.8/8000 p99=372us 
+2026-11-14T10:49:10Z r12-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=270.9k busy=24.7% rate=8000.8/8000 p99=364us 
+2026-11-14T10:49:10Z after 12 rounds: widest cycles_total half-width 1.24% (fh rseq-off vs tcmalloc-default) <= target 1.50%
+2026-11-14T10:49:10Z origin container 94536f30bc0e stopped
+2026-11-14T10:49:11Z done: ~/epl/runs/sm/09-tcmalloc-percpu/summary.md
+~/epl/runs/sm/09-tcmalloc-percpu/summary.md
+2026-11-14T10:49:11Z end 09-tcmalloc-percpu rc=0
+2026-11-14T10:49:11Z start 10-two-hop
+2026-11-14T10:49:16Z run sm-two-hop: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['one-hop', 'two-hop'], shapes ['s']
+2026-11-14T10:49:17Z origin container 8c889b6782ff (epl-origin-450014) started
+2026-11-14T10:49:56Z r01-s-one-hop VALID ins_u=163.9k cyc_tot=529.8k busy=31.5% rate=5200.5/5200 p99=637us 
+2026-11-14T10:50:35Z r01-s-two-hop VALID ins_u=163.0k cyc_tot=500.9k busy=29.5% rate=5200.6/5200 p99=1222us 
+2026-11-14T10:51:14Z r02-s-two-hop VALID ins_u=163.1k cyc_tot=505.4k busy=29.8% rate=5200.7/5200 p99=1170us 
+2026-11-14T10:51:52Z r02-s-one-hop VALID ins_u=163.8k cyc_tot=526.9k busy=31.2% rate=5200.6/5200 p99=636us 
+2026-11-14T10:52:31Z r03-s-one-hop VALID ins_u=163.8k cyc_tot=528.0k busy=31.3% rate=5200.6/5200 p99=650us 
+2026-11-14T10:53:09Z r03-s-two-hop VALID ins_u=163.1k cyc_tot=503.3k busy=29.6% rate=5200.6/5200 p99=1144us 
+2026-11-14T10:53:48Z r04-s-two-hop VALID ins_u=163.0k cyc_tot=501.1k busy=29.5% rate=5200.5/5200 p99=1220us 
+2026-11-14T10:54:27Z r04-s-one-hop VALID ins_u=163.9k cyc_tot=524.3k busy=31.1% rate=5200.5/5200 p99=622us 
+2026-11-14T10:55:06Z r05-s-one-hop VALID ins_u=163.9k cyc_tot=525.5k busy=31.2% rate=5200.6/5200 p99=653us 
+2026-11-14T10:55:44Z r05-s-two-hop VALID ins_u=163.0k cyc_tot=499.3k busy=29.4% rate=5200.6/5200 p99=1178us 
+2026-11-14T10:56:23Z r06-s-two-hop VALID ins_u=163.0k cyc_tot=498.1k busy=29.3% rate=5200.5/5200 p99=1324us 
+2026-11-14T10:57:02Z r06-s-one-hop VALID ins_u=163.7k cyc_tot=520.7k busy=30.7% rate=5200.6/5200 p99=611us 
+2026-11-14T10:57:40Z r07-s-one-hop VALID ins_u=164.0k cyc_tot=520.9k busy=31.0% rate=5200.5/5200 p99=627us 
+2026-11-14T10:58:19Z r07-s-two-hop VALID ins_u=163.0k cyc_tot=503.4k busy=29.7% rate=5200.6/5200 p99=1242us 
+2026-11-14T10:58:58Z r08-s-two-hop VALID ins_u=163.2k cyc_tot=505.4k busy=29.8% rate=5200.6/5200 p99=1595us 
+2026-11-14T10:59:36Z r08-s-one-hop VALID ins_u=164.0k cyc_tot=521.4k busy=31.0% rate=5200.5/5200 p99=613us 
+2026-11-14T11:00:15Z r09-s-two-hop VALID ins_u=163.1k cyc_tot=509.8k busy=30.0% rate=5200.6/5200 p99=1194us 
+2026-11-14T11:00:54Z r09-s-one-hop VALID ins_u=163.8k cyc_tot=524.5k busy=31.0% rate=5200.5/5200 p99=626us 
+2026-11-14T11:01:32Z r10-s-one-hop VALID ins_u=163.9k cyc_tot=527.0k busy=31.3% rate=5200.6/5200 p99=613us 
+2026-11-14T11:02:11Z r10-s-two-hop VALID ins_u=163.0k cyc_tot=505.8k busy=29.8% rate=5200.6/5200 p99=1398us 
+2026-11-14T11:02:50Z r11-s-one-hop VALID ins_u=164.0k cyc_tot=525.9k busy=31.3% rate=5200.6/5200 p99=619us 
+2026-11-14T11:03:29Z r11-s-two-hop VALID ins_u=163.0k cyc_tot=508.1k busy=29.9% rate=5200.7/5200 p99=1179us 
+2026-11-14T11:04:07Z r12-s-two-hop VALID ins_u=163.1k cyc_tot=500.5k busy=29.5% rate=5200.7/5200 p99=1012us 
+2026-11-14T11:04:46Z r12-s-one-hop VALID ins_u=163.9k cyc_tot=525.4k busy=31.2% rate=5200.5/5200 p99=640us 
+2026-11-14T11:04:46Z after 12 rounds: widest cycles_total_per_hop half-width 1.25% (s two-hop vs one-hop) <= target 1.50%
+2026-11-14T11:04:46Z origin container 8c889b6782ff stopped
+2026-11-14T11:04:47Z done: ~/epl/runs/sm/10-two-hop/summary.md
+~/epl/runs/sm/10-two-hop/summary.md
+2026-11-14T11:04:47Z end 10-two-hop rc=0
+2026-11-14T11:04:47Z queue done

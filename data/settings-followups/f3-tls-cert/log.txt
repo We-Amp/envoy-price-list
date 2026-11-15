@@ -1,0 +1,55 @@
+2026-11-14T13:30:08Z certificate ecdsa-p256 made
+2026-11-14T13:30:08Z certificate rsa2048 made
+2026-11-14T13:30:13Z run smf-tls-cert: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['rsa2048', 'ecdsa-p256'], shapes ['tls-ka', 'tls-hs-st']
+2026-11-14T13:30:13Z origin container b504ac3fb982 (epl-origin-506435) started
+2026-11-14T13:30:53Z r01-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=563.3k busy=30.8% rate=4800.6/4800 p99=955us 
+2026-11-14T13:31:32Z r01-tls-ka-ecdsa-p256 VALID ins_u=181.4k cyc_tot=564.3k busy=30.8% rate=4800.4/4800 p99=725us 
+2026-11-14T13:32:10Z r01-tls-hs-st-rsa2048 VALID ins_u=944.9k cyc_tot=954.9k busy=30.5% rate=2800.8/2800 p99=3020us 
+2026-11-14T13:32:48Z r01-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=782.6k busy=25.4% rate=2800.5/2800 p99=623us 
+2026-11-14T13:33:27Z r02-tls-ka-ecdsa-p256 VALID ins_u=180.9k cyc_tot=548.7k busy=29.9% rate=4800.5/4800 p99=759us 
+2026-11-14T13:34:06Z r02-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=553.2k busy=30.2% rate=4800.5/4800 p99=957us 
+2026-11-14T13:34:44Z r02-tls-hs-st-ecdsa-p256 VALID ins_u=345.0k cyc_tot=785.9k busy=25.6% rate=2800.4/2800 p99=632us 
+2026-11-14T13:35:22Z r02-tls-hs-st-rsa2048 VALID ins_u=945.1k cyc_tot=956.7k busy=30.6% rate=2800.7/2800 p99=3019us 
+2026-11-14T13:36:01Z r03-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=562.9k busy=30.7% rate=4800.5/4800 p99=888us 
+2026-11-14T13:36:40Z r03-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=550.8k busy=29.9% rate=4800.5/4800 p99=741us 
+2026-11-14T13:37:18Z r03-tls-hs-st-rsa2048 VALID ins_u=945.2k cyc_tot=954.6k busy=30.5% rate=2800.7/2800 p99=3017us 
+2026-11-14T13:37:56Z r03-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=780.2k busy=25.3% rate=2800.4/2800 p99=621us 
+2026-11-14T13:38:35Z r04-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=552.9k busy=30.1% rate=4800.5/4800 p99=702us 
+2026-11-14T13:39:14Z r04-tls-ka-rsa2048 VALID ins_u=181.2k cyc_tot=557.3k busy=30.3% rate=4800.5/4800 p99=922us 
+2026-11-14T13:39:52Z r04-tls-hs-st-ecdsa-p256 VALID ins_u=344.5k cyc_tot=783.5k busy=25.4% rate=2800.4/2800 p99=626us 
+2026-11-14T13:40:31Z r04-tls-hs-st-rsa2048 VALID ins_u=945.0k cyc_tot=959.0k busy=30.7% rate=2800.8/2800 p99=3011us 
+2026-11-14T13:41:10Z r05-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=565.7k busy=30.9% rate=4800.5/4800 p99=877us 
+2026-11-14T13:41:48Z r05-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=551.4k busy=30.0% rate=4800.5/4800 p99=749us 
+2026-11-14T13:42:27Z r05-tls-hs-st-rsa2048 VALID ins_u=944.0k cyc_tot=952.0k busy=30.5% rate=2800.9/2800 p99=3054us 
+2026-11-14T13:43:04Z r05-tls-hs-st-ecdsa-p256 VALID ins_u=344.5k cyc_tot=783.9k busy=25.5% rate=2800.4/2800 p99=627us 
+2026-11-14T13:43:43Z r06-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=562.7k busy=30.6% rate=4800.5/4800 p99=883us 
+2026-11-14T13:44:22Z r06-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=565.0k busy=30.8% rate=4800.5/4800 p99=922us 
+2026-11-14T13:45:00Z r06-tls-hs-st-ecdsa-p256 VALID ins_u=344.6k cyc_tot=787.6k busy=25.6% rate=2800.4/2800 p99=630us 
+2026-11-14T13:45:38Z r06-tls-hs-st-rsa2048 VALID ins_u=944.7k cyc_tot=957.1k busy=30.6% rate=2800.8/2800 p99=3010us 
+2026-11-14T13:46:17Z r07-tls-ka-rsa2048 VALID ins_u=181.0k cyc_tot=551.6k busy=29.9% rate=4800.5/4800 p99=1499us 
+2026-11-14T13:46:56Z r07-tls-ka-ecdsa-p256 VALID ins_u=181.4k cyc_tot=559.8k busy=30.6% rate=4800.5/4800 p99=697us 
+2026-11-14T13:47:34Z r07-tls-hs-st-rsa2048 VALID ins_u=945.3k cyc_tot=951.6k busy=30.4% rate=2800.8/2800 p99=3041us 
+2026-11-14T13:48:12Z r07-tls-hs-st-ecdsa-p256 VALID ins_u=344.6k cyc_tot=784.7k busy=25.5% rate=2800.5/2800 p99=629us 
+2026-11-14T13:48:51Z r08-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=555.9k busy=30.3% rate=4800.5/4800 p99=763us 
+2026-11-14T13:49:30Z r08-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=564.4k busy=30.8% rate=4800.5/4800 p99=923us 
+2026-11-14T13:50:08Z r08-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=787.6k busy=25.6% rate=2800.4/2800 p99=627us 
+2026-11-14T13:50:46Z r08-tls-hs-st-rsa2048 VALID ins_u=944.8k cyc_tot=955.4k busy=30.6% rate=2800.8/2800 p99=3028us 
+2026-11-14T13:51:25Z r09-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=565.4k busy=30.9% rate=4800.5/4800 p99=693us 
+2026-11-14T13:52:04Z r09-tls-ka-rsa2048 VALID ins_u=181.1k cyc_tot=560.8k busy=30.6% rate=4800.5/4800 p99=926us 
+2026-11-14T13:52:42Z r09-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=782.3k busy=25.4% rate=2800.5/2800 p99=625us 
+2026-11-14T13:53:20Z r09-tls-hs-st-rsa2048 VALID ins_u=944.8k cyc_tot=951.8k busy=30.5% rate=2800.7/2800 p99=3017us 
+2026-11-14T13:54:00Z r10-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=567.0k busy=30.9% rate=4800.5/4800 p99=1290us 
+2026-11-14T13:54:38Z r10-tls-ka-ecdsa-p256 VALID ins_u=181.0k cyc_tot=559.1k busy=30.5% rate=4800.5/4800 p99=746us 
+2026-11-14T13:55:17Z r10-tls-hs-st-rsa2048 VALID ins_u=945.3k cyc_tot=953.0k busy=30.5% rate=2800.6/2800 p99=3020us 
+2026-11-14T13:55:55Z r10-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=785.3k busy=25.4% rate=2800.4/2800 p99=620us 
+2026-11-14T13:56:34Z r11-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=561.2k busy=30.5% rate=4800.5/4800 p99=1265us 
+2026-11-14T13:57:12Z r11-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=548.9k busy=29.9% rate=4800.5/4800 p99=740us 
+2026-11-14T13:57:51Z r11-tls-hs-st-rsa2048 VALID ins_u=945.3k cyc_tot=959.6k busy=30.7% rate=2800.7/2800 p99=3034us 
+2026-11-14T13:58:29Z r11-tls-hs-st-ecdsa-p256 VALID ins_u=344.4k cyc_tot=784.1k busy=25.4% rate=2800.4/2800 p99=625us 
+2026-11-14T13:59:07Z r12-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=568.0k busy=31.1% rate=4800.5/4800 p99=698us 
+2026-11-14T13:59:46Z r12-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=561.0k busy=30.6% rate=4800.5/4800 p99=830us 
+2026-11-14T14:00:24Z r12-tls-hs-st-ecdsa-p256 VALID ins_u=344.5k cyc_tot=785.2k busy=25.5% rate=2800.4/2800 p99=627us 
+2026-11-14T14:01:03Z r12-tls-hs-st-rsa2048 VALID ins_u=944.9k cyc_tot=955.7k busy=30.6% rate=2800.8/2800 p99=3014us 
+2026-11-14T14:01:03Z after 12 rounds: widest cycles_total half-width 0.87% (tls-ka ecdsa-p256 vs rsa2048) <= target 1.50%
+2026-11-14T14:01:03Z origin container b504ac3fb982 stopped
+2026-11-14T14:01:04Z done: ~/epl/runs/smf/f3-tls-cert/summary.md

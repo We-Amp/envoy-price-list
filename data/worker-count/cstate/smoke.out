@@ -1,0 +1,8 @@
+2026-11-14T04:29:50Z condition A set: rc 0  readback mismatches 0
+A readback 0 B-mismatch-while-A 80
+2026-11-14T04:31:00Z   c00-A-req 8000 rps: 104.79 us/req (u 45.8 s 59.1) p50 166 vcs/req 0.849 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.482 ins/req 111551 busy max/med 0.432/0.419 invalid=[]
+2026-11-14T04:31:01Z   c00-A-req idle 0.0007 CPUs rss 66564 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 2}, 'rate_2xx': 7999.999694000011, 'p50_us': 160.727} invalid=[] []
+2026-11-14T04:31:02Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0
+{"cpu_us_per_req": 104.79031941184378, "cg_user_us_per_req": 45.76273149344942, "cg_sys_us_per_req": 59.05179455893454, "workers_vcs_per_req": 0.8491763951648761, "workers_ivcs_per_req": 4.136119699304098e-05, "workers_migr_per_s": 1.985297443185267, "node_residency": {"POLL": 3.2622986631507905e-05, "C1": 0.9701786122621565, "C1E": 0.0, "C3": 0.0, "C6": 0.0}, "perf": {"instructions": {"count": 10788025877, "running_pct": 10094763729.0}, "cycles": {"count": 22396391272, "running_pct": 10094763729.0}, "instructions:u": {"count": 6543127323, "running_pct": 10094763729.0}, "cycles:u": {"count": 12985727388, "running_pct": 10094763729.0}}, "perf_rc": 0, "perf_err": "", "invalid": []}
+{"samples": 61, "two_worker_same_core_frac": 0.0, "two_worker_same_cpu_frac": 0.0, "distinct_cpus_per_worker": {"354637": 3, "354638": 5}, "top_cpu_share_per_worker": {"354637": 0.36065573770491804, "354638": 0.29508196721311475}, "socket0_frac": 1.0}
+{'exit': 0, 'overflow': {'upstream_cx_overflow': 2}, 'rate_2xx': 7999.999694000011, 'p50_us': 160.727} {'POLL': 1.0211296824928004e-05, 'C1': 1.026899824819746, 'C1E': 0.0, 'C3': 0.0, 'C6': 0.0}

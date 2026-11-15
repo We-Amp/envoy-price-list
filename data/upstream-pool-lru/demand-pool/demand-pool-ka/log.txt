@@ -1,0 +1,29 @@
+2026-11-14T20:58:23Z run lru-demand-pool-ka: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['mru', 'lru'], shapes ['s-hi']
+2026-11-14T20:58:23Z origin container 0d1a9fbf9680 (epl-origin-638043) started
+2026-11-14T20:59:03Z r01-s-hi-mru VALID ins_u=162.8k cyc_tot=453.4k busy=40.9% rate=7989.4/8000 p99=969us 
+2026-11-14T20:59:41Z r01-s-hi-lru VALID ins_u=162.7k cyc_tot=452.8k busy=40.8% rate=7989.3/8000 p99=1077us 
+2026-11-14T21:00:20Z r02-s-hi-lru VALID ins_u=162.7k cyc_tot=465.2k busy=41.9% rate=7989.5/8000 p99=1048us 
+2026-11-14T21:00:58Z r02-s-hi-mru VALID ins_u=162.6k cyc_tot=461.7k busy=41.5% rate=7989.4/8000 p99=1129us 
+2026-11-14T21:01:37Z r03-s-hi-mru VALID ins_u=162.7k cyc_tot=458.9k busy=41.4% rate=7989.5/8000 p99=1013us 
+2026-11-14T21:02:15Z r03-s-hi-lru VALID ins_u=162.7k cyc_tot=453.4k busy=40.8% rate=7989.3/8000 p99=1059us 
+2026-11-14T21:02:54Z r04-s-hi-lru VALID ins_u=162.7k cyc_tot=463.8k busy=41.7% rate=7989.3/8000 p99=1088us 
+2026-11-14T21:03:33Z r04-s-hi-mru VALID ins_u=162.6k cyc_tot=467.7k busy=42.0% rate=7989.4/8000 p99=1069us 
+2026-11-14T21:04:11Z r05-s-hi-mru VALID ins_u=162.7k cyc_tot=453.9k busy=40.9% rate=7989.3/8000 p99=1000us 
+2026-11-14T21:04:50Z r05-s-hi-lru VALID ins_u=162.6k cyc_tot=452.5k busy=40.7% rate=7989.3/8000 p99=1097us 
+2026-11-14T21:05:28Z r06-s-hi-lru VALID ins_u=162.6k cyc_tot=464.9k busy=41.9% rate=7989.3/8000 p99=1082us 
+2026-11-14T21:06:07Z r06-s-hi-mru VALID ins_u=162.7k cyc_tot=457.4k busy=41.2% rate=7989.4/8000 p99=1031us 
+2026-11-14T21:06:45Z r07-s-hi-lru VALID ins_u=162.7k cyc_tot=457.3k busy=41.2% rate=7989.4/8000 p99=1068us 
+2026-11-14T21:07:24Z r07-s-hi-mru VALID ins_u=162.6k cyc_tot=460.6k busy=41.5% rate=7989.5/8000 p99=1038us 
+2026-11-14T21:08:03Z r08-s-hi-mru VALID ins_u=162.7k cyc_tot=453.8k busy=40.9% rate=7989.4/8000 p99=1026us 
+2026-11-14T21:08:41Z r08-s-hi-lru VALID ins_u=162.7k cyc_tot=454.8k busy=40.9% rate=7989.5/8000 p99=1087us 
+2026-11-14T21:09:20Z r09-s-hi-mru VALID ins_u=162.7k cyc_tot=458.2k busy=41.3% rate=7989.4/8000 p99=1035us 
+2026-11-14T21:09:58Z r09-s-hi-lru VALID ins_u=162.7k cyc_tot=460.7k busy=41.5% rate=7989.4/8000 p99=1071us 
+2026-11-14T21:10:37Z r10-s-hi-lru VALID ins_u=162.7k cyc_tot=460.8k busy=41.5% rate=7989.3/8000 p99=1078us 
+2026-11-14T21:11:15Z r10-s-hi-mru VALID ins_u=162.6k cyc_tot=454.8k busy=41.0% rate=7989.3/8000 p99=1040us 
+2026-11-14T21:11:54Z r11-s-hi-mru VALID ins_u=162.7k cyc_tot=459.9k busy=41.4% rate=7989.3/8000 p99=1018us 
+2026-11-14T21:12:33Z r11-s-hi-lru VALID ins_u=162.7k cyc_tot=453.9k busy=40.9% rate=7989.5/8000 p99=1075us 
+2026-11-14T21:13:11Z r12-s-hi-lru VALID ins_u=162.7k cyc_tot=460.9k busy=41.5% rate=7989.4/8000 p99=1068us 
+2026-11-14T21:13:50Z r12-s-hi-mru VALID ins_u=162.7k cyc_tot=455.6k busy=41.0% rate=7989.2/8000 p99=999us 
+2026-11-14T21:13:50Z after 12 rounds: widest cycles_total_all half-width 0.47% (s-hi lru vs mru) <= target 1.50%
+2026-11-14T21:13:50Z origin container 0d1a9fbf9680 stopped
+2026-11-14T21:13:51Z done: ~/epl/runs/lru/demand-pool-ka/summary.md

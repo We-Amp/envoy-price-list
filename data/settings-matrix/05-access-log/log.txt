@@ -1,0 +1,41 @@
+2026-11-14T09:08:35Z run sm-access-log: rotate order, rounds 12..24 in blocks of 6 (adaptive True), arms ['log-off', 'log-text', 'log-json'], shapes ['s']
+2026-11-14T09:08:35Z origin container 275f5d6648fa (epl-origin-427894) started
+2026-11-14T09:09:14Z r01-s-log-off VALID ins_u=163.8k cyc_tot=517.8k busy=30.7% rate=5200.5/5200 p99=648us 
+2026-11-14T09:09:53Z r01-s-log-text VALID ins_u=170.5k cyc_tot=549.2k busy=32.5% rate=5200.5/5200 p99=637us 
+2026-11-14T09:10:31Z r01-s-log-json VALID ins_u=173.7k cyc_tot=545.6k busy=32.2% rate=5200.6/5200 p99=657us 
+2026-11-14T09:11:10Z r02-s-log-json VALID ins_u=173.7k cyc_tot=548.0k busy=32.4% rate=5200.5/5200 p99=662us 
+2026-11-14T09:11:48Z r02-s-log-text VALID ins_u=170.5k cyc_tot=541.5k busy=32.0% rate=5200.6/5200 p99=674us 
+2026-11-14T09:12:27Z r02-s-log-off VALID ins_u=164.0k cyc_tot=528.6k busy=31.5% rate=5200.5/5200 p99=610us 
+2026-11-14T09:13:05Z r03-s-log-text VALID ins_u=170.6k cyc_tot=541.3k busy=32.2% rate=5200.6/5200 p99=627us 
+2026-11-14T09:13:44Z r03-s-log-json VALID ins_u=173.6k cyc_tot=548.0k busy=32.4% rate=5200.5/5200 p99=656us 
+2026-11-14T09:14:22Z r03-s-log-off VALID ins_u=163.9k cyc_tot=528.8k busy=31.4% rate=5200.4/5200 p99=625us 
+2026-11-14T09:15:01Z r04-s-log-off VALID ins_u=163.9k cyc_tot=522.0k busy=31.1% rate=5200.5/5200 p99=613us 
+2026-11-14T09:15:39Z r04-s-log-json VALID ins_u=173.6k cyc_tot=545.7k busy=32.3% rate=5200.5/5200 p99=650us 
+2026-11-14T09:16:18Z r04-s-log-text VALID ins_u=170.4k cyc_tot=553.1k busy=32.7% rate=5200.5/5200 p99=702us 
+2026-11-14T09:16:56Z r05-s-log-json VALID ins_u=173.5k cyc_tot=550.2k busy=32.4% rate=5200.6/5200 p99=694us 
+2026-11-14T09:17:35Z r05-s-log-off VALID ins_u=163.7k cyc_tot=523.9k busy=31.0% rate=5200.5/5200 p99=677us 
+2026-11-14T09:18:13Z r05-s-log-text VALID ins_u=170.5k cyc_tot=549.7k busy=32.4% rate=5200.5/5200 p99=781us 
+2026-11-14T09:18:52Z r06-s-log-text VALID ins_u=170.5k cyc_tot=548.7k busy=32.5% rate=5200.6/5200 p99=636us 
+2026-11-14T09:19:30Z r06-s-log-off VALID ins_u=163.8k cyc_tot=531.5k busy=31.5% rate=5200.5/5200 p99=622us 
+2026-11-14T09:20:09Z r06-s-log-json VALID ins_u=173.7k cyc_tot=554.0k busy=32.7% rate=5200.5/5200 p99=657us 
+2026-11-14T09:20:47Z r07-s-log-off VALID ins_u=163.9k cyc_tot=523.7k busy=31.1% rate=5200.6/5200 p99=641us 
+2026-11-14T09:21:26Z r07-s-log-text VALID ins_u=170.4k cyc_tot=540.1k busy=31.9% rate=5200.5/5200 p99=644us 
+2026-11-14T09:22:04Z r07-s-log-json VALID ins_u=173.5k cyc_tot=546.9k busy=32.3% rate=5200.6/5200 p99=653us 
+2026-11-14T09:22:43Z r08-s-log-json VALID ins_u=173.6k cyc_tot=559.0k busy=32.9% rate=5200.5/5200 p99=705us 
+2026-11-14T09:23:21Z r08-s-log-text VALID ins_u=170.5k cyc_tot=545.7k busy=32.3% rate=5200.6/5200 p99=647us 
+2026-11-14T09:24:00Z r08-s-log-off VALID ins_u=163.8k cyc_tot=523.8k busy=31.0% rate=5200.6/5200 p99=618us 
+2026-11-14T09:24:38Z r09-s-log-off VALID ins_u=163.8k cyc_tot=529.6k busy=31.4% rate=5200.5/5200 p99=634us 
+2026-11-14T09:25:17Z r09-s-log-json VALID ins_u=173.7k cyc_tot=554.1k busy=32.8% rate=5200.6/5200 p99=646us 
+2026-11-14T09:25:55Z r09-s-log-text VALID ins_u=170.5k cyc_tot=546.3k busy=32.3% rate=5200.6/5200 p99=666us 
+2026-11-14T09:26:34Z r10-s-log-text VALID ins_u=170.5k cyc_tot=546.2k busy=32.3% rate=5200.5/5200 p99=703us 
+2026-11-14T09:27:12Z r10-s-log-json VALID ins_u=173.6k cyc_tot=551.5k busy=32.6% rate=5200.6/5200 p99=655us 
+2026-11-14T09:27:51Z r10-s-log-off VALID ins_u=163.9k cyc_tot=531.1k busy=31.5% rate=5200.5/5200 p99=622us 
+2026-11-14T09:28:30Z r11-s-log-json VALID ins_u=173.7k cyc_tot=548.5k busy=32.5% rate=5200.5/5200 p99=646us 
+2026-11-14T09:29:08Z r11-s-log-off VALID ins_u=163.8k cyc_tot=535.0k busy=31.7% rate=5200.5/5200 p99=673us 
+2026-11-14T09:29:46Z r11-s-log-text VALID ins_u=170.5k cyc_tot=544.7k busy=32.2% rate=5200.5/5200 p99=663us 
+2026-11-14T09:30:25Z r12-s-log-text VALID ins_u=170.5k cyc_tot=541.3k busy=32.0% rate=5200.5/5200 p99=653us 
+2026-11-14T09:31:03Z r12-s-log-off VALID ins_u=163.7k cyc_tot=523.8k busy=31.0% rate=5200.5/5200 p99=628us 
+2026-11-14T09:31:42Z r12-s-log-json VALID ins_u=173.6k cyc_tot=553.4k busy=32.7% rate=5200.5/5200 p99=644us 
+2026-11-14T09:31:42Z after 12 rounds: widest cycles_total half-width 0.85% (s log-text vs log-off) <= target 1.50%
+2026-11-14T09:31:42Z origin container 275f5d6648fa stopped
+2026-11-14T09:31:44Z done: ~/epl/runs/sm/05-access-log/summary.md

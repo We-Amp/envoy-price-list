@@ -1,0 +1,246 @@
+{
+ "round": 0,
+ "arm": "req",
+ "tag": "r00-req",
+ "started_utc": "2026-11-14T02:33:06Z",
+ "invalid": [],
+ "loads": {
+  "2000": {
+   "window_s": 18.053,
+   "envoy_cpus_sched": 0.339308736551905,
+   "envoy_cpus_cgroup": 0.3393088314940986,
+   "node_cpus_run": 0.48396507182488496,
+   "node_other_cpus": 0.14465633527297994,
+   "client_cpus_run": 3.1873751280651264,
+   "rest_cpus": 0.004119078033473984,
+   "worker_busy": {
+    "wrk:worker_0": 0.16308855064928632,
+    "wrk:worker_1": 0.17526648785744423
+   },
+   "nh_cpus": 3.182004320242979,
+   "nh_thread_busy_max": 0.2061061069162877,
+   "client_cpus_other": 0.005370807822147494,
+   "requests": 36105,
+   "rps": 1999.9345956850777,
+   "client_conns": 512,
+   "hot_conns": 512,
+   "hot_conns_over_10pct_of_mean": 512,
+   "top16_conn_share": 0.0315,
+   "worker_cx_active": {
+    "0": 248,
+    "1": 264
+   },
+   "client_cpus_allowed": "20-39",
+   "client_exit": 0,
+   "nh": {
+    "pending_total": 16,
+    "cx_total": 512,
+    "workers": 16,
+    "worker_r2r_max_us": [
+     31770.6,
+     31246.3,
+     32271.4,
+     30230.5,
+     12196.9,
+     12674.0,
+     12632.1,
+     13014.5,
+     12508.7,
+     12748.8,
+     12915.2,
+     12620.8,
+     13272.1,
+     13085.7,
+     12469.8,
+     12258.8
+    ],
+    "queue_to_connect_max_us": 33495.039,
+    "callback_max_us": 47970.303,
+    "counters": {
+     "benchmark.http_2xx": 60000,
+     "cluster_manager.cluster_added": 16,
+     "default.total_match_count": 16,
+     "membership_change": 16,
+     "runtime.load_success": 1,
+     "runtime.override_dir_not_exists": 1,
+     "upstream_cx_http1_total": 512,
+     "upstream_cx_rx_bytes_total": 7080000,
+     "upstream_cx_total": 512,
+     "upstream_cx_tx_bytes_total": 2520000,
+     "upstream_rq_pending_total": 16,
+     "upstream_rq_total": 60000
+    },
+    "execution_duration_s": 29.999996337,
+    "responses_2xx": 60000,
+    "rate_2xx": 2000.0002442000298,
+    "overflow": {},
+    "non2xx": {},
+    "latency_us": {
+     "p50": 229.023,
+     "p90": 325.391,
+     "p99": 354.271,
+     "p999": 11978.750999999998,
+     "mean": 251.81699999999998,
+     "max": 32271.359,
+     "count": 60000
+    },
+    "client_version": "0.3.0"
+   },
+   "pre_idle": {
+    "foreign_procs": [],
+    "box_busy_cpus": 0.132
+   },
+   "cpu_us_per_req": 169.65996399390664,
+   "cpu_us_per_req_sched": 169.65991652125746,
+   "workers": {
+    "workers": 2,
+    "threads_found": 2,
+    "max_share": 0.518,
+    "min_share": 0.482,
+    "busy_max": 0.1753,
+    "busy_median": 0.1631,
+    "busy_min": 0.1631
+   },
+   "p50_us": 229.023,
+   "p99_us": 354.271,
+   "invalid": []
+  },
+  "8000": {
+   "window_s": 18.053,
+   "envoy_cpus_sched": 0.8154153954043513,
+   "envoy_cpus_cgroup": 0.8154100455412522,
+   "node_cpus_run": 0.9419269016585584,
+   "node_other_cpus": 0.12651150625420715,
+   "client_cpus_run": 3.7109107625529782,
+   "rest_cpus": 0.004270250733038433,
+   "worker_busy": {
+    "wrk:worker_0": 0.39881242905645015,
+    "wrk:worker_1": 0.41578700648209194
+   },
+   "nh_cpus": 3.7055519422468706,
+   "nh_thread_busy_max": 0.24156520995563305,
+   "client_cpus_other": 0.005358820306107681,
+   "requests": 144423,
+   "rps": 7999.8682815497605,
+   "client_conns": 512,
+   "hot_conns": 512,
+   "hot_conns_over_10pct_of_mean": 512,
+   "top16_conn_share": 0.0314,
+   "worker_cx_active": {
+    "0": 250,
+    "1": 262
+   },
+   "client_cpus_allowed": "20-39",
+   "client_exit": 0,
+   "nh": {
+    "pending_total": 16,
+    "cx_total": 512,
+    "workers": 16,
+    "worker_r2r_max_us": [
+     9552.9,
+     9804.3,
+     8555.5,
+     9579.5,
+     8604.2,
+     12174.3,
+     12300.3,
+     12298.8,
+     11504.1,
+     12093.4,
+     12059.6,
+     11672.6,
+     10553.3,
+     10534.9,
+     11914.8,
+     11420.7
+    ],
+    "queue_to_connect_max_us": 33532.926999999996,
+    "callback_max_us": 45406.206999999995,
+    "counters": {
+     "benchmark.http_2xx": 240000,
+     "cluster_manager.cluster_added": 16,
+     "default.total_match_count": 16,
+     "membership_change": 16,
+     "runtime.load_success": 1,
+     "runtime.override_dir_not_exists": 1,
+     "upstream_cx_http1_total": 512,
+     "upstream_cx_rx_bytes_total": 28320000,
+     "upstream_cx_total": 512,
+     "upstream_cx_tx_bytes_total": 10080000,
+     "upstream_rq_pending_total": 16,
+     "upstream_rq_total": 240000
+    },
+    "execution_duration_s": 30.000000278,
+    "responses_2xx": 240000,
+    "rate_2xx": 7999.999925866667,
+    "overflow": {},
+    "non2xx": {},
+    "latency_us": {
+     "p50": 161.559,
+     "p90": 180.215,
+     "p99": 300.015,
+     "p999": 7310.335,
+     "mean": 180.87,
+     "max": 12300.287,
+     "count": 240000
+    },
+    "client_version": "0.3.0"
+   },
+   "pre_idle": {
+    "foreign_procs": [],
+    "box_busy_cpus": 0.142
+   },
+   "cpu_us_per_req": 101.92793391634297,
+   "cpu_us_per_req_sched": 101.9286026602411,
+   "workers": {
+    "workers": 2,
+    "threads_found": 2,
+    "max_share": 0.5104,
+    "min_share": 0.4896,
+    "busy_max": 0.4158,
+    "busy_median": 0.3988,
+    "busy_min": 0.3988
+   },
+   "p50_us": 161.559,
+   "p99_us": 300.015,
+   "invalid": []
+  }
+ },
+ "concurrency": 2,
+ "envoy_version": "b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL",
+ "worker_threads": 2,
+ "threads_total": 9,
+ "cpus_allowed": "0-19,40-59",
+ "cgroup_cpu_max": "max 100000",
+ "cgroup_cpuset_effective": "0-19,40-59",
+ "qos": "Burstable",
+ "pre_idle": {
+  "foreign_procs": [],
+  "box_busy_cpus": 0.151
+ },
+ "idle": {
+  "window_s": 10.002,
+  "envoy_cpus_sched": 0.0019818655561775174,
+  "envoy_cpus_cgroup": 0.0019818372613563608,
+  "node_cpus_run": 0.1480220315057692,
+  "node_other_cpus": 0.14604016594959168,
+  "client_cpus_run": 0.0001895545055548095,
+  "rest_cpus": 0.0023874204268618305,
+  "worker_busy": {
+   "wrk:worker_0": 0.000493665343692409,
+   "wrk:worker_1": 0.0004719907108329397
+  },
+  "rss_kb": 66872,
+  "workers": {
+   "workers": 2,
+   "threads_found": 2,
+   "max_share": 0.5112,
+   "min_share": 0.4888,
+   "busy_max": 0.0005,
+   "busy_median": 0.0005,
+   "busy_min": 0.0005
+  },
+  "invalid": []
+ },
+ "rss_kb_after_load": 76864
+}

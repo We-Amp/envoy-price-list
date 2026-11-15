@@ -1,0 +1,55 @@
+2026-11-14T07:10:08Z certificate ecdsa-p256 made
+2026-11-14T07:10:09Z certificate rsa2048 made
+2026-11-14T07:10:14Z run sm-tls-cert: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['rsa2048', 'ecdsa-p256'], shapes ['tls-ka', 'tls-hs']
+2026-11-14T07:10:14Z origin container 2d1507552c42 (epl-origin-402147) started
+2026-11-14T07:10:54Z r01-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=567.1k busy=30.9% rate=4800.5/4800 p99=963us 
+2026-11-14T07:11:32Z r01-tls-ka-ecdsa-p256 VALID ins_u=181.4k cyc_tot=557.1k busy=30.5% rate=4800.5/4800 p99=711us 
+2026-11-14T07:12:11Z r01-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=931.9k busy=29.7% rate=2800.3/2800 p99=18748us 
+2026-11-14T07:12:50Z r01-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=766.5k busy=24.8% rate=2800.3/2800 p99=1518us 
+2026-11-14T07:13:29Z r02-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=562.3k busy=30.8% rate=4800.5/4800 p99=702us 
+2026-11-14T07:14:08Z r02-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=563.5k busy=30.9% rate=4800.5/4800 p99=889us 
+2026-11-14T07:14:46Z r02-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=765.2k busy=24.7% rate=2800.3/2800 p99=1617us 
+2026-11-14T07:15:25Z r02-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=936.3k busy=29.7% rate=2800.3/2800 p99=16400us 
+2026-11-14T07:16:04Z r03-tls-ka-rsa2048 VALID ins_u=181.5k cyc_tot=562.2k busy=30.7% rate=4800.5/4800 p99=857us 
+2026-11-14T07:16:43Z r03-tls-ka-ecdsa-p256 VALID ins_u=181.0k cyc_tot=559.1k busy=30.5% rate=4800.5/4800 p99=736us 
+2026-11-14T07:17:22Z r03-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=927.2k busy=29.5% rate=2800.3/2800 p99=20754us 
+2026-11-14T07:18:01Z r03-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=765.6k busy=24.7% rate=2800.3/2800 p99=1358us 
+2026-11-14T07:18:40Z r04-tls-ka-ecdsa-p256 VALID ins_u=181.0k cyc_tot=554.5k busy=30.2% rate=4800.5/4800 p99=769us 
+2026-11-14T07:19:19Z r04-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=563.0k busy=30.8% rate=4800.5/4800 p99=898us 
+2026-11-14T07:19:57Z r04-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=764.4k busy=24.7% rate=2800.3/2800 p99=1723us 
+2026-11-14T07:20:36Z r04-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=936.5k busy=29.7% rate=2800.2/2800 p99=21284us 
+2026-11-14T07:21:15Z r05-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=556.9k busy=30.3% rate=4800.5/4800 p99=888us 
+2026-11-14T07:21:54Z r05-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=554.7k busy=30.2% rate=4800.5/4800 p99=740us 
+2026-11-14T07:22:33Z r05-tls-hs-rsa2048 VALID ins_u=950.3k cyc_tot=930.4k busy=29.6% rate=2800.3/2800 p99=16583us 
+2026-11-14T07:23:12Z r05-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=762.1k busy=24.6% rate=2800.3/2800 p99=1800us 
+2026-11-14T07:23:51Z r06-tls-ka-ecdsa-p256 VALID ins_u=180.9k cyc_tot=546.2k busy=29.7% rate=4800.5/4800 p99=780us 
+2026-11-14T07:24:30Z r06-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=557.7k busy=30.4% rate=4800.5/4800 p99=890us 
+2026-11-14T07:25:09Z r06-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=767.9k busy=24.8% rate=2800.3/2800 p99=1504us 
+2026-11-14T07:25:47Z r06-tls-hs-rsa2048 VALID ins_u=950.5k cyc_tot=940.7k busy=29.9% rate=2800.3/2800 p99=18781us 
+2026-11-14T07:26:26Z r07-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=568.0k busy=31.1% rate=4800.5/4800 p99=859us 
+2026-11-14T07:27:05Z r07-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=561.6k busy=30.8% rate=4800.5/4800 p99=677us 
+2026-11-14T07:27:44Z r07-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=933.7k busy=29.7% rate=2800.3/2800 p99=21396us 
+2026-11-14T07:28:23Z r07-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=769.2k busy=24.9% rate=2800.3/2800 p99=1303us 
+2026-11-14T07:29:02Z r08-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=560.6k busy=30.6% rate=4800.5/4800 p99=671us 
+2026-11-14T07:29:41Z r08-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=557.7k busy=30.4% rate=4800.5/4800 p99=1229us 
+2026-11-14T07:30:19Z r08-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=769.6k busy=24.9% rate=2800.3/2800 p99=1588us 
+2026-11-14T07:30:58Z r08-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=934.5k busy=29.7% rate=2800.3/2800 p99=17630us 
+2026-11-14T07:31:37Z r09-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=564.2k busy=30.7% rate=4800.5/4800 p99=738us 
+2026-11-14T07:32:16Z r09-tls-ka-rsa2048 VALID ins_u=181.2k cyc_tot=547.9k busy=29.8% rate=4800.6/4800 p99=904us 
+2026-11-14T07:32:55Z r09-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=766.6k busy=24.8% rate=2800.3/2800 p99=1299us 
+2026-11-14T07:33:34Z r09-tls-hs-rsa2048 VALID ins_u=950.5k cyc_tot=936.7k busy=29.8% rate=2800.3/2800 p99=23500us 
+2026-11-14T07:34:13Z r10-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=557.3k busy=30.4% rate=4800.5/4800 p99=867us 
+2026-11-14T07:34:51Z r10-tls-ka-ecdsa-p256 VALID ins_u=181.3k cyc_tot=553.8k busy=30.2% rate=4800.5/4800 p99=708us 
+2026-11-14T07:35:30Z r10-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=933.5k busy=29.6% rate=2800.3/2800 p99=15859us 
+2026-11-14T07:36:09Z r10-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=765.5k busy=24.7% rate=2800.3/2800 p99=1592us 
+2026-11-14T07:36:48Z r11-tls-ka-rsa2048 VALID ins_u=181.3k cyc_tot=561.4k busy=30.5% rate=4800.5/4800 p99=949us 
+2026-11-14T07:37:27Z r11-tls-ka-ecdsa-p256 VALID ins_u=181.1k cyc_tot=558.5k busy=30.4% rate=4800.5/4800 p99=761us 
+2026-11-14T07:38:06Z r11-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=928.2k busy=29.5% rate=2800.3/2800 p99=15309us 
+2026-11-14T07:38:45Z r11-tls-hs-ecdsa-p256 VALID ins_u=346.6k cyc_tot=764.4k busy=24.7% rate=2800.3/2800 p99=1420us 
+2026-11-14T07:39:23Z r12-tls-ka-ecdsa-p256 VALID ins_u=181.2k cyc_tot=564.4k busy=31.0% rate=4800.5/4800 p99=684us 
+2026-11-14T07:40:02Z r12-tls-ka-rsa2048 VALID ins_u=181.4k cyc_tot=558.1k busy=30.4% rate=4800.5/4800 p99=919us 
+2026-11-14T07:40:41Z r12-tls-hs-ecdsa-p256 VALID ins_u=346.5k cyc_tot=763.3k busy=24.6% rate=2800.3/2800 p99=1730us 
+2026-11-14T07:41:20Z r12-tls-hs-rsa2048 VALID ins_u=950.4k cyc_tot=939.2k busy=29.9% rate=2800.3/2800 p99=20666us 
+2026-11-14T07:41:20Z after 12 rounds: widest cycles_total half-width 0.87% (tls-ka ecdsa-p256 vs rsa2048) <= target 1.50%
+2026-11-14T07:41:20Z origin container 2d1507552c42 stopped
+2026-11-14T07:41:22Z done: ~/epl/runs/sm/01-tls-cert/summary.md

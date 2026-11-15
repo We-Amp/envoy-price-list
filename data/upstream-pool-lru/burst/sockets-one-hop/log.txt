@@ -1,0 +1,21 @@
+2026-11-15T07:23:51Z run lru-one-hop: abba order, rounds 4..4 in blocks of 6 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo', 's-hi']
+2026-11-15T07:23:51Z origin container e9a6e7dc08f9 (epl-origin-664403) started
+2026-11-15T07:24:31Z r01-s-lo-mru VALID ins_u=163.8k cyc_tot=528.3k busy=31.3% rate=5201.1/5200 p99=603us 
+2026-11-15T07:25:09Z r01-s-lo-lru VALID ins_u=164.1k cyc_tot=524.4k busy=31.2% rate=5201.0/5200 p99=642us 
+2026-11-15T07:25:48Z r01-s-hi-mru VALID ins_u=163.7k cyc_tot=490.6k busy=44.0% rate=8001.6/8000 p99=800us 
+2026-11-15T07:26:26Z r01-s-hi-lru VALID ins_u=164.2k cyc_tot=489.4k busy=44.0% rate=8001.7/8000 p99=747us 
+2026-11-15T07:27:05Z r02-s-lo-lru VALID ins_u=164.3k cyc_tot=532.6k busy=31.6% rate=5201.1/5200 p99=636us 
+2026-11-15T07:27:43Z r02-s-lo-mru VALID ins_u=163.9k cyc_tot=529.2k busy=31.4% rate=5201.0/5200 p99=629us 
+2026-11-15T07:28:22Z r02-s-hi-lru VALID ins_u=164.3k cyc_tot=489.6k busy=43.9% rate=8001.5/8000 p99=893us 
+2026-11-15T07:29:00Z r02-s-hi-mru VALID ins_u=164.1k cyc_tot=491.9k busy=44.2% rate=8001.5/8000 p99=854us 
+2026-11-15T07:29:39Z r03-s-lo-mru VALID ins_u=163.8k cyc_tot=526.1k busy=31.2% rate=5201.0/5200 p99=636us 
+2026-11-15T07:30:17Z r03-s-lo-lru VALID ins_u=164.1k cyc_tot=532.0k busy=31.6% rate=5201.0/5200 p99=654us 
+2026-11-15T07:30:56Z r03-s-hi-mru VALID ins_u=163.6k cyc_tot=491.8k busy=44.1% rate=8001.6/8000 p99=1184us 
+2026-11-15T07:31:35Z r03-s-hi-lru VALID ins_u=164.4k cyc_tot=493.5k busy=44.3% rate=8001.6/8000 p99=871us 
+2026-11-15T07:32:13Z r04-s-lo-lru VALID ins_u=164.0k cyc_tot=532.8k busy=31.6% rate=5201.0/5200 p99=686us 
+2026-11-15T07:32:52Z r04-s-lo-mru VALID ins_u=163.9k cyc_tot=535.6k busy=31.8% rate=5201.0/5200 p99=627us 
+2026-11-15T07:33:30Z r04-s-hi-lru VALID ins_u=163.9k cyc_tot=486.4k busy=43.7% rate=8001.7/8000 p99=914us 
+2026-11-15T07:34:09Z r04-s-hi-mru VALID ins_u=163.9k cyc_tot=488.5k busy=43.8% rate=8001.5/8000 p99=1203us 
+2026-11-15T07:34:09Z after 4 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:34:09Z origin container e9a6e7dc08f9 stopped
+2026-11-15T07:34:10Z done: ~/epl/runs/lru/sockets-one-hop/summary.md

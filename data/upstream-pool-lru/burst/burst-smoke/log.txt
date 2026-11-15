@@ -1,0 +1,15 @@
+2026-11-15T07:02:28Z run lru-burst-smoke: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo']
+2026-11-15T07:02:28Z origin container dbf3e9e48ed9 (epl-origin-656707) started
+2026-11-15T07:03:38Z r01-s-lo-mru INVALID ins_u=163.8k cyc_tot=500.5k busy=29.5% rate=5200.9/5200 p99=1041us client overflow/pool-exhausted counters 127 (upstream_cx_overflow=127); client pending total 93 above 16 (queue absorbed a burst)
+2026-11-15T07:04:47Z r01-s-lo-lru INVALID ins_u=163.3k cyc_tot=486.2k busy=28.4% rate=5200.9/5200 p99=1253us client overflow/pool-exhausted counters 120 (upstream_cx_overflow=120); client pending total 85 above 16 (queue absorbed a burst)
+2026-11-15T07:05:56Z r02-s-lo-lru INVALID ins_u=163.9k cyc_tot=503.7k busy=29.6% rate=5200.8/5200 p99=1124us client overflow/pool-exhausted counters 81 (upstream_cx_overflow=81); client pending total 67 above 16 (queue absorbed a burst)
+2026-11-15T07:07:05Z r02-s-lo-mru INVALID ins_u=163.6k cyc_tot=496.2k busy=29.2% rate=5200.8/5200 p99=1041us client overflow/pool-exhausted counters 33 (upstream_cx_overflow=33); client pending total 41 above 16 (queue absorbed a burst)
+2026-11-15T07:07:05Z re-running round 1 shape s-lo (attempt 1): invalid ['r01-s-lo-mru', 'r01-s-lo-lru']
+2026-11-15T07:08:14Z r01-s-lo-mru.rr1 INVALID ins_u=163.8k cyc_tot=507.2k busy=29.9% rate=5200.9/5200 p99=981us client overflow/pool-exhausted counters 12 (upstream_cx_overflow=12); client pending total 28 above 16 (queue absorbed a burst)
+2026-11-15T07:09:23Z r01-s-lo-lru.rr1 VALID ins_u=163.7k cyc_tot=507.2k busy=29.8% rate=5200.9/5200 p99=1070us 
+2026-11-15T07:09:23Z re-running round 2 shape s-lo (attempt 1): invalid ['r02-s-lo-lru', 'r02-s-lo-mru']
+2026-11-15T07:10:31Z r02-s-lo-lru.rr1 INVALID ins_u=163.9k cyc_tot=507.6k busy=29.8% rate=5200.8/5200 p99=1073us client overflow/pool-exhausted counters 99 (upstream_cx_overflow=99); client pending total 78 above 16 (queue absorbed a burst)
+2026-11-15T07:11:40Z r02-s-lo-mru.rr1 INVALID ins_u=163.4k cyc_tot=488.0k busy=28.7% rate=5200.9/5200 p99=1018us client overflow/pool-exhausted counters 9 (upstream_cx_overflow=9); client pending total 23 above 16 (queue absorbed a burst)
+2026-11-15T07:11:40Z after 2 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:11:41Z origin container dbf3e9e48ed9 stopped
+2026-11-15T07:11:42Z done: ~/epl/runs/lru/burst-smoke/summary.md

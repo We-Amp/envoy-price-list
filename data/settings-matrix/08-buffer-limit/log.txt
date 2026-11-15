@@ -1,0 +1,29 @@
+2026-11-14T10:02:52Z run sm-buffer-limit: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['buffer-default', 'buffer-4k'], shapes ['m']
+2026-11-14T10:02:52Z origin container 20eac7e30ce4 (epl-origin-439892) started
+2026-11-14T10:03:31Z r01-m-buffer-default VALID ins_u=166.4k cyc_tot=538.6k busy=33.1% rate=5440.6/5440 p99=803us 
+2026-11-14T10:04:10Z r01-m-buffer-4k VALID ins_u=182.0k cyc_tot=645.2k busy=39.2% rate=5440.5/5440 p99=997us 
+2026-11-14T10:04:48Z r02-m-buffer-4k VALID ins_u=182.0k cyc_tot=642.3k busy=39.1% rate=5440.6/5440 p99=903us 
+2026-11-14T10:05:27Z r02-m-buffer-default VALID ins_u=166.5k cyc_tot=537.5k busy=33.2% rate=5440.5/5440 p99=617us 
+2026-11-14T10:06:05Z r03-m-buffer-default VALID ins_u=166.5k cyc_tot=539.1k busy=33.3% rate=5440.5/5440 p99=653us 
+2026-11-14T10:06:44Z r03-m-buffer-4k VALID ins_u=182.2k cyc_tot=657.2k busy=40.0% rate=5440.5/5440 p99=1355us 
+2026-11-14T10:07:22Z r04-m-buffer-4k VALID ins_u=181.8k cyc_tot=646.3k busy=39.2% rate=5440.6/5440 p99=1337us 
+2026-11-14T10:08:01Z r04-m-buffer-default VALID ins_u=166.6k cyc_tot=534.6k busy=33.0% rate=5440.6/5440 p99=629us 
+2026-11-14T10:08:40Z r05-m-buffer-default VALID ins_u=166.6k cyc_tot=533.8k busy=33.1% rate=5440.5/5440 p99=632us 
+2026-11-14T10:09:18Z r05-m-buffer-4k VALID ins_u=181.9k cyc_tot=645.8k busy=39.3% rate=5440.5/5440 p99=1116us 
+2026-11-14T10:09:57Z r06-m-buffer-4k VALID ins_u=182.0k cyc_tot=644.3k busy=39.2% rate=5440.5/5440 p99=985us 
+2026-11-14T10:10:35Z r06-m-buffer-default VALID ins_u=166.5k cyc_tot=531.9k busy=32.8% rate=5440.5/5440 p99=708us 
+2026-11-14T10:11:14Z r07-m-buffer-default VALID ins_u=166.5k cyc_tot=537.8k busy=33.2% rate=5440.5/5440 p99=648us 
+2026-11-14T10:11:52Z r07-m-buffer-4k VALID ins_u=182.0k cyc_tot=650.7k busy=39.6% rate=5440.5/5440 p99=855us 
+2026-11-14T10:12:31Z r08-m-buffer-4k VALID ins_u=182.1k cyc_tot=647.1k busy=39.4% rate=5440.6/5440 p99=989us 
+2026-11-14T10:13:09Z r08-m-buffer-default VALID ins_u=166.5k cyc_tot=540.8k busy=33.3% rate=5440.6/5440 p99=651us 
+2026-11-14T10:13:48Z r09-m-buffer-4k VALID ins_u=182.4k cyc_tot=643.4k busy=39.1% rate=5440.6/5440 p99=926us 
+2026-11-14T10:14:26Z r09-m-buffer-default VALID ins_u=166.7k cyc_tot=536.6k busy=33.1% rate=5440.6/5440 p99=649us 
+2026-11-14T10:15:05Z r10-m-buffer-default VALID ins_u=166.6k cyc_tot=544.2k busy=33.6% rate=5440.5/5440 p99=627us 
+2026-11-14T10:15:44Z r10-m-buffer-4k VALID ins_u=182.0k cyc_tot=640.4k busy=38.9% rate=5440.6/5440 p99=1788us 
+2026-11-14T10:16:22Z r11-m-buffer-default VALID ins_u=166.5k cyc_tot=539.4k busy=33.3% rate=5440.5/5440 p99=695us 
+2026-11-14T10:17:01Z r11-m-buffer-4k VALID ins_u=182.0k cyc_tot=648.1k busy=39.5% rate=5440.6/5440 p99=977us 
+2026-11-14T10:17:39Z r12-m-buffer-4k VALID ins_u=181.8k cyc_tot=637.3k busy=38.7% rate=5440.5/5440 p99=1470us 
+2026-11-14T10:18:18Z r12-m-buffer-default VALID ins_u=166.5k cyc_tot=537.5k busy=33.2% rate=5440.6/5440 p99=618us 
+2026-11-14T10:18:18Z after 12 rounds: widest cycles_total half-width 0.63% (m buffer-4k vs buffer-default) <= target 1.50%
+2026-11-14T10:18:18Z origin container 20eac7e30ce4 stopped
+2026-11-14T10:18:19Z done: ~/epl/runs/sm/08-buffer-limit/summary.md

@@ -1,0 +1,8 @@
+Data licence: Creative Commons Attribution 4.0 International (CC BY 4.0),
+https://creativecommons.org/licenses/by/4.0/
+
+Copyright 2026 We-Amp B.V.
+
+The measurement records, tables and run logs in this package are licensed under the licence named above.
+The scripts in worker-count/scripts/, worker-count/cstate/scripts/, aa-label-swap/aa_decompose.py and the
+run-queue *.sh files are code; they are licensed under the Apache License 2.0, as the harness is.

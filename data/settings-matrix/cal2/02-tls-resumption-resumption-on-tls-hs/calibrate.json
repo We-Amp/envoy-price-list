@@ -1,0 +1,33 @@
+[
+ {
+  "rps": 2800,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.24661062499999997,
+  "client_headroom": 0.7630375511164014,
+  "rate": 2800.2975038280083,
+  "ins_u_k": 351.7552226516926,
+  "cyc_total_k": 763.7585186846491,
+  "p99_us": 3731.967,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 56133,
+   "http.ingress_http.downstream_cx_destroy": 5632,
+   "http.ingress_http.downstream_cx_total": 5632,
+   "http.ingress_http.downstream_rq_2xx": 56133,
+   "http.ingress_http.downstream_rq_total": 56133,
+   "listener.127.0.0.1_10110.downstream_cx_total": 5632,
+   "listener.127.0.0.1_10110.ssl.handshake": 5632,
+   "listener.127.0.0.1_10110.ssl.no_certificate": 5632,
+   "listener.127.0.0.1_10110.ssl.session_reused": 5632,
+   "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 1408,
+   "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 1408,
+   "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 1408,
+   "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 1408,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 401,
+  "access_log_lines": null
+ }
+]

@@ -1,0 +1,88 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/smf",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8
+ },
+ "rounds": 12,
+ "rounds_block": 6,
+ "rounds_max": 24,
+ "stop": {
+  "target_half_width_pct": 1.5
+ },
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "name": "smf-buffer-limit",
+ "base_arm": "buffer-default",
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "buffer-default"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "buffer-4k",
+   "settings": {
+    "buffer_limit_bytes": 4096
+   }
+  }
+ ],
+ "shapes": [
+  {
+   "name": "m",
+   "path": "/m",
+   "kind": "proxied",
+   "body_bytes": 16384,
+   "rps": 5440
+  },
+  {
+   "name": "s2k",
+   "path": "/s2k",
+   "kind": "proxied",
+   "body_bytes": 2048,
+   "rps": 5200
+  }
+ ]
+}

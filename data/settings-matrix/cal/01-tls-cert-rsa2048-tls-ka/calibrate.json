@@ -1,0 +1,50 @@
+[
+ {
+  "rps": 4000,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 547 (upstream_cx_overflow=547)",
+   "client pending total 729 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.256819,
+  "client_headroom": 0.7584538072526339,
+  "rate": 4000.434145544654,
+  "ins_u_k": 181.37435878255502,
+  "cyc_total_k": 563.322166485304,
+  "p99_us": 853.471,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 80159,
+   "http.ingress_http.downstream_rq_2xx": 80159,
+   "http.ingress_http.downstream_rq_total": 80158,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 729,
+  "access_log_lines": null
+ },
+ {
+  "rps": 5200,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 1304 (upstream_cx_overflow=1304)",
+   "client pending total 1026 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.318879,
+  "client_headroom": 0.7484617061221417,
+  "rate": 5200.5542259247195,
+  "ins_u_k": 181.21931095380953,
+  "cyc_total_k": 543.7097357632534,
+  "p99_us": 1091.9669999999999,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 104202,
+   "http.ingress_http.downstream_rq_2xx": 104202,
+   "http.ingress_http.downstream_rq_total": 104201,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 1026,
+  "access_log_lines": null
+ }
+]

@@ -1,0 +1,939 @@
+"""Experiment config, balanced schedule, adaptive run loop, paired analysis."""
+
+import copy
+import json
+import os
+import platform
+import random
+import re
+import shutil
+import subprocess
+import time
+
+from . import __version__, envoy_config, stats, sysprobe, validity
+
+ALPHA = 0.05
+
+DEFAULTS = {
+    # Rounds: at least `rounds`, then blocks of `rounds_block` until every primary
+    # comparison's 95% interval half-width is at or under the stop target, at most
+    # `rounds_max`. `adaptive: false` runs exactly `rounds`.
+    "rounds": 12,
+    "rounds_block": 6,
+    "rounds_max": 36,
+    "adaptive": True,
+    "stop": {"target_half_width_pct": 3.0},
+    # auto: abba for 2 arms, rotate for 3 or more. Each round pair (r, r+1) runs
+    # one order forward and the other reversed; a seeded coin picks which comes
+    # first, so a disturbance with a period of two legs cannot line up with an arm.
+    "order": "auto",
+    "order_seed": 1,
+    # Comparisons: "base" (every arm against base_arm) or "all_pairs".
+    "comparisons": "base",
+    # One primary metric per comparison row; Holm across the primary rows. All
+    # other metrics are exploratory: interval only, no multiplicity control.
+    "primary_metric": "cycles_total",
+    "min_pairs": 6,
+    "rerun_invalid": 1,          # re-run a round (one shape, all arms) with an invalid leg, at most this often
+    "abort_after_invalid": 6,    # consecutive invalid legs before the run gives up
+    # A/A limits: the 95% half-width the self-test must reach. Set them from the
+    # smallest effect the runs that rely on this A/A intend to claim: release and
+    # setting rows claim cycle effects of about 1%, so an A/A with a 3% interval
+    # could not have excluded a harness bias of the size being published.
+    "aa": {"metrics": ["instructions_u", "cycles_total"],
+           "max_half_width_pct": {"instructions_u": 0.5, "cycles_total": 1.0}},
+    "envoy": {"workers": 4, "listener_port": 10110, "admin_port": 9921, "exact_balance": True,
+              "log_level": "warn", "codec_type": "HTTP1"},
+    "client": {"concurrency": 4, "connections_per_worker": 16, "warmup_s": 5, "duration_s": 25,
+               "idle_strategy": "poll", "open_loop": True, "extra_args": []},
+    "measure": {"lead_in_s": 2, "window_s": 20, "perf": ["perf"], "conn_probe": True},
+    "validity": {"rate_tolerance": 0.01, "min_client_headroom": 0.25, "max_overflow": 0, "max_non2xx": 0},
+    "idle": {"max_load1": 4.0, "max_busy_pct": 2.0, "max_cpu_busy_pct": 5.0, "sample_s": 1.0, "poll_s": 5,
+             "timeout_s": 600,
+             "procs": [r"(^|/)envoy[^/ ]*( |$)", r"(^|/)nighthawk_client( |$)", r"(^|/)h2load( |$)",
+                       r"(^|/)wrk2?( |$)", r"(^|/)fortio( |$)"]},
+    "origin": {"mode": "docker", "image": "nginx:alpine", "port": 8092, "workers": 8, "authz_port": None,
+               "authz_grpc_port": None},
+    # second Envoy of a two-hop arm (its CPUs are cpus.hop2); baseline config
+    "hop2": {"listener_port": 10120, "admin_port": 9931},
+    # null OpenTelemetry collector for tracing arms (image pinned by digest in the config)
+    "collector": {"image": None, "port": 4317},
+    "record_hostname": False,
+    "alpha": ALPHA,
+}
+
+METRICS = [
+    ("instructions_u", "instructions:u / req", lambda m: m["per_req"]["instructions_u"]),
+    ("cycles_u", "cycles:u / req", lambda m: m["per_req"]["cycles_u"]),
+    ("cycles_k", "cycles:k / req", lambda m: m["per_req"]["cycles_k"]),
+    ("cycles_total", "cycles (u+k) / req", lambda m: m["per_req"]["cycles_total"]),
+    # two-hop experiments only (absent elsewhere, so no comparison is made):
+    # every hop together, and that divided by the number of hops
+    ("cycles_total_all", "cycles (u+k) / req, all hops", lambda m: m["per_req"]["cycles_total_all"]),
+    ("cycles_total_per_hop", "cycles (u+k) / req / hop", lambda m: m["per_req"]["cycles_total_per_hop"]),
+    ("instructions_u_all", "instructions:u / req, all hops", lambda m: m["per_req"]["instructions_u_all"]),
+    ("cycles_total_hop2", "cycles (u+k) / req, second hop", lambda m: m["per_req"]["cycles_total_hop2"]),
+    ("hop2_worker_max_share", "second hop: busiest worker's share", lambda m: m["hop2_workers"]["worker_max_share"]),
+    ("hop2_worker_max_busy", "second hop: busiest worker busy (of a core)",
+     lambda m: m["hop2_workers"]["worker_max_busy"]),
+    ("hop2_conns_used", "first hop -> second hop: connections carrying traffic",
+     lambda m: m["conn_hop2_downstream"]["conns_over_1pct_of_mean"]),
+    ("p50_us", "p50 latency (us)", lambda m: m["latency_us"]["p50"]),
+    ("p99_us", "p99 latency (us)", lambda m: m["latency_us"]["p99"]),
+]
+METRIC_KEYS = [k for k, _, _ in METRICS]
+LATENCY_KEYS = ("p50_us", "p99_us")
+
+
+def _merge(base, over):
+    out = copy.deepcopy(base)
+    for k, v in (over or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _merge(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+
+def _expand(p):
+    """~ expansion; a bare program name (no slash) is looked up on PATH."""
+    if not isinstance(p, str):
+        return p
+    p = os.path.expanduser(os.path.expandvars(p))
+    if "/" not in p:
+        found = shutil.which(p)
+        if found:
+            return found
+    return p
+
+
+def parse_sets(items):
+    """["a.b=1", "c=x"] -> nested override dict; values are JSON when they parse."""
+    out = {}
+    for it in items or []:
+        if "=" not in it:
+            raise ValueError("--set wants key=value, got %r" % it)
+        k, v = it.split("=", 1)
+        try:
+            val = json.loads(v)
+        except ValueError:
+            val = v
+        cur = out
+        parts = k.split(".")
+        for p in parts[:-1]:
+            cur = cur.setdefault(p, {})
+        cur[parts[-1]] = val
+    return out
+
+
+def load(path, overrides=None):
+    with open(path) as f:
+        raw = json.load(f)
+    exp = _merge(DEFAULTS, raw)
+    exp = _merge(exp, overrides or {})
+    exp["_config_text"] = json.dumps(_merge(raw, overrides or {}), sort_keys=True)
+    for a in exp["arms"]:
+        a["binary"] = _expand(a["binary"])
+    exp["client"]["binary"] = _expand(exp["client"]["binary"])
+    if isinstance(exp["measure"]["perf"], str):
+        exp["measure"]["perf"] = exp["measure"]["perf"].split()
+    exp["measure"]["perf"] = [_expand(x) for x in exp["measure"]["perf"]]
+    exp["workdir"] = _expand(exp.get("workdir", "~/epl/runs"))
+    if exp.get("floor_from"):
+        exp["floor_from"] = _expand(exp["floor_from"])
+    return exp
+
+
+def arm_settings(arm):
+    return dict(arm.get("settings") or {})
+
+
+def arm_envoy(exp, arm, run_dir=""):
+    """The experiment's envoy section with the arm's settings merged in, plus the
+    ports and paths the harness owns (access-log file, collector, authz service,
+    second hop)."""
+    e = _merge(exp["envoy"], arm_settings(arm))
+    if e.get("access_log"):
+        e["access_log"] = dict(e["access_log"], path=os.path.join(run_dir, "alog", arm["name"] + ".alog"))
+    if e.get("tracing"):
+        e["collector_port"] = exp["collector"]["port"]
+    if e.get("ext_authz") == "grpc":
+        e["authz_grpc_port"] = exp["origin"]["authz_grpc_port"]
+    elif e.get("ext_authz"):
+        e["authz_port"] = exp["origin"]["authz_port"]
+    if e.get("two_hop"):
+        e["upstream_port"] = exp["hop2"]["listener_port"]
+    return e
+
+
+def hop2_envoy(exp, arm=None):
+    """The second hop: the experiment's baseline envoy section on the hop2 ports, plus
+    the arm's `hop2_settings` (none by default)."""
+    over = dict((arm_settings(arm).get("hop2_settings") or {}) if arm else {})
+    for k in ("two_hop", "hop2_settings"):
+        if k in over:
+            raise ValueError("hop2_settings cannot contain %s" % k)
+    # the second hop always listens on loopback (the first hop's upstream is 127.0.0.1)
+    over.update(listener_port=exp["hop2"]["listener_port"], admin_port=exp["hop2"]["admin_port"],
+                listener_address="127.0.0.1")
+    return _merge(exp["envoy"], over)
+
+
+def hop2_key(arm):
+    return "_hop2:" + arm["name"]
+
+
+def uses(exp, setting):
+    return any(arm_settings(a).get(setting) for a in exp["arms"]) or bool(exp["envoy"].get(setting))
+
+
+def prepare_bootstraps(exp, run_dir, log=lambda m: None, make_certs=True):
+    """Write one bootstrap per arm (and one for the second hop when an arm uses
+    it); make the test certificates when an arm uses TLS. Returns
+    ({arm name: path, "_hop2:<arm>": path}, {arm name: bootstrap text}, cert metadata)."""
+    certs = None
+    cert_dir = os.path.join(run_dir, "certs")
+    if uses(exp, "tls"):
+        kinds = sorted({(arm_envoy(exp, a).get("tls") or {}).get("cert", "rsa2048")
+                        for a in exp["arms"] if arm_envoy(exp, a).get("tls")})
+        if make_certs:
+            from .origin import make_certs as mk
+            certs = mk(cert_dir, kinds, log)
+        else:
+            certs = {"certs": {k: {"crt_sha256": "dry-run"} for k in kinds}}
+    if uses(exp, "access_log"):
+        os.makedirs(os.path.join(run_dir, "alog"), exist_ok=True)
+    paths, texts = {}, {}
+    plain = not any(arm_settings(a) for a in exp["arms"])
+    for a in exp["arms"]:
+        t = envoy_config.bootstrap_text(exp["shapes"], arm_envoy(exp, a, run_dir), exp["origin"]["port"], cert_dir)
+        p = os.path.join(run_dir, "envoy-bootstrap.json" if plain else "envoy-bootstrap-%s.json" % a["name"])
+        with open(p, "w") as f:
+            f.write(t)
+        paths[a["name"]], texts[a["name"]] = p, t
+    # one second-hop bootstrap per two-hop arm (they differ only when hop2_settings differ)
+    for a in exp["arms"]:
+        if not arm_settings(a).get("two_hop"):
+            continue
+        t = envoy_config.bootstrap_text(exp["shapes"], hop2_envoy(exp, a), exp["origin"]["port"], cert_dir)
+        p = os.path.join(run_dir, "envoy-bootstrap-hop2-%s.json" % a["name"])
+        with open(p, "w") as f:
+            f.write(t)
+        paths[hop2_key(a)], texts[hop2_key(a)] = p, t
+    return paths, texts, certs
+
+
+def effective_order(exp):
+    if exp["order"] == "auto":
+        return "abba" if len(exp["arms"]) <= 2 else "rotate"
+    return exp["order"]
+
+
+def order_period(exp):
+    """Rounds after which every arm has been in every position equally often."""
+    return 2 if effective_order(exp) == "abba" else 2 * len(exp["arms"])
+
+
+def validate(exp, allow_short=False, check_rounds=True):
+    errs = []
+    if not exp.get("name") or not re.match(r"^[A-Za-z0-9._-]+$", exp["name"]):
+        errs.append("name must be [A-Za-z0-9._-]+")
+    arms = exp.get("arms", [])
+    names = [a.get("name") for a in arms]
+    if len(arms) < 2:
+        errs.append("need at least 2 arms")
+    if len(set(names)) != len(names):
+        errs.append("arm names must be unique")
+    for n in names:
+        if not n or not re.match(r"^[A-Za-z0-9._-]+$", n):
+            errs.append("arm name %r must be [A-Za-z0-9._-]+" % n)
+    if exp.get("base_arm", names[0] if names else None) not in names:
+        errs.append("base_arm not among arms")
+    if exp["order"] not in ("auto", "abba", "rotate"):
+        errs.append("order must be auto, abba or rotate")
+    elif exp["order"] == "abba" and len(arms) > 2:
+        errs.append("abba with %d arms pins the middle arms to fixed positions; use rotate (or auto)" % len(arms))
+    if exp["comparisons"] not in ("base", "all_pairs"):
+        errs.append("comparisons must be base or all_pairs")
+    if exp["primary_metric"] not in METRIC_KEYS:
+        errs.append("primary_metric must be one of %s" % METRIC_KEYS)
+    if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate"):
+        per = order_period(exp)
+        rmin, rmax, blk = exp["rounds"], exp["rounds_max"], exp["rounds_block"]
+        if rmin < 12 and not allow_short:
+            errs.append("rounds must be >= 12 (method rule); use --allow-short only for smoke runs")
+        for label, v in (("rounds", rmin), ("rounds_max", rmax), ("rounds_block", blk)):
+            if v < 2 or v % 2:
+                errs.append("%s must be even (got %d)" % (label, v))
+            elif v % per:
+                errs.append("%s must be a multiple of %d (%s order, %d arms)" % (
+                    label, per, effective_order(exp), len(arms)))
+        if rmax < rmin:
+            errs.append("rounds_max must be >= rounds")
+        if rmax > 36 and not allow_short:
+            errs.append("rounds_max is capped at 36")
+    sets = {k: sysprobe.parse_cpuset(v) for k, v in exp["cpus"].items()}
+    keys = sorted(sets)
+    for i in range(len(keys)):
+        for j in range(i + 1, len(keys)):
+            ov = sets[keys[i]] & sets[keys[j]]
+            if ov:
+                errs.append("cpu sets %s and %s overlap on %s" % (keys[i], keys[j], sorted(ov)[:8]))
+    for k in ("sut", "client"):
+        if k not in sets:
+            errs.append("cpus.%s missing" % k)
+    if any(s["kind"] == "proxied" for s in exp.get("shapes", [])) and exp["origin"]["mode"] == "docker" \
+            and "origin" not in sets:
+        errs.append("cpus.origin missing for a docker origin")
+    snames = [s.get("name") for s in exp.get("shapes", [])]
+    if not snames or len(set(snames)) != len(snames):
+        errs.append("shapes must be non-empty with unique names")
+    for s in exp.get("shapes", []):
+        if s.get("kind") not in ("proxied", "direct_headers"):
+            errs.append("shape %s: kind must be proxied or direct_headers" % s.get("name"))
+        if not str(s.get("path", "")).startswith("/"):
+            errs.append("shape %s: path must start with /" % s.get("name"))
+        if int(s.get("rps", 0)) % int(exp["client"]["concurrency"]) != 0:
+            errs.append("shape %s: rps must be divisible by client concurrency" % s.get("name"))
+    for a in arms:
+        st = arm_settings(a)
+        bad = sorted(k for k in st if k not in envoy_config.SETTINGS and k not in ("codec_type",))
+        if bad:
+            errs.append("arm %s: unknown settings %s (known: %s)" % (a.get("name"), bad,
+                                                                     sorted(envoy_config.SETTINGS)))
+        tls = st.get("tls") or exp["envoy"].get("tls")
+        if tls and tls.get("cert", "rsa2048") not in envoy_config.CERT_KINDS:
+            errs.append("arm %s: tls.cert must be one of %s" % (a.get("name"), sorted(envoy_config.CERT_KINDS)))
+        if bool(st.get("tls", exp["envoy"].get("tls"))) != bool(arms[0].get("settings", {}).get(
+                "tls", exp["envoy"].get("tls"))):
+            errs.append("arms must agree on TLS on or off (the client URL is per experiment)")
+        if not isinstance(a.get("env", {}), dict):
+            errs.append("arm %s: env must be an object" % a.get("name"))
+        if not isinstance(a.get("hop2_env", {}), dict):
+            errs.append("arm %s: hop2_env must be an object" % a.get("name"))
+        if "hop2_env" in a and not arm_settings(a).get("two_hop"):
+            errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
+    if uses(exp, "two_hop") and "hop2" not in sets:
+        errs.append("a two_hop arm needs cpus.hop2")
+    if uses(exp, "tracing") and not exp["collector"].get("image"):
+        errs.append("a tracing arm needs collector.image")
+    if uses(exp, "tracing") and "origin" not in sets:
+        errs.append("a tracing arm needs cpus.origin (the collector runs there)")
+    for a in arms:
+        az = arm_settings(a).get("ext_authz")
+        if az == "grpc" and not exp["origin"].get("authz_grpc_port"):
+            errs.append("arm %s: a gRPC ext_authz arm needs origin.authz_grpc_port" % a.get("name"))
+        elif az and az != "grpc" and not exp["origin"].get("authz_port"):
+            errs.append("arm %s: an HTTP ext_authz arm needs origin.authz_port" % a.get("name"))
+        h2s = arm_settings(a).get("hop2_settings")
+        if h2s is not None:
+            if not arm_settings(a).get("two_hop"):
+                errs.append("arm %s: hop2_settings without two_hop" % a.get("name"))
+            bad = sorted(k for k in h2s if k not in envoy_config.SETTINGS or k in ("two_hop", "hop2_settings"))
+            if bad:
+                errs.append("arm %s: hop2_settings cannot contain %s" % (a.get("name"), bad))
+        if not isinstance(a.get("validity", {}), dict):
+            errs.append("arm %s: validity must be an object" % a.get("name"))
+    if exp.get("primary_metric") in ("cycles_total_all", "cycles_total_per_hop") and not uses(exp, "two_hop"):
+        errs.append("primary metric %s needs a two_hop arm" % exp["primary_metric"])
+    m = exp["measure"]
+    if m["lead_in_s"] + m["window_s"] + 1 > exp["client"]["duration_s"]:
+        errs.append("client duration must exceed lead_in + window + 1 s")
+    b = m.get("burst")
+    if b:
+        if not uses(exp, "two_hop"):
+            errs.append("measure.burst needs a two_hop arm (it pauses the second hop)")
+        if not 0 < float(b.get("at_s", -1)) < m["window_s"]:
+            errs.append("measure.burst.at_s must lie inside the perf window")
+        if "pause_hop2_ms" in b and not 0 < float(b["pause_hop2_ms"]) <= 1000:
+            errs.append("measure.burst.pause_hop2_ms must be in (0, 1000]")
+        if not 0.1 <= float(b.get("sample_s", 1.0)) <= 10:
+            errs.append("measure.burst.sample_s must be in [0.1, 10]")
+    return errs
+
+
+def _coin(seed, pair):
+    return random.Random("epl-order:%s:%d" % (seed, pair)).random() < 0.5
+
+
+def round_order(exp, r):
+    """Arm order of round r (1-based).
+
+    abba:   A B / B A per round pair.
+    rotate: round pair p starts at arm p mod k, so over 2k rounds every arm is
+            in every position exactly twice (once in each direction).
+    In every pair one round runs forward and the other reversed; a seeded coin
+    per pair decides which one comes first.
+    """
+    arms = exp["arms"]
+    k = len(arms)
+    pair = (r - 1) // 2
+    if effective_order(exp) == "abba":
+        fwd = list(arms)
+    else:
+        s = pair % k
+        fwd = arms[s:] + arms[:s]
+    first = (r % 2 == 1)
+    flip = _coin(exp.get("order_seed", 1), pair) if exp.get("order_seed") is not None else False
+    forward = first != flip
+    return fwd if forward else list(reversed(fwd))
+
+
+def schedule(exp, first=1, last=None):
+    """[(round, shape, arm)] for rounds first..last (default: the minimum rounds)."""
+    last = exp["rounds"] if last is None else last
+    out = []
+    for r in range(first, last + 1):
+        order = round_order(exp, r)
+        for sh in exp["shapes"]:
+            for a in order:
+                out.append((r, sh, a))
+    return out
+
+
+def leg_id(r, shape, arm, attempt=0):
+    return "r%02d-%s-%s%s" % (r, shape["name"], arm["name"], (".rr%d" % attempt) if attempt else "")
+
+
+# ---------------------------------------------------------------- metadata
+
+def _cmd_out(args, timeout=60):
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        return (r.stdout + r.stderr).strip()
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return "error: %s" % e
+
+
+def harness_version():
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    vf = os.path.join(here, "VERSION")
+    if os.path.exists(vf):
+        with open(vf) as f:
+            return f.read().strip()
+    try:
+        r = subprocess.run(["git", "-C", here, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10)
+        d = subprocess.run(["git", "-C", here, "status", "--porcelain"], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return "%s (no git)" % __version__
+    if r.returncode != 0:
+        return "%s (uncommitted)" % __version__
+    return "%s %s%s" % (__version__, r.stdout.strip()[:12], " dirty" if d.stdout.strip() else "")
+
+
+def nighthawk_commit(version_text, configured=None):
+    """(commit, source) for the client build. A commit given in the config wins;
+    else a 40-hex revision printed by `--version` (Envoy-style builds print
+    "<sha>/<version>/..."); else None, and the md5 identifies the build."""
+    if configured and configured != "unknown":
+        return configured, "config"
+    m = re.search(r"\b([0-9a-f]{40})\b", version_text or "")
+    if m:
+        return m.group(1), "--version"
+    return None, "not found in --version; the md5 identifies the build"
+
+
+def collect_metadata(exp, bootstrap_text, texts=None):
+    md = {"harness": harness_version(), "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+          "machine_label": exp.get("machine_label"),
+          "machine": sysprobe.machine_metadata(exp["cpus"], exp.get("record_hostname", False)),
+          "cpus": exp["cpus"], "config_sha256": sysprobe.text_sha256(exp["_config_text"]),
+          "bootstrap_sha256": sysprobe.text_sha256(bootstrap_text), "arms": {}}
+    if texts:
+        md["bootstrap_sha256_per_arm"] = {k: sysprobe.text_sha256(v) for k, v in texts.items()}
+    for a in exp["arms"]:
+        h = sysprobe.file_hashes(a["binary"])
+        ver = _cmd_out([a["binary"], "--version"])
+        vm = re.search(r"version:\s*(\S+)", ver)
+        md["arms"][a["name"]] = dict(h, path=a["binary"], version=vm.group(1) if vm else ver[-200:],
+                                     source=a.get("source"), source_sha256=a.get("source_sha256"),
+                                     extra_args=a.get("extra_args", []), settings=arm_settings(a),
+                                     env=a.get("env", {}))
+    nh = exp["client"]["binary"]
+    vtxt = _cmd_out([nh, "--version"])
+    vline = ([x for x in vtxt.splitlines() if x.strip()] or [""])[-1]
+    vm = re.search(r"version:\s*(\S+)", vline)
+    commit, csrc = nighthawk_commit(vtxt, exp["client"].get("commit"))
+    md["client"] = dict(sysprobe.file_hashes(nh), path=nh, version=vm.group(1) if vm else vline[-80:],
+                        commit=commit, commit_source=csrc,
+                        settings={k: v for k, v in exp["client"].items() if k != "binary"})
+    md["perf_version"] = _cmd_out(exp["measure"]["perf"] + ["--version"])
+    return md
+
+
+def check_binaries(exp, md):
+    errs = []
+    for a in exp["arms"]:
+        want = a.get("md5")
+        got = md["arms"][a["name"]]["md5"]
+        if want and want != got:
+            errs.append("arm %s md5 %s != expected %s" % (a["name"], got, want))
+        want = a.get("source_sha256")
+        got = md["arms"][a["name"]]["sha256"]
+        if want and want != got:
+            errs.append("arm %s sha256 %s != source sha256 %s" % (a["name"], got, want))
+    return errs
+
+
+def validate_bootstrap(exp, path):
+    """path: one bootstrap for every arm, or {arm name: path, "_hop2:<arm>": path}."""
+    res = {}
+    todo = [(a["name"], a, path[a["name"]] if isinstance(path, dict) else path) for a in exp["arms"]]
+    if isinstance(path, dict):
+        todo += [(hop2_key(a), a, path[hop2_key(a)]) for a in exp["arms"] if hop2_key(a) in path]
+    for name, a, path in todo:
+        try:
+            r = subprocess.run([a["binary"], "--mode", "validate", "-c", path, "-l", "warn"],
+                               capture_output=True, text=True, timeout=120,
+                               env=dict(os.environ, **a.get("env", {})))
+            out, rc = r.stdout + r.stderr, r.returncode
+        except (OSError, subprocess.TimeoutExpired) as e:
+            out, rc = "error: %s" % e, -1
+        ok = rc == 0 and re.search(r"^configuration '.*' OK$", out, re.M) is not None
+        res[name] = {"ok": ok, "exit": rc, "deprecated_lines": len(re.findall(r"(?i)deprecat", out)),
+                          "warnings": [ln[-300:] for ln in out.splitlines() if "[warning]" in ln][:10],
+                          "tail": out[-400:]}
+    return res
+
+
+# ---------------------------------------------------------------- analysis
+
+def comparison_pairs(exp):
+    """[(arm, reference)] names, in a stable order."""
+    names = [a["name"] for a in exp["arms"]]
+    base = exp.get("base_arm", names[0])
+    if exp.get("comparisons", "base") == "all_pairs":
+        return [(names[j], names[i]) for i in range(len(names)) for j in range(i + 1, len(names))]
+    return [(n, base) for n in names if n != base]
+
+
+def floor_from_results(res):
+    """{shape: {metric: {"hw": A/A 95% half-width, "far": far end of the A/A 95%
+    interval from zero}}} in log-%, from an A/A results dict. Over several A/A
+    comparisons in one shape, the widest is kept."""
+    out = {}
+    for s, sres in res["analysis"]["shapes"].items():
+        for comp in sres.get("comparisons", []):
+            for k in METRIC_KEYS:
+                p = (comp.get(k) or {}).get("paired") or {}
+                if p.get("half_width_pct") is None:
+                    continue
+                far = max(abs(p["log_lo_pct"]), abs(p["log_hi_pct"]))
+                cur = out.setdefault(s, {}).setdefault(k, {"hw": 0.0, "far": 0.0})
+                cur["hw"] = max(cur["hw"], p["half_width_pct"])
+                cur["far"] = max(cur["far"], far)
+    return out
+
+
+def aa_position(c):
+    """Where an effect sits against the A/A run: "floor" when |effect| is within
+    the A/A half-width, "interval" when within the far end of the A/A interval,
+    None when outside both (or no A/A given). Log-% on both sides."""
+    hw, far = c.get("aa_floor_half_width_pct"), c.get("aa_floor_far_pct")
+    p = c.get("paired") or {}
+    if hw is None or p.get("log_mean_pct") is None:
+        return None
+    e = abs(p["log_mean_pct"])
+    if e <= hw:
+        return "floor"
+    if far is not None and e <= far:
+        return "interval"
+    return None
+
+
+def load_floor(path):
+    if not path:
+        return None
+    with open(os.path.expanduser(path)) as f:
+        return floor_from_results(json.load(f))
+
+
+def _value(m, key, get, vcfg):
+    if key in LATENCY_KEYS and not validity.latency_ok(m, vcfg):
+        return None
+    try:
+        return get(m)
+    except (KeyError, TypeError):
+        return None
+
+
+def current_legs(legs):
+    """Valid, not superseded legs keyed by (shape, arm, round)."""
+    by = {}
+    for m in legs:
+        if m.get("superseded") or not m.get("verdict", {}).get("valid"):
+            continue
+        by[(m["shape"], m["arm"], m["round"])] = m
+    return by
+
+
+def analyse(exp, legs, floor=None):
+    base = exp.get("base_arm", exp["arms"][0]["name"])
+    alpha = exp.get("alpha", ALPHA)
+    primary = exp.get("primary_metric", "cycles_total")
+    min_pairs = exp.get("min_pairs", 6)
+    vcfg = exp.get("validity")
+    by = current_legs(legs)
+    getters = {k: g for k, _, g in METRICS}
+    out = {"base_arm": base, "alpha": alpha, "primary_metric": primary, "min_pairs": min_pairs,
+           "rounds_done": max([m["round"] for m in legs] or [0]), "shapes": {},
+           "headline": "mean of per-round log ratios (arm/reference) with a two-sided 95% t interval"}
+    for sh in exp["shapes"]:
+        s = sh["name"]
+        sres = {"arms": {}, "comparisons": [], "vs_base": {}}
+        for a in exp["arms"]:
+            an = a["name"]
+            mine = [m for m in legs if m["shape"] == s and m["arm"] == an and not m.get("superseded")]
+            valid = [m for m in mine if m.get("verdict", {}).get("valid")]
+            summ = {"legs": len(mine), "valid": len(valid),
+                    "superseded": len([m for m in legs if m["shape"] == s and m["arm"] == an
+                                       and m.get("superseded")])}
+            for key, _, get in METRICS:
+                vals = [v for v in (_value(m, key, get, vcfg) for m in valid) if v is not None]
+                if vals:
+                    sd = stats.stdev(vals)
+                    mu = stats.mean(vals)
+                    summ[key] = {"mean": mu, "median": stats.median(vals), "min": min(vals), "max": max(vals),
+                                 "cv_pct": (100.0 * sd / mu) if sd is not None and mu else None, "n": len(vals)}
+            busy = [m["sut_busy"] for m in valid if m.get("sut_busy") is not None]
+            if busy:
+                summ["sut_busy_mean"] = stats.mean(busy)
+            hr = [m["client_headroom"] for m in valid if m.get("client_headroom") is not None]
+            if hr:
+                summ["client_headroom_min"] = min(hr)
+            sres["arms"][an] = summ
+        for an, rn in comparison_pairs(exp):
+            rounds = sorted(r for (ss, aa, r) in by if ss == s and aa == an and (s, rn, r) in by)
+            comp = {"arm": an, "ref": rn, "rounds_paired": rounds}
+            for key, _, get in METRICS:
+                pr = [r for r in rounds if _value(by[(s, rn, r)], key, get, vcfg) is not None
+                      and _value(by[(s, an, r)], key, get, vcfg) is not None]
+                if not pr:
+                    continue
+                bv = [_value(by[(s, rn, r)], key, get, vcfg) for r in pr]
+                av = [_value(by[(s, an, r)], key, get, vcfg) for r in pr]
+                c = stats.compare_paired(bv, av, alpha=alpha)
+                c["role"] = "primary" if key == primary else "exploratory"
+                if floor and s in floor and key in floor[s]:
+                    c["aa_floor_half_width_pct"] = floor[s][key]["hw"]
+                    c["aa_floor_far_pct"] = floor[s][key]["far"]
+                comp[key] = c
+            sres["comparisons"].append(comp)
+            if rn == base:
+                sres["vs_base"][an] = comp
+        out["shapes"][s] = sres
+    # Holm across the primary rows; everything else stays exploratory.
+    prim = []
+    for s, sres in out["shapes"].items():
+        for comp in sres["comparisons"]:
+            c = comp.get(primary)
+            if c and c["paired"].get("t_p") is not None and c["n"] >= min_pairs:
+                prim.append(c)
+    adj = stats.holm([c["paired"]["t_p"] for c in prim])
+    for c, a in zip(prim, adj):
+        c["holm_p"] = a
+    out["primary_family_size"] = len(prim)
+    for s, sres in out["shapes"].items():
+        for comp in sres["comparisons"]:
+            for key in METRIC_KEYS:
+                c = comp.get(key)
+                if not c:
+                    continue
+                p = c["paired"]
+                if c["n"] < min_pairs or p.get("half_width_pct") is None:
+                    c["status"] = "insufficient"
+                    c["differs"] = None
+                elif c["role"] == "primary":
+                    c["differs"] = c.get("holm_p", 1.0) <= alpha
+                    c["status"] = "differs" if c["differs"] else "not resolved"
+                else:
+                    c["differs"] = not (p["log_lo_pct"] <= 0.0 <= p["log_hi_pct"])
+                    c["status"] = "exploratory: interval excludes 0" if c["differs"] else "exploratory"
+                # A difference no larger than what the A/A could not exclude is
+                # not a finding on its own; say so instead of leaving it to the write-up.
+                pos = aa_position(c) if c.get("differs") else None
+                c["inside_aa"] = pos
+                if pos == "floor":
+                    c["status"] += ", inside the A/A floor"
+                elif pos == "interval":
+                    c["status"] += ", inside the A/A interval"
+    return out
+
+
+def stop_check(exp, analysis):
+    """(stop, why): every primary comparison has n >= min_pairs and a 95% half-width
+    at or under the target. Stopping on interval width, never on a p-value."""
+    target = exp.get("stop", {}).get("target_half_width_pct", 3.0)
+    metric = exp.get("stop", {}).get("metric", exp.get("primary_metric", "cycles_total"))
+    if exp.get("expect") == "aa":
+        # an A/A run keeps going until it can pass its own half-width limit
+        lim = exp.get("aa", DEFAULTS["aa"])["max_half_width_pct"].get(metric)
+        if lim is not None:
+            target = min(target, lim)
+    worst = []
+    for s, sres in analysis["shapes"].items():
+        for comp in sres["comparisons"]:
+            c = comp.get(metric)
+            hw = (c or {}).get("paired", {}).get("half_width_pct")
+            if c is None or hw is None or c["n"] < exp.get("min_pairs", 6):
+                return False, "%s %s vs %s: not enough pairs" % (s, comp["arm"], comp["ref"])
+            worst.append((hw, "%s %s vs %s" % (s, comp["arm"], comp["ref"])))
+    if not worst:
+        return False, "no comparisons"
+    hw, where = max(worst)
+    if hw <= target:
+        return True, "widest %s half-width %.2f%% (%s) <= target %.2f%%" % (metric, hw, where, target)
+    return False, "widest %s half-width %.2f%% (%s) > target %.2f%%" % (metric, hw, where, target)
+
+
+def aa_verdict(exp, analysis):
+    """A/A self-test with power.
+
+    Pass when, for every shape and every metric in aa.metrics:
+      - there are at least min_pairs valid pairs;
+      - the difference is not significant after Holm across all the A/A checks
+        (paired t), so a perfect harness fails at most alpha of the time overall;
+      - the 95% half-width is at or under aa.max_half_width_pct for that metric,
+        so the run could have seen a bias of about that size (mde_pct is the bias
+        it detects with 80% power, before the Holm step).
+    """
+    aa = exp.get("aa", DEFAULTS["aa"])
+    alpha = analysis["alpha"]
+    checks = []
+    for s, sres in analysis["shapes"].items():
+        for comp in sres["comparisons"]:
+            for k in aa["metrics"]:
+                c = comp.get(k)
+                ch = {"shape": s, "arm": comp["arm"], "ref": comp["ref"], "metric": k,
+                      "max_half_width_pct": aa["max_half_width_pct"].get(k)}
+                if not c or c["n"] < analysis.get("min_pairs", 6) or c["paired"].get("t_p") is None:
+                    ch.update(ok=False, why="insufficient pairs", pairs=(c or {}).get("n", 0))
+                    checks.append(ch)
+                    continue
+                p = c["paired"]
+                ch.update(pairs=c["n"], effect_pct=p["effect_pct"], lo_pct=p["lo_pct"], hi_pct=p["hi_pct"],
+                          half_width_pct=p["half_width_pct"], sd_pct=p["log_sd_pct"], t_p=p["t_p"],
+                          mde_pct=p["mde_pct"], sign_p=c["sign_p"], won=c["pairs_won"])
+                checks.append(ch)
+    live = [c for c in checks if "t_p" in c]
+    for c, a in zip(live, stats.holm([c["t_p"] for c in live])):
+        c["holm_p"] = a
+        why = []
+        if a <= alpha:
+            why.append("differs (Holm p %.3f)" % a)
+        lim = c["max_half_width_pct"]
+        if lim is not None and c["half_width_pct"] > lim:
+            why.append("half-width %.2f%% > %.2f%%" % (c["half_width_pct"], lim))
+        c["ok"] = not why
+        c["why"] = "; ".join(why) or "ok"
+    return {"pass": bool(checks) and all(c["ok"] for c in checks), "checks": checks,
+            "rule": "no Holm-significant difference and 95% half-width within the limit on every check"}
+
+
+# ---------------------------------------------------------------- run loop
+
+def harness_cpus(exp):
+    """CPUs for the harness itself: everything online that no configured set or SUT sibling uses."""
+    if exp["cpus"].get("harness"):
+        return sysprobe.parse_cpuset(exp["cpus"]["harness"])
+    used = set()
+    for k, v in exp["cpus"].items():
+        used |= sysprobe.parse_cpuset(v)
+    used |= sysprobe.siblings_of(sysprobe.parse_cpuset(exp["cpus"]["sut"]) |
+                                 sysprobe.parse_cpuset(exp["cpus"].get("hop2", "")))
+    return sysprobe.online_cpus() - used
+
+
+class Runner:
+    def __init__(self, exp, run_dir, backend_factory, allow_short=False, log_stream=None):
+        self.exp = exp
+        self.run_dir = run_dir
+        self.allow_short = allow_short
+        for d in ("logs", "nighthawk", "perf"):
+            os.makedirs(os.path.join(run_dir, d), exist_ok=True)
+        self._logf = open(os.path.join(run_dir, "log.txt"), "a")
+        self._stream = log_stream
+        self.backend = backend_factory(exp, run_dir, self.log)
+
+    def log(self, msg):
+        line = sysprobe.scrub_text("%s %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), msg))
+        self._logf.write(line + "\n")
+        self._logf.flush()
+        if self._stream:
+            self._stream.write(line + "\n")
+            self._stream.flush()
+
+    def status(self, **kw):
+        kw["updated_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        kw["pid"] = os.getpid()
+        tmp = os.path.join(self.run_dir, "status.json.tmp")
+        with open(tmp, "w") as f:
+            json.dump(sysprobe.scrub(kw), f, indent=1)
+        os.replace(tmp, os.path.join(self.run_dir, "status.json"))
+
+    def _record(self, m):
+        with open(os.path.join(self.run_dir, "legs.jsonl"), "a") as f:
+            f.write(json.dumps(sysprobe.scrub(m), sort_keys=True) + "\n")
+
+    def _leg(self, legs, r, sh, a, bpath, attempt=0):
+        lid = leg_id(r, sh, a, attempt)
+        m = self.backend.run_leg(a, sh, r, bpath, lid)
+        m["attempt"] = attempt
+        legs.append(m)
+        self._record(m)
+        v = m["verdict"]
+        pr = m.get("per_req") or {}
+        self.log("%s %s ins_u=%.1fk cyc_tot=%.1fk busy=%s rate=%.1f/%d p99=%s %s" % (
+            lid, "VALID" if v["valid"] else "INVALID",
+            pr.get("instructions_u", 0) / 1e3, pr.get("cycles_total", 0) / 1e3,
+            ("%.1f%%" % (m["sut_busy"] * 100)) if m.get("sut_busy") is not None else "-",
+            m.get("sut_rate_2xx") or 0, m["target_rps"],
+            ("%.0fus" % m["latency_us"]["p99"]) if (m.get("latency_us") or {}).get("p99") else "-",
+            "" if v["valid"] else "; ".join(v["reasons"])))
+        if v["valid"]:
+            self._invalid_streak = 0
+        else:
+            self._invalid_streak += 1
+            if self._invalid_streak >= self.exp.get("abort_after_invalid", 6):
+                raise RuntimeError("%d consecutive invalid legs; giving up" % self._invalid_streak)
+        return m
+
+    def _rerun_invalid(self, legs, first, last, bpath):
+        """Re-run, at the end of a block, every (round, shape) in it that has an invalid leg:
+        all arms again, in the round's own order, so the round stays balanced."""
+        for attempt in range(1, self.exp.get("rerun_invalid", 1) + 1):
+            todo = []
+            for r in range(first, last + 1):
+                for sh in self.exp["shapes"]:
+                    cur = [m for m in legs if m["round"] == r and m["shape"] == sh["name"]
+                           and not m.get("superseded")]
+                    if any(not m["verdict"]["valid"] for m in cur):
+                        todo.append((r, sh, cur))
+            if not todo:
+                return
+            for r, sh, cur in todo:
+                self.log("re-running round %d shape %s (attempt %d): invalid %s" % (
+                    r, sh["name"], attempt, [m["leg_id"] for m in cur if not m["verdict"]["valid"]]))
+                for m in cur:
+                    m["superseded"] = True
+                self._record({"supersede": [m["leg_id"] for m in cur]})
+                for a in round_order(self.exp, r):
+                    self._leg(legs, r, sh, a, bpath, attempt)
+
+    def run(self, simulate=False):
+        exp = self.exp
+        self._invalid_streak = 0
+        bpath, btexts, certs = prepare_bootstraps(exp, self.run_dir, self.log, make_certs=not simulate)
+        btxt = btexts[exp["arms"][0]["name"]]
+        with open(os.path.join(self.run_dir, "experiment.json"), "w") as f:
+            json.dump(sysprobe.scrub({k: v for k, v in exp.items() if not k.startswith("_")}), f, indent=1,
+                      sort_keys=True)
+        floor = load_floor(exp.get("floor_from"))
+        legs_min = len(schedule(exp))
+        legs_max = len(schedule(exp, 1, exp["rounds_max"] if exp.get("adaptive", True) else exp["rounds"]))
+        self.status(state="starting", legs_min=legs_min, legs_max=legs_max, legs_done=0)
+        if simulate:
+            md = self.backend.metadata(exp, btxt)
+        else:
+            hc = harness_cpus(exp)
+            if hc:
+                os.sched_setaffinity(0, hc)
+            md = collect_metadata(exp, btxt, btexts)
+            md["harness_cpus"] = sorted(os.sched_getaffinity(0))
+            errs = check_binaries(exp, md)
+            if errs:
+                raise SystemExit("binary proof failed: " + "; ".join(errs))
+            md["bootstrap_validate"] = validate_bootstrap(exp, bpath)
+            bad = [k for k, v in md["bootstrap_validate"].items() if not v["ok"]]
+            if bad:
+                raise SystemExit("envoy --mode validate failed for %s: %s" % (
+                    bad, md["bootstrap_validate"][bad[0]]["tail"]))
+        if certs:
+            md["tls"] = certs
+        md["order"] = effective_order(exp)
+        self.log("run %s: %s order, rounds %d..%d in blocks of %d (adaptive %s), arms %s, shapes %s" % (
+            exp["name"], md["order"], exp["rounds"], exp["rounds_max"], exp["rounds_block"],
+            exp.get("adaptive", True), [a["name"] for a in exp["arms"]], [s["name"] for s in exp["shapes"]]))
+        origin = None
+        collector = None
+        legs = []
+        done = 0
+        target = exp["rounds"]
+        stop_reason = None
+        aborted = None
+        try:
+            if not simulate:
+                from .origin import Origin
+                origin = Origin(exp["origin"], exp["cpus"].get("origin", ""), exp["shapes"], self.run_dir, self.log)
+                md["origin"] = origin.start()
+                if uses(exp, "tracing"):
+                    from .origin import Collector
+                    collector = Collector(exp["collector"], exp["cpus"]["origin"], self.run_dir, self.log)
+                    md["collector"] = collector.start()
+            while True:
+                plan = schedule(exp, done + 1, target)
+                for i, (r, sh, a) in enumerate(plan):
+                    self.status(state="running", rounds_done=done, rounds_target=target,
+                                rounds_max=exp["rounds_max"], legs_done=len(legs),
+                                current=leg_id(r, sh, a),
+                                invalid_so_far=sum(1 for m in legs if not m["verdict"]["valid"]))
+                    self._leg(legs, r, sh, a, bpath)
+                self._rerun_invalid(legs, done + 1, target, bpath)
+                done = target
+                an = analyse(exp, legs, floor)
+                stop, why = stop_check(exp, an)
+                self.log("after %d rounds: %s" % (done, why))
+                if not exp.get("adaptive", True):
+                    stop_reason = "fixed rounds"
+                    break
+                if stop:
+                    stop_reason = why
+                    break
+                if done >= exp["rounds_max"]:
+                    stop_reason = "cap of %d rounds reached; %s" % (exp["rounds_max"], why)
+                    break
+                target = min(done + exp["rounds_block"], exp["rounds_max"])
+        except Exception as e:  # noqa: BLE001 - recorded, partial results still written
+            aborted = "%s: %s" % (type(e).__name__, e)
+            self.log("ABORTED: %s" % aborted)
+        finally:
+            if collector:
+                collector.stop()
+            if origin:
+                origin.stop()
+            if hasattr(self.backend, "close"):
+                self.backend.close()
+        if not simulate:
+            end = {a["name"]: sysprobe.file_hashes(a["binary"])["md5"] for a in exp["arms"]}
+            md["arms_md5_at_end"] = end
+            md["arms_md5_unchanged"] = all(end[n] == md["arms"][n]["md5"] for n in end)
+            cs = md["machine"].get("cpuidle_sut_summary") or {}
+            if cs.get("cpus"):
+                fp = sysprobe.cpuidle_fingerprint(sysprobe.parse_cpuset(cs["cpus"]))
+                md["cpuidle_fingerprint_at_end"] = fp
+                md["cpuidle_unchanged"] = fp == cs.get("fingerprint")
+        md["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        md["platform"] = platform.platform()
+        md["rounds_done"] = done
+        md["stop_reason"] = stop_reason
+        if aborted:
+            md["aborted"] = aborted
+        analysis = analyse(exp, legs, floor)
+        result = {"metadata": md, "experiment": {k: v for k, v in exp.items() if not k.startswith("_")},
+                  "legs": legs, "analysis": analysis}
+        if exp.get("expect") == "aa":
+            result["aa_selftest"] = aa_verdict(exp, analysis)
+        result = sysprobe.scrub(result)
+        with open(os.path.join(self.run_dir, "results.json"), "w") as f:
+            json.dump(result, f, indent=1, sort_keys=True)
+        from .report import markdown
+        with open(os.path.join(self.run_dir, "summary.md"), "w") as f:
+            f.write(markdown(result))
+        self.status(state="aborted" if aborted else "done", rounds_done=done, legs_done=len(legs),
+                    invalid=sum(1 for m in legs if not m["verdict"]["valid"]), error=aborted)
+        self.log("done: %s" % os.path.join(self.run_dir, "summary.md"))
+        if not simulate:
+            sysprobe.scrub_tree(self.run_dir)
+        if aborted:
+            raise RuntimeError(aborted)
+        return result

@@ -1,0 +1,79 @@
+2026-11-14T14:49:02Z run smf-aa-h2: abba order, rounds 12..36 in blocks of 6 (adaptive True), arms ['A', 'A2'], shapes ['fh2']
+2026-11-14T14:49:40Z r01-fh2-A VALID ins_u=242.2k cyc_tot=352.9k busy=31.8% rate=8000.8/8000 p99=377us 
+2026-11-14T14:50:18Z r01-fh2-A2 VALID ins_u=242.2k cyc_tot=360.3k busy=32.5% rate=8000.8/8000 p99=405us 
+2026-11-14T14:50:55Z r02-fh2-A2 VALID ins_u=242.1k cyc_tot=362.5k busy=32.5% rate=8000.7/8000 p99=413us 
+2026-11-14T14:51:33Z r02-fh2-A VALID ins_u=242.3k cyc_tot=351.4k busy=31.7% rate=8000.7/8000 p99=398us 
+2026-11-14T14:52:11Z r03-fh2-A VALID ins_u=242.3k cyc_tot=355.6k busy=32.1% rate=8000.8/8000 p99=323us 
+2026-11-14T14:52:48Z r03-fh2-A2 VALID ins_u=242.2k cyc_tot=364.2k busy=32.8% rate=8000.8/8000 p99=408us 
+2026-11-14T14:53:26Z r04-fh2-A2 VALID ins_u=242.2k cyc_tot=362.8k busy=32.7% rate=8000.7/8000 p99=404us 
+2026-11-14T14:54:03Z r04-fh2-A VALID ins_u=242.0k cyc_tot=357.5k busy=32.0% rate=8000.8/8000 p99=419us 
+2026-11-14T14:54:41Z r05-fh2-A VALID ins_u=242.2k cyc_tot=351.5k busy=31.7% rate=8000.7/8000 p99=374us 
+2026-11-14T14:55:19Z r05-fh2-A2 VALID ins_u=242.1k cyc_tot=356.8k busy=32.0% rate=8000.8/8000 p99=413us 
+2026-11-14T14:55:56Z r06-fh2-A2 VALID ins_u=242.2k cyc_tot=368.4k busy=33.2% rate=8000.8/8000 p99=393us 
+2026-11-14T14:56:34Z r06-fh2-A VALID ins_u=242.1k cyc_tot=359.1k busy=32.3% rate=8000.8/8000 p99=405us 
+2026-11-14T14:57:11Z r07-fh2-A VALID ins_u=242.2k cyc_tot=377.9k busy=34.1% rate=8000.8/8000 p99=406us 
+2026-11-14T14:57:49Z r07-fh2-A2 VALID ins_u=242.2k cyc_tot=357.6k busy=32.1% rate=8000.8/8000 p99=421us 
+2026-11-14T14:58:27Z r08-fh2-A2 VALID ins_u=242.2k cyc_tot=357.0k busy=32.2% rate=8000.8/8000 p99=395us 
+2026-11-14T14:59:04Z r08-fh2-A VALID ins_u=242.1k cyc_tot=348.5k busy=31.4% rate=8000.8/8000 p99=403us 
+2026-11-14T14:59:42Z r09-fh2-A2 VALID ins_u=242.2k cyc_tot=369.5k busy=33.4% rate=8000.8/8000 p99=329us 
+2026-11-14T15:00:20Z r09-fh2-A VALID ins_u=242.1k cyc_tot=345.2k busy=31.1% rate=8000.8/8000 p99=417us 
+2026-11-14T15:00:57Z r10-fh2-A VALID ins_u=242.2k cyc_tot=356.2k busy=32.1% rate=8000.8/8000 p99=401us 
+2026-11-14T15:01:35Z r10-fh2-A2 VALID ins_u=242.2k cyc_tot=371.4k busy=33.5% rate=8000.8/8000 p99=332us 
+2026-11-14T15:02:12Z r11-fh2-A VALID ins_u=242.2k cyc_tot=358.9k busy=32.3% rate=8000.7/8000 p99=368us 
+2026-11-14T15:02:50Z r11-fh2-A2 VALID ins_u=242.1k cyc_tot=363.2k busy=32.7% rate=8000.8/8000 p99=405us 
+2026-11-14T15:03:28Z r12-fh2-A2 VALID ins_u=242.2k cyc_tot=373.4k busy=33.7% rate=8000.7/8000 p99=336us 
+2026-11-14T15:04:05Z r12-fh2-A VALID ins_u=242.2k cyc_tot=371.9k busy=33.6% rate=8000.8/8000 p99=404us 
+2026-11-14T15:04:05Z after 12 rounds: widest cycles_total half-width 1.81% (fh2 A2 vs A) > target 1.00%
+2026-11-14T15:04:43Z r13-fh2-A2 VALID ins_u=242.0k cyc_tot=345.0k busy=30.9% rate=8000.7/8000 p99=406us 
+2026-11-14T15:05:20Z r13-fh2-A VALID ins_u=242.1k cyc_tot=353.9k busy=31.8% rate=8000.8/8000 p99=411us 
+2026-11-14T15:05:58Z r14-fh2-A VALID ins_u=242.1k cyc_tot=364.8k busy=32.8% rate=8000.8/8000 p99=417us 
+2026-11-14T15:06:36Z r14-fh2-A2 VALID ins_u=242.1k cyc_tot=354.7k busy=31.9% rate=8000.7/8000 p99=429us 
+2026-11-14T15:07:13Z r15-fh2-A2 VALID ins_u=242.4k cyc_tot=356.0k busy=32.2% rate=8000.8/8000 p99=308us 
+2026-11-14T15:07:51Z r15-fh2-A VALID ins_u=242.2k cyc_tot=346.3k busy=31.2% rate=8000.8/8000 p99=399us 
+2026-11-14T15:08:29Z r16-fh2-A VALID ins_u=242.0k cyc_tot=332.5k busy=29.7% rate=8000.7/8000 p99=420us 
+2026-11-14T15:09:06Z r16-fh2-A2 VALID ins_u=242.0k cyc_tot=354.9k busy=31.8% rate=8000.9/8000 p99=410us 
+2026-11-14T15:09:44Z r17-fh2-A2 VALID ins_u=242.1k cyc_tot=368.9k busy=33.2% rate=8000.8/8000 p99=397us 
+2026-11-14T15:10:22Z r17-fh2-A VALID ins_u=242.2k cyc_tot=375.5k busy=33.9% rate=8000.7/8000 p99=405us 
+2026-11-14T15:10:59Z r18-fh2-A VALID ins_u=242.2k cyc_tot=370.2k busy=33.4% rate=8000.7/8000 p99=397us 
+2026-11-14T15:11:37Z r18-fh2-A2 VALID ins_u=242.2k cyc_tot=355.1k busy=32.0% rate=8000.8/8000 p99=331us 
+2026-11-14T15:11:37Z after 18 rounds: widest cycles_total half-width 1.68% (fh2 A2 vs A) > target 1.00%
+2026-11-14T15:12:14Z r19-fh2-A VALID ins_u=242.2k cyc_tot=356.9k busy=32.1% rate=8000.8/8000 p99=405us 
+2026-11-14T15:12:52Z r19-fh2-A2 VALID ins_u=242.1k cyc_tot=369.2k busy=33.2% rate=8000.8/8000 p99=406us 
+2026-11-14T15:13:30Z r20-fh2-A2 VALID ins_u=242.2k cyc_tot=351.1k busy=31.7% rate=8000.7/8000 p99=328us 
+2026-11-14T15:14:07Z r20-fh2-A VALID ins_u=242.0k cyc_tot=360.6k busy=32.4% rate=8000.7/8000 p99=414us 
+2026-11-14T15:14:45Z r21-fh2-A2 VALID ins_u=242.2k cyc_tot=381.3k busy=34.4% rate=8000.8/8000 p99=400us 
+2026-11-14T15:15:23Z r21-fh2-A VALID ins_u=242.2k cyc_tot=368.0k busy=33.2% rate=8000.8/8000 p99=393us 
+2026-11-14T15:16:00Z r22-fh2-A VALID ins_u=242.1k cyc_tot=369.2k busy=33.2% rate=8000.8/8000 p99=436us 
+2026-11-14T15:16:38Z r22-fh2-A2 VALID ins_u=242.2k cyc_tot=368.8k busy=33.3% rate=8000.8/8000 p99=405us 
+2026-11-14T15:17:16Z r23-fh2-A VALID ins_u=242.1k cyc_tot=352.1k busy=31.6% rate=8000.8/8000 p99=411us 
+2026-11-14T15:17:53Z r23-fh2-A2 VALID ins_u=242.1k cyc_tot=360.4k busy=32.5% rate=8000.8/8000 p99=409us 
+2026-11-14T15:18:31Z r24-fh2-A2 VALID ins_u=242.1k cyc_tot=360.8k busy=32.4% rate=8000.8/8000 p99=406us 
+2026-11-14T15:19:08Z r24-fh2-A VALID ins_u=242.2k cyc_tot=349.7k busy=31.5% rate=8000.8/8000 p99=408us 
+2026-11-14T15:19:08Z after 24 rounds: widest cycles_total half-width 1.32% (fh2 A2 vs A) > target 1.00%
+2026-11-14T15:19:46Z r25-fh2-A VALID ins_u=242.1k cyc_tot=345.0k busy=30.9% rate=8000.8/8000 p99=427us 
+2026-11-14T15:20:24Z r25-fh2-A2 VALID ins_u=242.1k cyc_tot=356.0k busy=32.1% rate=8000.8/8000 p99=404us 
+2026-11-14T15:21:01Z r26-fh2-A2 VALID ins_u=242.2k cyc_tot=360.8k busy=32.5% rate=8000.8/8000 p99=405us 
+2026-11-14T15:21:39Z r26-fh2-A VALID ins_u=242.2k cyc_tot=368.3k busy=33.2% rate=8000.8/8000 p99=328us 
+2026-11-14T15:22:16Z r27-fh2-A2 VALID ins_u=242.2k cyc_tot=363.8k busy=32.8% rate=8000.8/8000 p99=405us 
+2026-11-14T15:22:54Z r27-fh2-A VALID ins_u=242.2k cyc_tot=353.7k busy=31.9% rate=8000.8/8000 p99=339us 
+2026-11-14T15:23:32Z r28-fh2-A VALID ins_u=242.1k cyc_tot=359.9k busy=32.4% rate=8000.7/8000 p99=402us 
+2026-11-14T15:24:09Z r28-fh2-A2 VALID ins_u=242.2k cyc_tot=352.3k busy=31.8% rate=8000.8/8000 p99=328us 
+2026-11-14T15:24:47Z r29-fh2-A2 VALID ins_u=242.2k cyc_tot=358.7k busy=32.4% rate=8000.8/8000 p99=397us 
+2026-11-14T15:25:25Z r29-fh2-A VALID ins_u=242.1k cyc_tot=371.0k busy=33.4% rate=8000.8/8000 p99=402us 
+2026-11-14T15:26:02Z r30-fh2-A VALID ins_u=242.2k cyc_tot=361.7k busy=32.6% rate=8000.8/8000 p99=383us 
+2026-11-14T15:26:40Z r30-fh2-A2 VALID ins_u=242.2k cyc_tot=375.4k busy=33.9% rate=8000.8/8000 p99=389us 
+2026-11-14T15:26:40Z after 30 rounds: widest cycles_total half-width 1.16% (fh2 A2 vs A) > target 1.00%
+2026-11-14T15:27:17Z r31-fh2-A2 VALID ins_u=242.2k cyc_tot=362.0k busy=32.7% rate=8000.8/8000 p99=396us 
+2026-11-14T15:27:55Z r31-fh2-A VALID ins_u=242.1k cyc_tot=368.9k busy=33.2% rate=8000.8/8000 p99=396us 
+2026-11-14T15:28:33Z r32-fh2-A VALID ins_u=242.1k cyc_tot=365.4k busy=32.9% rate=8000.8/8000 p99=406us 
+2026-11-14T15:29:10Z r32-fh2-A2 VALID ins_u=242.2k cyc_tot=360.2k busy=32.4% rate=8000.8/8000 p99=385us 
+2026-11-14T15:29:48Z r33-fh2-A VALID ins_u=242.3k cyc_tot=357.2k busy=32.3% rate=8000.8/8000 p99=386us 
+2026-11-14T15:30:26Z r33-fh2-A2 VALID ins_u=242.3k cyc_tot=368.2k busy=33.2% rate=8000.8/8000 p99=408us 
+2026-11-14T15:31:03Z r34-fh2-A2 VALID ins_u=242.2k cyc_tot=363.9k busy=32.8% rate=8000.8/8000 p99=415us 
+2026-11-14T15:31:41Z r34-fh2-A VALID ins_u=242.2k cyc_tot=356.2k busy=32.2% rate=8000.8/8000 p99=408us 
+2026-11-14T15:32:19Z r35-fh2-A VALID ins_u=242.2k cyc_tot=370.3k busy=33.4% rate=8000.8/8000 p99=408us 
+2026-11-14T15:32:56Z r35-fh2-A2 VALID ins_u=242.3k cyc_tot=369.8k busy=33.5% rate=8000.8/8000 p99=313us 
+2026-11-14T15:33:34Z r36-fh2-A2 VALID ins_u=242.2k cyc_tot=361.7k busy=32.6% rate=8000.8/8000 p99=394us 
+2026-11-14T15:34:11Z r36-fh2-A VALID ins_u=242.2k cyc_tot=373.5k busy=33.7% rate=8000.8/8000 p99=402us 
+2026-11-14T15:34:11Z after 36 rounds: widest cycles_total half-width 1.02% (fh2 A2 vs A) > target 1.00%
+2026-11-14T15:34:13Z done: ~/epl/runs/smf/aa-h2/summary.md

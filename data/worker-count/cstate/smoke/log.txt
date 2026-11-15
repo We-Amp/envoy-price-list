@@ -1,0 +1,4 @@
+2026-11-14T04:29:50Z condition A set: rc 0  readback mismatches 0
+2026-11-14T04:31:00Z   c00-A-req 8000 rps: 104.79 us/req (u 45.8 s 59.1) p50 166 vcs/req 0.849 ivcs/req 0.000 C1 0.97 C6 0.00 POLL 0.000 ipc 0.482 ins/req 111551 busy max/med 0.432/0.419 invalid=[]
+2026-11-14T04:31:01Z   c00-A-req idle 0.0007 CPUs rss 66564 kB workers=2 warm={'exit': 0, 'overflow': {'upstream_cx_overflow': 2}, 'rate_2xx': 7999.999694000011, 'p50_us': 160.727} invalid=[] []
+2026-11-14T04:31:02Z condition B set: rc 0 VERIFIED 400 knobs match $HOME/wc2/cstate/idle-orig.txt readback mismatches 0

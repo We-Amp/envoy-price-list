@@ -1,0 +1,29 @@
+[
+ {
+  "rps": 11200,
+  "valid": false,
+  "reasons": [
+   "client pending total 17 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.527090625,
+  "client_headroom": 0.7246321581683852,
+  "rate": 11204.278491916788,
+  "ins_u_k": 161.96305973732996,
+  "cyc_total_k": 421.213167314143,
+  "p99_us": 8232.958999999999,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 224582,
+   "http.ingress_http.downstream_rq_2xx": 224600,
+   "http.ingress_http.downstream_rq_total": 224580,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": 0.46869862500000004,
+  "pending_total": 17,
+  "access_log_lines": null,
+  "p50_us": 3527.551,
+  "worker_max_share": 0.2572,
+  "hop2_worker_max_share": 0.5337,
+  "hop2_worker_max_busy": 1.0002
+ }
+]

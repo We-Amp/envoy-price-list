@@ -1,0 +1,1939 @@
+[
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.259707941073,
+  "sut_busy": 0.398801,
+  "hop2_busy": 0.318696125,
+  "client_headroom": 0.7396276550326781,
+  "p50_us": 4106.750999999999,
+  "p99_us": 7813.887000000001,
+  "cyc_total_k": 443.39065520193026,
+  "cyc_all_k": 805.5366725105376,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.784,
+   "worker_min_share": 0.0,
+   "worker_share": [
+    0.784,
+    0.2156,
+    0.0,
+    0.0004
+   ],
+   "worker_max_busy": 1.0011,
+   "worker_min_busy": 0.0
+  },
+  "envoy_worker_max_busy": 0.404,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1382
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.449067799665,
+  "sut_busy": 0.430679125,
+  "hop2_busy": 0.42604437500000003,
+  "client_headroom": 0.7242013801607161,
+  "p50_us": 795.999,
+  "p99_us": 1646.975,
+  "cyc_total_k": 479.43290333304344,
+  "cyc_all_k": 956.3821987253663,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.254,
+   "worker_min_share": 0.2444,
+   "worker_share": [
+    0.2444,
+    0.2517,
+    0.254,
+    0.2499
+   ],
+   "worker_max_busy": 0.4334,
+   "worker_min_busy": 0.4169
+  },
+  "envoy_worker_max_busy": 0.4324,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 9603.049909697069,
+  "sut_busy": 0.502238875,
+  "hop2_busy": 0.48674225,
+  "client_headroom": 0.7312528153662937,
+  "p50_us": 904.703,
+  "p99_us": 2044.799,
+  "cyc_total_k": 468.34223938151706,
+  "cyc_all_k": 924.3109783525016,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2538,
+   "worker_min_share": 0.2425,
+   "worker_share": [
+    0.253,
+    0.2507,
+    0.2538,
+    0.2425
+   ],
+   "worker_max_busy": 0.4941,
+   "worker_min_busy": 0.4722
+  },
+  "envoy_worker_max_busy": 0.5031,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 9603.070877860531,
+  "sut_busy": 0.4752005,
+  "hop2_busy": 0.4944095,
+  "client_headroom": 0.7297367699561021,
+  "p50_us": 872.287,
+  "p99_us": 2253.311,
+  "cyc_total_k": 441.1667500671267,
+  "cyc_all_k": 904.7928019183563,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4667,
+   "worker_min_share": 0.0,
+   "worker_share": [
+    0.0,
+    0.3281,
+    0.2051,
+    0.4667
+   ],
+   "worker_max_busy": 0.9235,
+   "worker_min_busy": 0.0
+  },
+  "envoy_worker_max_busy": 0.4772,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1501
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 11203.64653686403,
+  "sut_busy": 0.5462771249999999,
+  "hop2_busy": 0.566819,
+  "client_headroom": 0.7246820125563623,
+  "p50_us": 915.359,
+  "p99_us": 2514.9429999999998,
+  "cyc_total_k": 436.90930205123504,
+  "cyc_all_k": 892.2282031844608,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4109,
+   "worker_min_share": 0.0574,
+   "worker_share": [
+    0.2704,
+    0.2612,
+    0.0574,
+    0.4109
+   ],
+   "worker_max_busy": 0.9322,
+   "worker_min_busy": 0.1302
+  },
+  "envoy_worker_max_busy": 0.5466,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1787
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 0,
+  "valid": true,
+  "reasons": [],
+  "rate": 11203.327041297796,
+  "sut_busy": 0.561657875,
+  "hop2_busy": 0.5645074999999999,
+  "client_headroom": 0.7227615102695555,
+  "p50_us": 995.391,
+  "p99_us": 2411.775,
+  "cyc_total_k": 450.07675333968393,
+  "cyc_all_k": 904.6553626560866,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.253,
+   "worker_min_share": 0.245,
+   "worker_share": [
+    0.2501,
+    0.2519,
+    0.245,
+    0.253
+   ],
+   "worker_max_busy": 0.5709,
+   "worker_min_busy": 0.553
+  },
+  "envoy_worker_max_busy": 0.564,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 12800,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 122 (upstream_cx_overflow=122)",
+   "client pending total 231 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 12804.285430080457,
+  "sut_busy": 0.62881325,
+  "hop2_busy": 0.625967875,
+  "client_headroom": 0.7143091397394932,
+  "p50_us": 1071.231,
+  "p99_us": 2595.199,
+  "cyc_total_k": 442.8900400585936,
+  "cyc_all_k": 884.1579282358175,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2518,
+   "worker_min_share": 0.2486,
+   "worker_share": [
+    0.25,
+    0.2518,
+    0.2486,
+    0.2496
+   ],
+   "worker_max_busy": 0.6302,
+   "worker_min_busy": 0.6222
+  },
+  "envoy_worker_max_busy": 0.6317,
+  "client_overflow": {
+   "upstream_cx_overflow": 122
+  },
+  "client_pending_total": 231,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 12800,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client pending total 67 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 12803.394526790804,
+  "sut_busy": 0.5892507499999999,
+  "hop2_busy": 0.5969285,
+  "client_headroom": 0.7113657964221575,
+  "p50_us": 1932.095,
+  "p99_us": 5950.463,
+  "cyc_total_k": 412.80493476090453,
+  "cyc_all_k": 833.976129131779,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4188,
+   "worker_min_share": 0.1267,
+   "worker_share": [
+    0.3169,
+    0.1376,
+    0.4188,
+    0.1267
+   ],
+   "worker_max_busy": 1.0,
+   "worker_min_busy": 0.3026
+  },
+  "envoy_worker_max_busy": 0.5957,
+  "client_overflow": {},
+  "client_pending_total": 67,
+  "hop2_conns": 1836
+ },
+ {
+  "arm": "mru",
+  "rps": 14400,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client pending total 107 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 14404.794065007876,
+  "sut_busy": 0.65291475,
+  "hop2_busy": 0.720166875,
+  "client_headroom": 0.7129069506707634,
+  "p50_us": 1036.479,
+  "p99_us": 2786.047,
+  "cyc_total_k": 407.9290869158835,
+  "cyc_all_k": 859.2127652151362,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3323,
+   "worker_min_share": 0.1803,
+   "worker_share": [
+    0.3323,
+    0.2116,
+    0.1803,
+    0.2758
+   ],
+   "worker_max_busy": 0.9565,
+   "worker_min_busy": 0.5189
+  },
+  "envoy_worker_max_busy": 0.6539,
+  "client_overflow": {},
+  "client_pending_total": 107,
+  "hop2_conns": 1921
+ },
+ {
+  "arm": "lru",
+  "rps": 14400,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client pending total 37 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 14404.504780376737,
+  "sut_busy": 0.707754875,
+  "hop2_busy": 0.702807375,
+  "client_headroom": 0.7051804358295908,
+  "p50_us": 1064.063,
+  "p99_us": 2318.463,
+  "cyc_total_k": 443.69241947884893,
+  "cyc_all_k": 884.1281343597093,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2513,
+   "worker_min_share": 0.2485,
+   "worker_share": [
+    0.2503,
+    0.2513,
+    0.2499,
+    0.2485
+   ],
+   "worker_max_busy": 0.7059,
+   "worker_min_busy": 0.6979
+  },
+  "envoy_worker_max_busy": 0.7119,
+  "client_overflow": {},
+  "client_pending_total": 37,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 16000,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 485 (upstream_cx_overflow=485)",
+   "client pending total 452 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 16005.291084742774,
+  "sut_busy": 0.76361675,
+  "hop2_busy": 0.764249125,
+  "client_headroom": 0.7007144746830285,
+  "p50_us": 1143.551,
+  "p99_us": 4599.039,
+  "cyc_total_k": 432.2340327283827,
+  "cyc_all_k": 863.9411811623562,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2521,
+   "worker_min_share": 0.2484,
+   "worker_share": [
+    0.2521,
+    0.2484,
+    0.2493,
+    0.2502
+   ],
+   "worker_max_busy": 0.7702,
+   "worker_min_busy": 0.7587
+  },
+  "envoy_worker_max_busy": 0.7652,
+  "client_overflow": {
+   "upstream_cx_overflow": 485
+  },
+  "client_pending_total": 452,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 16000,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 594 (upstream_cx_overflow=594)",
+   "client pending total 582 above 16 (queue absorbed a burst)",
+   "scheduler run time probe inconsistent: foreign -0.0399, siblings 0.0018 CPUs (under -0.01)"
+  ],
+  "rate": 16003.857956201964,
+  "sut_busy": 0.71047025,
+  "hop2_busy": 0.7131257499999999,
+  "client_headroom": 0.6951893163911771,
+  "p50_us": 1583.103,
+  "p99_us": 7052.287,
+  "cyc_total_k": 400.5563146551025,
+  "cyc_all_k": 804.7920426967241,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.351,
+   "worker_min_share": 0.0896,
+   "worker_share": [
+    0.3132,
+    0.351,
+    0.0896,
+    0.2462
+   ],
+   "worker_max_busy": 1.0007,
+   "worker_min_busy": 0.2554
+  },
+  "envoy_worker_max_busy": 0.7234,
+  "client_overflow": {
+   "upstream_cx_overflow": 594
+  },
+  "client_pending_total": 582,
+  "hop2_conns": 2001
+ },
+ {
+  "arm": "mru",
+  "rps": 17600,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 736 (upstream_cx_overflow=736)",
+   "client pending total 571 above 16 (queue absorbed a burst)",
+   "scheduler run time probe inconsistent: foreign -0.0126, siblings 0.0012 CPUs (under -0.01)"
+  ],
+  "rate": 17605.964181698608,
+  "sut_busy": 0.7681479999999999,
+  "hop2_busy": 0.77107725,
+  "client_headroom": 0.6882779048730692,
+  "p50_us": 1867.903,
+  "p99_us": 6862.335,
+  "cyc_total_k": 394.96654953600535,
+  "cyc_all_k": 792.8018913306308,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3244,
+   "worker_min_share": 0.1311,
+   "worker_share": [
+    0.2355,
+    0.1311,
+    0.309,
+    0.3244
+   ],
+   "worker_max_busy": 1.001,
+   "worker_min_busy": 0.4045
+  },
+  "envoy_worker_max_busy": 0.7761,
+  "client_overflow": {
+   "upstream_cx_overflow": 736
+  },
+  "client_pending_total": 571,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 17600,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 734 (upstream_cx_overflow=734)",
+   "client pending total 587 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 17605.980570781645,
+  "sut_busy": 0.838401625,
+  "hop2_busy": 0.8436299999999999,
+  "client_headroom": 0.6911292757473326,
+  "p50_us": 1257.215,
+  "p99_us": 6644.991,
+  "cyc_total_k": 432.5815990640886,
+  "cyc_all_k": 867.1200997680197,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.252,
+   "worker_min_share": 0.2477,
+   "worker_share": [
+    0.2513,
+    0.249,
+    0.252,
+    0.2477
+   ],
+   "worker_max_busy": 0.8498,
+   "worker_min_busy": 0.8353
+  },
+  "envoy_worker_max_busy": 0.8398,
+  "client_overflow": {
+   "upstream_cx_overflow": 734
+  },
+  "client_pending_total": 587,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 19200,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 1481 (upstream_cx_overflow=1481)",
+   "client pending total 1034 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19206.16247607531,
+  "sut_busy": 0.872745375,
+  "hop2_busy": 0.89698575,
+  "client_headroom": 0.6792446405434484,
+  "p50_us": 1586.4309999999998,
+  "p99_us": 7125.759,
+  "cyc_total_k": 413.6739607481204,
+  "cyc_all_k": 839.0078734610832,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2511,
+   "worker_min_share": 0.249,
+   "worker_share": [
+    0.249,
+    0.2511,
+    0.249,
+    0.2508
+   ],
+   "worker_max_busy": 0.9004,
+   "worker_min_busy": 0.8929
+  },
+  "envoy_worker_max_busy": 0.8755,
+  "client_overflow": {
+   "upstream_cx_overflow": 1481
+  },
+  "client_pending_total": 1034,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 19200,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 2439 (upstream_cx_overflow=2439)",
+   "client pending total 1526 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19206.829095467037,
+  "sut_busy": 0.818837875,
+  "hop2_busy": 0.848851375,
+  "client_headroom": 0.6821474093559294,
+  "p50_us": 1558.207,
+  "p99_us": 7937.790999999999,
+  "cyc_total_k": 386.92705724933666,
+  "cyc_all_k": 788.4979489208987,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2946,
+   "worker_min_share": 0.2045,
+   "worker_share": [
+    0.2571,
+    0.2438,
+    0.2045,
+    0.2946
+   ],
+   "worker_max_busy": 1.0005,
+   "worker_min_busy": 0.6946
+  },
+  "envoy_worker_max_busy": 0.8243,
+  "client_overflow": {
+   "upstream_cx_overflow": 2439
+  },
+  "client_pending_total": 1526,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 20800,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 1534 (upstream_cx_overflow=1534)",
+   "client pending total 1022 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 20807.09072701683,
+  "sut_busy": 0.8819235000000001,
+  "hop2_busy": 0.919986375,
+  "client_headroom": 0.6651711878422668,
+  "p50_us": 1781.183,
+  "p99_us": 4787.967,
+  "cyc_total_k": 385.935373664385,
+  "cyc_all_k": 789.0931737434684,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2703,
+   "worker_min_share": 0.229,
+   "worker_share": [
+    0.2601,
+    0.2703,
+    0.2406,
+    0.229
+   ],
+   "worker_max_busy": 0.9945,
+   "worker_min_busy": 0.8428
+  },
+  "envoy_worker_max_busy": 0.8837,
+  "client_overflow": {
+   "upstream_cx_overflow": 1534
+  },
+  "client_pending_total": 1022,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 20800,
+  "rep": 0,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 4523 (upstream_cx_overflow=4523)",
+   "client pending total 2543 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 20807.031924949213,
+  "sut_busy": 0.9322991249999999,
+  "hop2_busy": 0.9204334999999999,
+  "client_headroom": 0.6753093935168696,
+  "p50_us": 2303.487,
+  "p99_us": 21161.983,
+  "cyc_total_k": 409.3727792615376,
+  "cyc_all_k": 813.2321869540891,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2509,
+   "worker_min_share": 0.2488,
+   "worker_share": [
+    0.2488,
+    0.2509,
+    0.2507,
+    0.2496
+   ],
+   "worker_max_busy": 0.9237,
+   "worker_min_busy": 0.9157
+  },
+  "envoy_worker_max_busy": 0.9347,
+  "client_overflow": {
+   "upstream_cx_overflow": 4523
+  },
+  "client_pending_total": 2543,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.900670861453,
+  "sut_busy": 0.43341874999999996,
+  "hop2_busy": 0.427463375,
+  "client_headroom": 0.7335725889801863,
+  "p50_us": 779.6469999999999,
+  "p99_us": 1480.447,
+  "cyc_total_k": 482.027886300725,
+  "cyc_all_k": 960.4782708458373,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.255,
+   "worker_min_share": 0.2462,
+   "worker_share": [
+    0.2485,
+    0.2503,
+    0.2462,
+    0.255
+   ],
+   "worker_max_busy": 0.4361,
+   "worker_min_busy": 0.4211
+  },
+  "envoy_worker_max_busy": 0.4351,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.651306623586,
+  "sut_busy": 0.415146875,
+  "hop2_busy": 0.448741375,
+  "client_headroom": 0.7406691336828821,
+  "p50_us": 726.975,
+  "p99_us": 1431.4869999999999,
+  "cyc_total_k": 460.88680602605746,
+  "cyc_all_k": 960.5145099459663,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4222,
+   "worker_min_share": 0.1131,
+   "worker_share": [
+    0.4222,
+    0.1131,
+    0.2428,
+    0.2219
+   ],
+   "worker_max_busy": 0.758,
+   "worker_min_busy": 0.203
+  },
+  "envoy_worker_max_busy": 0.4184,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1365
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 9602.84098274746,
+  "sut_busy": 0.47947387500000005,
+  "hop2_busy": 0.47880849999999997,
+  "client_headroom": 0.7346082586834263,
+  "p50_us": 925.023,
+  "p99_us": 1878.847,
+  "cyc_total_k": 445.66985709113965,
+  "cyc_all_k": 896.4980377647478,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4635,
+   "worker_min_share": 0.0003,
+   "worker_share": [
+    0.0862,
+    0.0003,
+    0.45,
+    0.4635
+   ],
+   "worker_max_busy": 0.8875,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.4804,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1529
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 9603.112115224876,
+  "sut_busy": 0.503425125,
+  "hop2_busy": 0.497899125,
+  "client_headroom": 0.7271573911425526,
+  "p50_us": 896.447,
+  "p99_us": 2426.495,
+  "cyc_total_k": 469.20590268923326,
+  "cyc_all_k": 935.7020183856911,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2514,
+   "worker_min_share": 0.2481,
+   "worker_share": [
+    0.2501,
+    0.2504,
+    0.2481,
+    0.2514
+   ],
+   "worker_max_busy": 0.5003,
+   "worker_min_busy": 0.4938
+  },
+  "envoy_worker_max_busy": 0.5058,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 11203.769950907954,
+  "sut_busy": 0.568134,
+  "hop2_busy": 0.568810375,
+  "client_headroom": 0.7226209232154307,
+  "p50_us": 926.463,
+  "p99_us": 1881.9189999999999,
+  "cyc_total_k": 454.8432581871268,
+  "cyc_all_k": 912.3251432230319,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.254,
+   "worker_min_share": 0.2417,
+   "worker_share": [
+    0.254,
+    0.2518,
+    0.2525,
+    0.2417
+   ],
+   "worker_max_busy": 0.5782,
+   "worker_min_busy": 0.5503
+  },
+  "envoy_worker_max_busy": 0.5712,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 1,
+  "valid": true,
+  "reasons": [],
+  "rate": 11204.574680358379,
+  "sut_busy": 0.5249275,
+  "hop2_busy": 0.512065625,
+  "client_headroom": 0.7251457742087692,
+  "p50_us": 3396.607,
+  "p99_us": 11588.607,
+  "cyc_total_k": 419.3311412557536,
+  "cyc_all_k": 830.9129391158842,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4878,
+   "worker_min_share": 0.1537,
+   "worker_share": [
+    0.1739,
+    0.4878,
+    0.1537,
+    0.1846
+   ],
+   "worker_max_busy": 1.0006,
+   "worker_min_busy": 0.3153
+  },
+  "envoy_worker_max_busy": 0.5377,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1701
+ },
+ {
+  "arm": "mru",
+  "rps": 12800,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client pending total 75 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 12803.53447666955,
+  "sut_busy": 0.60319625,
+  "hop2_busy": 0.602206,
+  "client_headroom": 0.7153074924481861,
+  "p50_us": 1688.319,
+  "p99_us": 6101.759,
+  "cyc_total_k": 422.7813193234788,
+  "cyc_all_k": 847.3786345145337,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4149,
+   "worker_min_share": 0.1345,
+   "worker_share": [
+    0.3019,
+    0.4149,
+    0.1345,
+    0.1488
+   ],
+   "worker_max_busy": 0.9997,
+   "worker_min_busy": 0.3241
+  },
+  "envoy_worker_max_busy": 0.6098,
+  "client_overflow": {},
+  "client_pending_total": 75,
+  "hop2_conns": 1880
+ },
+ {
+  "arm": "lru",
+  "rps": 12800,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client pending total 36 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 12804.318550090788,
+  "sut_busy": 0.6366959999999999,
+  "hop2_busy": 0.642468875,
+  "client_headroom": 0.7130967244708224,
+  "p50_us": 983.711,
+  "p99_us": 3195.1349999999998,
+  "cyc_total_k": 447.8586910475872,
+  "cyc_all_k": 900.1239795590901,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2513,
+   "worker_min_share": 0.2478,
+   "worker_share": [
+    0.2513,
+    0.2478,
+    0.2501,
+    0.2507
+   ],
+   "worker_max_busy": 0.6457,
+   "worker_min_busy": 0.6367
+  },
+  "envoy_worker_max_busy": 0.6382,
+  "client_overflow": {},
+  "client_pending_total": 36,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 14400,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client pending total 59 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 14405.035465663279,
+  "sut_busy": 0.70234,
+  "hop2_busy": 0.7190015000000001,
+  "client_headroom": 0.7022238090241731,
+  "p50_us": 1063.999,
+  "p99_us": 2609.279,
+  "cyc_total_k": 440.2066931293057,
+  "cyc_all_k": 891.0153060118835,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2517,
+   "worker_min_share": 0.2483,
+   "worker_share": [
+    0.2517,
+    0.2503,
+    0.2497,
+    0.2483
+   ],
+   "worker_max_busy": 0.7232,
+   "worker_min_busy": 0.7133
+  },
+  "envoy_worker_max_busy": 0.7038,
+  "client_overflow": {},
+  "client_pending_total": 59,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 14400,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client pending total 75 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 14404.753218767837,
+  "sut_busy": 0.656296875,
+  "hop2_busy": 0.67717175,
+  "client_headroom": 0.6972502517652817,
+  "p50_us": 1224.959,
+  "p99_us": 5868.799,
+  "cyc_total_k": 409.9670918975414,
+  "cyc_all_k": 834.6412254661599,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3678,
+   "worker_min_share": 0.1412,
+   "worker_share": [
+    0.2841,
+    0.3678,
+    0.2069,
+    0.1412
+   ],
+   "worker_max_busy": 0.9965,
+   "worker_min_busy": 0.3826
+  },
+  "envoy_worker_max_busy": 0.6678,
+  "client_overflow": {},
+  "client_pending_total": 75,
+  "hop2_conns": 1877
+ },
+ {
+  "arm": "mru",
+  "rps": 16000,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 537 (upstream_cx_overflow=537)",
+   "client pending total 475 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 16013.197851306008,
+  "sut_busy": 0.710996,
+  "hop2_busy": 0.743432625,
+  "client_headroom": 0.7006552517943201,
+  "p50_us": 1310.847,
+  "p99_us": 3419.007,
+  "cyc_total_k": 400.54145228567756,
+  "cyc_all_k": 822.6577710663585,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3271,
+   "worker_min_share": 0.071,
+   "worker_share": [
+    0.3046,
+    0.071,
+    0.2973,
+    0.3271
+   ],
+   "worker_max_busy": 0.9729,
+   "worker_min_busy": 0.211
+  },
+  "envoy_worker_max_busy": 0.7129,
+  "client_overflow": {
+   "upstream_cx_overflow": 537
+  },
+  "client_pending_total": 475,
+  "hop2_conns": 2018
+ },
+ {
+  "arm": "lru",
+  "rps": 16000,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 803 (upstream_cx_overflow=803)",
+   "client pending total 688 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 16005.747943714314,
+  "sut_busy": 0.775078875,
+  "hop2_busy": 0.780715875,
+  "client_headroom": 0.6987688433062629,
+  "p50_us": 1117.759,
+  "p99_us": 3989.6310000000003,
+  "cyc_total_k": 438.57633782161076,
+  "cyc_all_k": 879.4573407972474,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2515,
+   "worker_min_share": 0.2482,
+   "worker_share": [
+    0.2515,
+    0.2498,
+    0.2482,
+    0.2506
+   ],
+   "worker_max_busy": 0.7845,
+   "worker_min_busy": 0.774
+  },
+  "envoy_worker_max_busy": 0.7795,
+  "client_overflow": {
+   "upstream_cx_overflow": 803
+  },
+  "client_pending_total": 688,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 17600,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 1414 (upstream_cx_overflow=1414)",
+   "client pending total 942 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 17606.05566129957,
+  "sut_busy": 0.826321875,
+  "hop2_busy": 0.832996625,
+  "client_headroom": 0.691652287307841,
+  "p50_us": 1250.943,
+  "p99_us": 7743.999,
+  "cyc_total_k": 426.0525376583021,
+  "cyc_all_k": 855.1076028683148,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.251,
+   "worker_min_share": 0.249,
+   "worker_share": [
+    0.2496,
+    0.251,
+    0.249,
+    0.2504
+   ],
+   "worker_max_busy": 0.8362,
+   "worker_min_busy": 0.8292
+  },
+  "envoy_worker_max_busy": 0.8282,
+  "client_overflow": {
+   "upstream_cx_overflow": 1414
+  },
+  "client_pending_total": 942,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 17600,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 302 (upstream_cx_overflow=302)",
+   "client pending total 255 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 17605.548070832738,
+  "sut_busy": 0.771729875,
+  "hop2_busy": 0.80658425,
+  "client_headroom": 0.6877325672190421,
+  "p50_us": 1506.111,
+  "p99_us": 3554.559,
+  "cyc_total_k": 396.76014766461077,
+  "cyc_all_k": 813.4791706045755,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2957,
+   "worker_min_share": 0.1282,
+   "worker_share": [
+    0.2821,
+    0.294,
+    0.1282,
+    0.2957
+   ],
+   "worker_max_busy": 0.9538,
+   "worker_min_busy": 0.4135
+  },
+  "envoy_worker_max_busy": 0.7727,
+  "client_overflow": {
+   "upstream_cx_overflow": 302
+  },
+  "client_pending_total": 255,
+  "hop2_conns": 2038
+ },
+ {
+  "arm": "mru",
+  "rps": 19200,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 796 (upstream_cx_overflow=796)",
+   "client pending total 551 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19206.862198123858,
+  "sut_busy": 0.8191561249999999,
+  "hop2_busy": 0.8773125,
+  "client_headroom": 0.6746933635746226,
+  "p50_us": 1391.743,
+  "p99_us": 3695.231,
+  "cyc_total_k": 386.83391363248063,
+  "cyc_all_k": 802.278911857096,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2744,
+   "worker_min_share": 0.2021,
+   "worker_share": [
+    0.2738,
+    0.2744,
+    0.2021,
+    0.2498
+   ],
+   "worker_max_busy": 0.9624,
+   "worker_min_busy": 0.709
+  },
+  "envoy_worker_max_busy": 0.8212,
+  "client_overflow": {
+   "upstream_cx_overflow": 796
+  },
+  "client_pending_total": 551,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 19200,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 362 (upstream_cx_overflow=362)",
+   "client pending total 335 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19206.35240323472,
+  "sut_busy": 0.8835598749999999,
+  "hop2_busy": 0.8825028749999999,
+  "client_headroom": 0.6862367338139559,
+  "p50_us": 1632.831,
+  "p99_us": 11413.503,
+  "cyc_total_k": 419.08105886073355,
+  "cyc_all_k": 837.2933763488371,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2511,
+   "worker_min_share": 0.2486,
+   "worker_share": [
+    0.2486,
+    0.2494,
+    0.2508,
+    0.2511
+   ],
+   "worker_max_busy": 0.8859,
+   "worker_min_busy": 0.8769
+  },
+  "envoy_worker_max_busy": 0.8864,
+  "client_overflow": {
+   "upstream_cx_overflow": 362
+  },
+  "client_pending_total": 335,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 20800,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 4876 (upstream_cx_overflow=4876)",
+   "client pending total 2840 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 20807.341344832483,
+  "sut_busy": 0.928344625,
+  "hop2_busy": 0.912268125,
+  "client_headroom": 0.6756750539157985,
+  "p50_us": 2110.9750000000004,
+  "p99_us": 17747.967,
+  "cyc_total_k": 407.51312992737695,
+  "cyc_all_k": 807.4463214841475,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2508,
+   "worker_min_share": 0.2485,
+   "worker_share": [
+    0.2505,
+    0.2508,
+    0.2502,
+    0.2485
+   ],
+   "worker_max_busy": 0.9151,
+   "worker_min_busy": 0.9066
+  },
+  "envoy_worker_max_busy": 0.9321,
+  "client_overflow": {
+   "upstream_cx_overflow": 4876
+  },
+  "client_pending_total": 2840,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 20800,
+  "rep": 1,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 1785 (upstream_cx_overflow=1785)",
+   "client pending total 1188 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 20805.91903796994,
+  "sut_busy": 0.86763275,
+  "hop2_busy": 0.903528125,
+  "client_headroom": 0.6623039256236224,
+  "p50_us": 2107.903,
+  "p99_us": 5331.455,
+  "cyc_total_k": 379.3073560820708,
+  "cyc_all_k": 775.8197718659853,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2756,
+   "worker_min_share": 0.1775,
+   "worker_share": [
+    0.2752,
+    0.1775,
+    0.2717,
+    0.2756
+   ],
+   "worker_max_busy": 0.9961,
+   "worker_min_busy": 0.6415
+  },
+  "envoy_worker_max_busy": 0.8699,
+  "client_overflow": {
+   "upstream_cx_overflow": 1785
+  },
+  "client_pending_total": 1188,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 8000,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.617439426672,
+  "sut_busy": 0.40607925,
+  "hop2_busy": 0.41009537499999993,
+  "client_headroom": 0.7352174108435899,
+  "p50_us": 826.5269999999999,
+  "p99_us": 1821.631,
+  "cyc_total_k": 451.21128641114854,
+  "cyc_all_k": 912.3652373695231,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.5258,
+   "worker_min_share": 0.0003,
+   "worker_share": [
+    0.4146,
+    0.0003,
+    0.0593,
+    0.5258
+   ],
+   "worker_max_busy": 0.8627,
+   "worker_min_busy": 0.0005
+  },
+  "envoy_worker_max_busy": 0.4079,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1450
+ },
+ {
+  "arm": "lru",
+  "rps": 8000,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 8002.433651162132,
+  "sut_busy": 0.42908262500000005,
+  "hop2_busy": 0.41735862500000004,
+  "client_headroom": 0.7410280240091569,
+  "p50_us": 883.487,
+  "p99_us": 2255.3590000000004,
+  "cyc_total_k": 477.35478857675383,
+  "cyc_all_k": 946.6722586884356,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2549,
+   "worker_min_share": 0.2427,
+   "worker_share": [
+    0.2427,
+    0.2516,
+    0.2507,
+    0.2549
+   ],
+   "worker_max_busy": 0.4256,
+   "worker_min_busy": 0.4052
+  },
+  "envoy_worker_max_busy": 0.4316,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 9600,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 9602.912796202952,
+  "sut_busy": 0.4961391249999999,
+  "hop2_busy": 0.49180287500000003,
+  "client_headroom": 0.7317273906107525,
+  "p50_us": 969.279,
+  "p99_us": 2438.271,
+  "cyc_total_k": 461.93260951031226,
+  "cyc_all_k": 924.4947623142375,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2579,
+   "worker_min_share": 0.2371,
+   "worker_share": [
+    0.2505,
+    0.2371,
+    0.2579,
+    0.2546
+   ],
+   "worker_max_busy": 0.5076,
+   "worker_min_busy": 0.4667
+  },
+  "envoy_worker_max_busy": 0.4991,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 9600,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 9603.057215296176,
+  "sut_busy": 0.47763524999999996,
+  "hop2_busy": 0.45523662500000006,
+  "client_headroom": 0.7351616860137702,
+  "p50_us": 948.191,
+  "p99_us": 1742.719,
+  "cyc_total_k": 443.47129925630196,
+  "cyc_all_k": 873.9885300517963,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.5015,
+   "worker_min_share": 0.0,
+   "worker_share": [
+    0.5015,
+    0.0005,
+    0.4979,
+    0.0
+   ],
+   "worker_max_busy": 0.9127,
+   "worker_min_busy": 0.0
+  },
+  "envoy_worker_max_busy": 0.4788,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1522
+ },
+ {
+  "arm": "mru",
+  "rps": 11200,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client pending total 91 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 11203.611821240687,
+  "sut_busy": 0.53601575,
+  "hop2_busy": 0.579199625,
+  "client_headroom": 0.7242675732035239,
+  "p50_us": 937.535,
+  "p99_us": 2461.4390000000003,
+  "cyc_total_k": 429.098735510958,
+  "cyc_all_k": 893.6866653142589,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3931,
+   "worker_min_share": 0.0942,
+   "worker_share": [
+    0.264,
+    0.0942,
+    0.3931,
+    0.2487
+   ],
+   "worker_max_busy": 0.911,
+   "worker_min_busy": 0.2184
+  },
+  "envoy_worker_max_busy": 0.5425,
+  "client_overflow": {},
+  "client_pending_total": 91,
+  "hop2_conns": 1807
+ },
+ {
+  "arm": "lru",
+  "rps": 11200,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 11203.609806805813,
+  "sut_busy": 0.564305875,
+  "hop2_busy": 0.5541636249999999,
+  "client_headroom": 0.7196416184774199,
+  "p50_us": 966.335,
+  "p99_us": 1997.503,
+  "cyc_total_k": 452.2126825875644,
+  "cyc_all_k": 898.158994486518,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2533,
+   "worker_min_share": 0.2447,
+   "worker_share": [
+    0.2447,
+    0.2499,
+    0.2533,
+    0.2521
+   ],
+   "worker_max_busy": 0.5612,
+   "worker_min_busy": 0.5423
+  },
+  "envoy_worker_max_busy": 0.5662,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 12800,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 12804.471782907684,
+  "sut_busy": 0.638056875,
+  "hop2_busy": 0.64190825,
+  "client_headroom": 0.7136257377434156,
+  "p50_us": 1043.903,
+  "p99_us": 2191.231,
+  "cyc_total_k": 448.6015533235537,
+  "cyc_all_k": 901.5460555397146,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2536,
+   "worker_min_share": 0.2474,
+   "worker_share": [
+    0.2507,
+    0.2474,
+    0.2483,
+    0.2536
+   ],
+   "worker_max_busy": 0.6511,
+   "worker_min_busy": 0.6351
+  },
+  "envoy_worker_max_busy": 0.6396,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 12800,
+  "rep": 2,
+  "valid": true,
+  "reasons": [],
+  "rate": 12801.75260524676,
+  "sut_busy": 0.58730125,
+  "hop2_busy": 0.560639,
+  "client_headroom": 0.7157116760043536,
+  "p50_us": 4314.6230000000005,
+  "p99_us": 9862.654999999999,
+  "cyc_total_k": 411.97346149608256,
+  "cyc_all_k": 808.4745684983889,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.4457,
+   "worker_min_share": 0.0962,
+   "worker_share": [
+    0.1046,
+    0.3535,
+    0.0962,
+    0.4457
+   ],
+   "worker_max_busy": 1.0005,
+   "worker_min_busy": 0.216
+  },
+  "envoy_worker_max_busy": 0.6005,
+  "client_overflow": {},
+  "client_pending_total": 16,
+  "hop2_conns": 1829
+ },
+ {
+  "arm": "mru",
+  "rps": 14400,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 121 (upstream_cx_overflow=121)",
+   "client pending total 183 above 16 (queue absorbed a burst)",
+   "scheduler run time probe inconsistent: foreign -0.0286, siblings 0.0062 CPUs (under -0.01)"
+  ],
+  "rate": 14403.869378740053,
+  "sut_busy": 0.6539537500000001,
+  "hop2_busy": 0.653856,
+  "client_headroom": 0.7092817135486182,
+  "p50_us": 1388.0310000000002,
+  "p99_us": 7967.7429999999995,
+  "cyc_total_k": 408.8856795655817,
+  "cyc_all_k": 819.6723508008336,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3824,
+   "worker_min_share": 0.0888,
+   "worker_share": [
+    0.3081,
+    0.0888,
+    0.2207,
+    0.3824
+   ],
+   "worker_max_busy": 1.0008,
+   "worker_min_busy": 0.2324
+  },
+  "envoy_worker_max_busy": 0.6627,
+  "client_overflow": {
+   "upstream_cx_overflow": 121
+  },
+  "client_pending_total": 183,
+  "hop2_conns": 1999
+ },
+ {
+  "arm": "lru",
+  "rps": 14400,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 108 (upstream_cx_overflow=108)",
+   "client pending total 163 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 14404.872766040855,
+  "sut_busy": 0.7002167499999999,
+  "hop2_busy": 0.70389275,
+  "client_headroom": 0.7042294690499492,
+  "p50_us": 1082.3670000000002,
+  "p99_us": 3141.6310000000003,
+  "cyc_total_k": 439.2958533148665,
+  "cyc_all_k": 879.9675871440494,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2518,
+   "worker_min_share": 0.2484,
+   "worker_share": [
+    0.2484,
+    0.2502,
+    0.2518,
+    0.2495
+   ],
+   "worker_max_busy": 0.7083,
+   "worker_min_busy": 0.6988
+  },
+  "envoy_worker_max_busy": 0.7043,
+  "client_overflow": {
+   "upstream_cx_overflow": 108
+  },
+  "client_pending_total": 163,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 16000,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 522 (upstream_cx_overflow=522)",
+   "client pending total 471 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 16005.42934774574,
+  "sut_busy": 0.764244375,
+  "hop2_busy": 0.767849,
+  "client_headroom": 0.6981030355485873,
+  "p50_us": 1114.175,
+  "p99_us": 5268.735,
+  "cyc_total_k": 432.30424203675153,
+  "cyc_all_k": 866.064861730956,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2518,
+   "worker_min_share": 0.2489,
+   "worker_share": [
+    0.2494,
+    0.2518,
+    0.2489,
+    0.2499
+   ],
+   "worker_max_busy": 0.7735,
+   "worker_min_busy": 0.7645
+  },
+  "envoy_worker_max_busy": 0.7665,
+  "client_overflow": {
+   "upstream_cx_overflow": 522
+  },
+  "client_pending_total": 471,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 16000,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 451 (upstream_cx_overflow=451)",
+   "client pending total 320 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 16006.039910056945,
+  "sut_busy": 0.7313531249999999,
+  "hop2_busy": 0.733251,
+  "client_headroom": 0.6892602502939983,
+  "p50_us": 1548.3509999999999,
+  "p99_us": 4874.495000000001,
+  "cyc_total_k": 413.06135403272765,
+  "cyc_all_k": 829.3806608722101,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3409,
+   "worker_min_share": 0.083,
+   "worker_share": [
+    0.3159,
+    0.2603,
+    0.3409,
+    0.083
+   ],
+   "worker_max_busy": 1.0001,
+   "worker_min_busy": 0.2434
+  },
+  "envoy_worker_max_busy": 0.7322,
+  "client_overflow": {
+   "upstream_cx_overflow": 451
+  },
+  "client_pending_total": 320,
+  "hop2_conns": 2046
+ },
+ {
+  "arm": "mru",
+  "rps": 17600,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 82 (upstream_cx_overflow=82)",
+   "client pending total 161 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 17607.49690719109,
+  "sut_busy": 0.76668425,
+  "hop2_busy": 0.791002875,
+  "client_headroom": 0.6911079265976288,
+  "p50_us": 1782.015,
+  "p99_us": 6149.631,
+  "cyc_total_k": 394.12078839075883,
+  "cyc_all_k": 801.9139523422756,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.3163,
+   "worker_min_share": 0.1683,
+   "worker_share": [
+    0.2138,
+    0.1683,
+    0.3016,
+    0.3163
+   ],
+   "worker_max_busy": 1.0005,
+   "worker_min_busy": 0.5325
+  },
+  "envoy_worker_max_busy": 0.771,
+  "client_overflow": {
+   "upstream_cx_overflow": 82
+  },
+  "client_pending_total": 161,
+  "hop2_conns": 2041
+ },
+ {
+  "arm": "lru",
+  "rps": 17600,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 781 (upstream_cx_overflow=781)",
+   "client pending total 535 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 17607.61967976848,
+  "sut_busy": 0.8308048749999999,
+  "hop2_busy": 0.836077375,
+  "client_headroom": 0.6951843321913583,
+  "p50_us": 1248.831,
+  "p99_us": 4361.215,
+  "cyc_total_k": 428.40386378104597,
+  "cyc_all_k": 858.9033395625258,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2505,
+   "worker_min_share": 0.2493,
+   "worker_share": [
+    0.2493,
+    0.2505,
+    0.2496,
+    0.2505
+   ],
+   "worker_max_busy": 0.8371,
+   "worker_min_busy": 0.8331
+  },
+  "envoy_worker_max_busy": 0.8321,
+  "client_overflow": {
+   "upstream_cx_overflow": 781
+  },
+  "client_pending_total": 535,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 19200,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 2007 (upstream_cx_overflow=2007)",
+   "client pending total 1254 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19206.820683752576,
+  "sut_busy": 0.8850209999999998,
+  "hop2_busy": 0.880127375,
+  "client_headroom": 0.6881799049456494,
+  "p50_us": 1590.2069999999999,
+  "p99_us": 9992.190999999999,
+  "cyc_total_k": 419.8155224133956,
+  "cyc_all_k": 836.6913884734751,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2507,
+   "worker_min_share": 0.2493,
+   "worker_share": [
+    0.2504,
+    0.2507,
+    0.2496,
+    0.2493
+   ],
+   "worker_max_busy": 0.8821,
+   "worker_min_busy": 0.8771
+  },
+  "envoy_worker_max_busy": 0.8866,
+  "client_overflow": {
+   "upstream_cx_overflow": 2007
+  },
+  "client_pending_total": 1254,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 19200,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 567 (upstream_cx_overflow=567)",
+   "client pending total 417 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 19205.972179025383,
+  "sut_busy": 0.8213442499999999,
+  "hop2_busy": 0.849214875,
+  "client_headroom": 0.6781682270341042,
+  "p50_us": 2253.439,
+  "p99_us": 6633.983,
+  "cyc_total_k": 388.1653717218033,
+  "cyc_all_k": 790.4317024435245,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2935,
+   "worker_min_share": 0.1997,
+   "worker_share": [
+    0.1997,
+    0.2134,
+    0.2934,
+    0.2935
+   ],
+   "worker_max_busy": 0.9974,
+   "worker_min_busy": 0.6786
+  },
+  "envoy_worker_max_busy": 0.8228,
+  "client_overflow": {
+   "upstream_cx_overflow": 567
+  },
+  "client_pending_total": 417,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "mru",
+  "rps": 20800,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 2458 (upstream_cx_overflow=2458)",
+   "client pending total 1507 above 16 (queue absorbed a burst)",
+   "scheduler run time probe inconsistent: foreign -0.0292, siblings 0.0007 CPUs (under -0.01)"
+  ],
+  "rate": 20806.381888243453,
+  "sut_busy": 0.8699121250000001,
+  "hop2_busy": 0.8672606250000001,
+  "client_headroom": 0.6747139731792622,
+  "p50_us": 2895.2309999999998,
+  "p99_us": 12354.047,
+  "cyc_total_k": 380.6205043811477,
+  "cyc_all_k": 760.7049929086068,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2886,
+   "worker_min_share": 0.1592,
+   "worker_share": [
+    0.2878,
+    0.2886,
+    0.2644,
+    0.1592
+   ],
+   "worker_max_busy": 1.0008,
+   "worker_min_busy": 0.5523
+  },
+  "envoy_worker_max_busy": 0.8796,
+  "client_overflow": {
+   "upstream_cx_overflow": 2458
+  },
+  "client_pending_total": 1507,
+  "hop2_conns": 2048
+ },
+ {
+  "arm": "lru",
+  "rps": 20800,
+  "rep": 2,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 608 (upstream_cx_overflow=608)",
+   "client pending total 472 above 16 (queue absorbed a burst)"
+  ],
+  "rate": 20806.878475788995,
+  "sut_busy": 0.9300852500000001,
+  "hop2_busy": 0.92160925,
+  "client_headroom": 0.6731788959851082,
+  "p50_us": 2069.8869999999997,
+  "p99_us": 6579.711,
+  "cyc_total_k": 408.26206830517293,
+  "cyc_all_k": 812.4446912385298,
+  "hop2_workers": {
+   "workers": 4,
+   "worker_threads_found": 4,
+   "worker_max_share": 0.2512,
+   "worker_min_share": 0.2489,
+   "worker_share": [
+    0.2489,
+    0.249,
+    0.2512,
+    0.2509
+   ],
+   "worker_max_busy": 0.9256,
+   "worker_min_busy": 0.9171
+  },
+  "envoy_worker_max_busy": 0.9341,
+  "client_overflow": {
+   "upstream_cx_overflow": 608
+  },
+  "client_pending_total": 472,
+  "hop2_conns": 2048
+ }
+]

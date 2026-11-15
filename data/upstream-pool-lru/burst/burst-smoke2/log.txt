@@ -1,0 +1,9 @@
+2026-11-15T07:34:15Z run lru-burst-smoke: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo']
+2026-11-15T07:34:15Z origin container ae45ad65ef0e (epl-origin-669302) started
+2026-11-15T07:35:25Z r01-s-lo-mru VALID ins_u=163.9k cyc_tot=504.3k busy=29.7% rate=5200.9/5200 p99=1044us 
+2026-11-15T07:36:34Z r01-s-lo-lru VALID ins_u=164.0k cyc_tot=517.2k busy=30.4% rate=5200.9/5200 p99=1090us 
+2026-11-15T07:37:43Z r02-s-lo-lru VALID ins_u=164.0k cyc_tot=517.4k busy=30.4% rate=5200.8/5200 p99=1056us 
+2026-11-15T07:38:52Z r02-s-lo-mru VALID ins_u=163.9k cyc_tot=506.2k busy=29.8% rate=5200.8/5200 p99=1022us 
+2026-11-15T07:38:52Z after 2 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:38:52Z origin container ae45ad65ef0e stopped
+2026-11-15T07:38:54Z done: ~/epl/runs/lru/burst-smoke2/summary.md

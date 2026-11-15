@@ -1,0 +1,53 @@
+2026-11-14T10:18:24Z run sm-tcmalloc-percpu: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['tcmalloc-default', 'rseq-off'], shapes ['s', 'fh']
+2026-11-14T10:18:24Z origin container 94536f30bc0e (epl-origin-443346) started
+2026-11-14T10:19:04Z r01-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5200.6/5200 p99=639us 
+2026-11-14T10:19:42Z r01-s-rseq-off VALID ins_u=147.2k cyc_tot=522.3k busy=31.1% rate=5200.6/5200 p99=608us 
+2026-11-14T10:20:21Z r01-fh-tcmalloc-default VALID ins_u=164.7k cyc_tot=282.8k busy=25.7% rate=8000.8/8000 p99=377us 
+2026-11-14T10:20:59Z r01-fh-rseq-off VALID ins_u=133.5k cyc_tot=282.6k busy=25.6% rate=8000.8/8000 p99=375us 
+2026-11-14T10:21:37Z r02-s-rseq-off VALID ins_u=147.2k cyc_tot=517.5k busy=30.8% rate=5200.5/5200 p99=591us 
+2026-11-14T10:22:16Z r02-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=531.7k busy=31.6% rate=5200.5/5200 p99=637us 
+2026-11-14T10:22:54Z r02-fh-rseq-off VALID ins_u=133.0k cyc_tot=283.7k busy=25.8% rate=8000.8/8000 p99=371us 
+2026-11-14T10:23:33Z r02-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=274.9k busy=25.0% rate=8000.8/8000 p99=361us 
+2026-11-14T10:24:11Z r03-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=524.8k busy=31.2% rate=5200.5/5200 p99=621us 
+2026-11-14T10:24:50Z r03-s-rseq-off VALID ins_u=147.1k cyc_tot=525.1k busy=31.2% rate=5200.5/5200 p99=627us 
+2026-11-14T10:25:28Z r03-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=281.5k busy=25.6% rate=8000.8/8000 p99=366us 
+2026-11-14T10:26:06Z r03-fh-rseq-off VALID ins_u=132.8k cyc_tot=281.0k busy=25.5% rate=8000.8/8000 p99=369us 
+2026-11-14T10:26:45Z r04-s-rseq-off VALID ins_u=147.2k cyc_tot=528.2k busy=31.4% rate=5200.5/5200 p99=626us 
+2026-11-14T10:27:23Z r04-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=529.7k busy=31.4% rate=5200.5/5200 p99=635us 
+2026-11-14T10:28:02Z r04-fh-rseq-off VALID ins_u=133.0k cyc_tot=280.1k busy=25.5% rate=8000.8/8000 p99=372us 
+2026-11-14T10:28:40Z r04-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=277.6k busy=25.2% rate=8000.8/8000 p99=366us 
+2026-11-14T10:29:19Z r05-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=534.9k busy=31.8% rate=5200.5/5200 p99=613us 
+2026-11-14T10:29:57Z r05-s-rseq-off VALID ins_u=147.1k cyc_tot=520.3k busy=30.9% rate=5200.5/5200 p99=618us 
+2026-11-14T10:30:35Z r05-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=279.6k busy=25.4% rate=8000.8/8000 p99=374us 
+2026-11-14T10:31:14Z r05-fh-rseq-off VALID ins_u=133.3k cyc_tot=282.3k busy=25.7% rate=8000.8/8000 p99=370us 
+2026-11-14T10:31:52Z r06-s-rseq-off VALID ins_u=147.3k cyc_tot=522.3k busy=31.1% rate=5200.5/5200 p99=635us 
+2026-11-14T10:32:31Z r06-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=523.3k busy=31.1% rate=5200.5/5200 p99=625us 
+2026-11-14T10:33:09Z r06-fh-rseq-off VALID ins_u=132.8k cyc_tot=290.3k busy=26.4% rate=8000.8/8000 p99=382us 
+2026-11-14T10:33:48Z r06-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=281.0k busy=25.6% rate=8000.8/8000 p99=372us 
+2026-11-14T10:34:26Z r07-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=524.6k busy=31.2% rate=5200.6/5200 p99=623us 
+2026-11-14T10:35:05Z r07-s-rseq-off VALID ins_u=147.2k cyc_tot=518.0k busy=30.8% rate=5200.5/5200 p99=613us 
+2026-11-14T10:35:43Z r07-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=278.7k busy=25.3% rate=8000.8/8000 p99=370us 
+2026-11-14T10:36:21Z r07-fh-rseq-off VALID ins_u=133.1k cyc_tot=276.6k busy=25.1% rate=8000.8/8000 p99=367us 
+2026-11-14T10:37:00Z r08-s-rseq-off VALID ins_u=147.2k cyc_tot=526.3k busy=31.4% rate=5200.5/5200 p99=625us 
+2026-11-14T10:37:38Z r08-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=528.3k busy=31.4% rate=5200.5/5200 p99=633us 
+2026-11-14T10:38:17Z r08-fh-rseq-off VALID ins_u=133.0k cyc_tot=289.0k busy=26.2% rate=8000.8/8000 p99=372us 
+2026-11-14T10:38:55Z r08-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=282.9k busy=25.7% rate=8000.8/8000 p99=368us 
+2026-11-14T10:39:33Z r09-s-rseq-off VALID ins_u=147.1k cyc_tot=531.0k busy=31.6% rate=5200.5/5200 p99=622us 
+2026-11-14T10:40:12Z r09-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=531.4k busy=31.6% rate=5200.5/5200 p99=648us 
+2026-11-14T10:40:50Z r09-fh-rseq-off VALID ins_u=133.4k cyc_tot=278.4k busy=25.3% rate=8000.8/8000 p99=375us 
+2026-11-14T10:41:29Z r09-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=282.9k busy=25.7% rate=8000.8/8000 p99=372us 
+2026-11-14T10:42:07Z r10-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=530.3k busy=31.6% rate=5200.5/5200 p99=615us 
+2026-11-14T10:42:46Z r10-s-rseq-off VALID ins_u=147.1k cyc_tot=519.8k busy=30.9% rate=5200.5/5200 p99=637us 
+2026-11-14T10:43:24Z r10-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=272.9k busy=24.8% rate=8000.8/8000 p99=363us 
+2026-11-14T10:44:02Z r10-fh-rseq-off VALID ins_u=133.0k cyc_tot=282.0k busy=25.6% rate=8000.8/8000 p99=368us 
+2026-11-14T10:44:41Z r11-s-tcmalloc-default VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5200.5/5200 p99=615us 
+2026-11-14T10:45:19Z r11-s-rseq-off VALID ins_u=147.0k cyc_tot=519.0k busy=30.7% rate=5200.6/5200 p99=604us 
+2026-11-14T10:45:58Z r11-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=270.0k busy=24.6% rate=8000.9/8000 p99=367us 
+2026-11-14T10:46:36Z r11-fh-rseq-off VALID ins_u=133.0k cyc_tot=281.4k busy=25.6% rate=8000.8/8000 p99=368us 
+2026-11-14T10:47:15Z r12-s-rseq-off VALID ins_u=147.3k cyc_tot=526.9k busy=31.3% rate=5200.5/5200 p99=602us 
+2026-11-14T10:47:53Z r12-s-tcmalloc-default VALID ins_u=163.8k cyc_tot=518.1k busy=30.7% rate=5200.5/5200 p99=661us 
+2026-11-14T10:48:31Z r12-fh-rseq-off VALID ins_u=133.0k cyc_tot=281.1k busy=25.5% rate=8000.8/8000 p99=372us 
+2026-11-14T10:49:10Z r12-fh-tcmalloc-default VALID ins_u=164.8k cyc_tot=270.9k busy=24.7% rate=8000.8/8000 p99=364us 
+2026-11-14T10:49:10Z after 12 rounds: widest cycles_total half-width 1.24% (fh rseq-off vs tcmalloc-default) <= target 1.50%
+2026-11-14T10:49:10Z origin container 94536f30bc0e stopped
+2026-11-14T10:49:11Z done: ~/epl/runs/sm/09-tcmalloc-percpu/summary.md

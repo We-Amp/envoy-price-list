@@ -1,0 +1,71 @@
+2026-11-14T08:27:22Z run sm-tracing: rotate order, rounds 16..32 in blocks of 8 (adaptive True), arms ['no-tracer', 'sampling-0', 'sampling-1', 'sampling-100'], shapes ['s']
+2026-11-14T08:27:23Z origin container 8bead885d5f3 (epl-origin-418923) started
+2026-11-14T08:27:23Z collector container 41000df44bf7 (epl-collector-418923) started
+2026-11-14T08:28:02Z r01-s-no-tracer VALID ins_u=163.9k cyc_tot=523.6k busy=31.1% rate=5200.6/5200 p99=624us 
+2026-11-14T08:28:41Z r01-s-sampling-0 VALID ins_u=185.1k cyc_tot=561.9k busy=33.0% rate=5200.5/5200 p99=677us 
+2026-11-14T08:29:19Z r01-s-sampling-1 VALID ins_u=186.7k cyc_tot=564.2k busy=33.3% rate=5200.5/5200 p99=675us 
+2026-11-14T08:29:58Z r01-s-sampling-100 VALID ins_u=315.2k cyc_tot=705.0k busy=41.1% rate=5200.7/5200 p99=1024us 
+2026-11-14T08:30:36Z r02-s-sampling-100 VALID ins_u=315.2k cyc_tot=704.2k busy=41.1% rate=5200.6/5200 p99=1065us 
+2026-11-14T08:31:15Z r02-s-sampling-1 VALID ins_u=186.9k cyc_tot=569.9k busy=33.6% rate=5200.5/5200 p99=685us 
+2026-11-14T08:31:53Z r02-s-sampling-0 VALID ins_u=185.1k cyc_tot=559.2k busy=33.0% rate=5200.5/5200 p99=765us 
+2026-11-14T08:32:31Z r02-s-no-tracer VALID ins_u=163.9k cyc_tot=520.0k busy=30.9% rate=5200.5/5200 p99=605us 
+2026-11-14T08:33:10Z r03-s-sampling-0 VALID ins_u=185.4k cyc_tot=555.5k busy=32.9% rate=5200.6/5200 p99=674us 
+2026-11-14T08:33:48Z r03-s-sampling-1 VALID ins_u=186.5k cyc_tot=556.5k busy=32.7% rate=5200.6/5200 p99=735us 
+2026-11-14T08:34:27Z r03-s-sampling-100 VALID ins_u=315.2k cyc_tot=700.2k busy=40.8% rate=5200.4/5200 p99=1080us 
+2026-11-14T08:35:05Z r03-s-no-tracer VALID ins_u=163.9k cyc_tot=523.2k busy=31.1% rate=5200.5/5200 p99=610us 
+2026-11-14T08:35:44Z r04-s-no-tracer VALID ins_u=164.0k cyc_tot=532.0k busy=31.6% rate=5200.5/5200 p99=627us 
+2026-11-14T08:36:22Z r04-s-sampling-100 VALID ins_u=315.4k cyc_tot=709.2k busy=41.4% rate=5200.6/5200 p99=984us 
+2026-11-14T08:37:01Z r04-s-sampling-1 VALID ins_u=186.6k cyc_tot=563.5k busy=33.3% rate=5200.5/5200 p99=738us 
+2026-11-14T08:37:39Z r04-s-sampling-0 VALID ins_u=185.3k cyc_tot=563.1k busy=33.2% rate=5200.5/5200 p99=671us 
+2026-11-14T08:38:18Z r05-s-sampling-1 VALID ins_u=186.7k cyc_tot=561.2k busy=33.1% rate=5200.5/5200 p99=681us 
+2026-11-14T08:38:56Z r05-s-sampling-100 VALID ins_u=315.1k cyc_tot=703.5k busy=41.0% rate=5200.4/5200 p99=1256us 
+2026-11-14T08:39:35Z r05-s-no-tracer VALID ins_u=164.0k cyc_tot=519.3k busy=30.9% rate=5200.6/5200 p99=629us 
+2026-11-14T08:40:13Z r05-s-sampling-0 VALID ins_u=185.4k cyc_tot=560.5k busy=33.1% rate=5200.5/5200 p99=744us 
+2026-11-14T08:40:52Z r06-s-sampling-0 VALID ins_u=185.3k cyc_tot=560.0k busy=33.1% rate=5200.5/5200 p99=682us 
+2026-11-14T08:41:30Z r06-s-no-tracer VALID ins_u=163.9k cyc_tot=524.4k busy=31.1% rate=5200.5/5200 p99=616us 
+2026-11-14T08:42:09Z r06-s-sampling-100 VALID ins_u=315.1k cyc_tot=701.7k busy=40.9% rate=5200.5/5200 p99=1144us 
+2026-11-14T08:42:47Z r06-s-sampling-1 VALID ins_u=186.7k cyc_tot=559.4k busy=33.1% rate=5200.5/5200 p99=657us 
+2026-11-14T08:43:26Z r07-s-sampling-100 VALID ins_u=315.3k cyc_tot=706.9k busy=41.3% rate=5200.6/5200 p99=1036us 
+2026-11-14T08:44:04Z r07-s-no-tracer VALID ins_u=163.9k cyc_tot=524.7k busy=31.2% rate=5200.5/5200 p99=622us 
+2026-11-14T08:44:43Z r07-s-sampling-0 VALID ins_u=185.2k cyc_tot=562.3k busy=33.1% rate=5200.5/5200 p99=708us 
+2026-11-14T08:45:21Z r07-s-sampling-1 VALID ins_u=186.7k cyc_tot=568.0k busy=33.5% rate=5200.5/5200 p99=781us 
+2026-11-14T08:46:00Z r08-s-sampling-1 VALID ins_u=186.7k cyc_tot=560.3k busy=33.2% rate=5200.5/5200 p99=668us 
+2026-11-14T08:46:38Z r08-s-sampling-0 VALID ins_u=185.3k cyc_tot=562.1k busy=33.2% rate=5200.5/5200 p99=637us 
+2026-11-14T08:47:16Z r08-s-no-tracer VALID ins_u=163.9k cyc_tot=522.9k busy=31.0% rate=5200.5/5200 p99=635us 
+2026-11-14T08:47:55Z r08-s-sampling-100 VALID ins_u=315.2k cyc_tot=708.4k busy=41.3% rate=5200.5/5200 p99=994us 
+2026-11-14T08:48:33Z r09-s-sampling-100 VALID ins_u=315.3k cyc_tot=701.8k busy=40.9% rate=5200.5/5200 p99=971us 
+2026-11-14T08:49:12Z r09-s-sampling-1 VALID ins_u=186.6k cyc_tot=563.2k busy=33.1% rate=5200.6/5200 p99=767us 
+2026-11-14T08:49:50Z r09-s-sampling-0 VALID ins_u=185.2k cyc_tot=560.0k busy=33.0% rate=5200.6/5200 p99=687us 
+2026-11-14T08:50:29Z r09-s-no-tracer VALID ins_u=163.9k cyc_tot=528.7k busy=31.4% rate=5200.5/5200 p99=631us 
+2026-11-14T08:51:07Z r10-s-no-tracer VALID ins_u=163.9k cyc_tot=526.1k busy=31.3% rate=5200.5/5200 p99=631us 
+2026-11-14T08:51:46Z r10-s-sampling-0 VALID ins_u=185.3k cyc_tot=565.3k busy=33.3% rate=5200.5/5200 p99=756us 
+2026-11-14T08:52:24Z r10-s-sampling-1 VALID ins_u=186.6k cyc_tot=562.3k busy=33.2% rate=5200.5/5200 p99=682us 
+2026-11-14T08:53:03Z r10-s-sampling-100 VALID ins_u=315.2k cyc_tot=700.9k busy=40.8% rate=5200.4/5200 p99=1059us 
+2026-11-14T08:53:41Z r11-s-sampling-0 VALID ins_u=185.2k cyc_tot=560.9k busy=33.0% rate=5200.5/5200 p99=729us 
+2026-11-14T08:54:20Z r11-s-sampling-1 VALID ins_u=186.5k cyc_tot=560.9k busy=33.0% rate=5200.6/5200 p99=793us 
+2026-11-14T08:54:58Z r11-s-sampling-100 VALID ins_u=315.2k cyc_tot=707.3k busy=41.2% rate=5200.6/5200 p99=1124us 
+2026-11-14T08:55:37Z r11-s-no-tracer VALID ins_u=163.9k cyc_tot=531.5k busy=31.5% rate=5200.5/5200 p99=613us 
+2026-11-14T08:56:15Z r12-s-no-tracer VALID ins_u=164.0k cyc_tot=529.9k busy=31.6% rate=5200.5/5200 p99=612us 
+2026-11-14T08:56:54Z r12-s-sampling-100 VALID ins_u=315.3k cyc_tot=704.4k busy=41.1% rate=5200.5/5200 p99=1097us 
+2026-11-14T08:57:32Z r12-s-sampling-1 VALID ins_u=186.6k cyc_tot=567.1k busy=33.5% rate=5200.5/5200 p99=713us 
+2026-11-14T08:58:11Z r12-s-sampling-0 VALID ins_u=185.3k cyc_tot=568.9k busy=33.6% rate=5200.6/5200 p99=675us 
+2026-11-14T08:58:49Z r13-s-sampling-0 VALID ins_u=185.2k cyc_tot=559.7k busy=32.9% rate=5200.6/5200 p99=728us 
+2026-11-14T08:59:28Z r13-s-no-tracer VALID ins_u=163.9k cyc_tot=525.6k busy=31.2% rate=5200.6/5200 p99=617us 
+2026-11-14T09:00:06Z r13-s-sampling-100 VALID ins_u=315.2k cyc_tot=699.8k busy=40.8% rate=5200.7/5200 p99=940us 
+2026-11-14T09:00:45Z r13-s-sampling-1 VALID ins_u=186.7k cyc_tot=560.7k busy=33.1% rate=5200.5/5200 p99=745us 
+2026-11-14T09:01:23Z r14-s-sampling-1 VALID ins_u=186.7k cyc_tot=566.4k busy=33.4% rate=5200.5/5200 p99=711us 
+2026-11-14T09:02:02Z r14-s-sampling-100 VALID ins_u=315.3k cyc_tot=706.4k busy=41.2% rate=5200.5/5200 p99=977us 
+2026-11-14T09:02:40Z r14-s-no-tracer VALID ins_u=163.9k cyc_tot=531.3k busy=31.5% rate=5200.6/5200 p99=630us 
+2026-11-14T09:03:18Z r14-s-sampling-0 VALID ins_u=185.3k cyc_tot=556.5k busy=32.8% rate=5200.6/5200 p99=704us 
+2026-11-14T09:03:57Z r15-s-sampling-1 VALID ins_u=186.6k cyc_tot=565.4k busy=33.3% rate=5200.5/5200 p99=734us 
+2026-11-14T09:04:35Z r15-s-sampling-0 VALID ins_u=185.3k cyc_tot=561.1k busy=33.1% rate=5200.5/5200 p99=675us 
+2026-11-14T09:05:14Z r15-s-no-tracer VALID ins_u=163.9k cyc_tot=532.5k busy=31.6% rate=5200.5/5200 p99=627us 
+2026-11-14T09:05:52Z r15-s-sampling-100 VALID ins_u=315.3k cyc_tot=702.8k busy=41.1% rate=5200.5/5200 p99=936us 
+2026-11-14T09:06:31Z r16-s-sampling-100 VALID ins_u=315.2k cyc_tot=701.7k busy=40.9% rate=5200.6/5200 p99=1149us 
+2026-11-14T09:07:09Z r16-s-no-tracer VALID ins_u=164.0k cyc_tot=525.1k busy=31.3% rate=5200.5/5200 p99=622us 
+2026-11-14T09:07:48Z r16-s-sampling-0 VALID ins_u=185.4k cyc_tot=568.8k busy=33.6% rate=5200.5/5200 p99=658us 
+2026-11-14T09:08:26Z r16-s-sampling-1 VALID ins_u=186.5k cyc_tot=561.0k busy=33.0% rate=5200.6/5200 p99=730us 
+2026-11-14T09:08:26Z after 16 rounds: widest cycles_total half-width 0.51% (s sampling-0 vs no-tracer) <= target 1.50%
+2026-11-14T09:08:26Z collector container 41000df44bf7 stopped
+2026-11-14T09:08:27Z origin container 8bead885d5f3 stopped
+2026-11-14T09:08:29Z done: ~/epl/runs/sm/04-tracing/summary.md

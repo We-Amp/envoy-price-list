@@ -1,0 +1,170 @@
+{
+ "aa": {
+  "max_half_width_pct": {
+   "cycles_total": 1.0,
+   "instructions_u": 0.5
+  },
+  "metrics": [
+   "instructions_u",
+   "cycles_total"
+  ]
+ },
+ "abort_after_invalid": 6,
+ "adaptive": true,
+ "alpha": 0.05,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2-pool-order",
+   "md5": "ce35a0841952b5c439a254dc6c8b7b6f",
+   "name": "mru",
+   "settings": {
+    "two_hop": true
+   },
+   "source": "envoy v1.40.2 + an experimental upstream pool reuse-order patch, -c opt, stripped",
+   "validity": {
+    "hop2_worker_share_gate": false
+   }
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2-pool-order",
+   "md5": "ce35a0841952b5c439a254dc6c8b7b6f",
+   "name": "mru-noeb",
+   "settings": {
+    "hop2_settings": {
+     "exact_balance": false
+    },
+    "two_hop": true
+   },
+   "source": "envoy v1.40.2 + an experimental upstream pool reuse-order patch, -c opt, stripped",
+   "validity": {
+    "hop2_worker_share_gate": false
+   }
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2-pool-order",
+   "env": {
+    "ENVOY_EXP_UPSTREAM_POOL_LRU": "1"
+   },
+   "hop2_env": {},
+   "md5": "ce35a0841952b5c439a254dc6c8b7b6f",
+   "name": "lru",
+   "settings": {
+    "two_hop": true
+   },
+   "source": "envoy v1.40.2 + an experimental upstream pool reuse-order patch, -c opt, stripped",
+   "validity": {
+    "hop2_worker_share_gate": false
+   }
+  }
+ ],
+ "base_arm": "mru",
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru",
+   "--rate-limiter-plugin-config",
+   "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"2s\"}}"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "collector": {
+  "image": null,
+  "port": 4317
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "20-31,60-71",
+  "hop2": "4-7",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "hop2": {
+  "admin_port": 9931,
+  "listener_port": 10120
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_cpu_busy_pct": 5.0,
+  "max_load1": 8.0,
+  "poll_s": 5,
+  "procs": [
+   "(^|/)envoy[^/ ]*( |$)",
+   "(^|/)nighthawk_client( |$)",
+   "(^|/)h2load( |$)",
+   "(^|/)wrk2?( |$)",
+   "(^|/)fortio( |$)"
+  ],
+  "sample_s": 1.0,
+  "timeout_s": 600
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "conn_probe": true,
+  "lead_in_s": 3,
+  "perf": [
+   "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+  ],
+  "window_s": 20
+ },
+ "min_pairs": 6,
+ "name": "lru-demand-pool",
+ "order": "auto",
+ "order_seed": 20261114,
+ "origin": {
+  "authz_grpc_port": null,
+  "authz_port": null,
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total_all",
+ "record_hostname": false,
+ "rerun_invalid": 1,
+ "rounds": 12,
+ "rounds_block": 6,
+ "rounds_max": 24,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s-lo",
+   "path": "/s",
+   "rps": 5200
+  },
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s-hi",
+   "path": "/s4",
+   "rps": 8000
+  }
+ ],
+ "stop": {
+  "target_half_width_pct": 1.5
+ },
+ "validity": {
+  "max_non2xx": 0,
+  "max_overflow": 0,
+  "min_client_headroom": 0.25,
+  "rate_tolerance": 0.01
+ },
+ "workdir": "~/epl/runs/lru"
+}

@@ -1,0 +1,62 @@
+[
+ {
+  "rps": 1200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.141418125,
+  "client_headroom": 0.7799297181783934,
+  "rate": 1200.1066230221807,
+  "ins_u_k": 834.5637574083188,
+  "cyc_total_k": 944.0846925307399,
+  "p99_us": 4918.527,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 24049,
+   "http.ingress_http.downstream_cx_destroy": 2048,
+   "http.ingress_http.downstream_cx_total": 2048,
+   "http.ingress_http.downstream_rq_2xx": 24049,
+   "http.ingress_http.downstream_rq_total": 24049,
+   "listener.127.0.0.1_10110.downstream_cx_total": 2048,
+   "listener.127.0.0.1_10110.ssl.handshake": 2048,
+   "listener.127.0.0.1_10110.ssl.no_certificate": 2048,
+   "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 512,
+   "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 512,
+   "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 512,
+   "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 512,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 84,
+  "access_log_lines": null
+ },
+ {
+  "rps": 2400,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.257345375,
+  "client_headroom": 0.7735056167068772,
+  "rate": 2400.2417993389254,
+  "ins_u_k": 915.7954923772301,
+  "cyc_total_k": 934.753278239693,
+  "p99_us": 13951.999,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 48112,
+   "http.ingress_http.downstream_cx_destroy": 4608,
+   "http.ingress_http.downstream_cx_total": 4608,
+   "http.ingress_http.downstream_rq_2xx": 48112,
+   "http.ingress_http.downstream_rq_total": 48112,
+   "listener.127.0.0.1_10110.downstream_cx_total": 4608,
+   "listener.127.0.0.1_10110.ssl.handshake": 4608,
+   "listener.127.0.0.1_10110.ssl.no_certificate": 4608,
+   "listener.127.0.0.1_10110.worker_0.downstream_cx_total": 1154,
+   "listener.127.0.0.1_10110.worker_1.downstream_cx_total": 1153,
+   "listener.127.0.0.1_10110.worker_2.downstream_cx_total": 1149,
+   "listener.127.0.0.1_10110.worker_3.downstream_cx_total": 1152,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 257,
+  "access_log_lines": null
+ }
+]

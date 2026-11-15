@@ -1,0 +1,21 @@
+2026-11-15T07:13:20Z run lru-two-hop: abba order, rounds 4..4 in blocks of 6 (adaptive False), arms ['mru', 'lru'], shapes ['s-lo', 's-hi']
+2026-11-15T07:13:21Z origin container c64fd4f875d3 (epl-origin-659880) started
+2026-11-15T07:14:00Z r01-s-lo-mru VALID ins_u=163.1k cyc_tot=500.9k busy=29.5% rate=5201.6/5200 p99=1242us 
+2026-11-15T07:14:39Z r01-s-lo-lru VALID ins_u=163.3k cyc_tot=510.8k busy=30.1% rate=5201.6/5200 p99=1065us 
+2026-11-15T07:15:18Z r01-s-hi-mru VALID ins_u=163.0k cyc_tot=454.5k busy=41.0% rate=8002.5/8000 p99=1470us 
+2026-11-15T07:15:57Z r01-s-hi-lru VALID ins_u=163.0k cyc_tot=472.2k busy=42.4% rate=8002.7/8000 p99=1967us 
+2026-11-15T07:16:36Z r02-s-lo-lru VALID ins_u=163.3k cyc_tot=514.5k busy=30.3% rate=5201.6/5200 p99=1150us 
+2026-11-15T07:17:15Z r02-s-lo-mru VALID ins_u=163.1k cyc_tot=501.5k busy=29.6% rate=5201.6/5200 p99=1030us 
+2026-11-15T07:17:54Z r02-s-hi-lru VALID ins_u=163.0k cyc_tot=473.9k busy=42.6% rate=8002.7/8000 p99=1856us 
+2026-11-15T07:18:33Z r02-s-hi-mru VALID ins_u=163.0k cyc_tot=454.6k busy=41.0% rate=8002.6/8000 p99=1345us 
+2026-11-15T07:19:12Z r03-s-lo-mru VALID ins_u=163.1k cyc_tot=508.6k busy=29.9% rate=5201.6/5200 p99=1042us 
+2026-11-15T07:19:51Z r03-s-lo-lru VALID ins_u=163.3k cyc_tot=515.2k busy=30.3% rate=5201.6/5200 p99=1111us 
+2026-11-15T07:20:30Z r03-s-hi-mru VALID ins_u=162.5k cyc_tot=449.9k busy=40.5% rate=8003.2/8000 p99=5942us 
+2026-11-15T07:21:09Z r03-s-hi-lru VALID ins_u=163.2k cyc_tot=474.3k busy=42.6% rate=8002.5/8000 p99=1542us 
+2026-11-15T07:21:48Z r04-s-lo-lru VALID ins_u=163.2k cyc_tot=511.8k busy=30.1% rate=5201.6/5200 p99=1172us 
+2026-11-15T07:22:27Z r04-s-lo-mru VALID ins_u=163.0k cyc_tot=515.1k busy=30.3% rate=5201.6/5200 p99=1059us 
+2026-11-15T07:23:06Z r04-s-hi-lru VALID ins_u=163.1k cyc_tot=467.7k busy=42.1% rate=8002.3/8000 p99=1893us 
+2026-11-15T07:23:45Z r04-s-hi-mru VALID ins_u=163.0k cyc_tot=455.3k busy=41.0% rate=8002.6/8000 p99=1886us 
+2026-11-15T07:23:45Z after 4 rounds: s-lo lru vs mru: not enough pairs
+2026-11-15T07:23:45Z origin container c64fd4f875d3 stopped
+2026-11-15T07:23:46Z done: ~/epl/runs/lru/sockets-two-hop/summary.md
