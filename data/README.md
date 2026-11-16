@@ -63,7 +63,7 @@ same machine. Envoy serves direct responses only (no origin). Tables: `route-tab
 
 | Run | Directory | Notes |
 |---|---|---|
-| 1,000 routes | `route-table/rt-n1000/` | one virtual host, the request `GET /target/x` matching the last of 1,000 routes. Arms `base`, `d1v4` (path first), `d2v3` (an unpublished route index prototype) and `base-A2` (a second copy of base, the A/A of the run); 16 rounds in rotated order at 2,000 and 16,000 req/s; Holm across the run's primary rows |
+| 1,000 routes | `route-table/rt-n1000/` | one virtual host, the request `GET /target/x` matching the last of 1,000 routes. Arms `base`, `d1v4` (path first), `d2v3` (a route index prototype, not proposed upstream) and `base-A2` (a second copy of base, the A/A of the run); 16 rounds in rotated order at 2,000 and 16,000 req/s; Holm across the run's primary rows |
 | 200 routes | `route-table/rt-n200/` | the same four arms on 200 routes, 16 rounds at 2,000 and 22,000 req/s |
 | One route | `route-table/rt-n1/` | the control: `base`, `d1v4`, `d2v3` on a single route, 12 rounds at 2,000 and 22,000 req/s; no A/A arm |
 | 109 constant headers | `route-table/hdr/` | arms `base`, `s1` (the header change) and `base-A2` on a direct-response route that adds 57 request and 52 response constant headers; 24 rounds at 2,000 and 20,000 req/s |
@@ -75,7 +75,7 @@ The builds, by file name and md5 (the md5 identifies the binary):
 | `base` (route runs) | `envoy-routes-base` | `e59880d7374383c6df4dcaad6c71dd7e` | Envoy main 8ce942ce56 |
 | `base` (header run) | `envoy-headers-base` | `e59880d7374383c6df4dcaad6c71dd7e` | the same binary under a second name |
 | `d1v4` | `envoy-routes-path-first` | `7fac057ec1629117f7ebcccfbf52b923` | branch `patches/route-match-path-first-v4` of https://github.com/We-Amp/envoy (28f612622a) |
-| `d2v3` | `envoy-routes-index-prototype` | `bf9fd4b39b85602a840480224fe3a1b2` | an unpublished route index prototype; its source revision is written as `patched-build` |
+| `d2v3` | `envoy-routes-index-prototype` | `bf9fd4b39b85602a840480224fe3a1b2` | a route index prototype, not proposed upstream; its source revision is written as `patched-build` |
 | `s1` | `envoy-headers-reference` | `a1da0f89183496870b9f9c1657bbe931` | 60556c39ef, the same source tree as branch `patches/router-header-reference-v3` of https://github.com/We-Amp/envoy (75887067de) |
 
 Each run directory has the files listed under "File formats" below, with `perf/` and `ss/`. The route tables

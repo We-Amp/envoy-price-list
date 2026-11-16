@@ -20,7 +20,7 @@ YAML by tables/from_yaml.py; each keeps the md5 of its source):
 Experiments (one run each, because each needs its own table):
 
   rt-n1000.json, rt-n200.json
-      base, path first (D1 v4), an unpublished route index prototype (D2 v3) and a second copy of base
+      base, path first (D1 v4), a route index prototype, not proposed upstream (D2 v3) and a second copy of base
       (`base-A2`, the A/A of the run), at a low and a high rate.
   rt-n1.json
       the one-route control: base, D1 v4, D2 v3 (identical instructions expected).
@@ -53,7 +53,7 @@ BIN = "~/epl/bin/"
 BUILDS = {
     "base": ("envoy-routes-base", "e59880d7374383c6df4dcaad6c71dd7e", "8ce942ce56"),
     "d1v4": ("envoy-routes-path-first", "7fac057ec1629117f7ebcccfbf52b923", "28f612622a"),
-    # an unpublished route index prototype, identified by its md5 only
+    # a route index prototype, not proposed upstream, identified by its md5 only
     "d2v3": ("envoy-routes-index-prototype", "bf9fd4b39b85602a840480224fe3a1b2", "patched-build"),
     # the same base build under the header experiment's file name (same md5)
     "hbase": ("envoy-headers-base", "e59880d7374383c6df4dcaad6c71dd7e", "8ce942ce56"),
