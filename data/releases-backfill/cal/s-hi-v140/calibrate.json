@@ -1,0 +1,83 @@
+[
+ {
+  "rps": 10400,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.530141625,
+  "client_headroom": 0.7280977961645256,
+  "rate": 10402.379634993684,
+  "ins_u_k": 162.98120575667969,
+  "cyc_total_k": 457.3150650353945,
+  "p99_us": 1509.055,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 208505,
+   "http.ingress_http.downstream_rq_2xx": 208505,
+   "http.ingress_http.downstream_rq_total": 208506,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 460.15900000000005,
+  "worker_max_share": 0.2552,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 11200,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 61 (upstream_cx_overflow=61)",
+   "client pending total 55 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.5840020000000001,
+  "client_headroom": 0.7206230842075403,
+  "rate": 11202.116326048304,
+  "ins_u_k": 162.97860756049135,
+  "cyc_total_k": 468.93344961389823,
+  "p99_us": 1295.807,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 224545,
+   "http.ingress_http.downstream_rq_2xx": 224542,
+   "http.ingress_http.downstream_rq_total": 224544,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 55,
+  "access_log_lines": null,
+  "p50_us": 499.855,
+  "worker_max_share": 0.2546,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 12000,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 140 (upstream_cx_overflow=140)",
+   "client pending total 98 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.595501125,
+  "client_headroom": 0.7171946423284241,
+  "rate": 12002.369110055555,
+  "ins_u_k": 162.56106272097216,
+  "cyc_total_k": 447.83095190322143,
+  "p99_us": 1523.903,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 240634,
+   "http.ingress_http.downstream_rq_2xx": 240637,
+   "http.ingress_http.downstream_rq_total": 240635,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 98,
+  "access_log_lines": null,
+  "p50_us": 571.551,
+  "worker_max_share": 0.2526,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

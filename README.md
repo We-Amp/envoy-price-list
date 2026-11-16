@@ -184,6 +184,8 @@ examples/               experiment configs and their generators (see below)
 | `examples/pilot-releases.json` | three official Envoy releases (v1.32.13, v1.36.13, v1.40.2) on three shapes |
 | `examples/settings-matrix/` | one experiment per setting against the baseline v1.40.2 config: TLS certificate type, session resumption, HPACK table size, tracing, access logs, external authorization, retries, buffer limits, tcmalloc per-CPU caches, a second hop (`01-` to `10-`), and the A/A that serves as their floor (`aa.json`). Written by `make.py`; `run-all.sh` queues rows; `table.py` builds the matrix-wide table with Holm across every primary row |
 | `examples/settings-matrix/followups/` | follow-ups to the first matrix runs: the second hop with both proxies evenly loaded, the buffer limit with a body that fits, ext_authz over HTTP and gRPC, the TLS rows with reconnects spread out in time, and A/A runs on the TLS and HTTP/2 shapes. Written by `followups.py`; `run-followups.sh` queues them; `followups_table.py` builds their table; `saturation.py` is a short saturation probe |
+| `examples/settings-matrix/filters/` | two more setting rows against the same baseline: the JWT authentication filter with a local JWKS (RS256, every token verified, and with the filter's cache of verified tokens; every arm's client sends the same token) and the local rate-limit filter (enabled and enforced, budget far above the test rate). Written by `filters.py`; `jwt_token.py` made the test JWKS and token in `filters/jwt.json` (the private key was not kept). Their A/A floor is the A/A arm of the release run below (`floor_arm`) |
+| `examples/releases/` | six official releases (v1.32.13, v1.34.14, v1.36.13, v1.37.11, v1.38.9, v1.40.2) at two load levels, each shape at the matrix rate and at a higher one, with a second copy of v1.40.2 as an A/A arm interleaved in the same rounds. Written by `make.py`; `run-session.sh` queues the release run and the two filter rows; `table.py` builds the tables, with the A/A-spread half-widths |
 | `examples/upstream-pool-lru/` | an experimental Envoy build that can reuse the least recently freed upstream connection instead of the most recently freed one (selected per process by an environment variable). The patch is one commit on Envoy v1.40.2, branch [`exp/upstream-pool-lru`](https://github.com/We-Amp/envoy/tree/exp/upstream-pool-lru) of We-Amp's Envoy fork (set `ENVOY_EXP_UPSTREAM_POOL_LRU=1` to switch the order); build it yourself and point the config at the binary. `make.py` writes the two-hop, one-hop and probe configs, `make_demand.py` the demand-grown pool follow-up, `make_burst.py` the stall-recovery runs; `table*.py` build their tables |
 
 The configs carry the paths, CPU sets and rates of the machine they were run on; treat them as templates.
@@ -231,6 +233,7 @@ See `examples/pilot-releases.json`. Main sections:
 | `comparisons` | `base` (every arm against `base_arm`) or `all_pairs` |
 | `primary_metric` | the metric Holm runs over (default `cycles_total`); the rest is exploratory |
 | `floor_from` | an A/A `results.json` whose half-widths are printed next to every row and used to mark effects inside the A/A floor or interval |
+| `floor_arm` | with `floor_from`: take the floor only from this arm's comparisons (an A/A arm inside another experiment, such as a second copy of the base binary in a release run); `report --floor-arm` does the same |
 | `shapes[]` | `proxied` (origin serves `body_bytes`) or `direct_headers` (direct response plus N request / M response headers added); `rps` is the total target rate |
 | `envoy` | workers, listener and admin ports, `exact_balance` |
 | `cpus` | `sut`, `client`, `origin` CPU lists; must be disjoint; optional `harness` (default: every CPU no set uses) |
@@ -264,6 +267,8 @@ metadata). The settings are:
 | `retries` | a retry policy on proxied routes (`5xx,reset,connect-failure`, 2 retries); the leg records the retry counter, which should stay 0 |
 | `buffer_limit_bytes` | `per_connection_buffer_limit_bytes` on the listener and the origin cluster |
 | `upstream_pool_per_downstream` | `connection_pool_per_downstream_connection` on the origin cluster: one upstream pool, so one upstream connection, per downstream connection |
+| `jwt_authn` | the JWT authentication filter before the router, one provider with a local JWKS (`jwks`, `issuer`, `audience`; no fetch), required on every route; the token is forwarded upstream. `cache: true` adds the filter's cache of verified tokens (`jwt_cache_config`). The client sends the token per shape (`client_extra_args`); the leg records `jwt_authn` allowed and denied counts |
+| `local_ratelimit` | the local rate-limit filter before the router, one token bucket shared by the workers (`tokens_per_s` per second), enabled and enforced on 100% of requests; the leg records its `ok`, `enforced` and `rate_limited` counts |
 | `hop2_settings` | settings for the second Envoy of a two-hop arm (by default it runs the baseline config) |
 | `two_hop` | client → this Envoy → a second Envoy on `cpus.hop2` (baseline config) → origin. perf runs on both; the extra metrics `cycles_total_all` (every hop) and `cycles_total_per_hop` exist only in an experiment with `cpus.hop2`, where a one-hop arm counts as one hop. Gates (worker share, during-window idle, pinning, exit code) cover both hops |
 
@@ -319,6 +324,28 @@ half-width of 1.37%), so A/A runs are now longer.
 
 `data/` holds the measurement records, tables and configs behind the published price list, one folder per
 experiment; see [data/README.md](data/README.md).
+
+### Week 4 update (16 November 2026)
+
+The update of the post on 16 November added a second release session at two load levels and two setting
+rows, all measured in one session. Where each section of the post comes from:
+
+| Post section | Configs | Data |
+|---|---|---|
+| How every number is measured: the A/A floor of the second release session | `examples/releases/releases.json`, arm `v1.40.2-A2` | `data/releases-backfill/releases/` |
+| Settings: JWT authentication (local JWKS, RS256) | `examples/settings-matrix/filters/11-jwt-authn.json`, with the test JWKS and token in `filters/jwt.json` | `data/settings-filters/11-jwt-authn/` |
+| Settings: Local rate limit, never triggered | `examples/settings-matrix/filters/12-local-ratelimit.json` | `data/settings-filters/12-local-ratelimit/` |
+| Releases | `examples/releases/releases.json` (written by `make.py`) | `data/releases-backfill/` |
+
+Harness changes for this session: the `jwt_authn` and `local_ratelimit` settings (see "Settings rows"),
+`floor_arm` (an A/A floor taken from one arm of another run), and a client rate ramp over the first second on
+the two higher-rate release shapes (`client_extra_args` in `examples/releases/make.py`). The session ran as
+
+```bash
+examples/releases/run-session.sh --set client.binary=~/nighthawk/bazel-bin/nighthawk_client
+python3 examples/releases/table.py ~/epl/runs/wk4/releases ~/epl/runs/wk4/11-jwt-authn \
+    ~/epl/runs/wk4/12-local-ratelimit --json tables.json > tables.md
+```
 
 ## License
 

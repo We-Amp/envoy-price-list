@@ -289,8 +289,16 @@ def validate(exp, allow_short=False, check_rounds=True):
     if not snames or len(set(snames)) != len(snames):
         errs.append("shapes must be non-empty with unique names")
     for s in exp.get("shapes", []):
-        if s.get("kind") not in ("proxied", "direct_headers"):
-            errs.append("shape %s: kind must be proxied or direct_headers" % s.get("name"))
+        if s.get("kind") not in ("proxied", "direct_headers", "routes"):
+            errs.append("shape %s: kind must be proxied, direct_headers or routes" % s.get("name"))
+        if s.get("kind") == "routes":
+            rs = (s.get("route_table") or {}).get("routes")
+            if not isinstance(rs, list) or not rs:
+                errs.append("shape %s: route_table.routes must be a non-empty list" % s.get("name"))
+            elif any("route" in r for r in rs if isinstance(r, dict)) and exp["origin"]["mode"] == "docker" \
+                    and not any(x.get("kind") == "proxied" for x in exp.get("shapes", [])):
+                errs.append("shape %s: a route table with upstream routes needs a proxied shape (the "
+                            "origin starts only for those); use direct_response routes" % s.get("name"))
         if not str(s.get("path", "")).startswith("/"):
             errs.append("shape %s: path must start with /" % s.get("name"))
         if int(s.get("rps", 0)) % int(exp["client"]["concurrency"]) != 0:
@@ -507,13 +515,17 @@ def comparison_pairs(exp):
     return [(n, base) for n in names if n != base]
 
 
-def floor_from_results(res):
+def floor_from_results(res, arm=None):
     """{shape: {metric: {"hw": A/A 95% half-width, "far": far end of the A/A 95%
     interval from zero}}} in log-%, from an A/A results dict. Over several A/A
-    comparisons in one shape, the widest is kept."""
+    comparisons in one shape, the widest is kept. With `arm`, only that arm's
+    comparisons count: an A/A arm inside another experiment (a second copy of the
+    base binary in a release run, say), whose other comparisons are not A/A."""
     out = {}
     for s, sres in res["analysis"]["shapes"].items():
         for comp in sres.get("comparisons", []):
+            if arm is not None and comp.get("arm") != arm:
+                continue
             for k in METRIC_KEYS:
                 p = (comp.get(k) or {}).get("paired") or {}
                 if p.get("half_width_pct") is None:
@@ -541,11 +553,14 @@ def aa_position(c):
     return None
 
 
-def load_floor(path):
+def load_floor(path, arm=None):
     if not path:
         return None
     with open(os.path.expanduser(path)) as f:
-        return floor_from_results(json.load(f))
+        fl = floor_from_results(json.load(f), arm)
+    if arm is not None and not fl:
+        raise ValueError("floor %s has no comparison of arm %s" % (path, arm))
+    return fl
 
 
 def _value(m, key, get, vcfg):
@@ -828,7 +843,7 @@ class Runner:
         with open(os.path.join(self.run_dir, "experiment.json"), "w") as f:
             json.dump(sysprobe.scrub({k: v for k, v in exp.items() if not k.startswith("_")}), f, indent=1,
                       sort_keys=True)
-        floor = load_floor(exp.get("floor_from"))
+        floor = load_floor(exp.get("floor_from"), exp.get("floor_arm"))
         legs_min = len(schedule(exp))
         legs_max = len(schedule(exp, 1, exp["rounds_max"] if exp.get("adaptive", True) else exp["rounds"]))
         self.status(state="starting", legs_min=legs_min, legs_max=legs_max, legs_done=0)

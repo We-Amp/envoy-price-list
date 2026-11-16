@@ -1,0 +1,78 @@
+[
+ {
+  "rps": 11200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.5706785,
+  "client_headroom": 0.7280221739004313,
+  "rate": 11165.31356374073,
+  "ins_u_k": 163.15089964116478,
+  "cyc_total_k": 457.0238330136424,
+  "p99_us": 1024.831,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 223732,
+   "http.ingress_http.downstream_rq_2xx": 223735,
+   "http.ingress_http.downstream_rq_total": 223733,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 410.17499999999995,
+  "worker_max_share": 0.2539,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 12000,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.613519125,
+  "client_headroom": 0.7151623714190727,
+  "rate": 11962.881096410945,
+  "ins_u_k": 163.1792220634592,
+  "cyc_total_k": 458.363233543723,
+  "p99_us": 880.895,
+  "stats": {
+   "cluster.origin.upstream_rq_total": 239813,
+   "http.ingress_http.downstream_rq_2xx": 239814,
+   "http.ingress_http.downstream_rq_total": 239814,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 401.119,
+  "worker_max_share": 0.2507,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 12800,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.644410625,
+  "client_headroom": 0.7165299049779055,
+  "rate": 12760.296532664472,
+  "ins_u_k": 162.34229398174054,
+  "cyc_total_k": 455.5126525093614,
+  "p99_us": 1408.191,
+  "stats": {
+   "cluster.origin.upstream_cx_total": 34,
+   "cluster.origin.upstream_rq_total": 255683,
+   "http.ingress_http.downstream_rq_2xx": 255683,
+   "http.ingress_http.downstream_rq_total": 255685,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 567.423,
+  "worker_max_share": 0.2564,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

@@ -1,0 +1,6 @@
+{
+ "issuer": "https://epl.example",
+ "audience": "epl",
+ "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\"epl-rs256\",\"n\":\"4v6b8g1uk3VASPZdasPLD5sptAXVBQyRu8tcnyhrcRQXG92HmDg8r9PD365tzF2kImLYTfI-tAG869ndxTZugB4_GodvSAEz3IDBTHR86sx820HSLse6XiHSjvLWS49m9zl706gh0rdJFFUgm4opiEP561Bz8MGAuh_fmZD2QYigjXIk4OooG4Vu_ZL_oIXwqfT5auT-RNDsELOwN22TiX2Tote2pkRQvw8QIyp15wge4r0jTZst8qaDiUGdv7o2V7ij3PCcWDBxosz3UnHB-lmhI-BD3s5xqc-_w5xs2LGiCEE9MdPWOVVTZFb-HL9mM1C5d9RtHBygOrHyLvOiRw\",\"e\":\"AQAB\"}]}",
+ "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImVwbC1yczI1NiJ9.eyJpc3MiOiJodHRwczovL2VwbC5leGFtcGxlIiwic3ViIjoiZXBsLWNsaWVudCIsImF1ZCI6ImVwbCIsImlhdCI6MTc2MzE2NDgwMCwiZXhwIjo0MTAyNDQ0ODAwfQ.EqF0KNtAyDQTkRxYeE40jn_l6xFb9iYH0wFx6gEAsHevkJsfMdop0f_uISWNWFw_n7yEEQ5wp47Dl0c0eUFy7UHsrup9a1moiL8C99wGlPbiW4ZA1XYDcT-i8LotVesGApalJxY0b0ICwmYh-Ky3AWN9wqHjhWLmgoUBmIWmtaMnAup3h4l6aZ63pSzbHmO_yz96eScnKZEwWSsBr23cYpECmGbF1RzWa8R1q7l7i2nZbAPXnCR0j93v9IErB6n0FDRMdb5lCJEuKdhADzORu4qa-PkzfwT9DADWIsw5bhm4yj2FtrlpulpR1dY9pVxRlI3RWrbNjnd5EBoe2awPig"
+}

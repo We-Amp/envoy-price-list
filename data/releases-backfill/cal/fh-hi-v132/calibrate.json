@@ -1,0 +1,83 @@
+[
+ {
+  "rps": 14400,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 154 (upstream_cx_overflow=154)",
+   "client pending total 122 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.44433875,
+  "client_headroom": 0.6837065013553149,
+  "rate": 14402.87844672228,
+  "ins_u_k": 230.77565793846009,
+  "cyc_total_k": 276.13196683299674,
+  "p99_us": 561.439,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 288701,
+   "http.ingress_http.downstream_rq_total": 288701,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 122,
+  "access_log_lines": null,
+  "p50_us": 275.519,
+  "worker_max_share": 0.2538,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 16000,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 95 (upstream_cx_overflow=95)",
+   "client pending total 76 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.484877,
+  "client_headroom": 0.679108898534785,
+  "rate": 16002.983955450407,
+  "ins_u_k": 230.69570304996864,
+  "cyc_total_k": 271.3338514859361,
+  "p99_us": 627.3910000000001,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 320667,
+   "http.ingress_http.downstream_rq_total": 320667,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 76,
+  "access_log_lines": null,
+  "p50_us": 278.799,
+  "worker_max_share": 0.2534,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 17600,
+  "valid": false,
+  "reasons": [
+   "client overflow/pool-exhausted counters 195 (upstream_cx_overflow=195)",
+   "client pending total 152 above 16 (queue absorbed a burst)"
+  ],
+  "sut_busy": 0.521547625,
+  "client_headroom": 0.6676805546167769,
+  "rate": 17603.400122718005,
+  "ins_u_k": 230.6393639408522,
+  "cyc_total_k": 265.84341211505887,
+  "p99_us": 576.031,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 352789,
+   "http.ingress_http.downstream_rq_total": 352791,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 152,
+  "access_log_lines": null,
+  "p50_us": 279.823,
+  "worker_max_share": 0.251,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

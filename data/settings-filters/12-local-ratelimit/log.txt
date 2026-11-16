@@ -1,0 +1,53 @@
+2026-11-15T23:32:11Z run wk4-local-ratelimit: abba order, rounds 12..24 in blocks of 6 (adaptive True), arms ['ratelimit-off', 'ratelimit-on'], shapes ['s', 'fh']
+2026-11-15T23:32:11Z origin container 90ac96d8395c (epl-origin-776845) started
+2026-11-15T23:32:50Z r01-s-ratelimit-off VALID ins_u=163.9k cyc_tot=528.2k busy=31.3% rate=5201.0/5200 p99=626us 
+2026-11-15T23:33:29Z r01-s-ratelimit-on VALID ins_u=167.7k cyc_tot=531.9k busy=31.6% rate=5201.1/5200 p99=659us 
+2026-11-15T23:34:07Z r01-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=281.6k busy=25.6% rate=8001.6/8000 p99=373us 
+2026-11-15T23:34:46Z r01-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=291.2k busy=26.4% rate=8001.6/8000 p99=377us 
+2026-11-15T23:35:24Z r02-s-ratelimit-on VALID ins_u=167.7k cyc_tot=539.5k busy=32.0% rate=5201.0/5200 p99=657us 
+2026-11-15T23:36:02Z r02-s-ratelimit-off VALID ins_u=164.0k cyc_tot=521.9k busy=31.1% rate=5201.1/5200 p99=640us 
+2026-11-15T23:36:41Z r02-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=286.4k busy=26.0% rate=8001.6/8000 p99=384us 
+2026-11-15T23:37:19Z r02-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=276.1k busy=25.1% rate=8001.6/8000 p99=356us 
+2026-11-15T23:37:58Z r03-s-ratelimit-off VALID ins_u=163.9k cyc_tot=531.4k busy=31.6% rate=5201.1/5200 p99=622us 
+2026-11-15T23:38:36Z r03-s-ratelimit-on VALID ins_u=167.7k cyc_tot=536.2k busy=31.7% rate=5201.0/5200 p99=651us 
+2026-11-15T23:39:15Z r03-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=280.9k busy=25.6% rate=8001.6/8000 p99=366us 
+2026-11-15T23:39:53Z r03-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=291.7k busy=26.4% rate=8001.6/8000 p99=379us 
+2026-11-15T23:40:32Z r04-s-ratelimit-on VALID ins_u=167.6k cyc_tot=534.4k busy=31.7% rate=5201.0/5200 p99=660us 
+2026-11-15T23:41:10Z r04-s-ratelimit-off VALID ins_u=163.9k cyc_tot=523.2k busy=31.1% rate=5201.1/5200 p99=612us 
+2026-11-15T23:41:48Z r04-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=291.1k busy=26.3% rate=8001.6/8000 p99=386us 
+2026-11-15T23:42:27Z r04-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=277.5k busy=25.2% rate=8001.7/8000 p99=371us 
+2026-11-15T23:43:05Z r05-s-ratelimit-off VALID ins_u=163.7k cyc_tot=521.8k busy=30.8% rate=5201.0/5200 p99=618us 
+2026-11-15T23:43:44Z r05-s-ratelimit-on VALID ins_u=167.6k cyc_tot=534.4k busy=31.6% rate=5201.0/5200 p99=634us 
+2026-11-15T23:44:22Z r05-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=274.1k busy=25.0% rate=8001.6/8000 p99=368us 
+2026-11-15T23:45:01Z r05-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=293.2k busy=26.6% rate=8001.5/8000 p99=387us 
+2026-11-15T23:45:39Z r06-s-ratelimit-on VALID ins_u=167.6k cyc_tot=535.7k busy=31.8% rate=5201.1/5200 p99=636us 
+2026-11-15T23:46:18Z r06-s-ratelimit-off VALID ins_u=163.9k cyc_tot=525.0k busy=31.1% rate=5201.1/5200 p99=633us 
+2026-11-15T23:46:56Z r06-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=294.2k busy=26.6% rate=8001.6/8000 p99=388us 
+2026-11-15T23:47:34Z r06-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=284.0k busy=25.8% rate=8001.5/8000 p99=369us 
+2026-11-15T23:48:13Z r07-s-ratelimit-off VALID ins_u=163.8k cyc_tot=526.1k busy=31.2% rate=5201.1/5200 p99=608us 
+2026-11-15T23:48:51Z r07-s-ratelimit-on VALID ins_u=167.6k cyc_tot=534.4k busy=31.8% rate=5201.0/5200 p99=660us 
+2026-11-15T23:49:30Z r07-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=283.2k busy=25.7% rate=8001.6/8000 p99=367us 
+2026-11-15T23:50:08Z r07-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=295.3k busy=26.7% rate=8001.6/8000 p99=385us 
+2026-11-15T23:50:47Z r08-s-ratelimit-on VALID ins_u=167.6k cyc_tot=545.0k busy=32.3% rate=5201.0/5200 p99=635us 
+2026-11-15T23:51:25Z r08-s-ratelimit-off VALID ins_u=163.8k cyc_tot=528.0k busy=31.3% rate=5201.0/5200 p99=646us 
+2026-11-15T23:52:04Z r08-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=293.2k busy=26.6% rate=8001.6/8000 p99=380us 
+2026-11-15T23:52:42Z r08-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=279.5k busy=25.4% rate=8001.6/8000 p99=376us 
+2026-11-15T23:53:20Z r09-s-ratelimit-on VALID ins_u=167.6k cyc_tot=537.2k busy=31.8% rate=5201.1/5200 p99=632us 
+2026-11-15T23:53:59Z r09-s-ratelimit-off VALID ins_u=163.8k cyc_tot=522.2k busy=31.0% rate=5201.0/5200 p99=635us 
+2026-11-15T23:54:37Z r09-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=282.0k busy=25.6% rate=8001.6/8000 p99=380us 
+2026-11-15T23:55:16Z r09-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=280.9k busy=25.5% rate=8001.7/8000 p99=365us 
+2026-11-15T23:55:54Z r10-s-ratelimit-off VALID ins_u=163.9k cyc_tot=526.1k busy=31.2% rate=5201.0/5200 p99=620us 
+2026-11-15T23:56:33Z r10-s-ratelimit-on VALID ins_u=167.7k cyc_tot=534.8k busy=31.7% rate=5201.1/5200 p99=663us 
+2026-11-15T23:57:11Z r10-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=282.1k busy=25.6% rate=8001.6/8000 p99=368us 
+2026-11-15T23:57:49Z r10-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=290.5k busy=26.3% rate=8001.6/8000 p99=384us 
+2026-11-15T23:58:28Z r11-s-ratelimit-off VALID ins_u=163.9k cyc_tot=537.7k busy=31.9% rate=5201.0/5200 p99=641us 
+2026-11-15T23:59:06Z r11-s-ratelimit-on VALID ins_u=167.6k cyc_tot=536.5k busy=31.7% rate=5201.0/5200 p99=641us 
+2026-11-15T23:59:45Z r11-fh-ratelimit-off VALID ins_u=164.8k cyc_tot=281.2k busy=25.6% rate=8001.6/8000 p99=365us 
+2026-11-16T00:00:23Z r11-fh-ratelimit-on VALID ins_u=168.4k cyc_tot=293.0k busy=26.6% rate=8001.6/8000 p99=382us 
+2026-11-16T00:01:02Z r12-s-ratelimit-on VALID ins_u=167.6k cyc_tot=534.7k busy=31.6% rate=5201.1/5200 p99=648us 
+2026-11-16T00:01:40Z r12-s-ratelimit-off VALID ins_u=163.8k cyc_tot=521.5k busy=30.9% rate=5201.0/5200 p99=669us 
+2026-11-16T00:02:18Z r12-fh-ratelimit-on VALID ins_u=168.3k cyc_tot=291.4k busy=26.4% rate=8001.6/8000 p99=385us 
+2026-11-16T00:02:57Z r12-fh-ratelimit-off VALID ins_u=164.7k cyc_tot=278.5k busy=25.3% rate=8001.6/8000 p99=365us 
+2026-11-16T00:02:57Z after 12 rounds: widest cycles_total half-width 0.94% (fh ratelimit-on vs ratelimit-off) <= target 1.50%
+2026-11-16T00:02:57Z origin container 90ac96d8395c stopped
+2026-11-16T00:02:58Z done: ~/epl/runs/wk4/12-local-ratelimit/summary.md

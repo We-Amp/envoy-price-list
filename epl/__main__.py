@@ -277,7 +277,7 @@ def cmd_report(args):
     from .report import markdown
     with open(args.results) as f:
         res = json.load(f)
-    floor = experiment.load_floor(args.floor) if args.floor else None
+    floor = experiment.load_floor(args.floor, args.floor_arm) if args.floor else None
     if args.reanalyse or floor:
         exp = res["experiment"]
         res["analysis"] = experiment.analyse(exp, res["legs"], floor)
@@ -445,6 +445,7 @@ def main(argv=None):
     p = sp.add_parser("report")
     p.add_argument("results")
     p.add_argument("--floor", help="A/A results.json whose half-widths are printed as the floor")
+    p.add_argument("--floor-arm", help="use only this arm's comparisons of --floor (an A/A arm inside another run)")
     p.add_argument("--reanalyse", action="store_true", help="recompute the analysis from the legs")
     p.set_defaults(fn=cmd_report)
     p = sp.add_parser("scrub")

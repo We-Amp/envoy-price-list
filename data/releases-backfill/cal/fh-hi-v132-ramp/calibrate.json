@@ -1,0 +1,74 @@
+[
+ {
+  "rps": 14400,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.454697375,
+  "client_headroom": 0.689644574251628,
+  "rate": 14355.535124724576,
+  "ins_u_k": 231.0150589536889,
+  "cyc_total_k": 282.301672841872,
+  "p99_us": 438.79900000000004,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 287707,
+   "http.ingress_http.downstream_rq_total": 287707,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 240.687,
+  "worker_max_share": 0.2512,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 16000,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.5003683750000001,
+  "client_headroom": 0.6880818651107623,
+  "rate": 15950.395466400805,
+  "ins_u_k": 230.96773829591433,
+  "cyc_total_k": 280.25296308898885,
+  "p99_us": 448.495,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 319603,
+   "http.ingress_http.downstream_rq_total": 319603,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 250.80700000000002,
+  "worker_max_share": 0.2503,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 17600,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.532371,
+  "client_headroom": 0.6591982709296738,
+  "rate": 17545.750395302355,
+  "ins_u_k": 230.85785987725484,
+  "cyc_total_k": 271.8072214641133,
+  "p99_us": 541.855,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 351634,
+   "http.ingress_http.downstream_rq_total": 351634,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 278.783,
+  "worker_max_share": 0.2517,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

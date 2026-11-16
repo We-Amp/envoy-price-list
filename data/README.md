@@ -25,7 +25,7 @@ loopback.
 | | `settings-followups/f1-two-hop/` | the second hop with both proxies evenly loaded; `settings-matrix/10-two-hop/` is the stock chain |
 | | `settings-followups/sat/` | short saturation probes; the post does not publish maximum rates from them |
 | | `settings-matrix/cal/`, `cal2/` | calibration legs used to pick the rates |
-| Releases | `price-list-v2/pilot-v2/` | three releases, 12 rounds in rotated order, Holm across 9 comparisons |
+| Releases | `price-list-v2/pilot-v2/` | the first release session: three releases, 12 rounds in rotated order, Holm across 9 comparisons. The figures the post quotes from it (−6.3%, +1.2% and the 16 KB shape) are here; the second session is in the week-4 table below |
 | Surplus worker threads in a container pod | `worker-count/ab/` | `ab-records.json` (every arm attempt and leg), `ab-summary.json`, `log.txt` |
 | | `worker-count/calib/` | calibration |
 | | `worker-count/cstate/` | the idle-state follow-up: `run/cs-records.json`, `run/cs-summary.json`, per-leg `perf` CSVs, `idle-orig.txt` (the idle-state configuration that was restored), `restore.log` |
@@ -35,6 +35,25 @@ loopback.
 | | `upstream-pool-lru/demand-pool/` | pool grown with the load (`demand-pool/`), with keep-alive limits (`demand-pool-ka/`), a short pilot, and `tables.md` |
 | | `upstream-pool-lru/burst/` | the 40 ms stall of the second proxy (`burst/`), its smoke runs, socket-count runs (`sockets-*`), and `tables-burst.md`/`tables-burst.json` |
 | | `upstream-pool-lru/probe-*/`, `smoke-limits/`, `tables-limits.md` | saturation probes; the post does not publish maximum rates from them |
+
+## Week 4 update (16 November 2026)
+
+The update of the post on 16 November added a second release session at two load levels and two setting
+rows. All three were measured in one session on 15 November, on the same machine. Their tables are in
+`releases-backfill/tables.md` and `releases-backfill/tables.json` (written by `examples/releases/table.py`).
+
+| Post section | Directory | Notes |
+|---|---|---|
+| How every number is measured: the A/A floor (0.7% to 1.7% in the second release session) | `releases-backfill/releases/` | arm `v1.40.2-A2`, a second copy of v1.40.2 run in the same rounds as the releases; the "A/A of the session" table at the top of `tables.md`, per shape and load level |
+| Settings: JWT authentication (local JWKS, RS256) | `settings-filters/11-jwt-authn/` | three arms: `jwt-off` (the reference; its client sends the same token), `jwt` (every token verified) and `jwt-cache` (the filter's cache of verified tokens, one token in use); 4 KB proxied at 5,200 req/s and the header-heavy direct response at 8,000 req/s |
+| Settings: Local rate limit, never triggered | `settings-filters/12-local-ratelimit/` | two arms, `ratelimit-off` and `ratelimit-on` (one token bucket shared by the workers, enforced on every request, budget far above the rate); same two shapes and rates |
+| Releases | `releases-backfill/releases/` | the second release session: six releases (v1.32.13, v1.34.14, v1.36.13, v1.37.11, v1.38.9, v1.40.2) and the A/A arm, 7 arms in rotated order, 14 rounds. Two shapes, each at two load levels: `s` (4 KB proxied) at 5,200 and `s-hi` at 12,000 req/s, `fh` (header-heavy direct response) at 8,000 and `fh-hi` at 18,400 req/s. Holm across 24 rows, the 20 comparisons and the 4 A/A checks. On the two higher-rate shapes the client ramps its rate over the first second |
+| | `releases-backfill/cal/` | the calibration legs that set the two higher rates, with the client ramp (`*-ramp*`) and without it |
+| | `releases-backfill/queue.log` | the run queue of the session, in the order the three runs ran |
+
+The two setting rows take their A/A floor from the `v1.40.2-A2` arm of the release run (`floor_arm` in
+their `experiment.json`); the tables print it next to every row. The configs are in the harness repository
+under `examples/releases/` and `examples/settings-matrix/filters/`.
 
 Also included, not cited by the post:
 

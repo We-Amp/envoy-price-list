@@ -1,0 +1,50 @@
+[
+ {
+  "rps": 19200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.5716926250000001,
+  "client_headroom": 0.6552084120713917,
+  "rate": 19140.92287805409,
+  "ins_u_k": 230.891995279242,
+  "cyc_total_k": 268.02061612096855,
+  "p99_us": 649.183,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 383605,
+   "http.ingress_http.downstream_rq_total": 383604,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 280.399,
+  "worker_max_share": 0.2519,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ },
+ {
+  "rps": 20800,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.5765913749999999,
+  "client_headroom": 0.6362418142685786,
+  "rate": 20735.61373747298,
+  "ins_u_k": 230.4758935089238,
+  "cyc_total_k": 250.96404271341288,
+  "p99_us": 867.775,
+  "stats": {
+   "http.ingress_http.downstream_rq_2xx": 415558,
+   "http.ingress_http.downstream_rq_total": 415557,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 330.623,
+  "worker_max_share": 0.257,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null
+ }
+]

@@ -87,9 +87,9 @@ STAT_FILTER = (r"^(http\.ingress_http\.|cluster\.(origin|ext_authz|otel_collecto
                r"listener\..*\.(ssl\.(handshake|session_reused|connection_error|no_certificate)|downstream_cx_total|"
                r"downstream_cx_active)$|"
                r"listener\..*\.ssl\.(versions|ciphers|curves|sigalgs)\.|"
-               r"tracing\.|access_logs\.)")
+               r"tracing\.|access_logs\.|[a-z_]+\.http_local_rate_limit\.)")
 # deltas of these are recorded per leg (counters only; gauges and histograms are skipped)
-DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|ssl\.|upstream_rq_retry|upstream_rq_total|upstream_cx_total|"
+DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_limit\.|ssl\.|upstream_rq_retry|upstream_rq_total|upstream_cx_total|"
                            r"downstream_cx_total|downstream_rq_total|downstream_rq_2xx|rq_timeout|cx_destroy$|overflow|"
                            r"cx_destroy_local|cx_destroy_remote|cx_max_requests|max_requests_reached|idle_timeout|"
                            r"max_duration_reached|"
