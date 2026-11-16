@@ -1,0 +1,7 @@
+3088388627,,instructions:u,6889121922,100.00,0.36,insn per cycle
+8646715533,,cycles:u,6889160917,100.00,,
+4498657069,,cycles:k,6889195820,100.00,,
+1625647164,,instructions:k,6889229874,100.00,0.36,insn per cycle
+6889.26,msec,task-clock,6889262593,100.00,0.344,CPUs utilized
+41101,,context-switches,6889292754,100.00,5.966,K/sec
+55,,cpu-migrations,6889312192,100.00,7.983,/sec

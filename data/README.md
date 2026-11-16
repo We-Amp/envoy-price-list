@@ -55,6 +55,37 @@ The two setting rows take their A/A floor from the `v1.40.2-A2` arm of the relea
 their `experiment.json`); the tables print it next to every row. The configs are in the harness repository
 under `examples/releases/` and `examples/settings-matrix/filters/`.
 
+## Route table and constant-header re-measure (16 November 2026)
+
+The route-table and header changes measured again with the full method, in one session on 16 November on the
+same machine. Envoy serves direct responses only (no origin). Tables: `route-table/tables.md` and
+`route-table/tables.json` (written by `examples/route-table/table.py`).
+
+| Run | Directory | Notes |
+|---|---|---|
+| 1,000 routes | `route-table/rt-n1000/` | one virtual host, the request `GET /target/x` matching the last of 1,000 routes. Arms `base`, `d1v4` (path first), `d2v3` (an unpublished route index prototype) and `base-A2` (a second copy of base, the A/A of the run); 16 rounds in rotated order at 2,000 and 16,000 req/s; Holm across the run's primary rows |
+| 200 routes | `route-table/rt-n200/` | the same four arms on 200 routes, 16 rounds at 2,000 and 22,000 req/s |
+| One route | `route-table/rt-n1/` | the control: `base`, `d1v4`, `d2v3` on a single route, 12 rounds at 2,000 and 22,000 req/s; no A/A arm |
+| 109 constant headers | `route-table/hdr/` | arms `base`, `s1` (the header change) and `base-A2` on a direct-response route that adds 57 request and 52 response constant headers; 24 rounds at 2,000 and 20,000 req/s |
+
+The builds, by file name and md5 (the md5 identifies the binary):
+
+| Arm | File | md5 | Source |
+|---|---|---|---|
+| `base` (route runs) | `envoy-routes-base` | `e59880d7374383c6df4dcaad6c71dd7e` | Envoy main 8ce942ce56 |
+| `base` (header run) | `envoy-headers-base` | `e59880d7374383c6df4dcaad6c71dd7e` | the same binary under a second name |
+| `d1v4` | `envoy-routes-path-first` | `7fac057ec1629117f7ebcccfbf52b923` | branch `patches/route-match-path-first-v4` of https://github.com/We-Amp/envoy (28f612622a) |
+| `d2v3` | `envoy-routes-index-prototype` | `bf9fd4b39b85602a840480224fe3a1b2` | an unpublished route index prototype; its source revision is written as `patched-build` |
+| `s1` | `envoy-headers-reference` | `a1da0f89183496870b9f9c1657bbe931` | 60556c39ef, the same source tree as branch `patches/router-header-reference-v3` of https://github.com/We-Amp/envoy (75887067de) |
+
+Each run directory has the files listed under "File formats" below, with `perf/` and `ss/`. The route tables
+and the header route are in the harness repository under `examples/route-table/tables/`, each with the md5 of
+the recorded config it was converted from. On the higher-rate shapes the client ramps its rate over the first
+second.
+
+Left out of this set: the raw Nighthawk output of every leg, the proxy and client logs, the calibration legs,
+the two smoke runs, and the session's queue logs.
+
 Also included, not cited by the post:
 
 - `price-list-wk1/`: the first release comparison and A/A, measured with the first version of the method
@@ -100,6 +131,10 @@ A harness run directory holds:
   appear as `envoy-1.40.2-po`), and the source revision in its version string is replaced by
   `patched-build`. Its md5 is unchanged and identifies the binary. The patch is branch `exp/upstream-pool-lru` of https://github.com/We-Amp/envoy (one commit on v1.40.2).
 - The Nighthawk client path is written as `~/nighthawk/bazel-bin/nighthawk_client`.
+- In `route-table/`, the run labels are dropped from run names and paths (`~/epl/runs/route-table`), the
+  builds carry the file names in the table above (thread names cut to 15 characters, such as
+  `envoy-routes-ba`), the prototype's source revision is `patched-build`, and the recorded config of the
+  header route is called `headers109.yaml`. Its md5 is unchanged.
 - `config_sha256` and `bootstrap_sha256` were computed on the text as run, so they may not match an edited
   file. The `harness` version strings name revisions from before the harness was published.
 
