@@ -131,6 +131,12 @@
      "stat": "nofile_soft",
      "scope": "field",
      "min": 8096
+    },
+    {
+     "stat": "main.bursts",
+     "scope": "field",
+     "max": 0,
+     "label": "no flush in the window"
     }
    ]
   },
@@ -167,6 +173,12 @@
      "stat": "nofile_soft",
      "scope": "field",
      "min": 8096
+    },
+    {
+     "stat": "main.bursts",
+     "scope": "field",
+     "min": 3,
+     "label": "at least 3 flushes in the window"
     }
    ]
   },
@@ -208,9 +220,30 @@
      "min": 8096
     },
     {
+     "stat": "main.bursts",
+     "scope": "field",
+     "min": 3,
+     "label": "at least 3 flushes in the window"
+    },
+    {
      "stat": "udp.drop_share",
      "scope": "field",
      "max": 0.01
+    },
+    {
+     "stat": "udp.datagrams_per_request",
+     "scope": "field",
+     "min": 1.0,
+     "label": "per-request statsd datagrams (histogram values) present"
+    },
+    {
+     "stat": "udp.datagrams_per_request",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.1,
+     "label": "datagrams per request as in the smoke, +/-10%"
     }
    ]
   },
@@ -250,6 +283,12 @@
      "stat": "nofile_soft",
      "scope": "field",
      "min": 8096
+    },
+    {
+     "stat": "main.bursts",
+     "scope": "field",
+     "max": 0,
+     "label": "no flush in the window"
     }
    ]
   }

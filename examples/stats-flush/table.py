@@ -69,6 +69,19 @@ def g(m, *path):
     return v
 
 
+def flush_price_rounds(off, arm):
+    """{round: (ms, cycles)}: the arm's main-thread price of one flush, paired with flush-off's
+    run time over the same wall time. Burst periods are used only where the burst count
+    matched the interval (+/-1); otherwise (the smallest rung, a missed burst) the per-second
+    form: (arm - flush-off) per second x the arm's interval."""
+    out = {}
+    for r in sorted(set(off) & set(arm)):
+        ms, cyc = flush_price({r: off[r]}, {r: arm[r]})
+        if ms or cyc:
+            out[r] = (ms[0] if ms else None, cyc[0] if cyc else None)
+    return out
+
+
 def flush_price(off, arm):
     """Paired per round: the arm's main-thread ms per flush minus flush-off's over the same
     wall time. Returns ([ms], [cycles]) per round."""
@@ -77,7 +90,9 @@ def flush_price(off, arm):
         a, o = arm[r], off[r]
         off_ms_s, off_cyc_s = g(o, "main", "run_ms_per_s"), g(o, "main_perf", "cycles_per_s")
         per = g(a, "main", "period_s")
-        if per:
+        ok = a.get("flushes_from") != "interval" and g(a, "main", "burst_count_error") is not None \
+            and g(a, "main", "burst_count_error") <= 1
+        if per and ok:
             x = g(a, "main", "run_ms_per_period")
             if x is not None and off_ms_s is not None:
                 ms.append(x - off_ms_s * per)
@@ -93,6 +108,30 @@ def flush_price(off, arm):
             if c is not None and off_cyc_s is not None:
                 cyc.append((c - off_cyc_s) * iv)
     return ms, cyc
+
+
+def price_ratio_row(res, shape, arm, ref, label, family):
+    """Log ratio of the per-flush prices of two arms (each against flush-off, paired by
+    round): like with like even when the two run at different intervals."""
+    off = legs_by_round(res, "flush-off")
+    pa, pr = flush_price_rounds(off, legs_by_round(res, arm)), flush_price_rounds(off, legs_by_round(res, ref))
+    rounds = sorted(r for r in set(pa) & set(pr) if pa[r][0] and pr[r][0] and pa[r][0] > 0 and pr[r][0] > 0)
+    p = stats.paired_log_ratio([pr[r][0] for r in rounds], [pa[r][0] for r in rounds])
+    r = {"label": label, "shape": shape, "arm": arm, "ref": ref, "metric": "flush price (ms per flush)",
+         "family": family, "n": p["n"], "incomplete": bool(res.get("metadata", {}).get("incomplete"))}
+    ia = {m.get("flush_interval_s") for m in legs_by_round(res, arm).values()}
+    ir = {m.get("flush_interval_s") for m in legs_by_round(res, ref).values()}
+    if ia != ir:
+        r["note"] = "intervals differ (%s against %s): per-flush prices compared" % (sorted(ia), sorted(ir))
+    if p.get("half_width_pct") is None:
+        r["missing"] = "fewer than 2 pairs"
+        return r
+    w = T.widened(p)
+    r.update(log_mean=p["log_mean_pct"], lo=p["log_lo_pct"], hi=p["log_hi_pct"], hw=p["half_width_pct"],
+             t_p=None if r["incomplete"] else p["t_p"], se=T.se_of(p), widened=w,
+             effect_pct=T.pct(p["log_mean_pct"]), lo_pct=T.pct(p["log_lo_pct"]), hi_pct=T.pct(p["log_hi_pct"]),
+             widened_lo_pct=T.pct(p["log_mean_pct"] - w), widened_hi_pct=T.pct(p["log_mean_pct"] + w))
+    return r
 
 
 def t_interval(xs):
@@ -283,8 +322,8 @@ def tables(sess):
     for rung, _ in RUNGS:
         res = runs.get("m-" + rung)
         if res:
-            conf.append(ratio_row(res, "idle-" + rung, "statsd", "nosink", "main_ms_per_s",
-                                  "statsd sink, marginal price per flush", "confirmatory"))
+            conf.append(price_ratio_row(res, "idle-" + rung, "statsd", "nosink",
+                                        "statsd sink, marginal price per flush", "confirmatory"))
     if runs.get("w"):
         conf.append(ratio_row(runs["w"], "s", "statsd", "flush-off", "cycles_total",
                               "statsd sink, per-request cost on the workers (cycles per request)", "confirmatory"))

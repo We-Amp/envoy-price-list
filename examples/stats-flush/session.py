@@ -12,6 +12,9 @@
                                                     flush's share of the loaded cycles at 5 s;
                                                     confirmatory only at 1% or more
     python3 session.py calibrated CFG_DIR           exit 1 when a queued config is uncalibrated
+    python3 session.py merge-smoke OUT ORIG NEW ARM  a smoke directory for the check: ORIG's
+                                                    legs and config dumps with ARM's taken from
+                                                    NEW (the 5 s statsd fallback's own smoke)
 """
 
 import glob
@@ -168,6 +171,32 @@ def uncalibrated(cfg_dir):
     return bad
 
 
+def merge_smoke(out, orig, new, arm):
+    import shutil
+    if os.path.exists(out):
+        shutil.rmtree(out)
+    os.makedirs(os.path.join(out, "config_dump"))
+    lines = []
+    for src, keep in ((orig, lambda a: a != arm), (new, lambda a: a == arm)):
+        p = os.path.join(src, "legs.jsonl")
+        if not os.path.exists(p):
+            raise SystemExit("no legs in %s" % src)
+        with open(p) as f:
+            for x in f:
+                if not x.strip():
+                    continue
+                m = json.loads(x)
+                if "leg_id" in m and keep(m.get("arm")):
+                    lines.append(json.dumps(m))
+        d = os.path.join(src, "config_dump")
+        for fn in os.listdir(d) if os.path.isdir(d) else []:
+            if keep(fn.split(".json")[0]):
+                shutil.copy(os.path.join(d, fn), os.path.join(out, "config_dump", fn))
+    with open(os.path.join(out, "legs.jsonl"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+    return len(lines)
+
+
 def main(argv):
     cmd = argv[0]
     if cmd == "rungs":
@@ -189,6 +218,9 @@ def main(argv):
         r = predict_w(argv[1], argv[2] if len(argv) > 2 else None)
         print(json.dumps(r, indent=1))
         return 1 if "error" in r else 0
+    if cmd == "merge-smoke":
+        print("%d legs in %s" % (merge_smoke(argv[1], argv[2], argv[3], argv[4]), argv[1]))
+        return 0
     if cmd == "calibrated":
         bad = uncalibrated(argv[1])
         if bad:

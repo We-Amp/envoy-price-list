@@ -292,6 +292,7 @@
    "path": "/idle",
    "kind": "idle",
    "rps": 0,
+   "bursts_visible": true,
    "ready_timeout_s": 180,
    "admin_timeout_s": 120,
    "settle_s": 3.0

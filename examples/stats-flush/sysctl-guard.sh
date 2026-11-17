@@ -45,6 +45,9 @@ guard_begin() {
   trap guard_end EXIT
   trap 'guard_end; exit 143' TERM
   trap 'guard_end; exit 130' INT
+  # active before the write: a write that fails half way, or a value the kernel clamps,
+  # is still restored by the trap
+  GUARD_ACTIVE=1
   if ! guard_set "$GUARD_VALUE"; then
     guard_log "could not set rmem_max to $GUARD_VALUE"
     return 1
@@ -55,7 +58,6 @@ guard_begin() {
     guard_log "read back $now, not $GUARD_VALUE"
     return 1
   fi
-  GUARD_ACTIVE=1
   printf '{"rmem_max_original": %s, "rmem_max_session": %s, "set_utc": "%s"}\n' \
     "$GUARD_ORIG" "$GUARD_VALUE" "$(date -u +%FT%TZ)" > "$GUARD_DIR/sysctl-session.json"
   guard_log "rmem_max $GUARD_ORIG -> $GUARD_VALUE"
@@ -72,8 +74,27 @@ guard_end() {
     printf '{"rmem_max_original": %s, "rmem_max_session": %s, "restored": %s, "restore_ok": true, "restored_utc": "%s"}\n' \
       "$GUARD_ORIG" "$GUARD_VALUE" "$back" "$(date -u +%FT%TZ)" > "$GUARD_DIR/sysctl-session.json"
   else
-    guard_log "RESTORE FAILED: rmem_max reads $back, expected $GUARD_ORIG"
+    guard_log "RESTORE FAILED: rmem_max reads $back, expected $GUARD_ORIG; restore it by hand: run-session.sh restore"
     printf '{"rmem_max_original": %s, "rmem_max_session": %s, "restored": %s, "restore_ok": false}\n' \
       "$GUARD_ORIG" "$GUARD_VALUE" "$back" > "$GUARD_DIR/sysctl-session.json"
+    echo "SYSCTL RESTORE FAILED: net.core.rmem_max is $back, should be $GUARD_ORIG" >&2
+    exit 70
   fi
+}
+
+guard_restore() {  # after a session that could not restore (killed): put back the recorded original
+  local orig
+  orig=$(sed -n 's/.*"rmem_max_original": \([0-9]*\).*/\1/p' "$GUARD_DIR/sysctl-session.json" 2>/dev/null)
+  [ -n "$orig" ] || orig=$(cat "$GUARD_DIR/rmem_max.step0" 2>/dev/null)
+  if [ -z "$orig" ]; then
+    guard_log "restore: no recorded original in $GUARD_DIR"
+    return 1
+  fi
+  guard_set "$orig" || { guard_log "restore: could not write $orig"; return 1; }
+  if [ "$(cat "$GUARD_FILE")" = "$orig" ]; then
+    guard_log "restore: rmem_max back to $orig"
+    return 0
+  fi
+  guard_log "restore: rmem_max reads $(cat "$GUARD_FILE"), expected $orig"
+  return 1
 }

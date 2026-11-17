@@ -10,13 +10,16 @@
 #                                          smoke's drops (configs rewritten), then check
 #   run-session.sh check                    freeze each run's evidence from its smoke into
 #                                          $RUNS/frozen/, check every smoke leg, recompute the budget
+#   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
+#                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
 #                                          only if they fit; PROBE10M=1 adds the 10M probe after
 #                                          the queue in its own 30 min box if it still fits
 #
 # net.core.rmem_max: calibrate, smoke and queue raise it to GUARD_VALUE (256 MiB) for their
-# own duration and restore the value they found on exit, failure or the hard stop
-# (sysctl-guard.sh); they refuse to start when the value is not the one recorded at step 0.
+# own duration and restore the value they found on exit, failure, the hard stop or an
+# operator's TERM (forwarded to the running child first; sysctl-guard.sh); a failed restore
+# exits 70 and says so; they refuse to start when the value is not the one recorded at step 0.
 #
 # Queue rules: no start unless every config is calibrated and every smoke leg passes its run's
 # frozen evidence (no override), and the mandatory part is at most 2 h 30 min (FORCE=1
@@ -47,11 +50,39 @@ GUARD_DIR=$R
 # shellcheck source=sysctl-guard.sh
 . "$S/sysctl-guard.sh"
 
-smoke_of() {
+smoke_of() {  # the smoke a run is checked against; the 5 s statsd fallback has a merged one
+  local s
   case "$1" in
-    m-10k) echo smoke-m-10k;; m-300k) echo smoke-m-300k;; w) echo smoke-w;;
-    m-100k|s-100k) echo smoke-100k;; m-1m|s-1m|x-1m) echo smoke-1m;;
+    m-10k) s=smoke-m-10k;; m-300k) s=smoke-m-300k;; w) s=smoke-w;;
+    m-100k|s-100k) s=smoke-100k;; m-1m|s-1m|x-1m) s=smoke-1m;;
   esac
+  if [ -d "$R/smoke/$s.statsd5" ]; then echo "$s.statsd5"; else echo "$s"; fi
+}
+
+rung_of_smoke() {
+  case "$1" in smoke-m-10k) echo 10k;; smoke-100k) echo 100k;; smoke-m-300k) echo 300k;; smoke-1m) echo 1m;; esac
+}
+
+# The child of a run in the background, so an operator's TERM reaches this script at once: it
+# forwards TERM to the child (timeout passes it on to the harness, which stops its own Envoy,
+# client and containers) and the guard restores rmem_max before the script exits.
+CHILD=
+on_term() {
+  if [ -n "$CHILD" ] && kill -0 "$CHILD" 2>/dev/null; then
+    log "TERM: forwarding to the running child $CHILD"
+    kill -TERM "$CHILD" 2>/dev/null
+    wait "$CHILD" 2>/dev/null
+  fi
+  guard_end
+  exit 143
+}
+bg_wait() {  # run a command in the background, wait for it, return its status
+  "$@" &
+  CHILD=$!
+  wait "$CHILD"
+  local rc=$?
+  CHILD=
+  return $rc
 }
 
 rewrite() {
@@ -85,16 +116,17 @@ case "$mode" in
   calibrate)
     log "calibrate start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
     guard_begin || exit 1
+    trap on_term TERM INT
     for rung in $RUNGS; do
       for arm in nosink statsd; do
         log "calibrate $rung $arm"
-        $EPL stats-calibrate "$C/cal-$rung.json" --arm "$arm" --shapes "idle-$rung" --out "$R/cal/$rung-$arm" \
+        bg_wait $EPL stats-calibrate "$C/cal-$rung.json" --arm "$arm" --shapes "idle-$rung" --out "$R/cal/$rung-$arm" \
           --ready-timeout 600 --admin-timeout 300 "$@" >> "$R/queue.log" 2>&1
         log "end calibrate $rung $arm rc=$?"
       done
     done
     log "3M probe (10 min box, not measured)"
-    timeout --foreground --signal=TERM --kill-after=60 600 $EPL stats-calibrate "$C/cal-3m.json" --arm nosink \
+    bg_wait timeout --foreground --signal=TERM --kill-after=60 600 $EPL stats-calibrate "$C/cal-3m.json" --arm nosink \
       --shapes idle-3m --out "$R/cal/3m-nosink" --ready-timeout 540 --admin-timeout 300 "$@" >> "$R/queue.log" 2>&1
     log "end 3M probe rc=$?"
     $SESSION rungs "$R/rungs.json" "$R"/cal/*-nosink "$R"/cal/*-statsd >> "$R/queue.log" 2>&1
@@ -104,22 +136,39 @@ case "$mode" in
   smoke)
     log "smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
     guard_begin || exit 1
+    trap on_term TERM INT
     mkdir -p "$R/smoke"
     for s in $SMOKES; do
       log "start $s"
-      $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
+      bg_wait $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
       log "end $s rc=$?"
     done
     log "main-thread profile at 1M (not measured)"
-    $EPL flush-profile "$C/m-1m.json" --arm nosink --shape idle-1m --out "$R/profile-1m" "$@" >> "$R/queue.log" 2>&1
+    bg_wait $EPL flush-profile "$C/m-1m.json" --arm nosink --shape idle-1m --out "$R/profile-1m" "$@" >> "$R/queue.log" 2>&1
     log "end profile rc=$?"
     $SESSION statsd-interval "$R/rungs.json" "$R"/smoke/smoke-* >> "$R/queue.log" 2>&1
     rewrite
+    # the 5 s fallback: smoke the rung's statsd arm again at 5 s and check against that leg
+    for s in smoke-m-10k smoke-100k smoke-m-300k smoke-1m; do
+      rung=$(rung_of_smoke "$s")
+      if [ -f "$C/smoke-statsd5-$rung.json" ]; then
+        log "statsd at 5 s for $rung: smoke again"
+        rm -rf "$R/smoke/smoke-statsd5-$rung" "$R/smoke/$s.statsd5"
+        bg_wait $EPL run "$C/smoke-statsd5-$rung.json" --out "$R/smoke/smoke-statsd5-$rung" --allow-short "$@" \
+          >> "$R/queue.log" 2>&1
+        $SESSION merge-smoke "$R/smoke/$s.statsd5" "$R/smoke/$s" "$R/smoke/smoke-statsd5-$rung" statsd \
+          >> "$R/queue.log" 2>&1
+      fi
+    done
     check
     log "smoke done rc=$?"
     ;;
   check)
     check
+    exit $?
+    ;;
+  restore)
+    guard_restore
     exit $?
     ;;
   queue)
@@ -133,6 +182,7 @@ case "$mode" in
       exit 1
     fi
     guard_begin || exit 1
+    trap on_term TERM INT
     T0=$(date +%s)
     left() { echo $(( STOP_S - ($(date +%s) - T0) )); }
     runone() {
@@ -144,8 +194,8 @@ case "$mode" in
         return
       fi
       log "start $run (${L}s left before the stop)"
-      timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/$run.json" --out "$R/$run" \
-        --allow-short "$@" >> "$R/queue.log" 2>&1
+      bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/$run.json" \
+        --out "$R/$run" --allow-short "$@" >> "$R/queue.log" 2>&1
       local rc=$?
       [ "$rc" -eq 124 ] && log "$run stopped at the session stop (SIGTERM); partial results, incomplete"
       log "end $run rc=$rc"
@@ -170,7 +220,7 @@ case "$mode" in
       L=$(left)
       if [ "$L" -ge 1800 ]; then
         log "10M probe (30 min box, not a priced row)"
-        timeout --foreground --signal=TERM --kill-after=60 1800 $EPL stats-calibrate "$C/cal-10m.json" --arm nosink \
+        bg_wait timeout --foreground --signal=TERM --kill-after=60 1800 $EPL stats-calibrate "$C/cal-10m.json" --arm nosink \
           --shapes idle-10m --out "$R/cal/10m-nosink" --ready-timeout 1500 --admin-timeout 600 "$@" \
           >> "$R/queue.log" 2>&1
         log "end 10M probe rc=$?"

@@ -287,12 +287,16 @@
      "label": "flush bursts in the window as the interval says, +/-1"
     },
     {
-     "stat": "udp.sent_per_flush",
+     "stat": "udp.fit.residual",
      "scope": "field",
-     "per": "field:used_cg_lines",
-     "per_request": 1.0,
-     "tol": 0.01,
-     "label": "datagrams per flush = used counters and gauges, +/-1%"
+     "max": 0.01,
+     "label": "datagrams = a whole number of flushes of the used counters and gauges, +/-1% of a flush"
+    },
+    {
+     "stat": "udp.fit.n_error",
+     "scope": "field",
+     "max": 1,
+     "label": "that number of flushes as the span and interval say, +/-1"
     },
     {
      "stat": "udp.drop_share",
@@ -309,6 +313,7 @@
    "path": "/idle",
    "kind": "idle",
    "rps": 0,
+   "bursts_visible": true,
    "ready_timeout_s": 180,
    "admin_timeout_s": 120,
    "settle_s": 3.0

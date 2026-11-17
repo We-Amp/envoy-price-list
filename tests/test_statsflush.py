@@ -312,3 +312,172 @@ class TableTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewRTest(unittest.TestCase):
+    def test_r1_flush_fit_and_counters(self):
+        from epl import statsrow
+        f = statsrow.flush_fit(3 * 1000 + 5, 1000, 3)
+        self.assertEqual((f["n"], f["n_error"]), (3, 0))
+        self.assertAlmostEqual(f["residual"], 0.005)
+        self.assertAlmostEqual(statsrow.flush_fit(2500, 1000, 3)["residual"], 0.5)
+        self.assertIn("error", statsrow.flush_fit(10, 0, 1))
+        bad = {"snmp": {"InDatagrams": 1}, "sock": None}
+        self.assertIn("RcvbufErrors", statsrow.udp_window(bad, bad, 1)["error"])
+        th0 = {100: ("envoy", 0), 101: ("wrk:worker_0", 0), 102: ("x", 0)}
+        th1 = {100: ("envoy", 50e6), 101: ("wrk:worker_0", 4e6), 102: ("x", 1e6)}
+        self.assertAlmostEqual(statsrow.busiest_other_ratio(th0, th1, 100), 12.5)
+        ok, _ = statsrow.quiesce(999999999, None, timeout_s=0.1)
+        self.assertFalse(ok)  # no such thread: never quiescent, bounded
+
+    def test_r1_configs(self):
+        c = MK.configs(box("bench-x86_64"))
+        sh = c["m-10k.json"]["shapes"][0]
+        self.assertFalse(sh["bursts_visible"])
+        self.assertTrue(c["m-1m.json"]["shapes"][0]["bursts_visible"])
+        st = [a for a in c["m-100k.json"]["arms"] if a["name"] == "statsd"][0]
+        stats_ = [i["stat"] for i in st["evidence"]]
+        self.assertIn("udp.fit.residual", stats_)
+        self.assertIn("udp.fit.n_error", stats_)
+        self.assertNotIn("main_over_busiest_other", stats_)
+        st1m = [a for a in c["m-1m.json"]["arms"] if a["name"] == "statsd"][0]
+        self.assertIn("main_over_busiest_other", [i["stat"] for i in st1m["evidence"]])
+
+    def test_r2_flush_price_forms(self):
+        off = {1: {"main": {"run_ms_per_s": 0.5}, "main_perf": {"cycles_per_s": 1e6}}}
+        good = {1: {"flush_interval_s": 1, "flushes_from": "bursts",
+                    "main": {"run_ms_per_s": 10.5, "run_ms_per_period": 10.6, "period_s": 1.01, "burst_count_error": 0},
+                    "main_perf": {"cycles_per_s": 2.3e7}}}
+        ms, _ = TAB.flush_price(off, good)
+        self.assertAlmostEqual(ms[0], 10.6 - 0.5 * 1.01)
+        missed = {1: dict(good[1], main=dict(good[1]["main"], burst_count_error=4, run_ms_per_period=21.0))}
+        ms, _ = TAB.flush_price(off, missed)
+        self.assertAlmostEqual(ms[0], (10.5 - 0.5) * 1)  # per-second form
+        invisible = {1: dict(good[1], flushes_from="interval")}
+        self.assertAlmostEqual(TAB.flush_price(off, invisible)[0][0], 10.0)
+
+    def test_r2_price_ratio_across_intervals(self):
+        def leg(arm, r, interval, ms_s, per_ms):
+            return {"leg_id": "%s%d" % (arm, r), "arm": arm, "shape": "idle-1m", "round": r,
+                    "verdict": {"valid": True}, "flush_interval_s": interval, "flushes_from": "bursts",
+                    "main": {"run_ms_per_s": ms_s, "run_ms_per_period": per_ms, "period_s": interval,
+                             "burst_count_error": 0}}
+        legs = []
+        for r in range(1, 5):
+            legs += [leg("flush-off", r, None, 0.5, None), leg("nosink", r, 1, 80.5 + r * 0.1, 80.5 + r * 0.1),
+                     leg("statsd", r, 5, 0, 160.0 * 1.0 + 2.5 + r * 0.2)]
+        res = {"legs": legs, "metadata": {"rounds_complete": 4}, "analysis": {},
+               "experiment": {"arms": [{"name": n} for n in ("flush-off", "nosink", "statsd")],
+                              "shapes": [{"name": "idle-1m"}], "order": "latin"}}
+        r = TAB.price_ratio_row(res, "idle-1m", "statsd", "nosink", "x", "confirmatory")
+        self.assertIn("intervals differ", r["note"])
+        self.assertAlmostEqual(r["effect_pct"], 100.0, delta=2.0)  # 160 ms against 80 ms per flush
+
+    def test_r3_statsd5_smoke_and_merge(self):
+        cal = {rr: {"stats_total": 1, "used_total": 1, "settle_s": 2, "ready_timeout_s": 60, "admin_timeout_s": 10}
+               for rr, _ in MK.RUNGS}
+        cal["1m"]["statsd_interval_s"] = 5
+        c = MK.configs(box("bench-x86_64"), cal)
+        self.assertIn("smoke-statsd5-1m.json", c)
+        self.assertNotIn("smoke-statsd5-100k.json", c)
+        st = [a for a in c["smoke-statsd5-1m.json"]["arms"] if a["name"] == "statsd"][0]
+        self.assertEqual(st["settings"]["stats_flush"], {"interval_s": 5})
+        d = tempfile.mkdtemp()
+        for name, arms in (("orig", ("statsd", "nosink", "flush-off")), ("new", ("statsd", "nosink"))):
+            os.makedirs(os.path.join(d, name, "config_dump"))
+            with open(os.path.join(d, name, "legs.jsonl"), "w") as f:
+                for a in arms:
+                    f.write(json.dumps({"leg_id": "%s-%s" % (name, a), "arm": a}) + "\n")
+                    open(os.path.join(d, name, "config_dump", a + ".json.gz"), "w").write(name)
+        n = SESS.merge_smoke(os.path.join(d, "out"), os.path.join(d, "orig"), os.path.join(d, "new"), "statsd")
+        self.assertEqual(n, 3)
+        ids = [json.loads(x)["leg_id"] for x in open(os.path.join(d, "out", "legs.jsonl")) if x.strip()]
+        self.assertEqual(sorted(ids), ["new-statsd", "orig-flush-off", "orig-nosink"])
+        self.assertEqual(open(os.path.join(d, "out", "config_dump", "statsd.json.gz")).read(), "new")
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        self.assertIn("merge-smoke", txt)
+        self.assertIn('echo "$s.statsd5"', txt)
+
+    def test_r4_partial_calibration(self):
+        cal = {"1m": {"stats_total": 1100300, "used_total": 600000, "settle_s": 2.5, "ready_timeout_s": 150,
+                      "admin_timeout_s": 60}, "10k": {"stats_total": 11000, "used_total": 6000}}
+        c = MK.configs(box("bench-x86_64"), cal)
+        self.assertNotIn("uncalibrated", c["m-1m.json"])
+        self.assertTrue(c["m-10k.json"].get("uncalibrated"))  # settle and timeouts missing
+        self.assertTrue(c["m-300k.json"].get("uncalibrated"))
+        self.assertTrue(c["w.json"].get("uncalibrated"))
+        d = tempfile.mkdtemp()
+        for fn, cc in c.items():
+            json.dump(cc, open(os.path.join(d, fn), "w"))
+        self.assertIn("m-10k", SESS.uncalibrated(d))
+        self.assertNotIn("m-1m", SESS.uncalibrated(d))
+
+    def test_r5_guard_edges(self):
+        d = tempfile.mkdtemp()
+        f = os.path.join(d, "rmem_max")
+        open(f, "w").write("212992\n")
+        guard = os.path.join(SF, "sysctl-guard.sh")
+        # a value the kernel clamps: the read-back differs, the guard fails, and still restores
+        sh = ("GUARD_FILE=%s; GUARD_DIR=%s; . %s; real_set() { echo \"$1\" > \"$GUARD_FILE\"; }; "
+              "guard_set() { if [ \"$1\" = 268435456 ]; then echo 1048576 > \"$GUARD_FILE\"; else real_set \"$1\"; fi; }; "
+              "guard_begin || exit 9" % (f, d, guard))
+        r = subprocess.run(["bash", "-c", sh], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.returncode, 9)
+        self.assertEqual(open(f).read().strip(), "212992")
+        # a restore that fails: loud and non-zero
+        sh = ("GUARD_FILE=%s; GUARD_DIR=%s; . %s; guard_begin || exit 9; guard_set() { return 1; }; exit 0"
+              % (f, d, guard))
+        r = subprocess.run(["bash", "-c", sh], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.returncode, 70)
+        self.assertIn("SYSCTL RESTORE FAILED", r.stderr)
+        self.assertEqual(open(f).read().strip(), "268435456")
+        # the restore command puts the recorded original back
+        sh = "GUARD_FILE=%s; GUARD_DIR=%s; . %s; guard_restore" % (f, d, guard)
+        r = subprocess.run(["bash", "-c", sh], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertEqual(open(f).read().strip(), "212992")
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        self.assertIn("trap on_term TERM INT", txt)
+        self.assertIn('kill -TERM "$CHILD"', txt)
+        self.assertIn("restore)", txt)
+
+    def test_r5_operator_term_forwards_and_restores(self):
+        d = tempfile.mkdtemp()
+        f = os.path.join(d, "rmem_max")
+        open(f, "w").write("212992\n")
+        # the queue's pattern: guard, TERM trap, a child in the background
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        funcs = txt.split("# The child of a run in the background")[1].split("mode=${1:-}")[0]
+        script = ("set -u; R=%s; log() { echo \"$*\"; }; GUARD_FILE=%s; GUARD_DIR=%s; . %s\n#%s\n"
+                  "guard_begin || exit 9; trap on_term TERM INT; echo started; bg_wait sleep 30; echo done"
+                  % (d, f, d, os.path.join(SF, "sysctl-guard.sh"), funcs))
+        p = subprocess.Popen(["bash", "-c", script], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        import time
+        for _ in range(200):
+            if open(f).read().strip() == "268435456":
+                break
+            time.sleep(0.05)
+        time.sleep(0.3)
+        t = time.monotonic()
+        p.terminate()
+        p.wait(timeout=10)
+        self.assertLess(time.monotonic() - t, 5)  # not after the child's 30 s
+        self.assertEqual(p.returncode, 143)
+        self.assertEqual(open(f).read().strip(), "212992")
+
+    def test_r6_w_flush_evidence(self):
+        c = MK.configs(box("bench-x86_64"))["w.json"]
+        ev = {a["name"]: a["evidence"] for a in c["arms"]}
+        self.assertIn({"stat": "main.bursts", "scope": "field", "max": 0, "label": "no flush in the window"},
+                      ev["flush-off"])
+        for a in ("nosink", "statsd"):
+            self.assertTrue(any(i["stat"] == "main.bursts" and i.get("min") == 3 for i in ev[a]))
+        self.assertTrue(any(i["stat"] == "udp.datagrams_per_request" and "ref" in i for i in ev["statsd"]))
+
+    def test_r7_run_refuses_templates_and_uncalibrated(self):
+        for fn, needle in (("sibling.json", "template"), ("m-1m.json", "uncalibrated")):
+            r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "epl"), "run", os.path.join(X86, fn),
+                                "--dry-run", "--allow-short", "--out", tempfile.mkdtemp()],
+                               capture_output=True, text=True, timeout=120)
+            self.assertNotEqual(r.returncode, 0, fn)
+            self.assertIn(needle, r.stderr)

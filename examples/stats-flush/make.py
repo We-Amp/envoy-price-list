@@ -106,9 +106,17 @@ def ev_periodic(interval, visible=True):
 
 EV_FLUSH_OFF = [{"stat": "main.bursts", "scope": "field", "max": 0, "label": "no main-thread burst in the window"},
                 {"stat": "flush_interval_s", "scope": "field", "absent": True}]
-EV_STATSD = [{"stat": "udp.sent_per_flush", "scope": "field", "per": "field:used_cg_lines", "per_request": 1.0,
-              "tol": 0.01, "label": "datagrams per flush = used counters and gauges, +/-1%"},
+# Between two quiescent points (no flush in progress, the sink's queue read empty) the
+# datagrams are a whole number n of flushes of the used counter and gauge lines: the
+# residual after n whole flushes is under 1% of one flush, and n is the number of flushes the
+# span holds, +/-1 (a flush at either edge falls in or out as a whole, never in part).
+EV_STATSD = [{"stat": "udp.fit.residual", "scope": "field", "max": 0.01,
+              "label": "datagrams = a whole number of flushes of the used counters and gauges, +/-1% of a flush"},
+             {"stat": "udp.fit.n_error", "scope": "field", "max": 1,
+              "label": "that number of flushes as the span and interval say, +/-1"},
              {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
+TOP_RUNG_MAIN = {"stat": "main_over_busiest_other", "scope": "field", "min": 10,
+                 "label": "the main thread is the busiest thread by a factor of 10 (idle statsd leg, top rung)"}
 EV_DOG = [{"stat": "udp.sent_per_flush", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
            "label": "datagrams per flush as in the smoke, +/-1%"},
           {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
@@ -152,7 +160,7 @@ def base_cfg(box, name):
 
 def idle_shape(rung, cal):
     c = (cal or {}).get(rung) or {}
-    sh = {"name": "idle-" + rung, "path": "/idle", "kind": "idle", "rps": 0,
+    sh = {"name": "idle-" + rung, "path": "/idle", "kind": "idle", "rps": 0, "bursts_visible": rung != "10k",
           "ready_timeout_s": c.get("ready_timeout_s", 60 if rung in ("10k", "100k") else 180),
           "admin_timeout_s": c.get("admin_timeout_s", 30 if rung in ("10k", "100k") else 120),
           "settle_s": c.get("settle_s", 3.0)}
@@ -180,7 +188,8 @@ def rung_arms(box, k, rung, cal, names):
                                  ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible)),
         "statsd": lambda: arm(box, "statsd", stats_set(k, stats_flush={"interval_s": sd_int},
                                                        stats_sink={"kind": "statsd"}),
-                              ev_common(k, rung, cal) + ev_periodic(sd_int, visible) + EV_STATSD),
+                              ev_common(k, rung, cal) + ev_periodic(sd_int, visible) + EV_STATSD
+                              + ([TOP_RUNG_MAIN] if rung == RUNGS[-1][0] else [])),
         "dogstatsd-buf": lambda: arm(box, "dogstatsd-buf", stats_set(
             k, stats_flush={"interval_s": INTERVAL_S},
             stats_sink={"kind": "dog_statsd", "max_bytes_per_datagram": DOG_MAX_BYTES}),
@@ -204,15 +213,23 @@ def rung_arms(box, k, rung, cal, names):
     return [every[n]() for n in names]
 
 
+CAL_KEYS = ("stats_total", "used_total", "settle_s", "ready_timeout_s", "admin_timeout_s")
+
+
+def rung_calibrated(cal, rung):
+    """A rung is calibrated only when its calibration produced every number the configs use."""
+    c = (cal or {}).get(rung) or {}
+    return all(c.get(k) is not None for k in CAL_KEYS)
+
+
 def configs(box, cal=None):
     out = {}
-    calibrated = bool(cal)
 
     def cfg(fname, name, rung, k, arms, shapes, **kw):
         c = base_cfg(box, name)
         arms = rung_arms(box, k, rung, cal, arms) if rung else arms
         c.update(base_arm=arms[0]["name"], arms=arms, shapes=shapes)
-        if not calibrated:
+        if not rung_calibrated(cal, rung or "100k"):
             c["uncalibrated"] = True
         c.update(kw)
         out[fname] = c
@@ -246,16 +263,30 @@ def configs(box, cal=None):
            "pre_window_settle_s": c100.get("settle_s", 3.0)}
     w_ev = [zero("gen_cx_connect_fail"), {"stat": "prime.ok", "scope": "field", "equals": 1000, "tol_abs": 0},
             {"stat": "nofile_soft", "scope": "field", "min": 4 * 1000 + 4096}]
-    warms = [arm(box, "flush-off", stats_set(1000, stats_flush={"on_admin": True}), w_ev),
-             arm(box, "nosink", stats_set(1000), w_ev),
-             arm(box, "statsd", stats_set(1000, stats_sink={"kind": "statsd"}), w_ev + [
-                 {"stat": "udp.drop_share", "scope": "field", "max": 0.01}]),
-             arm(box, "flush-off-A2", stats_set(1000, stats_flush={"on_admin": True}), w_ev)]
+    # flushes over the window: none without the timer, at least 3 at 5 s in 20 s with it
+    w_off = [{"stat": "main.bursts", "scope": "field", "max": 0, "label": "no flush in the window"}]
+    w_on = [{"stat": "main.bursts", "scope": "field", "min": 3, "label": "at least 3 flushes in the window"}]
+    w_statsd = [{"stat": "udp.drop_share", "scope": "field", "max": 0.01},
+                {"stat": "udp.datagrams_per_request", "scope": "field", "min": 1.0,
+                 "label": "per-request statsd datagrams (histogram values) present"},
+                {"stat": "udp.datagrams_per_request", "scope": "field", "ref": {"arm": "self"}, "tol": 0.1,
+                 "label": "datagrams per request as in the smoke, +/-10%"}]
+    warms = [arm(box, "flush-off", stats_set(1000, stats_flush={"on_admin": True}), w_ev + w_off),
+             arm(box, "nosink", stats_set(1000), w_ev + w_on),
+             arm(box, "statsd", stats_set(1000, stats_sink={"kind": "statsd"}), w_ev + w_on + w_statsd),
+             arm(box, "flush-off-A2", stats_set(1000, stats_flush={"on_admin": True}), w_ev + w_off)]
     w = cfg("w.json", "sf-w", None, 1000, warms, [wsh], rounds=8, rounds_block=8, rounds_max=8,
             primary_metric="cycles_total", confirmatory=[["statsd", "flush-off"]])
     # v2 timings, with the settle after the pre-window read inside the client's run
     w["client"]["duration_s"] = 28
     w["measure"].update(main_sampler=True, per_thread=True)
+    # the 5 s fallback (decided from the smoke's drops): the rung's statsd arm is smoked again
+    # at 5 s, and its check reads that leg instead of the 1 s one
+    for rung, k in RUNGS:
+        if ((cal or {}).get(rung) or {}).get("statsd_interval_s") == 5:
+            cfg("smoke-statsd5-%s.json" % rung, "sf-smoke-statsd5-" + rung, rung, k, ["statsd", "nosink"],
+                [idle_shape(rung, cal)], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
+                evidence_mode="record")
     sw = json.loads(json.dumps(w))
     sw.update(name="sf-smoke-w", rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
     sw.pop("confirmatory")
