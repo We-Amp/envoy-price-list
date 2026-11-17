@@ -62,6 +62,8 @@ DEFAULTS = {
     # metrics_port: the collector's internal telemetry at level basic on this loopback port
     # (receiver span counters, scraped before and after every leg); None = level none
     "collector": {"image": None, "port": 4317, "metrics_port": None},
+    # UDP discard sink for statsd arms (the stats row): port, receive buffer asked for, CPUs
+    "stats_sink": {"port": 8125, "rcvbuf": 268435456, "sample_every": 1000},
     "record_hostname": False,
     "alpha": ALPHA,
 }
@@ -82,6 +84,13 @@ METRICS = [
      lambda m: m["hop2_workers"]["worker_max_busy"]),
     ("hop2_conns_used", "first hop -> second hop: connections carrying traffic",
      lambda m: m["conn_hop2_downstream"]["conns_over_1pct_of_mean"]),
+    # idle legs of the stats row (absent elsewhere, so no comparison is made): the main
+    # thread's run time per second and per flush period, its cycles per second (perf -t)
+    ("main_ms_per_s", "main thread ms / s", lambda m: m["main"]["run_ms_per_s"]),
+    ("main_ms_per_period", "main thread ms / flush period", lambda m: m["main"]["run_ms_per_period"]),
+    ("main_cycles_per_s", "main thread cycles / s", lambda m: m["main_perf"]["cycles_per_s"]),
+    ("main_cycles_per_period", "main thread cycles / flush period", lambda m: m["main_perf"]["cycles_per_period"]),
+    ("workers_cycles_per_req", "worker threads cycles / req", lambda m: m["workers_cycles_per_req"]),
     ("p50_us", "p50 latency (us)", lambda m: m["latency_us"]["p50"]),
     ("p99_us", "p99 latency (us)", lambda m: m["latency_us"]["p99"]),
 ]
@@ -159,8 +168,10 @@ def arm_envoy(exp, arm, run_dir=""):
     e = _merge(exp["envoy"], arm_settings(arm))
     if e.get("access_log"):
         e["access_log"] = dict(e["access_log"], path=os.path.join(run_dir, "alog", arm["name"] + ".alog"))
-    if e.get("tracing"):
+    if e.get("tracing") or (e.get("stats_sink") or {}).get("kind") == "otlp":
         e["collector_port"] = exp["collector"]["port"]
+    if (e.get("stats_sink") or {}).get("kind") in ("statsd", "dog_statsd"):
+        e["stats_sink_port"] = exp["stats_sink"]["port"]
     if e.get("ext_authz") == "grpc":
         e["authz_grpc_port"] = exp["origin"]["authz_grpc_port"]
     elif e.get("ext_authz"):
@@ -211,6 +222,12 @@ def hop2_envoy(exp, arm=None):
 
 def hop2_key(arm):
     return "_hop2:" + arm["name"]
+
+
+def needs_collector(exp):
+    """Tracing arms and OTLP stats-sink arms send to the local null collector."""
+    return uses(exp, "tracing") or any((arm_envoy(exp, a).get("stats_sink") or {}).get("kind") == "otlp"
+                                       for a in exp["arms"])
 
 
 def uses(exp, setting):
@@ -319,8 +336,13 @@ def validate(exp, allow_short=False, check_rounds=True):
     if not snames or len(set(snames)) != len(snames):
         errs.append("shapes must be non-empty with unique names")
     for s in exp.get("shapes", []):
-        if s.get("kind") not in ("proxied", "direct_headers", "routes"):
-            errs.append("shape %s: kind must be proxied, direct_headers or routes" % s.get("name"))
+        if s.get("kind") not in ("proxied", "direct_headers", "routes", "idle"):
+            errs.append("shape %s: kind must be proxied, direct_headers, routes or idle" % s.get("name"))
+        if s.get("pre_window_settle_s") and s.get("kind") != "idle":
+            li = s.get("lead_in_s", exp["measure"]["lead_in_s"])
+            if li + float(s["pre_window_settle_s"]) + exp["measure"]["window_s"] + 1 > exp["client"]["duration_s"]:
+                errs.append("shape %s: client duration must exceed lead_in + pre_window_settle + window + 1 s"
+                            % s.get("name"))
         if s.get("kind") == "routes":
             rs = (s.get("route_table") or {}).get("routes")
             if not isinstance(rs, list) or not rs:
@@ -363,9 +385,9 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
     if uses(exp, "two_hop") and "hop2" not in sets:
         errs.append("a two_hop arm needs cpus.hop2")
-    if uses(exp, "tracing") and not exp["collector"].get("image"):
+    if needs_collector(exp) and not exp["collector"].get("image"):
         errs.append("a tracing arm needs collector.image")
-    if uses(exp, "tracing") and "origin" not in sets:
+    if needs_collector(exp) and "origin" not in sets:
         errs.append("a tracing arm needs cpus.origin (the collector runs there)")
     for a in arms:
         az = arm_settings(a).get("ext_authz")
@@ -1030,7 +1052,7 @@ class Runner:
                 from .origin import Origin
                 origin = Origin(exp["origin"], exp["cpus"].get("origin", ""), exp["shapes"], self.run_dir, self.log)
                 md["origin"] = origin.start()
-                if uses(exp, "tracing"):
+                if needs_collector(exp):
                     from .origin import Collector
                     collector = Collector(exp["collector"], exp["cpus"]["origin"], self.run_dir, self.log)
                     md["collector"] = collector.start()

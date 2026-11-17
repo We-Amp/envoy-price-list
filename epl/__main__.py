@@ -155,7 +155,7 @@ def cmd_calibrate(args):
     rows = []
     try:
         origin.start()
-        if experiment.uses(exp, "tracing"):
+        if experiment.needs_collector(exp):
             from .origin import Collector
             collector = Collector(exp["collector"], exp["cpus"]["origin"], run_dir, log)
             collector.start()

@@ -57,7 +57,7 @@ class Origin:
         mode = self.meta["mode"]
         port = int(self.cfg["port"])
         needs = any(s["kind"] == "proxied" for s in self.shapes) or bool(self.cfg.get("authz_port")) \
-            or bool(self.cfg.get("authz_grpc_port"))
+            or bool(self.cfg.get("authz_grpc_port")) or bool(self.cfg.get("prime_file"))
         if mode == "external" or not needs:
             if needs and not sysprobe.port_open("127.0.0.1", port):
                 raise RuntimeError("external origin port %d not accepting connections" % port)
@@ -72,6 +72,9 @@ class Origin:
         files = envoy_config.origin_files(self.shapes)
         from .experiment import HARNESS_ROOT
         bodies = envoy_config.origin_bodies(self.shapes, HARNESS_ROOT)
+        if self.cfg.get("prime_file"):
+            # the stats row's priming requests (one per generated cluster) fetch this file
+            files[envoy_config.STATS_PRIME_PATH.lstrip("/")] = 2
         for rel, size in files.items():
             p = os.path.join(www, rel)
             os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -86,7 +89,8 @@ class Origin:
                                        self.cfg.get("authz_grpc_port"),
                                        self.cfg.get("keepalive_timeout_s", 600),
                                        self.cfg.get("keepalive_requests", 10000000),
-                                       envoy_config.content_types(self.shapes))
+                                       envoy_config.content_types(self.shapes),
+                                       self.cfg.get("worker_connections", 8192), self.cfg.get("worker_rlimit_nofile"))
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(conf)
         image = self.cfg.get("image", "nginx:alpine")
@@ -139,6 +143,10 @@ service:
     traces:
       receivers: [otlp]
       exporters: [nop]
+%s"""
+METRICS_PIPELINE = """    metrics:
+      receivers: [otlp]
+      exporters: [nop]
 """
 
 
@@ -156,20 +164,22 @@ TELEMETRY_BASIC = ("      level: basic\n"
                    "                port: %d\n")
 
 
-def collector_conf(port, metrics_port=None):
+def collector_conf(port, metrics_port=None, metrics=False):
+    """metrics: also a metrics pipeline (OTLP receiver, nop exporter) for the stats sink."""
     tel = TELEMETRY_BASIC % int(metrics_port) if metrics_port else TELEMETRY_NONE
-    return COLLECTOR_CONF % (int(port), tel)
+    return COLLECTOR_CONF % (int(port), tel, METRICS_PIPELINE if metrics else "")
 
 
-SPANS_RE = re.compile(r"^otelcol_receiver_(accepted|refused)_spans(?:_total)?(?:\{[^}]*\})?\s+([0-9.eE+-]+)\s*$", re.M)
+SPANS_RE = re.compile(r"^otelcol_receiver_(accepted|refused)_(spans|metric_points)(?:_total)?(?:\{[^}]*\})?"
+                      r"\s+([0-9.eE+-]+)\s*$", re.M)
 
 
 def parse_collector_metrics(text):
     """{"accepted_spans": n, "refused_spans": n} summed over every receiver label set,
     from the collector's Prometheus text; a counter not exported yet is left out."""
     out = {}
-    for kind, v in SPANS_RE.findall(text or ""):
-        out[kind + "_spans"] = out.get(kind + "_spans", 0.0) + float(v)
+    for kind, what, v in SPANS_RE.findall(text or ""):
+        out[kind + "_" + what] = out.get(kind + "_" + what, 0.0) + float(v)
     return {k: int(round(v)) for k, v in out.items()}
 
 
@@ -217,7 +227,7 @@ class Collector:
                 raise RuntimeError("collector port %d already in use" % p)
         d = os.path.join(self.run_dir, "collector")
         os.makedirs(d, exist_ok=True)
-        conf = collector_conf(port, self.metrics_port)
+        conf = collector_conf(port, self.metrics_port, bool(self.cfg.get("metrics")))
         with open(os.path.join(d, "config.yaml"), "w") as f:
             f.write(conf)
         name = "epl-collector-%d" % os.getpid()
