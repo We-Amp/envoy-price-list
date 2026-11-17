@@ -1,0 +1,185 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/wk5",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8
+ },
+ "rounds": 2,
+ "rounds_block": 2,
+ "rounds_max": 2,
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "order_seed": 21,
+ "name": "wk5-smoke-17a",
+ "base_arm": "trace-1",
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "trace-1",
+   "settings": {
+    "tracing": {
+     "sampling_pct": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "per_request": 0.01,
+     "tol_binomial_sd": 4,
+     "label": "sampled share within 4 binomial SD of 1%"
+    },
+    {
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "tracing.opentelemetry.spans_sent",
+     "scope": "leg",
+     "per_request": 1.0,
+     "tol": 0.05,
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "label": "spans sent per sampled request over the leg"
+    },
+    {
+     "stat": "collector_delta.accepted_spans",
+     "scope": "field",
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "min": 0.95,
+     "label": "collector accepted >= 95% of spans sent"
+    },
+    {
+     "stat": "collector_delta.refused_spans",
+     "scope": "field",
+     "max": 0,
+     "label": "collector refused no span"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "trace-100",
+   "settings": {
+    "tracing": {
+     "sampling_pct": 100
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "per_request": 1.0,
+     "tol_binomial_sd": 4,
+     "label": "sampled share within 4 binomial SD of 100%",
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "tracing.opentelemetry.spans_sent",
+     "scope": "leg",
+     "per_request": 1.0,
+     "tol": 0.05,
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "label": "spans sent per sampled request over the leg"
+    },
+    {
+     "stat": "collector_delta.accepted_spans",
+     "scope": "field",
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "min": 0.95,
+     "label": "collector accepted >= 95% of spans sent"
+    },
+    {
+     "stat": "collector_delta.refused_spans",
+     "scope": "field",
+     "max": 0,
+     "label": "collector refused no span"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "s",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200
+  },
+  {
+   "name": "fh",
+   "path": "/fh",
+   "kind": "direct_headers",
+   "body_bytes": 128,
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000
+  }
+ ],
+ "collector": {
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:1daa4312b48312dbae2d543e67b77e897dd5d9c48e7651d1416cdb417026ad06",
+  "port": 4317,
+  "metrics_port": 8888
+ },
+ "adaptive": false,
+ "evidence_mode": "record"
+}
