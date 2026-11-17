@@ -1,0 +1,157 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/release-record",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8
+ },
+ "rounds": 16,
+ "rounds_block": 16,
+ "rounds_max": 32,
+ "stop": {
+  "target_half_width_pct": 0.8,
+  "rows": "confirmatory"
+ },
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "name": "release-record-a",
+ "base_arm": "v1.40.2",
+ "arms": [
+  {
+   "name": "v1.37.0",
+   "binary": "~/epl/bin/envoy-1.37.0",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.37.0/envoy-1.37.0-linux-x86_64",
+   "source_sha256": "0a5729ee4e980d346ebcee80f18e7efe5232b91141bb4c776ec3adcca786e60c"
+  },
+  {
+   "name": "v1.37.11",
+   "binary": "~/epl/bin/envoy-1.37.11",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.37.11/envoy-1.37.11-linux-x86_64",
+   "source_sha256": "b9ebeed3ba6febcc0943810bddc27f66807ceaf9b1538d3e6db14284fbcb1ce8"
+  },
+  {
+   "name": "v1.38.0",
+   "binary": "~/epl/bin/envoy-1.38.0",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.38.0/envoy-1.38.0-linux-x86_64",
+   "source_sha256": "cca312a7c3f91852f2849995c895130c59842e21ba787dc90bafa4026d6c5ecc"
+  },
+  {
+   "name": "v1.38.9",
+   "binary": "~/epl/bin/envoy-1.38.9",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.38.9/envoy-1.38.9-linux-x86_64",
+   "source_sha256": "3c70be6f1c5704c1d78e034828a9ef9501fbd7b6ea7992c75b62f6b13846dcb4"
+  },
+  {
+   "name": "v1.39.6",
+   "binary": "~/epl/bin/envoy-1.39.6",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.39.6/envoy-1.39.6-linux-x86_64",
+   "source_sha256": "116ef1d0d4e0685bbb0749134aa84ebd6d56a37c568ce6418f1242138d9d10cf"
+  },
+  {
+   "name": "v1.40.0",
+   "binary": "~/epl/bin/envoy-1.40.0",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.0/envoy-1.40.0-linux-x86_64",
+   "source_sha256": "8aa137a7d00994ce43f613556f5a120709229f63bedb86eedde5ccbc402c2b80"
+  },
+  {
+   "name": "v1.40.2",
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "name": "v1.40.2-A2",
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "shapes": [
+  {
+   "name": "s",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200
+  },
+  {
+   "name": "fh",
+   "path": "/fh",
+   "kind": "direct_headers",
+   "body_bytes": 128,
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000
+  },
+  {
+   "name": "s-hi",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 12000,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
+  },
+  {
+   "name": "fh-hi",
+   "path": "/fh",
+   "kind": "direct_headers",
+   "body_bytes": 128,
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 18400,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
+  }
+ ],
+ "confirmatory": [
+  [
+   "v1.38.0",
+   "v1.37.11"
+  ]
+ ],
+ "order_seed": 7
+}

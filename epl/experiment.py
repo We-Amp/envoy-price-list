@@ -345,8 +345,25 @@ def validate(exp, allow_short=False, check_rounds=True):
     if exp.get("primary_metric") in ("cycles_total_all", "cycles_total_per_hop") and not uses(exp, "two_hop"):
         errs.append("primary metric %s needs a two_hop arm" % exp["primary_metric"])
     m = exp["measure"]
-    if m["lead_in_s"] + m["window_s"] + 1 > exp["client"]["duration_s"]:
-        errs.append("client duration must exceed lead_in + window + 1 s")
+    for li in [m["lead_in_s"]] + [sh["lead_in_s"] for sh in exp["shapes"] if sh.get("lead_in_s") is not None]:
+        if li + m["window_s"] + 1 > exp["client"]["duration_s"]:
+            errs.append("client duration must exceed lead_in + window + 1 s")
+    names = [a.get("name") for a in arms]
+    for p in exp.get("confirmatory") or []:
+        if not (isinstance(p, (list, tuple)) and len(p) == 2 and p[0] in names and p[1] in names and p[0] != p[1]):
+            errs.append("confirmatory rows are [arm, reference] pairs of two different arms, got %r" % (p,))
+    if exp.get("stop", {}).get("rows") == "confirmatory" and not exp.get("confirmatory"):
+        errs.append("stop.rows = confirmatory needs confirmatory rows")
+    groups = m.get("perf_event_groups")
+    lists = ([m["perf_events"]] if m.get("perf_events") else []) + (groups or [])
+    if groups is not None and (not isinstance(groups, list) or not groups):
+        errs.append("measure.perf_event_groups must be a non-empty list of event lists")
+    for ev in lists:
+        names = set(ev.split(",")) if isinstance(ev, str) else set()
+        if "instructions:u" not in names or not ({"cycles:u", "cycles:k"} <= names or "cycles" in names):
+            errs.append("perf event list %r needs instructions:u and cycles (or cycles:u and cycles:k)" % (ev,))
+    if lists and uses(exp, "two_hop"):
+        errs.append("measure.perf_events / perf_event_groups are for one-hop experiments only")
     b = m.get("burst")
     if b:
         if not uses(exp, "two_hop"):
@@ -617,7 +634,9 @@ def analyse(exp, legs, floor=None):
             if hr:
                 summ["client_headroom_min"] = min(hr)
             sres["arms"][an] = summ
-        for an, rn in comparison_pairs(exp):
+        sres["confirmatory"] = []
+        conf = [(p[0], p[1]) for p in exp.get("confirmatory") or []]
+        for an, rn, kind in [(a, r, "row") for a, r in comparison_pairs(exp)] + [(a, r, "conf") for a, r in conf]:
             rounds = sorted(r for (ss, aa, r) in by if ss == s and aa == an and (s, rn, r) in by)
             comp = {"arm": an, "ref": rn, "rounds_paired": rounds}
             for key, _, get in METRICS:
@@ -628,11 +647,18 @@ def analyse(exp, legs, floor=None):
                 bv = [_value(by[(s, rn, r)], key, get, vcfg) for r in pr]
                 av = [_value(by[(s, an, r)], key, get, vcfg) for r in pr]
                 c = stats.compare_paired(bv, av, alpha=alpha)
-                c["role"] = "primary" if key == primary else "exploratory"
+                if key != primary:
+                    c["role"] = "exploratory"
+                else:
+                    c["role"] = "confirmatory" if kind == "conf" else "primary"
                 if floor and s in floor and key in floor[s]:
                     c["aa_floor_half_width_pct"] = floor[s][key]["hw"]
                     c["aa_floor_far_pct"] = floor[s][key]["far"]
                 comp[key] = c
+            if kind == "conf":
+                # named before the run, its own family: Holm across these rows only
+                sres["confirmatory"].append(comp)
+                continue
             sres["comparisons"].append(comp)
             if rn == base:
                 sres["vs_base"][an] = comp
@@ -648,8 +674,18 @@ def analyse(exp, legs, floor=None):
     for c, a in zip(prim, adj):
         c["holm_p"] = a
     out["primary_family_size"] = len(prim)
+    cfm = []
     for s, sres in out["shapes"].items():
-        for comp in sres["comparisons"]:
+        for comp in sres.get("confirmatory", []):
+            c = comp.get(primary)
+            if c and c["paired"].get("t_p") is not None and c["n"] >= min_pairs:
+                cfm.append(c)
+    for c, a in zip(cfm, stats.holm([c["paired"]["t_p"] for c in cfm])):
+        c["holm_p"] = a
+    if exp.get("confirmatory"):
+        out["confirmatory_family_size"] = len(cfm)
+    for s, sres in out["shapes"].items():
+        for comp in sres["comparisons"] + sres.get("confirmatory", []):
             for key in METRIC_KEYS:
                 c = comp.get(key)
                 if not c:
@@ -658,7 +694,7 @@ def analyse(exp, legs, floor=None):
                 if c["n"] < min_pairs or p.get("half_width_pct") is None:
                     c["status"] = "insufficient"
                     c["differs"] = None
-                elif c["role"] == "primary":
+                elif c["role"] in ("primary", "confirmatory"):
                     c["differs"] = c.get("holm_p", 1.0) <= alpha
                     c["status"] = "differs" if c["differs"] else "not resolved"
                 else:
@@ -686,8 +722,9 @@ def stop_check(exp, analysis):
         if lim is not None:
             target = min(target, lim)
     worst = []
+    rows = "confirmatory" if exp.get("stop", {}).get("rows") == "confirmatory" else "comparisons"
     for s, sres in analysis["shapes"].items():
-        for comp in sres["comparisons"]:
+        for comp in sres.get(rows, []):
             c = comp.get(metric)
             hw = (c or {}).get("paired", {}).get("half_width_pct")
             if c is None or hw is None or c["n"] < exp.get("min_pairs", 6):

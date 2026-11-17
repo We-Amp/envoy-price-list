@@ -186,6 +186,7 @@ examples/               experiment configs and their generators (see below)
 | `examples/settings-matrix/followups/` | follow-ups to the first matrix runs: the second hop with both proxies evenly loaded, the buffer limit with a body that fits, ext_authz over HTTP and gRPC, the TLS rows with reconnects spread out in time, and A/A runs on the TLS and HTTP/2 shapes. Written by `followups.py`; `run-followups.sh` queues them; `followups_table.py` builds their table; `saturation.py` is a short saturation probe |
 | `examples/settings-matrix/filters/` | two more setting rows against the same baseline: the JWT authentication filter with a local JWKS (RS256, every token verified, and with the filter's cache of verified tokens; every arm's client sends the same token) and the local rate-limit filter (enabled and enforced, budget far above the test rate). Written by `filters.py`; `jwt_token.py` made the test JWKS and token in `filters/jwt.json` (the private key was not kept). Their A/A floor is the A/A arm of the release run below (`floor_arm`) |
 | `examples/releases/` | six official releases (v1.32.13, v1.34.14, v1.36.13, v1.37.11, v1.38.9, v1.40.2) at two load levels, each shape at the matrix rate and at a higher one, with a second copy of v1.40.2 as an A/A arm interleaved in the same rounds. Written by `make.py`; `run-session.sh` queues the release run and the two filter rows; `table.py` builds the tables, with the A/A-spread half-widths |
+| `examples/release-record/` | release record/1 (see [RELEASE-RECORD.md](RELEASE-RECORD.md)): the configs of its first session, written by `make.py` (Run A: seven releases and the A/A copy of v1.40.2 on four cells, with confirmatory rows named before the run; Run C: hardware counters in three event groups; Run B: the v1.38 patches one by one; three smoke runs), `static.py` for the per-tag static record (size, sections, compiler string, digest, build id) and `table.py` for the tables |
 | `examples/upstream-pool-lru/` | an experimental Envoy build that can reuse the least recently freed upstream connection instead of the most recently freed one (selected per process by an environment variable). The patch is one commit on Envoy v1.40.2, branch [`exp/upstream-pool-lru`](https://github.com/We-Amp/envoy/tree/exp/upstream-pool-lru) of We-Amp's Envoy fork (set `ENVOY_EXP_UPSTREAM_POOL_LRU=1` to switch the order); build it yourself and point the config at the binary. `make.py` writes the two-hop, one-hop and probe configs, `make_demand.py` the demand-grown pool follow-up, `make_burst.py` the stall-recovery runs; `table*.py` build their tables |
 | `examples/route-table/` | recorded route tables and a recorded route with 109 constant headers (57 request, 52 response; because the route is a direct response, Envoy applies only the 52 response headers and the virtual host's 8, so 60 headers run per request), used as they are (shape kind `routes`: `route_table.routes` in order, optional `route_table.vhost` header fields). One virtual host of direct responses with 1, 200 or 1,000 routes, the request matching the last one; base, path first (branch `patches/route-match-path-first-v4` of We-Amp's Envoy fork), a route index prototype that is not proposed upstream (identified by its md5 only), and a second copy of base as the A/A arm; and base against the header change (branch `patches/router-header-reference-v3`) on the 109-header route. Each at 2,000 req/s and at a higher calibrated rate. `tables/` holds the tables, converted by `tables/from_yaml.py` (each keeps the md5 of its source); `make.py` writes the configs, `run-session.sh` queues the four runs, `table.py` builds the tables |
 
@@ -230,6 +231,8 @@ See `examples/pilot-releases.json`. Main sections:
 | `base_arm` | the arm every other arm is compared against |
 | `rounds`, `rounds_block`, `rounds_max`, `adaptive` | minimum rounds (>= 12), block size, cap (<= 36); `adaptive: false` runs exactly `rounds` |
 | `stop` | `target_half_width_pct` (default 3.0) for the primary metric |
+| `confirmatory` | `[arm, reference]` pairs named before the run: their own Holm family, reported apart from the other comparisons |
+| `stop.rows` | `confirmatory`: the stop rule looks at the confirmatory rows only (default: every comparison) |
 | `order`, `order_seed` | `auto` (default: `abba` for 2 arms, `rotate` for 3+), `abba` or `rotate`; the seed of the per-pair coin |
 | `comparisons` | `base` (every arm against `base_arm`) or `all_pairs` |
 | `primary_metric` | the metric Holm runs over (default `cycles_total`); the rest is exploratory |
@@ -240,6 +243,8 @@ See `examples/pilot-releases.json`. Main sections:
 | `cpus` | `sut`, `client`, `origin` CPU lists; must be disjoint; optional `harness` (default: every CPU no set uses) |
 | `client` | Nighthawk binary, concurrency, connections per worker, idle strategy, warm-up and run length, extra args |
 | `measure` | lead-in and perf window in seconds, perf command |
+| `measure.perf_events`, `measure.perf_event_groups` | a perf event list for every leg, or several lists rotated by round (every arm of a round counts the same list, so paired rounds compare like with like). Each list needs `instructions:u` and either `cycles:u` + `cycles:k` or `cycles` (user and kernel on one counter, which frees a programmable counter); further events are stored per request. One-hop experiments only; the default list is unchanged |
+| `shapes[].lead_in_s` | a later start of the window for one shape (for a client that ramps its rate up) |
 | `validity` | rate tolerance, minimum client headroom, maximum overflow and non-2xx, pending total, foreign and sibling CPU during the window, exit code, multiplexing, optional `min_eff_ghz` and latency-only `max_latency_ms` |
 | `idle` | load, busy and per-CPU busy thresholds, `pgrep -f` patterns, timeout |
 | `origin` | `docker` (own nginx container) or `external` |
@@ -368,6 +373,23 @@ examples/route-table/run-session.sh
 python3 examples/route-table/table.py ~/epl/runs/route-table/rt-n1000 ~/epl/runs/route-table/rt-n200 \
     ~/epl/runs/route-table/hdr ~/epl/runs/route-table/rt-n1 --json tables.json > tables.md
 ```
+
+### Release record (16 November 2026)
+
+The Releases section of the post, from 17 November, is kept as a release record: a fixed protocol, an anchor
+release and an A/A copy in every session, and one entry per session. The protocol (record/1) and the first entry
+are in [RELEASE-RECORD.md](RELEASE-RECORD.md).
+
+| Run | Configs | Data |
+|---|---|---|
+| Static record of 13 release binaries | `examples/release-record/static.py` | `data/release-record/2026-11-16/static.json` |
+| A: seven releases and the A/A copy, four cells, confirmatory rows v1.38.0 against v1.37.11 | `examples/release-record/run-a.json` | `data/release-record/2026-11-16/run-a/` |
+| C: hardware counters (exploratory) | `examples/release-record/run-c.json` | `data/release-record/2026-11-16/run-c/` |
+| B: the v1.38 patches one by one (exploratory) | `examples/release-record/run-b.json` | `data/release-record/2026-11-16/run-b/` |
+
+The tables are in `data/release-record/2026-11-16/tables-a.md`, `tables-c.md` and `tables-b.md` (and `.json`).
+Harness changes for this session: `confirmatory` rows and `stop.rows`, `measure.perf_events` and
+`measure.perf_event_groups`, and `shapes[].lead_in_s` (see "Config").
 
 ## License
 

@@ -1,0 +1,9 @@
+44542036364,,instructions:u,48023111088,100.00,,
+107001996559,,cycles,48023104084,100.00,2.228,GHz
+406985590,,br_misp_retired.all_branches,48023060723,100.00,8.475,M/sec
+882297960,,mem_load_uops_retired.l1_miss,48023026356,100.00,18.372,M/sec
+31861178,,mem_load_uops_retired.l3_miss,48023007701,100.00,663.456,K/sec
+2192151141,,dtlb_load_misses.walk_duration,48023031877,100.00,45.648,M/sec
+48023.04,msec,task-clock,48023035177,100.00,2.401,CPUs utilized
+222730,,context-switches,48023010917,100.00,4.638,K/sec
+443,,cpu-migrations,48022985798,100.00,9.225,/sec

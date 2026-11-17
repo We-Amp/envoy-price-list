@@ -68,6 +68,33 @@ class ExperimentTest(unittest.TestCase):
         self.assertTrue(any("2 arms" in e for e in self.errs(cfg(arms=[{"name": "a", "binary": "/bin/true"}]))))
         self.assertTrue(any("primary_metric" in e for e in self.errs(cfg(primary_metric="nope"))))
 
+    def test_perf_event_groups(self):
+        from epl import leg
+        # default: the event list (and so the perf command) is the one every earlier run used
+        self.assertEqual(leg.perf_events({}, 1), leg.PERF_EVENTS)
+        self.assertEqual(leg.perf_events({"lead_in_s": 2, "window_s": 20}, 7), leg.PERF_EVENTS)
+        self.assertEqual(leg.PERF_EVENTS, "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,"
+                                          "context-switches,cpu-migrations")
+        g = ["instructions:u,cycles,a", "instructions:u,cycles,b", "instructions:u,cycles,c"]
+        self.assertEqual([leg.perf_events({"perf_event_groups": g}, r)[-1] for r in range(1, 8)],
+                         list("abcabca"))
+        self.assertEqual(leg.perf_events({"perf_events": "instructions:u,cycles"}, 3), "instructions:u,cycles")
+        self.assertTrue(leg.perf_counts_ok({"instructions:u": 1, "cycles:u": 1, "cycles:k": 1}))
+        self.assertTrue(leg.perf_counts_ok({"instructions:u": 1, "cycles": 1}))
+        self.assertFalse(leg.perf_counts_ok({"instructions:u": 1, "cycles:u": 1}))
+        self.assertFalse(leg.perf_counts_ok({"cycles": 1}))
+        m = {"lead_in_s": 2, "window_s": 20}
+        self.assertEqual(self.errs(cfg(measure=dict(m, perf_event_groups=g))), [])
+        self.assertTrue(any("needs instructions:u" in e for e in self.errs(
+            cfg(measure=dict(m, perf_event_groups=["instructions:u,cycles:u,x"])))))
+        self.assertTrue(any("non-empty" in e for e in self.errs(cfg(measure=dict(m, perf_event_groups=[])))))
+        self.assertTrue(any("needs instructions:u" in e for e in self.errs(cfg(measure=dict(m, perf_events="cycles")))))
+
+    def test_shape_lead_in(self):
+        sh = cfg()["shapes"]
+        self.assertEqual(self.errs(cfg(shapes=[dict(sh[0], lead_in_s=3), sh[1]])), [])
+        self.assertTrue(any("lead_in" in e for e in self.errs(cfg(shapes=[dict(sh[0], lead_in_s=5), sh[1]]))))
+
     def test_default_order(self):
         self.assertEqual(experiment.effective_order(load(cfg(), self.tmp)), "abba")
         self.assertEqual(experiment.effective_order(load(three_arms(), self.tmp)), "rotate")
@@ -242,6 +269,26 @@ class DryRunTest(unittest.TestCase):
         self.assertEqual(ins["status"], "exploratory: interval excludes 0")
         with open(os.path.join(rd, "summary.md")) as f:
             self.assertIn("[95% CI]", f.read())
+
+    def test_confirmatory_rows(self):
+        c = three_arms(sim_seed=5, confirmatory=[["z", "y"]], rounds=12, rounds_block=6, rounds_max=36,
+                       stop={"target_half_width_pct": 1.5, "rows": "confirmatory"})
+        c["arms"][2]["sim_factor"] = 0.95
+        res, _ = self.run_sim(c)
+        an = res["analysis"]
+        self.assertEqual(an["confirmatory_family_size"], 2)
+        self.assertEqual(an["primary_family_size"], 4)
+        row = an["shapes"]["s"]["confirmatory"][0]
+        self.assertEqual((row["arm"], row["ref"]), ("z", "y"))
+        cyc = row["cycles_total"]
+        self.assertEqual(cyc["role"], "confirmatory")
+        self.assertIn("holm_p", cyc)
+        self.assertTrue(cyc["differs"])
+        self.assertNotIn("z", [x["arm"] for x in an["shapes"]["s"]["comparisons"] if x["ref"] == "y"])
+        self.assertIn("z vs y", res["metadata"]["stop_reason"])
+        errs = lambda c: experiment.validate(load(c, tempfile.mkdtemp()))  # noqa: E731
+        self.assertTrue(any("confirmatory rows are" in e for e in errs(three_arms(confirmatory=[["z", "q"]]))))
+        self.assertTrue(any("needs confirmatory" in e for e in errs(three_arms(stop={"rows": "confirmatory"}))))
 
     def test_adaptive_rounds(self):
         res, _ = self.run_sim(cfg(sim_seed=4))

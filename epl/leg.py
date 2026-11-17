@@ -30,6 +30,24 @@ from . import experiment as _exp
 from . import nighthawk, sysprobe, validity
 
 PERF_EVENTS = "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations"
+BASE_EVENT_NAMES = ("instructions:u", "cycles:u", "cycles:k", "instructions:k", "cycles", "task-clock",
+                    "context-switches", "cpu-migrations")
+
+
+def perf_events(mcfg, rnd):
+    """The perf event list of a leg: `measure.perf_event_groups` rotated by round (every arm
+    of a round counts the same group, so paired rounds compare like with like), else
+    `measure.perf_events`, else the default list."""
+    groups = mcfg.get("perf_event_groups")
+    if groups:
+        return groups[(int(rnd) - 1) % len(groups)]
+    return mcfg.get("perf_events") or PERF_EVENTS
+
+
+def perf_counts_ok(pv):
+    """instructions:u and total cycles: either cycles:u + cycles:k, or `cycles` (user + kernel
+    on one counter, which leaves a programmable counter free for an event group)."""
+    return "instructions:u" in pv and (("cycles:u" in pv and "cycles:k" in pv) or "cycles" in pv)
 
 
 class OwnProcesses:
@@ -420,6 +438,9 @@ class RealBackend:
     def run_leg(self, arm, shape, rnd, bootstrap_path, leg_id):
         e = self.exp
         ecfg, ccfg, mcfg = e["envoy"], e["client"], e["measure"]
+        if shape.get("lead_in_s") is not None:
+            # a shape may start its window later (a client that ramps its rate up)
+            mcfg = dict(mcfg, lead_in_s=shape["lead_in_s"])
         m = {"leg_id": leg_id, "arm": arm["name"], "shape": shape["name"], "round": rnd,
              "target_rps": shape["rps"], "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
         aenv = _exp.arm_envoy(e, arm, self.run_dir)
@@ -521,7 +542,10 @@ class RealBackend:
                     r0, rwhy0 = sysprobe.cpu_run_ns()
                     i0 = sysprobe.cpuidle_counts(sysprobe.parse_cpuset(e["cpus"]["sut"]) | hop2_set)
                     t0 = time.monotonic()
-                    pcmd = lambda pid: self.perf + ["stat", "-x", ",", "-e", PERF_EVENTS, "-p", str(pid),  # noqa: E731
+                    events = perf_events(mcfg, rnd)
+                    if events != PERF_EVENTS:
+                        m["perf_events"] = events
+                    pcmd = lambda pid: self.perf + ["stat", "-x", ",", "-e", events, "-p", str(pid),  # noqa: E731
                                                     "--", "sleep", str(mcfg["window_s"])]
                     pb = subprocess.Popen(pcmd(hop_b.pid), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                           text=True) if hop_b else None
@@ -641,7 +665,7 @@ class RealBackend:
                 sut_non2xx=non2,
                 upstream_cx_opened=_delta(q0, q1, "cluster.origin.upstream_cx_total"),
                 perf_raw=pv,
-                perf_ok=all(k in pv for k in ("instructions:u", "cycles:u", "cycles:k")),
+                perf_ok=perf_counts_ok(pv),
                 perf_running_pct=prun,
                 perf_min_running_pct=min(prun.values()) if prun else None,
                 client_thread_busy_max=maxb,
@@ -655,20 +679,29 @@ class RealBackend:
                 client_callback_max_us=nhp["callback_max_us"],
             )
             if resp > 0 and m["perf_ok"]:
-                cu, ck, iu = pv["cycles:u"], pv["cycles:k"], pv["instructions:u"]
+                iu = pv["instructions:u"]
+                split = "cycles:u" in pv and "cycles:k" in pv
+                cu, ck = (pv["cycles:u"], pv["cycles:k"]) if split else (None, None)
+                ctot = (cu + ck) if split else pv["cycles"]
                 tc = pv.get("task-clock", 0.0)  # msec
                 m["per_req"] = {
                     "instructions_u": iu / resp,
                     "instructions_k": pv.get("instructions:k", 0.0) / resp,
-                    "cycles_u": cu / resp,
-                    "cycles_k": ck / resp,
-                    "cycles_total": (cu + ck) / resp,
+                    "cycles_u": cu / resp if split else None,
+                    "cycles_k": ck / resp if split else None,
+                    "cycles_total": ctot / resp,
                     "task_clock_us": tc * 1000.0 / resp,
                     "context_switches": pv.get("context-switches", 0.0) / resp,
                     "cpu_migrations": pv.get("cpu-migrations", 0.0) / resp,
                 }
+                if not split:
+                    for k in ("cycles_u", "cycles_k", "instructions_k"):
+                        m["per_req"].pop(k)
+                extra = {k: v / resp for k, v in pv.items() if k not in BASE_EVENT_NAMES}
+                if extra:
+                    m["per_req"]["events"] = extra
                 m["sut_busy"] = tc / 1000.0 / (mcfg["window_s"] * ecfg["workers"])
-                m["eff_ghz"] = (cu + ck) / (tc / 1000.0) / 1e9 if tc else None
+                m["eff_ghz"] = ctot / (tc / 1000.0) / 1e9 if tc else None
                 if hop2_set:
                     # two-hop experiment: every hop together and per hop (a single-hop arm has one hop)
                     hops, ins_all, cyc_all = 1, iu, cu + ck

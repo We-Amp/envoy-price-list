@@ -86,6 +86,26 @@ second.
 Left out of this set: the raw Nighthawk output of every leg, the proxy and client logs, the calibration legs,
 the two smoke runs, and the session's queue logs.
 
+## Release record, first session (16 November 2026)
+
+The Releases section of the post from 17 November. The protocol (record/1), the arms, the rows named before the
+runs, the deviations and the results are in `RELEASE-RECORD.md` in the harness repository. One session on 16 and
+17 November, on the same machine, all under `release-record/2026-11-16/`.
+
+| Post section | Directory | Notes |
+|---|---|---|
+| Releases: the binaries | `release-record/2026-11-16/static.json` | static record of 13 official release binaries (v1.32.13 to v1.40.2): size, sha256 and the published digest it matched, `--version`, GNU build id, section sizes, `.comment` strings, symbol table presence |
+| | `release-record/2026-11-16/sha256-*.txt` | sha256 of every binary at the start and end of the two run queues |
+| Releases: the table, the header-heavy and proxied bullets, patch releases | `release-record/2026-11-16/run-a/` | Run A: v1.37.0, v1.37.11, v1.38.0, v1.38.9, v1.39.6, v1.40.0, v1.40.2 and `v1.40.2-A2` (a second copy of v1.40.2, the A/A of the session), 8 arms in rotated order, 32 rounds on the four cells `s` 5,200, `fh` 8,000, `s-hi` 12,000 and `fh-hi` 18,400 req/s. Confirmatory rows (v1.38.0 against v1.37.11, Holm over 4) in `analysis.shapes.*.confirmatory`; record rows Holm over 28. A 3 s lead-in on the two higher-rate cells |
+| Releases: patch releases one by one | `release-record/2026-11-16/run-b/` | Run B: v1.38.0, v1.38.2, v1.38.5, v1.38.7, v1.38.9 on `s-hi` and `fh-hi`, 20 fixed rounds, no A/A arm |
+| Releases: hardware counters, and the exploratory v1.32.13 reading at 12,000 req/s | `release-record/2026-11-16/run-c/` | Run C: v1.32.13, v1.37.11, v1.38.9, v1.40.2 on `s-hi` and `fh-hi`, 24 fixed rounds, no A/A arm; the perf event list rotates over three groups by round (`perf_events` per leg in `legs.jsonl`, the extra events per request under `per_req.events`); cycles are counted as one `cycles` event (user and kernel together) |
+| | `release-record/2026-11-16/tables-a.md`, `tables-c.md`, `tables-b.md` (and `.json`) | the tables of the three runs, written by `examples/release-record/table.py` |
+| | `release-record/2026-11-16/queue-1.log`, `queue-2.log` | the two run queues: the three smoke runs and Run A; then Runs C and B (this queue logs itself as `queue3`; a queue in between only waited for a start time and was stopped before it ran anything) |
+
+Each run directory has `results.json`, `legs.jsonl`, `summary.md`, `experiment.json`, `envoy-bootstrap.json`,
+`status.json`, `log.txt`, `perf/` and `origin/`. Left out of this set: the raw Nighthawk output of every leg, the
+proxy and client logs, the socket listings, and the three smoke runs (their legs appear in `queue-1.log`).
+
 Also included, not cited by the post:
 
 - `price-list-wk1/`: the first release comparison and A/A, measured with the first version of the method
@@ -135,6 +155,11 @@ A harness run directory holds:
   builds carry the file names in the table above (thread names cut to 15 characters, such as
   `envoy-routes-ba`), the prototype's source revision is `patched-build`, and the recorded config of the
   header route is called `headers109.yaml`. Its md5 is unchanged.
+- In `release-record/`, the session label is dropped from run names and paths (`release-record-a`,
+  `~/epl/runs/release-record`), the second run queue's files are numbered 2 (`queue-2.log`,
+  `sha256-start-2.txt`, `sha256-end-2.txt`), a container on the machine that the harness did not start is written as
+  "1 foreign, untouched", and the `version` field in `static.json` keeps only the text after `version: ` (the
+  line also carried the local binary path; `static.py` now writes it that way).
 - `config_sha256` and `bootstrap_sha256` were computed on the text as run, so they may not match an edited
   file. The `harness` version strings name revisions from before the harness was published.
 
