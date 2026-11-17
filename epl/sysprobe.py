@@ -372,6 +372,38 @@ def threads_busy(before, after, seconds):
     return res
 
 
+def parse_mountinfo(text):
+    """[(mount point, fstype, source, major:minor)] from /proc/self/mountinfo."""
+    out = []
+    for line in text.splitlines():
+        pre, sep, post = line.partition(" - ")
+        f = pre.split()
+        g = post.split()
+        if not sep or len(f) < 5 or len(g) < 2:
+            continue
+        mp = f[4].replace("\\040", " ")
+        out.append((mp, g[0], g[1], f[2]))
+    return out
+
+
+def fs_of(path, mountinfo="/proc/self/mountinfo"):
+    """File system a path lives on: {mount_point, fstype, source, device}; error text if unknown."""
+    try:
+        with open(mountinfo) as f:
+            mounts = parse_mountinfo(f.read())
+    except OSError as e:
+        return {"error": str(e)}
+    p = os.path.realpath(path)
+    best = None
+    for mp, fstype, src, dev in mounts:
+        if p == mp or p.startswith(mp.rstrip("/") + "/") or mp == "/":
+            if best is None or len(mp) >= len(best[0]):
+                best = (mp, fstype, src, dev)
+    if best is None:
+        return {"error": "no mount for %s" % p}
+    return {"mount_point": best[0], "fstype": best[1], "source": best[2], "device": best[3]}
+
+
 def cpus_allowed(pid):
     try:
         with open("/proc/%d/status" % pid) as f:

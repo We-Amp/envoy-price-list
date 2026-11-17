@@ -7,7 +7,8 @@ instructions, `sim_cycles_noise` (default 1.4%, about the v2 bench box) on user 
 run-position effect so the order matters.
 `sim_faults` maps a leg id to one fault: rate, overflow, headroom, port, idle,
 non2xx, uneven (one worker idle), noworkers (no wrk: thread), nosched (no
-/proc/schedstat); that leg comes back with the matching field set.
+/proc/schedstat), evidence (an evidence item fails); that leg comes back with the
+matching field set. Evidence is not evaluated in a dry run (no counters).
 """
 
 import random
@@ -75,5 +76,10 @@ class SimBackend:
         elif fault == "non2xx":
             m["client_non2xx"] = {"benchmark.http_5xx": 2}
             m["sut_non2xx"] = 2
+        if arm.get("evidence") is not None:
+            # no counters in a dry run: evidence is recorded as not evaluated, never gated,
+            # unless the fault "evidence" asks for a failing item
+            m["evidence"] = {"ok": fault != "evidence", "gate": fault == "evidence", "simulated": True, "items": [],
+                             "failed": ["simulated: evidence item failed"] if fault == "evidence" else []}
         m["verdict"] = validity.verdict(m, self.exp["validity"])
         return m

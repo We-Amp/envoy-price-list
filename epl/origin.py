@@ -8,11 +8,38 @@ mode "external": something else serves the origin port; the harness only
                  start it).
 """
 
+import http.client
 import os
+import re
 import subprocess
 import time
 
 from . import envoy_config, sysprobe
+
+
+def container_pid(cid):
+    """Main PID of a container this run started (read once, at start; never in a window)."""
+    r = subprocess.run(["docker", "inspect", "--format", "{{.State.Pid}}", cid],
+                       capture_output=True, text=True, timeout=30)
+    try:
+        pid = int(r.stdout.strip())
+    except ValueError:
+        return None
+    return pid if pid > 1 else None
+
+
+def side_service(name, cid, cpus, log):
+    """A SideService for a container, or None (recorded) when its cgroup cannot be read."""
+    from .sideservice import SideService
+    pid = container_pid(cid)
+    if not pid:
+        log("%s: no main PID from docker inspect; side-service gate will fail closed" % name)
+        return None
+    try:
+        return SideService(name, pid, cpus)
+    except (RuntimeError, OSError) as e:
+        log("%s: cgroup not readable (%s); side-service gate will fail closed" % (name, e))
+        return None
 
 
 class Origin:
@@ -23,6 +50,7 @@ class Origin:
         self.run_dir = run_dir
         self.log = log
         self.container_id = None
+        self.side = None  # SideService once the harness's own container runs
         self.meta = {"mode": cfg.get("mode", "external"), "port": cfg["port"]}
 
     def start(self):
@@ -75,6 +103,7 @@ class Origin:
                 raise RuntimeError("origin did not open port %d" % p)
         img = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}} {{index .RepoDigests 0}}", image],
                              capture_output=True, text=True, timeout=30).stdout.strip()
+        self.side = side_service("origin", self.container_id, self.cpus, self.log)
         self.meta.update(image=image, image_id=img, container_name=name, workers=self.cfg.get("workers", 8),
                          authz_port=self.cfg.get("authz_port"), authz_grpc_port=self.cfg.get("authz_grpc_port"),
                          nginx_conf_sha256=sysprobe.text_sha256(conf),
@@ -100,18 +129,50 @@ exporters:
 service:
   telemetry:
     metrics:
-      level: none
-  pipelines:
+%s  pipelines:
     traces:
       receivers: [otlp]
       exporters: [nop]
 """
 
 
+# Internal telemetry. "none" is what the first tracing row ran with. "basic" turns on the
+# receiver's accepted/refused span counters, served for Prometheus on a fixed loopback
+# port that the harness probes like every other port (a change against that row,
+# recorded in the collector metadata).
+TELEMETRY_NONE = "      level: none\n"
+TELEMETRY_BASIC = ("      level: basic\n"
+                   "      readers:\n"
+                   "        - pull:\n"
+                   "            exporter:\n"
+                   "              prometheus:\n"
+                   "                host: 127.0.0.1\n"
+                   "                port: %d\n")
+
+
+def collector_conf(port, metrics_port=None):
+    tel = TELEMETRY_BASIC % int(metrics_port) if metrics_port else TELEMETRY_NONE
+    return COLLECTOR_CONF % (int(port), tel)
+
+
+SPANS_RE = re.compile(r"^otelcol_receiver_(accepted|refused)_spans(?:_total)?(?:\{[^}]*\})?\s+([0-9.eE+-]+)\s*$", re.M)
+
+
+def parse_collector_metrics(text):
+    """{"accepted_spans": n, "refused_spans": n} summed over every receiver label set,
+    from the collector's Prometheus text; a counter not exported yet is left out."""
+    out = {}
+    for kind, v in SPANS_RE.findall(text or ""):
+        out[kind + "_spans"] = out.get(kind + "_spans", 0.0) + float(v)
+    return {k: int(round(v)) for k, v in out.items()}
+
+
 class Collector:
     """Local null OpenTelemetry collector: OTLP/gRPC receiver, `nop` exporter (spans are
     received, decoded and dropped). Own container, host network, pinned; only the
-    container ID `docker run` returned is ever stopped."""
+    container ID `docker run` returned is ever stopped. With `metrics_port` set its
+    internal telemetry runs at level basic on that loopback port, and `scrape()` reads
+    the receiver's accepted and refused span counters (plain HTTP from Python)."""
 
     def __init__(self, cfg, cpus, run_dir, log):
         self.cfg = cfg
@@ -119,15 +180,38 @@ class Collector:
         self.run_dir = run_dir
         self.log = log
         self.container_id = None
-        self.meta = {"port": int(cfg["port"]), "image": cfg["image"]}
+        self.side = None
+        self.metrics_port = int(cfg["metrics_port"]) if cfg.get("metrics_port") else None
+        self.meta = {"port": int(cfg["port"]), "image": cfg["image"],
+                     "telemetry_level": "basic" if self.metrics_port else "none",
+                     "metrics_port": self.metrics_port}
+
+    def scrape(self):
+        """Cumulative receiver span counters, or {"error": ...}."""
+        if not self.metrics_port:
+            return {"error": "collector telemetry off (no metrics_port)"}
+        try:
+            c = http.client.HTTPConnection("127.0.0.1", self.metrics_port, timeout=5.0)
+            try:
+                c.request("GET", "/metrics")
+                r = c.getresponse()
+                body = r.read().decode(errors="replace")
+            finally:
+                c.close()
+        except OSError as e:
+            return {"error": "scrape failed: %s" % e}
+        if r.status != 200:
+            return {"error": "scrape returned %d" % r.status}
+        return parse_collector_metrics(body)
 
     def start(self):
         port = int(self.cfg["port"])
-        if sysprobe.port_open("127.0.0.1", port):
-            raise RuntimeError("collector port %d already in use" % port)
+        for p in [port] + ([self.metrics_port] if self.metrics_port else []):
+            if sysprobe.port_open("127.0.0.1", p):
+                raise RuntimeError("collector port %d already in use" % p)
         d = os.path.join(self.run_dir, "collector")
         os.makedirs(d, exist_ok=True)
-        conf = COLLECTOR_CONF % port
+        conf = collector_conf(port, self.metrics_port)
         with open(os.path.join(d, "config.yaml"), "w") as f:
             f.write(conf)
         name = "epl-collector-%d" % os.getpid()
@@ -139,11 +223,13 @@ class Collector:
             raise RuntimeError("docker run (collector) failed: %s" % r.stderr.strip()[:300])
         self.container_id = r.stdout.strip()
         self.log("collector container %s (%s) started" % (self.container_id[:12], name))
-        if not sysprobe.wait_port("127.0.0.1", port, 30):
-            self.stop()
-            raise RuntimeError("collector did not open port %d" % port)
+        for p in [port] + ([self.metrics_port] if self.metrics_port else []):
+            if not sysprobe.wait_port("127.0.0.1", p, 30):
+                self.stop()
+                raise RuntimeError("collector did not open port %d" % p)
         img = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}} {{index .RepoDigests 0}}",
                               self.cfg["image"]], capture_output=True, text=True, timeout=30).stdout.strip()
+        self.side = side_service("collector", self.container_id, self.cpus, self.log)
         self.meta.update(image_id=img, container_name=name, config_sha256=sysprobe.text_sha256(conf),
                          exporter="nop")
         return self.meta

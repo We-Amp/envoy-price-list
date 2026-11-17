@@ -7,6 +7,7 @@ Commands (see README.md):
   calibrate CFG --arm A --shape S --rps R1,R2,...   single legs, to pick rates
   status RUN_DIR                 progress of a (detached) run
   report RESULTS_JSON [--floor AA_RESULTS_JSON]   regenerate summary.md from results.json
+  evidence-check SPEC RUN_DIR... [--freeze OUT]   run an evidence spec offline against recorded legs
   scrub RUN_DIR                  replace home directory paths with ~ in a run directory
   selftest                       offline tests: statistics, validity gates, schedule, dry run
   remote HOST <run|calibrate|status|fetch|ship> ...  same, on a bench box over ssh
@@ -156,6 +157,7 @@ def cmd_calibrate(args):
             from .origin import Collector
             collector = Collector(exp["collector"], exp["cpus"]["origin"], run_dir, log)
             collector.start()
+        be.attach(origin, collector)
         for rps in [int(x) for x in args.rps.split(",")]:
             sh = dict(shape[0], rps=rps)
             m = be.run_leg(arm[0], sh, 0, bpath, "cal-%s-%s-%d" % (args.arm, args.shape, rps))
@@ -170,7 +172,10 @@ def cmd_calibrate(args):
                    "p50_us": (m.get("latency_us") or {}).get("p50"),
                    "worker_max_share": m.get("envoy_worker_max_share"),
                    "hop2_worker_max_share": (m.get("hop2_workers") or {}).get("worker_max_share"),
-                   "hop2_worker_max_busy": (m.get("hop2_workers") or {}).get("worker_max_busy")}
+                   "hop2_worker_max_busy": (m.get("hop2_workers") or {}).get("worker_max_busy"),
+                   "sut_foreign_cpus": m.get("sut_foreign_cpus"),
+                   "side_services": m.get("side_services"),
+                   "evidence_failed": (m.get("evidence") or {}).get("failed")}
             rows.append(row)
             # the full leg record too (shares, connections, counters), one line per rate
             with open(os.path.join(run_dir, "calibrate-legs.jsonl"), "a") as f:
@@ -284,6 +289,57 @@ def cmd_report(args):
         if exp.get("expect") == "aa":
             res["aa_selftest"] = experiment.aa_verdict(exp, res["analysis"])
     sys.stdout.write(markdown(res, floor))
+
+
+def cmd_evidence_check(args):
+    """Evaluate the evidence spec (an experiment config's arms[].evidence, or
+    {"evidence": {arm: [items]}}) against every recorded leg of the run directories.
+    --freeze OUT first resolves every `ref` item from these legs (mean per-request value
+    of the referenced arm plus the offset) and writes the spec, or the whole config with
+    the frozen items, to OUT; the check then runs with the frozen spec. Exit 1 when any
+    leg fails an item or a ref cannot be resolved."""
+    from . import evidence
+    spec = evidence.load_spec(args.spec)
+    if not spec:
+        sys.exit("no evidence items in %s" % args.spec)
+    bad = 0
+    if args.freeze:
+        legs = []
+        for d in args.run_dir:
+            legs += evidence.load_legs(os.path.expanduser(d))
+        spec, problems = evidence.freeze(spec, legs)
+        for p in problems:
+            print("FREEZE PROBLEM %s" % p)
+        bad += len(problems)
+        with open(args.spec) as f:
+            raw = json.load(f)
+        if isinstance(raw.get("evidence"), dict):
+            raw["evidence"] = spec
+        else:
+            for a in raw.get("arms", []):
+                if a["name"] in spec:
+                    a["evidence"] = spec[a["name"]]
+        with open(args.freeze, "w") as f:
+            json.dump(raw, f, indent=1)
+            f.write("\n")
+        print("frozen spec written to %s" % args.freeze)
+    seen = set()
+    for d in args.run_dir:
+        rows, problems = evidence.check_run(spec, os.path.expanduser(d))
+        for p in problems:
+            print("note: %s" % p)
+        for lid, arm, ev in rows:
+            seen.add(arm)
+            print("%s %-28s %s" % ("PASS" if ev["ok"] else "FAIL", lid, "" if ev["ok"] else "; ".join(ev["failed"])))
+            if args.verbose:
+                for it in ev["items"]:
+                    print("      %-60s %s value=%s" % (it["label"], "ok" if it["ok"] else it["why"], it.get("value")))
+            bad += 0 if ev["ok"] else 1
+    missing = sorted(set(spec) - seen)
+    if missing:
+        print("arms of the spec with no leg in these runs: %s" % ", ".join(missing))
+    print("evidence-check: %s (%d failing)" % ("PASS" if not bad and seen else "FAIL", bad))
+    sys.exit(0 if not bad and seen else 1)
 
 
 def cmd_scrub(args):
@@ -448,6 +504,12 @@ def main(argv=None):
     p.add_argument("--floor-arm", help="use only this arm's comparisons of --floor (an A/A arm inside another run)")
     p.add_argument("--reanalyse", action="store_true", help="recompute the analysis from the legs")
     p.set_defaults(fn=cmd_report)
+    p = sp.add_parser("evidence-check")
+    p.add_argument("spec")
+    p.add_argument("run_dir", nargs="+")
+    p.add_argument("--freeze", metavar="OUT", help="resolve ref items from these legs and write the frozen spec")
+    p.add_argument("-v", "--verbose", action="store_true")
+    p.set_defaults(fn=cmd_evidence_check)
     p = sp.add_parser("scrub")
     p.add_argument("run_dir")
     p.set_defaults(fn=cmd_scrub)

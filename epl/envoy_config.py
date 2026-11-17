@@ -65,6 +65,9 @@ SETTINGS = {
                  "verified) | true (jwt_cache_config, verified tokens cached)}; the token is forwarded upstream",
     "local_ratelimit": "local rate-limit filter, one token bucket shared by the workers, enabled and enforced "
                        "on every request: {tokens_per_s} (set far above the test rate, so nothing is rejected)",
+    "idle_timers_off": "true: the stream idle timeout (HCM stream_idle_timeout, default 5 min) and the downstream "
+                       "connection idle timeout (HCM common_http_protocol_options.idle_timeout, default 1 h) "
+                       "both set to 0s, which disables them",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
 }
@@ -245,6 +248,14 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         if ka.get("max_requests") is not None:
             cho["max_requests_per_connection"] = int(ka["max_requests"])
         hcm["common_http_protocol_options"] = cho
+    ito = envoy_cfg.get("idle_timers_off")
+    if ito:
+        if ito is not True:
+            raise ValueError("idle_timers_off must be true")
+        if (ka or {}).get("idle_timeout_s") is not None:
+            raise ValueError("idle_timers_off and downstream_keepalive.idle_timeout_s set the same field")
+        hcm["stream_idle_timeout"] = "0s"
+        hcm.setdefault("common_http_protocol_options", {})["idle_timeout"] = "0s"
     if envoy_cfg.get("hpack_table_size") is not None:
         hcm["http2_protocol_options"] = {"hpack_table_size": int(envoy_cfg["hpack_table_size"])}
     tr = envoy_cfg.get("tracing")

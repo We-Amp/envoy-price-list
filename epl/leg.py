@@ -99,15 +99,17 @@ def admin_get(port, path, timeout=5.0):
 
 STAT_FILTER = (r"^(http\.ingress_http\.|cluster\.(origin|ext_authz|otel_collector)\.upstream_(cx_total|rq_total|"
                r"cx_connect_fail|cx_overflow|rq_pending_overflow|rq_retry|rq_2xx|rq_4xx|rq_5xx|rq_timeout|cx_destroy|cx_active|"
+               r"cx_tx_bytes_total|cx_rx_bytes_total|"
                r"cx_destroy_local|cx_destroy_remote|cx_destroy_local_with_active_rq|cx_destroy_remote_with_active_rq|"
                r"cx_max_requests|cx_idle_timeout|cx_max_duration_reached|rq_reset|cx_protocol_error|rq_503|"
                r"flow_control_[a-z_]+)$|"
                r"listener\..*\.(ssl\.(handshake|session_reused|connection_error|no_certificate)|downstream_cx_total|"
                r"downstream_cx_active)$|"
                r"listener\..*\.ssl\.(versions|ciphers|curves|sigalgs)\.|"
-               r"tracing\.|access_logs\.|[a-z_]+\.http_local_rate_limit\.)")
+               r"tracing\.|access_logs\.|[a-z_]+\.http_local_rate_limit\.|filesystem\.|lua\.|wasm\.)")
 # deltas of these are recorded per leg (counters only; gauges and histograms are skipped)
 DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_limit\.|ssl\.|upstream_rq_retry|upstream_rq_total|upstream_cx_total|"
+                           r"filesystem\.|downstream_rq_completed|tx_bytes_total|compressor\.|lua\.|wasm\.|"
                            r"downstream_cx_total|downstream_rq_total|downstream_rq_2xx|rq_timeout|cx_destroy$|overflow|"
                            r"cx_destroy_local|cx_destroy_remote|cx_max_requests|max_requests_reached|idle_timeout|"
                            r"max_duration_reached|"
@@ -237,6 +239,47 @@ def _worker_busy(threads):
 
 def _stat_deltas(q0, q1):
     return {k: q1[k] - q0.get(k, 0) for k in sorted(q1) if DELTA_KEYS_RE.search(k) and q1[k] != q0.get(k, 0)}
+
+
+def _stat_window(q0, q1):
+    """Every filtered stat's change over the window, zeros included, so evidence can tell a
+    counter that stayed at 0 from one that does not exist (gauges come out as changes too)."""
+    return {k: q1[k] - q0.get(k, 0) for k in sorted(q1)}
+
+
+JSON_CHECK_LINES = 100
+
+
+def json_lines_check(path, n=JSON_CHECK_LINES):
+    """Parse the first and the last n lines of a JSON access log. {checked, bad, first_error}."""
+    with open(path, "rb") as f:
+        head = []
+        for _ in range(n):
+            ln = f.readline()
+            if not ln:
+                break
+            head.append(ln)
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.seek(max(0, size - 64 * 1024 * max(1, n // 100)))
+        tail = f.read().splitlines(True)
+    if len(tail) > n:
+        tail = tail[-n:]
+    elif tail and size > 64 * 1024 and not tail[0].endswith(b"\n"):
+        tail = tail[1:]
+    out = {"checked": 0, "bad": 0}
+    for ln in head + tail:
+        ln = ln.strip()
+        if not ln:
+            continue
+        out["checked"] += 1
+        try:
+            if not isinstance(json.loads(ln.decode("utf-8", "replace")), dict):
+                raise ValueError("not an object")
+        except ValueError as e:
+            out["bad"] += 1
+            out.setdefault("first_error", str(e)[:120])
+    return out
 
 
 # timeline samples (measure.burst): pool and connection gauges and counters of each hop
@@ -402,6 +445,49 @@ class RealBackend:
         # of the run; every leg re-reads it and a change invalidates the leg.
         self.idle_cpus = self._idle_cpus()
         self.cpuidle_fp0 = sysprobe.cpuidle_fingerprint(self.idle_cpus)
+        self.side = []           # SideService objects of the containers this run started
+        self.side_expected = []  # names of the containers this run started
+        self.collector = None    # origin.Collector, for its span counters
+        self.config_dumps = {}   # arm -> parsed /config_dump at its first start
+        self.stats_saved = set()
+
+    def attach(self, origin=None, collector=None):
+        """The side services the run started; their CPU and placement are gated per leg.
+        A container whose cgroup could not be read is recorded as such and fails the gate."""
+        self.side = []
+        self.side_expected = []
+        for name, svc in (("origin", origin), ("collector", collector)):
+            if svc is None or not getattr(svc, "container_id", None):
+                continue
+            self.side_expected.append(name)
+            if svc.side is not None:
+                self.side.append(svc.side)
+        self.collector = collector
+
+    def _save_config_dump(self, arm, port):
+        """/config_dump of the arm at its first start, kept gzipped in the run directory."""
+        if arm in self.config_dumps:
+            return
+        st, body = admin_get(port, "/config_dump", timeout=10.0)
+        if st != 200:
+            raise RuntimeError("admin /config_dump returned %d" % st)
+        d = os.path.join(self.run_dir, "config_dump")
+        os.makedirs(d, exist_ok=True)
+        with gzip.open(os.path.join(d, arm + ".json.gz"), "wt") as f:
+            f.write(body)
+        self.config_dumps[arm] = json.loads(body)
+
+    def _save_stats(self, arm, port):
+        """Every stat name and value at the end of the arm's first leg (for freezing evidence names)."""
+        if arm in self.stats_saved:
+            return
+        st, body = admin_get(port, "/stats", timeout=10.0)
+        if st == 200:
+            d = os.path.join(self.run_dir, "stats")
+            os.makedirs(d, exist_ok=True)
+            with gzip.open(os.path.join(d, arm + ".txt.gz"), "wt") as f:
+                f.write(body)
+            self.stats_saved.add(arm)
 
     def _idle_cpus(self):
         c = sysprobe.parse_cpuset(self.exp["cpus"]["sut"]) | sysprobe.parse_cpuset(self.exp["cpus"].get("hop2", ""))
@@ -469,6 +555,8 @@ class RealBackend:
             must_open.append(aenv["authz_grpc_port"] if aenv["ext_authz"] == "grpc" else aenv["authz_port"])
         if aenv.get("tracing"):
             must_open.append(aenv["collector_port"])
+            if e["collector"].get("metrics_port"):
+                must_open.append(int(e["collector"]["metrics_port"]))
         free = [ecfg["listener_port"], ecfg["admin_port"]]
         if hop2_set:
             free += [e["hop2"]["listener_port"], e["hop2"]["admin_port"]]
@@ -479,6 +567,16 @@ class RealBackend:
             return m
         envoy = None
         hop_b = None
+        side_u0 = {}
+        if self.side_expected:
+            # placement of every side-service process, read before Envoy starts
+            m["side_services"] = {n: {"error": "cgroup not readable"} for n in self.side_expected}
+            for svc in self.side:
+                try:
+                    m["side_services"][svc.name] = svc.placement()
+                except OSError as ex:
+                    m["side_services"][svc.name] = {"error": "placement unreadable: %s" % ex}
+        coll0 = self.collector.scrape() if self.collector and aenv.get("tracing") else None
         alog = (aenv.get("access_log") or {}).get("path")
         if alog:
             with open(alog, "w"):
@@ -502,6 +600,7 @@ class RealBackend:
             m["envoy_pid"] = envoy.pid
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
+            self._save_config_dump(arm["name"], ecfg["admin_port"])
             sut_cpus = sysprobe.cpus_allowed(envoy.pid)
             m["sut_cpus_allowed"] = sut_cpus
             pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
@@ -540,6 +639,7 @@ class RealBackend:
                     k0 = sysprobe.proc_run_ns(envoy.pid)
                     kb0 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     r0, rwhy0 = sysprobe.cpu_run_ns()
+                    side_u0 = {svc.name: svc.usage_us() for svc in self.side}
                     i0 = sysprobe.cpuidle_counts(sysprobe.parse_cpuset(e["cpus"]["sut"]) | hop2_set)
                     t0 = time.monotonic()
                     events = perf_events(mcfg, rnd)
@@ -577,6 +677,7 @@ class RealBackend:
                     i1 = sysprobe.cpuidle_counts(sysprobe.parse_cpuset(e["cpus"]["sut"]) | hop2_set)
                     m["cpuidle_residency"] = sysprobe.cpuidle_residency(i0, i1, t1 - t0)
                     r1, rwhy1 = sysprobe.cpu_run_ns()
+                    side_u1 = {svc.name: svc.usage_us() for svc in self.side}
                     k1 = sysprobe.proc_run_ns(envoy.pid)
                     kb1 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     p1 = sysprobe.per_cpu_times()
@@ -648,6 +749,12 @@ class RealBackend:
                     m["envoy_worker_min_share"] = min(m["envoy_worker_min_share"], wsb["envoy_worker_min_share"])
             non2 = sum(_delta(q0, q1, "http.ingress_http.downstream_rq_%s" % c) for c in ("1xx", "3xx", "4xx", "5xx"))
             m["sut_stats_delta"] = _stat_deltas(q0, q1)
+            m["sut_stats_window"] = _stat_window(q0, q1)
+            if self.side:
+                from .sideservice import window_record
+                for svc in self.side:
+                    rec = window_record(svc, side_u0.get(svc.name), side_u1.get(svc.name), busy_win, resp_raw)
+                    m["side_services"][svc.name] = dict(m["side_services"].get(svc.name) or {}, **rec)
             m["sut_stats_end"] = _stat_end(q1)
             m["tcmalloc_percpu_slab_bytes"] = tcmalloc_percpu(ecfg["admin_port"])
             if hop_b:
@@ -736,6 +843,13 @@ class RealBackend:
         except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg
             m["error"] = "%s: %s" % (type(ex).__name__, ex)
         finally:
+            if envoy is not None and envoy.poll() is None:
+                # end-of-leg snapshot: cumulative counters over the whole leg, just before the stop
+                try:
+                    m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"])
+                    self._save_stats(arm["name"], ecfg["admin_port"])
+                except (OSError, RuntimeError) as ex:
+                    m["leg_end_snapshot_error"] = str(ex)
             if envoy is not None:
                 st = self._stop_envoy(envoy, elog, elog_path)
                 m["envoy_exit"] = st["exit"]
@@ -750,12 +864,27 @@ class RealBackend:
                 # every request should have a line (written by the flush thread, flushed at exit)
                 n, size = _count_lines(alog)
                 m["access_log_lines"], m["access_log_bytes"] = n, size
+                m["access_log_bytes_per_line"] = round(size / n, 2) if n else None
+                if (aenv.get("access_log") or {}).get("format") == "json":
+                    js = json_lines_check(alog)
+                    m["access_log_json"] = js
+                    m["access_log_json_ok"] = js["checked"] > 0 and js["bad"] == 0
                 with open(alog, "rb") as f:
                     sample = f.read(4096)
                 with open(os.path.join(self.run_dir, "alog", leg_id + ".sample"), "wb") as f:
                     f.write(sample)
                 with open(alog, "w"):
                     pass  # keep the run directory small: sample kept, file emptied
+        if coll0 is not None:
+            c1 = self.collector.scrape()
+            if "error" in coll0 or "error" in c1:
+                m["collector_delta"] = {"error": coll0.get("error") or c1.get("error")}
+            else:
+                m["collector_delta"] = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)}
+        if arm.get("evidence") is not None:
+            from . import evidence
+            m["evidence"] = evidence.evaluate(m, arm["evidence"], self.config_dumps.get(arm["name"]),
+                                              gate=e.get("evidence_mode", "gate") == "gate")
         m["verdict"] = validity.verdict(m, vcfg)
         return m
 

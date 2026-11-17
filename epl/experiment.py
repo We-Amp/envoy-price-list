@@ -57,7 +57,9 @@ DEFAULTS = {
     # second Envoy of a two-hop arm (its CPUs are cpus.hop2); baseline config
     "hop2": {"listener_port": 10120, "admin_port": 9931},
     # null OpenTelemetry collector for tracing arms (image pinned by digest in the config)
-    "collector": {"image": None, "port": 4317},
+    # metrics_port: the collector's internal telemetry at level basic on this loopback port
+    # (receiver span counters, scraped before and after every leg); None = level none
+    "collector": {"image": None, "port": 4317, "metrics_port": None},
     "record_hostname": False,
     "alpha": ALPHA,
 }
@@ -350,8 +352,23 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("client duration must exceed lead_in + window + 1 s")
     names = [a.get("name") for a in arms]
     for p in exp.get("confirmatory") or []:
-        if not (isinstance(p, (list, tuple)) and len(p) == 2 and p[0] in names and p[1] in names and p[0] != p[1]):
-            errs.append("confirmatory rows are [arm, reference] pairs of two different arms, got %r" % (p,))
+        ok = isinstance(p, (list, tuple)) and len(p) in (2, 3) and p[0] in names and p[1] in names and p[0] != p[1]
+        if ok and len(p) == 3:
+            sh = [p[2]] if isinstance(p[2], str) else p[2]
+            ok = isinstance(sh, list) and bool(sh) and all(x in snames for x in sh)
+        if not ok:
+            errs.append("confirmatory rows are [arm, reference] or [arm, reference, shape(s)] with two different "
+                        "arms and known shapes, got %r" % (p,))
+    for s in exp.get("shapes", []):
+        t = s.get("stop_target_half_width_pct")
+        if t is not None and not (isinstance(t, (int, float)) and t > 0):
+            errs.append("shape %s: stop_target_half_width_pct must be a positive number" % s.get("name"))
+    if exp.get("evidence_mode", "gate") not in ("gate", "record"):
+        errs.append("evidence_mode must be gate or record")
+    from . import evidence as _ev
+    for a in arms:
+        if "evidence" in a:
+            errs += ["arm %s: %s" % (a.get("name"), x) for x in _ev.validate_items(a["evidence"], names)]
     if exp.get("stop", {}).get("rows") == "confirmatory" and not exp.get("confirmatory"):
         errs.append("stop.rows = confirmatory needs confirmatory rows")
     groups = m.get("perf_event_groups")
@@ -922,6 +939,10 @@ class Runner:
                     from .origin import Collector
                     collector = Collector(exp["collector"], exp["cpus"]["origin"], self.run_dir, self.log)
                     md["collector"] = collector.start()
+                if hasattr(self.backend, "attach"):
+                    self.backend.attach(origin, collector)
+                if uses(exp, "access_log"):
+                    md["access_log_fs"] = sysprobe.fs_of(os.path.join(self.run_dir, "alog"))
             while True:
                 plan = schedule(exp, done + 1, target)
                 for i, (r, sh, a) in enumerate(plan):

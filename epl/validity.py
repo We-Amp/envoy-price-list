@@ -57,6 +57,11 @@ DEFAULTS = {
     # Latency columns only: a leg whose client max request-to-response exceeds
     # this keeps its CPU numbers but drops out of the latency comparisons.
     "max_latency_ms": None,
+    # Side services in their own containers (origin with the authorization service,
+    # tracing collector): CPU time in the window, read from the container's cgroup,
+    # at most this share of the container's CPU set; the container's cpuset and every
+    # process in it must sit on the configured set. None turns the gate off.
+    "max_side_service_busy": 0.5,
 }
 
 
@@ -144,6 +149,28 @@ def verdict(m, cfg=None):
         reasons.append("perf counters multiplexed (%.1f%% running)" % m["perf_min_running_pct"])
     if c["min_eff_ghz"] and m.get("eff_ghz") is not None and m["eff_ghz"] < c["min_eff_ghz"]:
         reasons.append("effective clock %.3f GHz under %.3f" % (m["eff_ghz"], c["min_eff_ghz"]))
+    lim = c["max_side_service_busy"]
+    for name, sv in sorted((m.get("side_services") or {}).items()):
+        if lim is None:
+            break
+        if sv.get("error"):
+            reasons.append("side service %s: %s" % (name, sv["error"]))
+            continue
+        if sv.get("busy_of_set") is None:
+            reasons.append("side service %s: no CPU time measured" % name)
+        elif sv["busy_of_set"] > lim:
+            reasons.append("side service %s used %.0f%% of its CPU set in the window, limit %.0f%%"
+                           % (name, sv["busy_of_set"] * 100, lim * 100))
+        if not sv.get("cpuset_ok"):
+            reasons.append("side service %s: container cpuset %s is not the configured set %s"
+                           % (name, sv.get("cpuset"), sv.get("want")))
+        if not sv.get("pids_ok"):
+            reasons.append("side service %s: processes off the configured set: %s"
+                           % (name, sv.get("bad_pids") or "no process found"))
+    ev = m.get("evidence")
+    if ev is not None and ev.get("gate", True) and not ev.get("ok"):
+        f = ev.get("failed") or ["no evidence evaluated"]
+        reasons.append("evidence: %s%s" % ("; ".join(f[:4]), " (+%d more)" % (len(f) - 4) if len(f) > 4 else ""))
     return {"valid": not reasons, "reasons": reasons}
 
 
