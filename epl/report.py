@@ -64,6 +64,12 @@ def markdown(res, floor=None):
         md.get("stop_reason")))
     if md.get("aborted"):
         L.append("- **Aborted:** %s" % md["aborted"])
+    if md.get("incomplete"):
+        L.append("- **Incomplete, no verdict:** %s complete rounds of the minimum %d; only complete rotation "
+                 "blocks are analysed and no row carries a verdict" % (md.get("rounds_complete"), exp["rounds"]))
+    elif md.get("legs_after_last_complete_block"):
+        L.append("- %d legs after the last complete rotation block are recorded but not analysed" %
+                 md["legs_after_last_complete_block"])
     L.append("- Headline: %s. Primary metric %s, Holm across %d primary rows at alpha %.2f; every other "
              "metric is exploratory (interval only, no multiplicity control)." % (
                  an.get("headline", "paired"), an.get("primary_metric"), an.get("primary_family_size", 0),

@@ -616,6 +616,43 @@ def current_legs(legs):
     return by
 
 
+def confirmatory_in_shape(p, shape):
+    """Whether a confirmatory entry ([arm, ref] or [arm, ref, shape(s)]) covers this shape."""
+    if len(p) < 3:
+        return True
+    return shape in ([p[2]] if isinstance(p[2], str) else p[2])
+
+
+def complete_rounds(exp, legs):
+    """The last round R, a multiple of the order period, such that every round up to R has a
+    current (not superseded) leg for every shape and arm: only these rounds are balanced."""
+    have = {(m["round"], m["shape"], m["arm"]) for m in legs if not m.get("superseded") and "round" in m}
+    per = order_period(exp)
+    r = 0
+    while True:
+        nxt = range(r + 1, r + per + 1)
+        if all((x, sh["name"], a["name"]) in have for x in nxt for sh in exp["shapes"] for a in exp["arms"]):
+            r += per
+        else:
+            return r
+
+
+INCOMPLETE = "incomplete, no verdict"
+
+
+def mark_incomplete(analysis):
+    """A run stopped before its minimum rounds: every row keeps its numbers, none a verdict."""
+    analysis["incomplete"] = True
+    for sres in analysis["shapes"].values():
+        for comp in sres["comparisons"] + sres.get("confirmatory", []):
+            for key in METRIC_KEYS:
+                c = comp.get(key)
+                if c:
+                    c["status"] = INCOMPLETE
+                    c["differs"] = None
+    return analysis
+
+
 def analyse(exp, legs, floor=None):
     base = exp.get("base_arm", exp["arms"][0]["name"])
     alpha = exp.get("alpha", ALPHA)
@@ -652,7 +689,7 @@ def analyse(exp, legs, floor=None):
                 summ["client_headroom_min"] = min(hr)
             sres["arms"][an] = summ
         sres["confirmatory"] = []
-        conf = [(p[0], p[1]) for p in exp.get("confirmatory") or []]
+        conf = [(p[0], p[1]) for p in exp.get("confirmatory") or [] if confirmatory_in_shape(p, s)]
         for an, rn, kind in [(a, r, "row") for a, r in comparison_pairs(exp)] + [(a, r, "conf") for a, r in conf]:
             rounds = sorted(r for (ss, aa, r) in by if ss == s and aa == an and (s, rn, r) in by)
             comp = {"arm": an, "ref": rn, "rounds_paired": rounds}
@@ -740,19 +777,26 @@ def stop_check(exp, analysis):
             target = min(target, lim)
     worst = []
     rows = "confirmatory" if exp.get("stop", {}).get("rows") == "confirmatory" else "comparisons"
+    # a shape may set its own target (the same absolute cost is a larger percentage on a
+    # cheaper shape); an A/A run's own limit still caps it
+    starget = {sh["name"]: sh.get("stop_target_half_width_pct") for sh in exp["shapes"]}
     for s, sres in analysis["shapes"].items():
+        t = target if starget.get(s) is None else float(starget[s])
+        if exp.get("expect") == "aa" and starget.get(s) is not None:
+            lim = exp.get("aa", DEFAULTS["aa"])["max_half_width_pct"].get(metric)
+            t = t if lim is None else min(t, lim)
         for comp in sres.get(rows, []):
             c = comp.get(metric)
             hw = (c or {}).get("paired", {}).get("half_width_pct")
             if c is None or hw is None or c["n"] < exp.get("min_pairs", 6):
                 return False, "%s %s vs %s: not enough pairs" % (s, comp["arm"], comp["ref"])
-            worst.append((hw, "%s %s vs %s" % (s, comp["arm"], comp["ref"])))
+            worst.append((hw / t, hw, t, "%s %s vs %s" % (s, comp["arm"], comp["ref"])))
     if not worst:
         return False, "no comparisons"
-    hw, where = max(worst)
-    if hw <= target:
-        return True, "widest %s half-width %.2f%% (%s) <= target %.2f%%" % (metric, hw, where, target)
-    return False, "widest %s half-width %.2f%% (%s) > target %.2f%%" % (metric, hw, where, target)
+    _, hw, t, where = max(worst)
+    if all(w[0] <= 1.0 for w in worst):
+        return True, "widest %s half-width against its target %.2f%% (%s) <= target %.2f%%" % (metric, hw, where, t)
+    return False, "widest %s half-width against its target %.2f%% (%s) > target %.2f%%" % (metric, hw, where, t)
 
 
 def aa_verdict(exp, analysis):
@@ -966,7 +1010,7 @@ class Runner:
                     stop_reason = "cap of %d rounds reached; %s" % (exp["rounds_max"], why)
                     break
                 target = min(done + exp["rounds_block"], exp["rounds_max"])
-        except Exception as e:  # noqa: BLE001 - recorded, partial results still written
+        except BaseException as e:  # noqa: BLE001 - recorded (a stop signal too), partial results still written
             aborted = "%s: %s" % (type(e).__name__, e)
             self.log("ABORTED: %s" % aborted)
         finally:
@@ -991,10 +1035,21 @@ class Runner:
         md["stop_reason"] = stop_reason
         if aborted:
             md["aborted"] = aborted
-        analysis = analyse(exp, legs, floor)
+        # Only complete rotation blocks enter the analysis. A run that ends before its
+        # minimum rounds (a stop signal, an abort) is incomplete: numbers, no verdicts.
+        md["rounds_complete"] = complete_rounds(exp, legs)
+        md["incomplete"] = md["rounds_complete"] < exp["rounds"]
+        used = [m for m in legs if m["round"] <= md["rounds_complete"]]
+        if len(used) < len(legs):
+            md["legs_after_last_complete_block"] = len(legs) - len(used)
+        analysis = analyse(exp, used, floor)
+        if md["incomplete"]:
+            mark_incomplete(analysis)
+            self.log("run incomplete: %d complete rounds of the minimum %d; no verdicts" % (
+                md["rounds_complete"], exp["rounds"]))
         result = {"metadata": md, "experiment": {k: v for k, v in exp.items() if not k.startswith("_")},
                   "legs": legs, "analysis": analysis}
-        if exp.get("expect") == "aa":
+        if exp.get("expect") == "aa" and not md["incomplete"]:
             result["aa_selftest"] = aa_verdict(exp, analysis)
         result = sysprobe.scrub(result)
         with open(os.path.join(self.run_dir, "results.json"), "w") as f:
