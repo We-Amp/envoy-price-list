@@ -34,7 +34,7 @@ Four fixed cells, the same in every session: two shapes, each at two load levels
 |---|---|---|---|
 | `s` | 4 KB proxied (an nginx origin serves the body) | 5,200 req/s | 31% |
 | `s-hi` | the same | 12,000 req/s | 60% |
-| `fh` | 128-byte direct response, 57 request and 52 response headers added by the route | 8,000 req/s | 26% |
+| `fh` | 128-byte direct response, 52 response headers added by the route (the route also lists 57 request headers, which a direct response never applies) | 8,000 req/s | 26% |
 | `fh-hi` | the same | 18,400 req/s | 51% to 55% |
 
 4 workers, HTTP/1.1 over loopback, no TLS, the client and origin settings of `examples/releases/make.py`. On the
@@ -111,7 +111,7 @@ them except in the counter run (Run C).
 - Confirmatory rows: total cycles per request, v1.38.0 against v1.37.11, one row per cell (four rows, Holm over
   four). Question: is the v1.37 to v1.38 step already in v1.38.0?
 - Stop rule as in the protocol (0.8% on the confirmatory rows, 16/16/32).
-- Exploratory steps from the same rounds: first against newest patch of three lines (v1.37.0 to v1.37.11, v1.38.0 to
+- Exploratory steps from the same rounds: the first against the newest patch of three lines (v1.37.0 to v1.37.11, v1.38.0 to
   v1.38.9, v1.40.0 to v1.40.2); v1.38.9 to v1.39.6 to v1.40.0; v1.38.9 against v1.37.11 (a repeat of the second
   session's step with a new seed).
 - Run B (the v1.38 patches one by one) only if v1.38.0 reads like v1.37.11 while v1.38.9 is dearer.
@@ -240,7 +240,7 @@ Record rows, v1.40.2 against each arm (Holm over 28; negative means v1.40.2 is c
 Every "differs" row has a Holm p-value under 0.001 and a widened interval that excludes zero (`tables-a.md`).
 
 Changed against the second session (same binaries, new seed): header-heavy v1.37.11 at the lower load moved from
-−2.7% to −3.4%, the largest move; proxied v1.37.11 at the lower load moved from +1.2% (not resolved) to +1.4%
+−2.7% to −3.4% and header-heavy v1.38.9 at the higher load from −4.5% to −3.7%, the two largest moves; proxied v1.37.11 at the lower load moved from +1.2% (not resolved) to +1.4%
 (differs). The v1.37.11 and v1.38.9 rows agree between the sessions in all eight cells within the between-session
 spread (|z| ≤ 1.2 with the spread counted for each session, ≤ 1.4 counted once).
 
