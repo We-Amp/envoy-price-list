@@ -16,7 +16,8 @@ exact equality, except a count that must stay at zero, whose tolerance is writte
        "tol_abs": F       absolute
        "tol_binomial_sd": K   K binomial standard deviations of the expected share,
                               sqrt(X (1 - X) / n), n = the denominator
-     "per": "SCOPE:NAME"  denominator of per_request (default: window -> the 2xx
+     "per": "SCOPE:NAME"  denominator of per_request, or of min/max when given (default
+                          for per_request: window -> the 2xx
                           responses in the window; leg -> the end-of-leg
                           http.ingress_http.downstream_rq_completed)
      "ref": {"arm": A | "self", "offset": D}
@@ -214,6 +215,15 @@ def check_item(m, it, config_dump=None):
         return r
     lo, hi = it.get("min"), it.get("max")
     r.update(min=lo, max=hi)
+    if "per" in it:
+        # a bound on a ratio of two values (e.g. spans the collector accepted per span sent)
+        d, why = _denominator(m, it)
+        if d is None:
+            r["why"] = why
+            return r
+        r.update(raw=v, denominator=d)
+        v = v / d
+        r["value"] = v
     r["ok"] = (lo is None or v >= lo) and (hi is None or v <= hi)
     r["why"] = "ok" if r["ok"] else "%s outside [%s, %s]" % (v, lo, hi)
     return r
