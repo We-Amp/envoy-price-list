@@ -1063,7 +1063,7 @@ class RealBackend:
         ready_t = float(shape.get("ready_timeout_s", 60))
         adm_t = float(shape.get("admin_timeout_s", 30))
         settle = float(shape.get("settle_s", 2))
-        window = float(shape.get("window_s", mcfg["window_s"]))
+        window = float(arm.get("window_s") or shape.get("window_s", mcfg["window_s"]))
         sf = aenv.get("stats_flush") or {}
         interval = None if sf.get("on_admin") else float(sf.get("interval_s", 5))
         m["flush_interval_s"] = interval
@@ -1146,6 +1146,16 @@ class RealBackend:
             m["used_total"] = post.get("total")
             m["used_cg_lines"] = (post.get("total") or 0) - (post.get("histograms") or 0) - \
                 (post.get("text_readouts") or 0)
+            if getattr(self, "calibrate", False):
+                # calibration only: N and used N by kind (each read flushes under on_admin)
+                bk = {}
+                for kd in ("Counters", "Gauges", "Histograms", "TextReadouts"):
+                    for uo in (False, True):
+                        st_, body_, dt_ = statsrow.admin_text(ecfg["admin_port"], "/stats?type=%s%s" % (
+                            kd, "&usedonly" if uo else ""), adm_t)
+                        bk["%s%s" % (kd.lower(), "_used" if uo else "")] = (
+                            sum(1 for ln in body_.splitlines() if ": " in ln) if st_ == 200 else None)
+                m["by_kind"] = bk
             m["gen_cx_connect_fail"] = statsrow.generated_sum(n1, names, "upstream_cx_connect_fail")
             m["gen_cx_overflow"] = statsrow.generated_sum(n1, names, "upstream_cx_overflow")
             keep0 = {k: v for k, v in n0.items() if IDLE_KEEP_RE.search(k)}

@@ -1,0 +1,25 @@
+{
+ "name": "example-aarch64",
+ "arch": "aarch64",
+ "label": "arm-bench-host",
+ "machine_label": "example arm64 server (no SMT), bare metal, frequency policy as found; Envoy on 4 cores",
+ "cpus": {
+  "sut": "8-11",
+  "client": "16-31",
+  "origin": "32-47"
+ },
+ "perf": "/usr/bin/perf",
+ "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+ "client_binary": "~/nighthawk-arm64/bazel-bin/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+ "collector_image": "otel/opentelemetry-collector:0.120.0@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+ "image_platform": "linux/arm64",
+ "binaries": {
+  "aarch64": {
+   "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+   "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+  }
+ },
+ "note": "A description for the portability check only: no ARM box is named yet. CPU sets, perf path and image digests are placeholders to be replaced from the real box at its step 0."
+}

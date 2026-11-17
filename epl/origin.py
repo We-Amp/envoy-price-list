@@ -96,7 +96,7 @@ class Origin:
         image = self.cfg.get("image", "nginx:alpine")
         name = "%s-%d" % (self.cfg.get("name_prefix", "epl-origin"), os.getpid())
         args = ["docker", "run", "-d", "--rm", "--name", name, "--network", "host",
-                "--cpuset-cpus", self.cpus,
+                "--cpuset-cpus", self.cpus] + (["--platform", self.cfg["platform"]] if self.cfg.get("platform") else []) + [
                 "-v", "%s:/etc/nginx/nginx.conf:ro" % os.path.join(od, "nginx.conf"),
                 "-v", "%s:/www:ro" % www, image]
         r = subprocess.run(args, capture_output=True, text=True, timeout=120)
@@ -231,7 +231,8 @@ class Collector:
         with open(os.path.join(d, "config.yaml"), "w") as f:
             f.write(conf)
         name = "epl-collector-%d" % os.getpid()
-        args = ["docker", "run", "-d", "--rm", "--name", name, "--network", "host", "--cpuset-cpus", self.cpus,
+        args = ["docker", "run", "-d", "--rm", "--name", name, "--network", "host", "--cpuset-cpus", self.cpus] + (
+            ["--platform", self.cfg["platform"]] if self.cfg.get("platform") else []) + [
                 "-v", "%s:/etc/epl-collector.yaml:ro" % os.path.join(d, "config.yaml"),
                 self.cfg["image"], "--config", "/etc/epl-collector.yaml"]
         r = subprocess.run(args, capture_output=True, text=True, timeout=120)
