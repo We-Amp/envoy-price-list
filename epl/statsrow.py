@@ -137,10 +137,12 @@ def udp_window(c0, c1, flushes, used_lines=None):
     larger of the change of RcvbufErrors and of the socket's drops (the same drops, counted
     twice by the kernel); sent = delivered + dropped."""
     s0, s1 = c0.get("snmp") or {}, c1.get("snmp") or {}
-    if "InDatagrams" not in s0 or "InDatagrams" not in s1:
-        return {"error": "no Udp: line in /proc/net/snmp"}
+    for k in ("InDatagrams", "RcvbufErrors"):
+        if k not in s0 or k not in s1:
+            # without RcvbufErrors a drop would read as none: fail closed
+            return {"error": "no %s in the Udp: line of /proc/net/snmp" % k}
     delivered = s1["InDatagrams"] - s0["InDatagrams"]
-    rcvbuf = s1.get("RcvbufErrors", 0) - s0.get("RcvbufErrors", 0)
+    rcvbuf = s1["RcvbufErrors"] - s0["RcvbufErrors"]
     k0, k1 = c0.get("sock"), c1.get("sock")
     sockd = (k1["drops"] - k0["drops"]) if k0 and k1 else None
     dropped = max(rcvbuf, sockd or 0)
@@ -153,6 +155,48 @@ def udp_window(c0, c1, flushes, used_lines=None):
     if used_lines:
         out["used_lines"] = used_lines
     return out
+
+
+def flush_fit(sent, used_lines, expected):
+    """Datagrams between two quiescent points are a whole number of flushes of `used_lines`
+    lines each (the plain statsd sink: one datagram per used counter or gauge). n = the
+    nearest whole number of flushes; residual = |sent - n x used| / used, as a share of one
+    flush; n_error = |n - expected|."""
+    if not used_lines or sent is None:
+        return {"error": "no used-line count"}
+    n = int(round(sent / float(used_lines)))
+    return {"n": n, "residual": abs(sent - n * used_lines) / float(used_lines),
+            "expected": expected, "n_error": abs(n - expected) if expected is not None else None}
+
+
+def quiesce(pid, port=None, timeout_s=30.0, step_s=0.03, max_busy=0.1):
+    """Wait (bounded) for a quiescent point: the main thread idle over one step (no flush in
+    progress) and, with a sink port, its receive queue empty (every datagram sent so far has
+    been read, so the kernel's InDatagrams has counted it). Returns (ok, seconds waited)."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < timeout_s:
+        a = thread_run_ns(pid, pid)
+        time.sleep(step_s)
+        b = thread_run_ns(pid, pid)
+        idle = a is not None and b is not None and (b - a) / 1e9 / step_s <= max_busy
+        q = True
+        if port is not None:
+            s = parse_udp_socket(read("/proc/net/udp"), port)
+            q = s is not None and s["rx_queue"] == 0
+        if idle and q:
+            return True, round(time.monotonic() - t0, 3)
+    return False, round(time.monotonic() - t0, 3)
+
+
+def busiest_other_ratio(th0, th1, pid):
+    """Main thread's run time over the busiest other thread's, between two threads_run_ns
+    readings (the plan's smoke check: at least 10 in an idle statsd leg at the top rung)."""
+    main = (th1.get(pid, (None, 0))[1] - th0.get(pid, (None, 0))[1]) if pid in th0 and pid in th1 else None
+    others = [th1[t][1] - th0[t][1] for t in th1 if t in th0 and t != pid]
+    if main is None:
+        return None
+    top = max(others or [0])
+    return main / top if top > 0 else float("inf")
 
 
 # ---------------------------------------------------------------- admin /stats

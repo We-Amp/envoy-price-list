@@ -1105,6 +1105,11 @@ class RealBackend:
             time.sleep(settle)
             # window
             vm0 = statsrow.memory_kb(pid)
+            # a quiescent point (no flush in progress, the sink's queue read empty) before the
+            # kernel counters, so the window's datagrams are whole flushes
+            q0_ok, q0_s = statsrow.quiesce(pid, e["stats_sink"]["port"] if sink else None,
+                                           float(shape.get("quiesce_timeout_s", 30)))
+            tu0 = time.monotonic()
             u0 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
             sk0 = sysprobe.proc_run_ns(sink.pid) if sink else None
             coll0 = self.collector.scrape() if (self.collector and kind == "otlp") else None
@@ -1132,7 +1137,12 @@ class RealBackend:
             r1, rwhy1 = sysprobe.cpu_run_ns()
             k1 = sysprobe.proc_run_ns(pid)
             th1 = statsrow.threads_run_ns(pid)
+            q1_ok, q1_s = statsrow.quiesce(pid, e["stats_sink"]["port"] if sink else None,
+                                           float(shape.get("quiesce_timeout_s", 30)))
+            tu1 = time.monotonic()
             u1 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
+            m["quiesce"] = {"before_ok": q0_ok, "before_s": q0_s, "after_ok": q1_ok, "after_s": q1_s,
+                            "span_s": round(tu1 - tu0, 3)}
             sk1 = sysprobe.proc_run_ns(sink.pid) if sink else None
             vm1 = statsrow.memory_kb(pid)
             m["memory"] = {"vm_rss_kb_before": vm0["vm_rss_kb"], "vm_hwm_kb_after": vm1["vm_hwm_kb"],
@@ -1207,6 +1217,7 @@ class RealBackend:
             # every thread's run time; SUT CPUs clean during the window
             busy_win = t1 - t0
             other = sum(th1[t][1] - th0[t][1] for t in th1 if t in th0 and t != pid)
+            m["main_over_busiest_other"] = statsrow.busiest_other_ratio(th0, th1, pid)
             m["other_threads_ms_per_s"] = other / 1e6 / busy_win if busy_win > 0 else None
             if k0 is not None and k1 is not None and r0 and r1 and not rwhy0 and not rwhy1:
                 envoy_cpus = (k1 - k0) / 1e9 / busy_win
@@ -1223,13 +1234,27 @@ class RealBackend:
                 pc["expected"] = int(busy_win // float(arm["prom_scrape_s"]))
                 pc["count_error"] = abs(pc["scrapes"] - pc["expected"])
                 m["prom"] = pc
-            flushes = main.get("bursts") or (int(busy_win // interval) if interval else 0)
+            # the flush count: bursts where the rung's flushes are visible to the sampler, else the
+            # interval (at the smallest rung a flush is under the 20 ms resolution)
+            visible = shape.get("bursts_visible", True)
+            if interval and (not visible or not main.get("bursts")):
+                flushes, m["flushes_from"] = int(round(busy_win / interval)), "interval"
+            else:
+                flushes, m["flushes_from"] = main.get("bursts") or 0, "bursts"
             m["flushes_counted"] = flushes
-            m["flushes_from"] = "bursts" if main.get("bursts") else "interval"
             if sink:
-                m["udp"] = statsrow.udp_window(u0, u1, flushes, m["used_cg_lines"])
-                if m["udp"].get("sent_per_flush") is not None and m["used_cg_lines"]:
-                    m["udp"]["sent_per_flush_over_used"] = m["udp"]["sent_per_flush"] / m["used_cg_lines"]
+                m["udp"] = statsrow.udp_window(u0, u1, None, m["used_cg_lines"])
+                if "error" not in m["udp"]:
+                    # whole flushes between the two quiescent points
+                    exp_n = int(round((tu1 - tu0) / (interval + (main.get("burst_run_ms_mean") or 0) / 1e3))) \
+                        if interval else None
+                    if kind == "statsd":
+                        m["udp"]["fit"] = statsrow.flush_fit(m["udp"]["sent"], m["used_cg_lines"], exp_n)
+                        if m["udp"]["fit"].get("n"):
+                            m["udp"]["sent_per_flush"] = m["udp"]["sent"] / m["udp"]["fit"]["n"]
+                    elif exp_n:
+                        # batched lines: datagrams per flush over the flushes the span holds
+                        m["udp"]["sent_per_flush"] = m["udp"]["sent"] / exp_n
                 m.setdefault("side_services", {})["udpsink"] = statsrow.process_side(
                     sink.pid, e["cpus"]["origin"], sk0, sk1, busy_win)
             if coll0 is not None and self.collector:

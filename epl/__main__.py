@@ -104,6 +104,11 @@ def _detach(log_path):
 
 def cmd_run(args):
     exp = _load(args)
+    if exp.get("template"):
+        sys.exit("%s is a template (%s); it is not run as it is" % (args.config, exp.get("template_note", "")))
+    if exp.get("uncalibrated") and not args.allow_uncalibrated:
+        sys.exit("%s is uncalibrated: run the calibration and write the configs from it first "
+                 "(--allow-uncalibrated only for a dry run)" % args.config)
     run_dir = _run_dir(exp, args.out)
     if os.path.exists(os.path.join(run_dir, "legs.jsonl")):
         sys.exit("run dir %s already has legs; pick another --out" % run_dir)
@@ -765,6 +770,7 @@ def main(argv=None):
     p.add_argument("--max-rounds", type=int)
     p.add_argument("--fixed", action="store_true", help="run exactly --rounds, no adaptive blocks")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--allow-uncalibrated", action="store_true")
     p.add_argument("--detach", action="store_true")
     p.add_argument("--allow-short", action="store_true")
     common(p)
