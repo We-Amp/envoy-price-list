@@ -298,16 +298,34 @@ class IncompleteRunTest(unittest.TestCase):
         self.assertLessEqual(max(r for c in an["shapes"]["s"]["comparisons"] for r in c["rounds_paired"]), 6)
 
     def test_stopped_inside_a_later_block(self):
-        # minimum 12 done, stop inside the block 13..18: complete, analysed on 12 rounds
+        # minimum 12 done, stop inside the block 13..18 before the stop target: analysed on the
+        # 12 complete rounds, but incomplete (the stop rule was never met), so no verdicts
         c = three_arms(rounds=12, rounds_block=6, rounds_max=24, stop={"target_half_width_pct": 0.01})
         res = self.run_until(c, 14 * 6 - 3)
         md = res["metadata"]
-        self.assertFalse(md["incomplete"])
+        self.assertTrue(md["incomplete"])
+        self.assertIn("stopped before its stop rule", md["stopped_early"])
         self.assertEqual(md["rounds_complete"], 12)
         self.assertGreater(md["legs_after_last_complete_block"], 0)
         an = res["analysis"]
-        self.assertNotIn("incomplete", an)
+        self.assertTrue(an["incomplete"])
         self.assertEqual(max(r for c in an["shapes"]["s"]["comparisons"] for r in c["rounds_paired"]), 12)
+
+    def test_complete_rounds_and_invalid_legs(self):
+        exp = load(three_arms(), tempfile.mkdtemp())
+        legs = []
+        be = SimBackend(exp, tempfile.mkdtemp(), lambda m: None)
+        for r, sh, a in experiment.schedule(exp, 1, 12):
+            legs.append(be.run_leg(a, sh, r, None, experiment.leg_id(r, sh, a)))
+        self.assertEqual(experiment.complete_rounds(exp, legs), 12)
+        # an invalid leg of round 8 still waiting for its re-run: block 7..12 is not complete
+        bad = [m for m in legs if m["round"] == 8][0]
+        bad["verdict"] = {"valid": False, "reasons": ["x"]}
+        self.assertEqual(experiment.complete_rounds(exp, legs), 6)
+        # after its re-run (still invalid) the method drops the pair; the block is complete
+        bad["superseded"] = True
+        legs.append(dict(bad, superseded=False, attempt=1, leg_id=bad["leg_id"] + ".rr1"))
+        self.assertEqual(experiment.complete_rounds(exp, legs), 12)
 
     def test_evidence_fault_invalidates(self):
         tmp = tempfile.mkdtemp()

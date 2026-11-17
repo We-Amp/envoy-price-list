@@ -65,8 +65,10 @@ def markdown(res, floor=None):
     if md.get("aborted"):
         L.append("- **Aborted:** %s" % md["aborted"])
     if md.get("incomplete"):
-        L.append("- **Incomplete, no verdict:** %s complete rounds of the minimum %d; only complete rotation "
-                 "blocks are analysed and no row carries a verdict" % (md.get("rounds_complete"), exp["rounds"]))
+        L.append("- **Incomplete, no verdict:** %s complete rounds of the minimum %d%s; only complete rotation "
+                 "blocks are analysed and no row carries a verdict" % (
+                     md.get("rounds_complete"), exp["rounds"],
+                     " (%s)" % md["stopped_early"] if md.get("stopped_early") else ""))
     elif md.get("legs_after_last_complete_block"):
         L.append("- %d legs after the last complete rotation block are recorded but not analysed" %
                  md["legs_after_last_complete_block"])

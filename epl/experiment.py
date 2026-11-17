@@ -625,8 +625,14 @@ def confirmatory_in_shape(p, shape):
 
 def complete_rounds(exp, legs):
     """The last round R, a multiple of the order period, such that every round up to R has a
-    current (not superseded) leg for every shape and arm: only these rounds are balanced."""
-    have = {(m["round"], m["shape"], m["arm"]) for m in legs if not m.get("superseded") and "round" in m}
+    current (not superseded) leg for every shape and arm: only these rounds are balanced.
+    An invalid leg counts only once its round has had all its re-runs (the method then drops
+    that pair); an invalid leg still waiting for its re-run (a run stopped in the re-run
+    phase) does not, so that block is not complete."""
+    reruns = int(exp.get("rerun_invalid", 1))
+    have = {(m["round"], m["shape"], m["arm"]) for m in legs
+            if not m.get("superseded") and "round" in m
+            and ((m.get("verdict") or {}).get("valid") or int(m.get("attempt", 0)) >= reruns)}
     per = order_period(exp)
     r = 0
     while True:
@@ -1038,15 +1044,20 @@ class Runner:
         # Only complete rotation blocks enter the analysis. A run that ends before its
         # minimum rounds (a stop signal, an abort) is incomplete: numbers, no verdicts.
         md["rounds_complete"] = complete_rounds(exp, legs)
-        md["incomplete"] = md["rounds_complete"] < exp["rounds"]
+        # A run that was stopped or aborted never reached its stop rule: incomplete as well,
+        # even with its minimum rounds done
+        md["incomplete"] = md["rounds_complete"] < exp["rounds"] or aborted is not None
+        if aborted is not None:
+            md["stopped_early"] = "stopped before its stop rule (%s); %d complete rounds" % (
+                aborted, md["rounds_complete"])
         used = [m for m in legs if m["round"] <= md["rounds_complete"]]
         if len(used) < len(legs):
             md["legs_after_last_complete_block"] = len(legs) - len(used)
         analysis = analyse(exp, used, floor)
         if md["incomplete"]:
             mark_incomplete(analysis)
-            self.log("run incomplete: %d complete rounds of the minimum %d; no verdicts" % (
-                md["rounds_complete"], exp["rounds"]))
+            self.log("run incomplete: %d complete rounds of the minimum %d%s; no verdicts" % (
+                md["rounds_complete"], exp["rounds"], ", stopped early" if aborted else ""))
         result = {"metadata": md, "experiment": {k: v for k, v in exp.items() if not k.startswith("_")},
                   "legs": legs, "analysis": analysis}
         if exp.get("expect") == "aa" and not md["incomplete"]:
