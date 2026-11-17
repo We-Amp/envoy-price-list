@@ -198,8 +198,8 @@ class Collector:
                 body = r.read().decode(errors="replace")
             finally:
                 c.close()
-        except OSError as e:
-            return {"error": "scrape failed: %s" % e}
+        except (OSError, http.client.HTTPException, ValueError) as e:
+            return {"error": "scrape failed: %s: %s" % (type(e).__name__, e)}
         if r.status != 200:
             return {"error": "scrape returned %d" % r.status}
         return parse_collector_metrics(body)
