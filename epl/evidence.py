@@ -139,6 +139,8 @@ def config_values(dump, key):
 def _denominator(m, it):
     sc = it.get("scope", "window")
     spec = it.get("per") or DEFAULT_PER.get(sc)
+    if not spec and sc == "field":
+        return 1.0, None  # a field value is compared as it is (per flush, per leg: the field says)
     if not spec:
         return None, "no denominator for scope %s" % sc
     s, n = spec.split(":", 1)
