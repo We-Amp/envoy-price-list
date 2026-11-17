@@ -20,7 +20,8 @@
 # the time used plus its worst case fits inside the stop.
 #
 # Runs go to $RUNS (default ~/epl/runs/wk5), smoke runs to $RUNS/smoke; progress to
-# $RUNS/queue.log. Extra arguments go to every `epl run`.
+# $RUNS/queue.log. Extra arguments go to every `epl run` and `epl calibrate` (for example
+# --set client.binary=PATH when the client is not at the configured path).
 set -u
 H=$(cd "$(dirname "$0")/../.." && pwd)
 EPL="python3 $H/bin/epl"
@@ -61,7 +62,7 @@ case "$mode" in
     for arm in log-off log-json; do
       log "calibrate s-w16 $arm at $CAL_RPS"
       $EPL calibrate "$C/18w-access-log-w16.json" --arm "$arm" --shape s-w16 --rps "$CAL_RPS" \
-        --out "$R/cal-w16-$arm" >> "$R/queue.log" 2>&1
+        --out "$R/cal-w16-$arm" "$@" >> "$R/queue.log" 2>&1
       log "end calibrate $arm rc=$?"
     done
     for s in $SMOKES; do
