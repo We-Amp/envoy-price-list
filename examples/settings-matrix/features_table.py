@@ -23,8 +23,11 @@ Verdicts (as the week-4 tables): under 1% = within the A/A spread, not a finding
 above 0.05 = not resolved; "differs" only when the widened interval excludes zero; a
 smaller interval that excludes zero reads "about N%, not resolved". A row below the
 reach of its shape's A/A, where that A/A failed its 1% limit, is not a finding. A row of
-an incomplete run gets no verdict. Closing an R17/R18 item: "no measurable cost" only
-when the widened upper end is under 1.5%; otherwise "not resolved; at most N%".
+an incomplete run (stopped before its minimum or before its stop rule) gets no verdict
+and stays out of every Holm step (p = 1); its rows are listed separately. A row whose
+shape has no A/A is flagged. Closing an R17/R18 item: "no measurable cost" only when the
+widened upper end is under 1.5% and the shape's A/A is valid; otherwise "not resolved;
+at most N%".
 
 Replication (rows that repeat a published one): z = (new - old) / sqrt(SE_new^2 +
 SE_old^2 + 2*0.34^2). "Replicated" needs |z| <= 2, the same sign and a new verdict that
@@ -217,6 +220,10 @@ def row(runs, spec, family=None):
             out[k] = {"effect_pct": T.pct(q["log_mean_pct"]), "lo_pct": T.pct(q["log_lo_pct"]),
                       "hi_pct": T.pct(q["log_hi_pct"]), "arm_median": q["arm_median"],
                       "ref_median": q["ref_median"], "abs_diff_mean": q["abs_diff_mean"]}
+    if out["incomplete"]:
+        # an incomplete run has no verdict and stays out of every Holm step (counted as p = 1);
+        # its p-value is kept for the separate listing only
+        out["t_p_incomplete"], out["t_p"] = out["t_p"], None
     an = (res.get("analysis") or {}).get("shapes", {}).get(shape, {}).get("arms", {})
     out["busy"] = {a: (an.get(a) or {}).get("sut_busy_mean") for a in (arm, ref)}
     return out
@@ -242,8 +249,9 @@ def aa_status(runs, secondary):
             continue
         hp = r.get("holm_p", r.get("t_p"))
         reach = max(abs(r["lo"]), abs(r["hi"]))
-        out[key] = {"ok": r["hw"] <= AA_LIMIT_PCT and hp > 0.05, "reach": reach, "hw": r["hw"], "holm_p": hp,
-                    "spec": spec}
+        ok = (not r.get("incomplete")) and hp is not None and r["hw"] <= AA_LIMIT_PCT and hp > 0.05
+        out[key] = {"ok": ok, "reach": reach, "hw": r["hw"], "holm_p": hp, "spec": spec,
+                    "incomplete": bool(r.get("incomplete"))}
     return out
 
 
@@ -256,7 +264,9 @@ def verdict(r, aa=None):
     v = T.verdict(p, r["widened"], r.get("holm_p"))
     if v == "differs" and abs(r["effect_pct"]) < 2.0:
         v = "differs: about %+.1f%%, near the floor" % r["effect_pct"]
-    if aa and aa.get("ok") is False and abs(r["log_mean"]) < aa["reach"]:
+    if aa is None or aa.get("ok") is None:
+        v += "; WARNING: no A/A for this shape (%s)" % ((aa or {}).get("why") or "not run")
+    elif aa.get("ok") is False and abs(r["log_mean"]) < aa["reach"]:
         v += "; below the A/A reach %.2f%%, not a finding" % aa["reach"]
     return v
 
@@ -267,13 +277,14 @@ def is_finding(v):
     return v.startswith("differs") and "not a finding" not in v
 
 
-def closing(r):
-    """How an R17/R18 item closes on this row (review S8)."""
+def closing(r, aa=None):
+    """How an R17/R18 item closes on this row (review S8). "No measurable cost" also needs
+    a valid A/A for the row's shape (passed its limit, complete run)."""
     if r.get("missing") or r.get("incomplete"):
         return "open (no verdict)"
     if is_finding(r["verdict"]):
         return "costs about %+.1f%%" % r["effect_pct"]
-    if r["widened_hi_pct"] < NO_COST_BELOW_PCT:
+    if r["widened_hi_pct"] < NO_COST_BELOW_PCT and (aa or {}).get("ok") is True:
         return "no measurable cost (widened upper end %+.2f%%)" % r["widened_hi_pct"]
     return "not resolved; at most %+.1f%%" % r["widened_hi_pct"]
 
@@ -326,7 +337,8 @@ def busy(x):
 
 def evidence_summary(res):
     out = {}
-    for m in experiment.current_legs(res["legs"]).values():
+    # every leg that is not superseded, invalid ones included, so a failing item shows up
+    for m in [x for x in res["legs"] if not x.get("superseded") and "leg_id" in x]:
         ev = m.get("evidence")
         k = "%s/%s" % (m["shape"], m["arm"])
         e = out.setdefault(k, {"legs": 0, "evidence_ok": 0, "side_cpu_us_per_req": []})
@@ -390,7 +402,7 @@ def tables(runs, data_dir):
             key = (r["run"], r["shape"], r["arm"], r["ref"])
             if key in CLOSES:
                 r["closes"] = CLOSES[key]
-                r["closing"] = closing(r)
+                r["closing"] = closing(r, aa.get((r["run"], r["shape"])))
         L.append("## %s (Holm over %d rows, %d with data)\n" % (title, k, have))
         L.append(HDR)
         for r in rows:
@@ -404,7 +416,7 @@ def tables(runs, data_dir):
         r["verdict"] = verdict(r, aa.get((r["run"], r["shape"])))
         key = (r["run"], r["shape"], r["arm"], r["ref"])
         if key in CLOSES:
-            r["closes"], r["closing"] = CLOSES[key], closing(r)
+            r["closes"], r["closing"] = CLOSES[key], closing(r, aa.get((r["run"], r["shape"])))
     L.append("## Secondary rows (Holm over %d rows, %d with data)\n" % (
         len(secondary), sum(1 for r in secondary if r.get("t_p") is not None)))
     L.append(HDR)
@@ -414,8 +426,19 @@ def tables(runs, data_dir):
     js["families"]["secondary"] = {"size": len(secondary), "rows": secondary}
     w16 = family("Row 18w, 16 workers", "w16", W16) if "18w-access-log-w16" in runs else []
 
+    inc = [r for r in conf + secondary + w16 if r.get("incomplete") and r.get("t_p_incomplete") is not None]
+    if inc:
+        L.append("## Rows of incomplete runs (no verdict, not in any Holm step)\n")
+        L.append("| Row | Shape | Arm vs ref | Total cycles [95% CI] | raw p | Pairs |\n|---|---|---|---|---|---|")
+        for r in inc:
+            L.append("| %s | %s | %s vs %s | %+.2f%% [%+.2f, %+.2f] | %.3g | %d |" % (
+                r["label"], r["shape"], r["arm"], r["ref"], r["effect_pct"], r["lo_pct"], r["hi_pct"],
+                r["t_p_incomplete"], r["n"]))
+        L.append("")
+
     L.append("## R17 and R18\n")
-    L.append("\"No measurable cost\" only when the widened upper end is under %.1f%% (review S8).\n" % NO_COST_BELOW_PCT)
+    L.append("\"No measurable cost\" only when the widened upper end is under %.1f%% and the shape's A/A is valid "
+             "(review S8).\n" % NO_COST_BELOW_PCT)
     L.append("| Item | Row | Shape | Verdict | Closes as |\n|---|---|---|---|---|")
     for r in conf + secondary + w16:
         if r.get("closes"):

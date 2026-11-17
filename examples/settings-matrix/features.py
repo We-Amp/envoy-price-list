@@ -24,12 +24,13 @@ Configs (in features/):
   18w-access-log-w16.json   the access log at 16 workers on CPUs 0-15 (siblings idle), with
                        its own A/A arm; s-w16 at a calibrated rate, ramped client, 3 s
                        lead-in; 16/8/32, 1.0% on every row, the A/A included. Optional.
-  smoke-*.json      two rounds of every non-reference arm (two arms per smoke, so every
-                    order balances in two rounds); evidence is recorded, not gated, and
-                    checked offline afterwards with `epl evidence-check`.
+  smoke-*.json      two rounds of every arm, reference arms and A/A copies included (two
+                    arms per smoke, so every order balances in two rounds); evidence is
+                    recorded, not gated, and checked offline afterwards with
+                    `epl evidence-check`, which fails when any arm has no smoke leg.
 
 Every run uses order seed 21. Rows 17 and 18 take the A/A floor from run S's base-A2
-arm (same session, an earlier run); rows 13 and 18w carry their own A/A arm. The named
+arm (same session, an earlier run); rows 13 and 18w carry their own A/A arm (no floor_from). The named
 confirmatory rows and the session-wide Holm step are in features_table.py, not here:
 the per-run Holm values in results.json are not quoted.
 
@@ -215,7 +216,7 @@ def run_configs(rates):
         **dict(fixed16, **FLOOR))
     run("13-ext-authz.json", "wk5-ext-authz", ["authz-off", "authz-http", "authz-grpc", "authz-off-A2"],
         [S["s"], S["fh6"]], confirmatory=[["authz-http", "authz-off"], ["authz-grpc", "authz-off"]],
-        origin=dict(make.BASE["origin"], **AUTHZ_PORTS), **dict(fixed16, **FLOOR))
+        origin=dict(make.BASE["origin"], **AUTHZ_PORTS), **fixed16)
     run("18w-access-log-w16.json", "wk5-access-log-w16", ["log-off", "log-text", "log-json", "log-off-A2"],
         [S["s-w16"]], confirmatory=[["log-text", "log-off"], ["log-json", "log-off"]],
         envoy=dict(make.BASE["envoy"], workers=16), cpus=dict(make.BASE["cpus"], sut=W16_CPUS),
@@ -231,6 +232,10 @@ SMOKES = [
     ("smoke-17b.json", "17-tracing.json", ["trace-10", "trace-off"], ["s", "fh"]),
     ("smoke-13.json", "13-ext-authz.json", ["authz-http", "authz-grpc"], ["s", "fh6"]),
     ("smoke-18w.json", "18w-access-log-w16.json", ["log-text", "log-json"], ["s-w16"]),
+    # the reference arms and A/A copies, so their (absent) evidence is exercised too
+    ("smoke-ref1.json", "18-access-log.json", ["log-off", "base-A2"], ["s", "fh"]),
+    ("smoke-ref2.json", "13-ext-authz.json", ["authz-off", "authz-off-A2"], ["s", "fh6"]),
+    ("smoke-ref3.json", "18w-access-log-w16.json", ["log-off-A2", "log-off"], ["s-w16"]),
 ]
 
 
@@ -239,7 +244,7 @@ def configs(rates):
     for fn, src, arms, shp in SMOKES:
         c = json.loads(json.dumps(out[src]))
         c.update(name="wk5-" + fn[:-5], base_arm=arms[0],
-                 arms=[a for n in arms for a in c["arms"] if a["name"] == n],
+                 arms=[([a for a in c["arms"] if a["name"] == n] or [ARMS[n]()])[0] for n in arms],
                  shapes=[s for n in shp for s in c["shapes"] if s["name"] == n],
                  rounds=2, rounds_block=2, rounds_max=2, adaptive=False, evidence_mode="record")
         for k in ("floor_from", "floor_arm", "confirmatory", "stop"):
@@ -301,8 +306,9 @@ def has_floor(run_dir):
         return False, "no results.json"
     with open(p) as f:
         md = json.load(f).get("metadata", {})
-    if md.get("incomplete"):
-        return False, "incomplete (%s complete rounds)" % md.get("rounds_complete")
+    if md.get("incomplete") or md.get("aborted"):
+        return False, "incomplete (%s complete rounds%s)" % (
+            md.get("rounds_complete"), "; %s" % md["aborted"] if md.get("aborted") else "")
     return True, "rounds %s, stop: %s" % (md.get("rounds_complete"), md.get("stop_reason"))
 
 

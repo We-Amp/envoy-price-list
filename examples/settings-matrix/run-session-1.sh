@@ -9,12 +9,13 @@
 #                                         features.py was rerun with corrected counter names)
 #   run-session-1.sh queue [EPL_ARGS...]   steps 1.2 to 1.6: run S, 18, 17, 13, then 18w
 #
-# Queue rules: it does not start unless every smoke leg passes the evidence check and the
-# mandatory worst case (smoke seconds per leg x cap legs) is at most 9 h 30 min (FORCE=1
-# starts it anyway, after the lead said so). Hard stop STOP_H hours (default 10) after the
-# queue starts: each run gets the time that is left and is stopped with SIGTERM (its own
-# process only, through `timeout`) when it runs out; a stopped run writes its partial
-# results and marks itself incomplete. If run S ends without a complete result, the queue
+# Queue rules: it does not start unless every arm has smoke legs and every smoke leg passes
+# the evidence check (no override), and the mandatory worst case (smoke seconds per leg x
+# cap legs) is at most 9 h 30 min (FORCE=1 overrides only this budget question, after the
+# lead said so). Hard stop STOP_H hours (default 10) after the queue starts: each run gets
+# the time that is left and is then sent SIGTERM through `timeout --foreground`, which
+# signals the harness process only; the harness stops its own Envoy, client and
+# containers, writes its partial results and marks the run incomplete. If run S ends without a complete result, the queue
 # stops: no row runs without a floor from its own session. 18w (optional) starts only if
 # the time used plus its worst case fits inside the stop.
 #
@@ -31,7 +32,7 @@ STOP_S=$(( ${STOP_H:-10} * 3600 ))
 CAL_RPS=${CAL_RPS:-19200,20800,22400}
 RUNS_MANDATORY="run-s 18-access-log 17-tracing 13-ext-authz"
 RUN_OPTIONAL="18w-access-log-w16"
-SMOKES="smoke-s1 smoke-s2 smoke-18 smoke-17a smoke-17b smoke-13 smoke-18w"
+SMOKES="smoke-s1 smoke-s2 smoke-18 smoke-17a smoke-17b smoke-13 smoke-18w smoke-ref1 smoke-ref2 smoke-ref3"
 mkdir -p "$R"
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$R/queue.log"; }
 
@@ -79,8 +80,10 @@ case "$mode" in
     log "queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) args: $*"
     check
     rc=$?
-    if [ "$rc" -ne 0 ] && [ "${FORCE:-0}" != 1 ]; then
-      log "queue not started (check rc=$rc; FORCE=1 overrides only after the lead agreed)"
+    if [ "$rc" -eq 3 ] && [ "${FORCE:-0}" = 1 ]; then
+      log "budget above 9 h 30 min: FORCE=1 given, starting (the lead agreed)"
+    elif [ "$rc" -ne 0 ]; then
+      log "queue not started (check rc=$rc: 1 = evidence check failed, no override; 3 = budget, FORCE=1 after the lead agreed)"
       exit 1
     fi
     T0=$(date +%s)
@@ -92,7 +95,7 @@ case "$mode" in
         continue
       fi
       log "start $run (${L}s left before the stop)"
-      timeout --signal=TERM --kill-after=300 "$L" $EPL run "$C/$run.json" --out "$R/$run" "$@" >> "$R/queue.log" 2>&1
+      timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/$run.json" --out "$R/$run" "$@" >> "$R/queue.log" 2>&1
       rc=$?
       [ "$rc" -eq 124 ] && log "$run stopped at the session stop (SIGTERM); partial results, incomplete if short"
       log "end $run rc=$rc"
@@ -108,7 +111,7 @@ case "$mode" in
     L=$(left)
     if [ "$CAP" -le "$L" ]; then
       log "start $RUN_OPTIONAL (worst case ${CAP}s, ${L}s left)"
-      timeout --signal=TERM --kill-after=300 "$L" $EPL run "$C/$RUN_OPTIONAL.json" --out "$R/$RUN_OPTIONAL" "$@" \
+      timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/$RUN_OPTIONAL.json" --out "$R/$RUN_OPTIONAL" "$@" \
         >> "$R/queue.log" 2>&1
       log "end $RUN_OPTIONAL rc=$?"
     else

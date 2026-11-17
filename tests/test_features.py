@@ -237,9 +237,9 @@ class FeaturesTableTest(unittest.TestCase):
         self.assertTrue(FT.replication(new, old)["replicated"])
         new.update(log_mean=-1.6, effect_pct=-1.6)
         self.assertFalse(FT.replication(new, old)["replicated"])
-        self.assertEqual(FT.closing({"verdict": "within the A/A spread (< 1%)", "widened_hi_pct": 1.4}),
+        self.assertEqual(FT.closing({"verdict": "within the A/A spread (< 1%)", "widened_hi_pct": 1.4}, {"ok": True}),
                          "no measurable cost (widened upper end +1.40%)")
-        self.assertEqual(FT.closing({"verdict": "within the A/A spread (< 1%)", "widened_hi_pct": 1.62}),
+        self.assertEqual(FT.closing({"verdict": "within the A/A spread (< 1%)", "widened_hi_pct": 1.62}, {"ok": True}),
                          "not resolved; at most +1.6%")
         self.assertEqual(FT.closing({"incomplete": True, "verdict": "x"}), "open (no verdict)")
         self.assertEqual(FT.verdict({"incomplete": True, "log_mean": 5.0}), experiment.INCOMPLETE)

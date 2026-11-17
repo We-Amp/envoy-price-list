@@ -215,7 +215,5 @@
    "authz-off"
   ]
  ],
- "adaptive": false,
- "floor_from": "~/epl/runs/wk5/run-s/results.json",
- "floor_arm": "base-A2"
+ "adaptive": false
 }
