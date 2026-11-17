@@ -139,6 +139,27 @@ def interpolate(pts, busy):
     return None
 
 
+def no_percentage(r, aa):
+    """Plan S3: when AA-2 misses its limit on j16, the j16 rows carry no percentage headline,
+    only absolute cycles (total and user) with the A/A reach."""
+    st = aa.get((r["run"], r["shape"])) or {}
+    if r["shape"] != "j16" or r.get("missing") or st.get("ok") is True:
+        return
+    r["no_percentage"] = True
+    au = (r.get("cycles_u") or {}).get("abs_diff_mean")
+    r["verdict"] = ("no percentage headline: the j16 A/A %s (reach %s); added %+.1fk cycles per request, "
+                    "user %s" % ("missed its limit" if st.get("ok") is False else "is missing",
+                                 "%.2f%%" % st["reach"] if st.get("reach") is not None else "-",
+                                 r["abs_diff_mean"] / 1e3, "-" if au is None else "%+.1fk" % (au / 1e3)))
+
+
+def fmt_row(r):
+    if r.get("no_percentage"):
+        return "| %s | %s | %s vs %s | - | - | - | %d | %s |" % (r["label"], r["shape"], r["arm"], r["ref"], r["n"],
+                                                               r["verdict"])
+    return FT.fmt_row(r)
+
+
 def tables(runs):
     L, js = [], {"runs": {}, "families": {}}
     L.append("# Feature rows, session 2\n")
@@ -179,10 +200,11 @@ def tables(runs):
         have = sum(1 for r in rows if r.get("t_p") is not None)
         for r in rows:
             r["verdict"] = FT.verdict(r, aa.get((r["run"], r["shape"])))
+            no_percentage(r, aa)
         L.append("## %s (Holm over %d rows, %d with data)\n" % (title, k, have))
         L.append(FT.HDR)
         for r in rows:
-            L.append(FT.fmt_row(r))
+            L.append(fmt_row(r))
         L.append("")
         js["families"][name] = {"size": k, "with_data": have, "rows": rows}
         return rows

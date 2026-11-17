@@ -291,3 +291,54 @@ class Table2Test(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewT1T3T4Test(unittest.TestCase):
+    def test_t1_trace_and_gates(self):
+        from epl.__main__ import trace_problems
+        self.assertEqual(len(trace_problems([], ["wasm"])), 1)
+        self.assertEqual(trace_problems(["[wasm] x"], ["wasm"]), [])
+        with open(os.path.join(SM, "run-session-2.sh")) as f:
+            txt = f.read()
+        self.assertIn('echo "$rc" > "$R/probe/$arm-$shape.rc"', txt)
+        self.assertIn('echo "${PIPESTATUS[0]}" > "$R/jit-check.rc"', txt)
+        self.assertIn('if [ "$jrc" != 0 ] && [ "$warm" != 15 ]; then', txt)
+        probes = txt.split('PROBES="')[1].split('"')[0].split()
+        self.assertEqual(len(probes), 10)
+        for p in ("wasm-empty-s", "lua-empty-s", "gzip-s-ae", "zstd-j4"):
+            self.assertIn(p, probes)
+
+    def test_t1_check_fails_without_probe_rc(self):
+        import subprocess
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, "smoke"))
+        r = subprocess.run(["bash", os.path.join(SM, "run-session-2.sh"), "check"], env=dict(os.environ, RUNS=d),
+                           capture_output=True, text=True, timeout=300)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("probe wasm-empty-s missing or failed", r.stdout)
+        self.assertIn("JIT check rc none", r.stdout)
+
+    def test_t3_no_applicable_item_fails(self):
+        items = [{"stat": "x", "min": 1, "shape": "j4"}]
+        ev = evidence.evaluate({"shape": "j16", "sut_stats_window": {"x": 5}}, items)
+        self.assertFalse(ev["ok"])
+        self.assertIn("no evidence item applies", ev["failed"][0])
+        self.assertTrue(evidence.evaluate({"shape": "j4", "sut_stats_window": {"x": 5}}, items)["ok"])
+        self.assertTrue(evidence.evaluate({"shape": "j4"}, [])["ok"])
+
+    def test_t4_j16_without_aa(self):
+        r = {"run": "14-compression", "shape": "j16", "arm": "gzip", "ref": "comp-off", "label": "compression, gzip",
+             "n": 16, "abs_diff_mean": 150e3, "cycles_u": {"abs_diff_mean": 120e3}, "verdict": "differs"}
+        FT2.no_percentage(r, {("14-compression", "j16"): {"ok": False, "reach": 1.4}})
+        self.assertTrue(r["no_percentage"])
+        self.assertIn("no percentage headline", r["verdict"])
+        self.assertIn("+150.0k", r["verdict"])
+        line = FT2.fmt_row(r)
+        self.assertNotIn("%", line.split("no percentage")[0])
+        r2 = dict(r, verdict="differs")
+        r2.pop("no_percentage")
+        FT2.no_percentage(r2, {("14-compression", "j16"): {"ok": True, "reach": 0.9}})
+        self.assertNotIn("no_percentage", r2)
+        r3 = dict(r2, shape="j4")
+        FT2.no_percentage(r3, {})
+        self.assertNotIn("no_percentage", r3)

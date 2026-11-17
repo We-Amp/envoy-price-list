@@ -357,6 +357,12 @@ def request_headers(shape):
     return out
 
 
+def trace_problems(lines, comps):
+    """A traced probe with no log line of the traced components means the filter was never
+    entered (or logged nothing): that fails, closed."""
+    return [] if lines else ["no %s log lines: the filter did not run on the request" % ",".join(comps)]
+
+
 def check_expect(headers, expects):
     """[problem] for every NAME=VALUE that the response headers do not carry (NAME= : absent)."""
     got = {}
@@ -434,6 +440,7 @@ def cmd_request_probe(args):
         print("%d log lines of %s in %s" % (len(lines), ",".join(comps), elog_path))
         for ln in lines[:args.lines]:
             print("  " + ln[-240:])
+        bad += trace_problems(lines, comps)
     for b in bad:
         print("PROBE FAIL %s" % b)
     print("request-probe: %s" % ("PASS" if not bad else "FAIL"))

@@ -43,6 +43,8 @@ CAL_J16=${CAL_J16:-2000,2400,2800}
 CAL_LC=${CAL_LC:-5200,7600,10400}
 MANDATORY="aa-2 run-f 14-compression lc-j16"
 OPTIONAL="14b lc-sfh"
+# every probe the smoke runs (ARM-SHAPE); check fails unless each has a zero rc file
+PROBES="gzip-j4 brotli-j4 zstd-j4 comp-off-j4 gzip-s-ae lua-header-s wasm-header-s filter-off-s lua-empty-s wasm-empty-s"
 SMOKES="smoke-aa smoke-f1 smoke-f2 smoke-f3 smoke-14a smoke-14b smoke-lc smoke-14bidle smoke-sfh"
 mkdir -p "$R"
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$R/queue.log"; }
@@ -67,6 +69,19 @@ check() {
       bad=1
     fi
   done
+  for p in $PROBES; do
+    if [ "$(cat "$R/probe/$p.rc" 2>/dev/null)" != 0 ]; then
+      log "probe $p missing or failed (rc $(cat "$R/probe/$p.rc" 2>/dev/null || echo none))"
+      bad=1
+    fi
+  done
+  local jrc warm
+  jrc=$(cat "$R/jit-check.rc" 2>/dev/null || echo none)
+  warm=$(python3 -c 'import json,os,sys; p=os.environ.get("RATES_JSON"); print(json.load(open(p)).get("f_warmup_s", 5) if p else 5)')
+  if [ "$jrc" != 0 ] && [ "$warm" != 15 ]; then
+    log "JIT check rc $jrc and run F warm-up ${warm}s: set f_warmup_s 15 in RATES_JSON (or rerun the check)"
+    bad=1
+  fi
   python3 "$FEAT" budget "$SMOKE" "$FROZEN" | tee -a "$R/queue.log"
   local brc=${PIPESTATUS[0]}
   [ "$brc" -eq 3 ] && log "mandatory worst case above 9 h 30 min: ask the lead before the queue"
@@ -80,7 +95,9 @@ probe() {  # probe ARM SHAPE CONFIG [request-probe args]
   log "probe $arm $shape"
   $EPL request-probe "$C/$cfg.json" --arm "$arm" --shape "$shape" --out "$R/probe/$arm-$shape" "$@" \
     >> "$R/queue.log" 2>&1
-  log "end probe $arm $shape rc=$?"
+  local rc=$?
+  echo "$rc" > "$R/probe/$arm-$shape.rc"
+  log "end probe $arm $shape rc=$rc"
 }
 
 mode=${1:-}
@@ -98,6 +115,7 @@ case "$mode" in
     log "JIT warm-up check"
     $EPL run "$C/jit-check.json" --out "$R/jit-check" --allow-short "$@" >> "$R/queue.log" 2>&1
     python3 "$TABLE" jit "$R/jit-check" | tee -a "$R/queue.log"
+    echo "${PIPESTATUS[0]}" > "$R/jit-check.rc"
     for lib in gzip brotli zstd; do probe "$lib" j4 14-compression --expect "content-encoding=$( \
       case $lib in gzip) echo gzip;; brotli) echo br;; zstd) echo zstd;; esac)" "$@"; done
     probe comp-off j4 14-compression --expect "content-encoding=" "$@"

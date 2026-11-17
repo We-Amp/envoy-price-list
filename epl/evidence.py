@@ -265,6 +265,9 @@ def evaluate(m, items, config_dump=None, gate=True):
     """The evidence record of one leg: every item that applies to the leg's shape, `ok`
     only when all of them pass."""
     res = [check_item(m, it, config_dump) for it in items or [] if applies(it, m.get("shape"))]
+    if items and not res:
+        # an arm with evidence but nothing for this shape would pass vacuously
+        res = [{"label": "evidence", "ok": False, "why": "no evidence item applies to shape %s" % m.get("shape")}]
     return {"ok": all(r["ok"] for r in res), "gate": bool(gate), "items": res,
             "failed": [r["label"] + ": " + r["why"] for r in res if not r["ok"]]}
 
