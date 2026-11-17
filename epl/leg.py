@@ -261,12 +261,12 @@ def json_lines_check(path, n=JSON_CHECK_LINES):
             head.append(ln)
         f.seek(0, os.SEEK_END)
         size = f.tell()
-        f.seek(max(0, size - 64 * 1024 * max(1, n // 100)))
+        off = max(len(b"".join(head)), size - 256 * 1024)
+        f.seek(off)
         tail = f.read().splitlines(True)
-    if len(tail) > n:
-        tail = tail[-n:]
-    elif tail and size > 64 * 1024 and not tail[0].endswith(b"\n"):
-        tail = tail[1:]
+    if off > len(b"".join(head)) and tail:
+        tail = tail[1:]  # the read started inside a line
+    tail = tail[-n:]
     out = {"checked": 0, "bad": 0}
     for ln in head + tail:
         ln = ln.strip()

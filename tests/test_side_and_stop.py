@@ -133,6 +133,16 @@ class LegHelpersTest(unittest.TestCase):
                 f.write(json.dumps({"i": i, "path": "/s"}) + "\n")
         r = leg.json_lines_check(p)
         self.assertEqual(r, {"checked": 200, "bad": 0})
+        small = os.path.join(d, "b.alog")
+        with open(small, "w") as f:
+            for i in range(50):
+                f.write(json.dumps({"i": i}) + "\n")
+        self.assertEqual(leg.json_lines_check(small), {"checked": 50, "bad": 0})
+        big = os.path.join(d, "c.alog")
+        with open(big, "w") as f:
+            for i in range(5000):
+                f.write(json.dumps({"i": i, "pad": "x" * 200}) + "\n")
+        self.assertEqual(leg.json_lines_check(big), {"checked": 200, "bad": 0})
         with open(p, "a") as f:
             f.write("[2026-11-17T00:00:00.000Z] \"GET /s HTTP/1.1\" 200\n")
         r = leg.json_lines_check(p)
