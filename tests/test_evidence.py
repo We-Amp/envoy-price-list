@@ -12,7 +12,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def leg(**over):
-    m = {"leg_id": "r01-s-x", "arm": "x", "round": 1, "responses_raw": 104000,
+    m = {"leg_id": "r01-s-x", "arm": "x", "shape": "s", "round": 1, "responses_raw": 104000,
          "sut_stats_window": {"http.ingress_http.ext_authz.ok": 104050, "http.ingress_http.ext_authz.denied": 0,
                               "cluster.ext_authz.upstream_cx_total": 0,
                               "http.ingress_http.tracing.random_sampling": 1040},
@@ -182,6 +182,7 @@ class EvidenceCheckTest(unittest.TestCase):
         frozen, problems = evidence.freeze(spec, evidence.load_legs(self.run))
         self.assertEqual(problems, [])
         it = frozen["hdr"][0]
+        self.assertEqual(it["shape"], "s")
         self.assertAlmostEqual(it["per_request"], 137.0 + 75.0 / 104000, places=6)
         rows, problems = evidence.check_run(frozen, self.run)
         self.assertEqual(problems, [])

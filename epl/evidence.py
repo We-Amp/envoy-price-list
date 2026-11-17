@@ -24,7 +24,9 @@ exact equality, except a count that must stay at zero, whose tolerance is writte
                           per_request is the mean per-request value of arm A in the
                           smoke legs plus D, written in by `epl evidence-check --freeze`;
                           an item with a ref that has not been frozen fails
+     "shape": NAME or [NAMES]   the item applies only to legs of these shapes
      "label": text}
+  A `stat` ending in "*" with `absent` means no stat with that prefix in the snapshot.
 
 Scopes:
   window  counter delta over the perf window (`sut_stats_window` of the leg; the
@@ -64,7 +66,7 @@ def validate_items(items, arm_names=()):
         sc = it.get("scope", "window")
         if sc not in SCOPES:
             errs.append("%s: scope must be one of %s" % (w, SCOPES))
-        kinds = [k for k in KINDS if k in it]
+        kinds = [k for k in KINDS if k in it] or (["per_request"] if "ref" in it else [])
         if not kinds:
             errs.append("%s: needs one of %s" % (w, KINDS))
         if "equals" in it and ({"min", "max"} & set(kinds)):
@@ -188,6 +190,14 @@ def check_item(m, it, config_dump=None):
     if snapshot_missing(m, sc):
         r["why"] = "no %s snapshot in this leg (%s)" % (sc, m.get("leg_end_snapshot_error") or "not taken")
         return r
+    if it.get("absent") and it["stat"].endswith("*") and sc in SNAPSHOT:
+        # a prefix: no stat of that family at all
+        pre = it["stat"][:-1]
+        hit = sorted(k for k in m[SNAPSHOT[sc]] if k.startswith(pre))
+        r["value"] = hit[:4]
+        r["ok"] = not hit
+        r["why"] = "ok" if r["ok"] else "present (%s)" % ", ".join(hit[:4])
+        return r
     v = lookup(m, sc, it["stat"])
     r["value"] = v
     if it.get("absent"):
@@ -245,9 +255,16 @@ def check_item(m, it, config_dump=None):
     return r
 
 
+def applies(it, shape):
+    """An item with `shape` (a name or a list) applies only to legs of those shapes."""
+    sh = it.get("shape")
+    return sh is None or shape == sh or (isinstance(sh, list) and shape in sh)
+
+
 def evaluate(m, items, config_dump=None, gate=True):
-    """The evidence record of one leg: every item's result, `ok` only when all pass."""
-    res = [check_item(m, it, config_dump) for it in items or []]
+    """The evidence record of one leg: every item that applies to the leg's shape, `ok`
+    only when all of them pass."""
+    res = [check_item(m, it, config_dump) for it in items or [] if applies(it, m.get("shape"))]
     return {"ok": all(r["ok"] for r in res), "gate": bool(gate), "items": res,
             "failed": [r["label"] + ": " + r["why"] for r in res if not r["ok"]]}
 
@@ -306,25 +323,36 @@ def per_request_value(m, it):
 def freeze(spec, legs):
     """A copy of the spec with every `ref` item's per_request set from the legs:
     the mean per-request value of the ref arm (or the item's own arm) plus the offset.
+    The value is taken per shape: an item without `shape` becomes one frozen item per shape
+    the arm's legs ran (a per-request byte count differs between shapes), each with `shape`
+    set. An item that is frozen already is kept as it is.
     Returns (spec, problems)."""
     out, problems = {}, []
     for arm, items in spec.items():
         new = []
+        mine = sorted({m.get("shape") for m in legs if m.get("arm") == arm and m.get("shape")})
         for it in items:
-            it = dict(it)
             ref = it.get("ref")
-            if ref:
-                src = arm if ref["arm"] == "self" else ref["arm"]
-                vals = [per_request_value(m, it) for m in legs if m.get("arm") == src
+            if not ref or it.get("per_request") is not None:
+                new.append(dict(it))
+                continue
+            src = arm if ref["arm"] == "self" else ref["arm"]
+            shapes = [s for s in mine if applies(it, s)]
+            if not shapes:
+                problems.append("%s %s: no leg of this arm in a shape the item covers" % (arm, label(it)))
+                new.append(dict(it))
+                continue
+            for s in shapes:
+                vals = [per_request_value(m, it) for m in legs if m.get("arm") == src and m.get("shape") == s
                         and (m.get("verdict") or {}).get("valid", True)]
                 vals = [v for v in vals if v is not None]
+                f = dict(it, shape=s)
                 if not vals:
-                    problems.append("%s %s: no value of arm %s in the legs" % (arm, label(it), src))
+                    problems.append("%s %s on %s: no value of arm %s in the legs" % (arm, label(it), s, src))
                 else:
-                    it["per_request"] = sum(vals) / len(vals) + float(ref.get("offset", 0.0))
-                    it["ref"] = dict(ref, frozen_from_legs=len(vals),
-                                     frozen_min=min(vals), frozen_max=max(vals))
-            new.append(it)
+                    f["per_request"] = sum(vals) / len(vals) + float(ref.get("offset", 0.0))
+                    f["ref"] = dict(ref, frozen_from_legs=len(vals), frozen_min=min(vals), frozen_max=max(vals))
+                new.append(f)
         out[arm] = new
     return out, problems
 
