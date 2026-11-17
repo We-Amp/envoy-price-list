@@ -38,6 +38,29 @@ FILE_LOG = "type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAcce
 UPSTREAM_HTTP = "type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 JWT_AUTHN = "type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication"
 LOCAL_RL = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
+COMPRESSOR = "type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor"
+LUA = "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+WASM = "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"
+
+# Compressor libraries with every field at the filter's documented default, written out so
+# the bootstrap states what ran: (extension name, type URL, defaults).
+COMPRESSOR_LIBS = {
+    "gzip": ("envoy.compression.gzip.compressor",
+             "type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip",
+             {"memory_level": 5, "compression_level": "DEFAULT_COMPRESSION",
+              "compression_strategy": "DEFAULT_STRATEGY", "window_bits": 12, "chunk_size": 4096}),
+    "brotli": ("envoy.compression.brotli.compressor",
+               "type.googleapis.com/envoy.extensions.compression.brotli.compressor.v3.Brotli",
+               {"quality": 3, "encoder_mode": "DEFAULT", "window_bits": 18, "input_block_bits": 24,
+                "chunk_size": 4096, "disable_literal_context_modeling": False}),
+    "zstd": ("envoy.compression.zstd.compressor",
+             "type.googleapis.com/envoy.extensions.compression.zstd.compressor.v3.Zstd",
+             {"compression_level": 3, "enable_checksum": False, "strategy": "DEFAULT", "chunk_size": 4096}),
+}
+# the response direction at its defaults (no request direction: requests are not compressed)
+COMPRESSOR_RESPONSE = {"common_config": {"min_content_length": 30}, "disable_on_etag_header": False,
+                       "remove_accept_encoding_header": False}
+WASM_RUNTIMES = ("envoy.wasm.runtime.v8",)
 
 # Settings an arm may change, with what each one does. All are generic Envoy
 # settings; none is off by default in the sense of costing work.
@@ -68,6 +91,12 @@ SETTINGS = {
     "idle_timers_off": "true: the stream idle timeout (HCM stream_idle_timeout, default 5 min) and the downstream "
                        "connection idle timeout (HCM common_http_protocol_options.idle_timeout, default 1 h) "
                        "both set to 0s, which disables them",
+    "compressor": "one compressor filter before the router, response direction only, every library field "
+                  "written out at its default: {library: gzip | brotli | zstd, <library field>: value ...}; "
+                  "stats under compressor.epl.<library>.",
+    "lua": "Lua filter before the router with an inline script: {inline: source}",
+    "wasm": "Wasm filter before the router, one VM per worker, module from a local file, fail closed: "
+            "{file: path (relative to the harness), sha256: hex, runtime: envoy.wasm.runtime.v8}",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
 }
@@ -190,6 +219,40 @@ def local_ratelimit_filter(rl):
         "filter_enforced": {"runtime_key": "local_rate_limit_enforced", "default_value": pct}}}
 
 
+def compressor_filter(c):
+    lib = c.get("library")
+    if lib not in COMPRESSOR_LIBS:
+        raise ValueError("compressor.library must be one of %s" % sorted(COMPRESSOR_LIBS))
+    name, url, defaults = COMPRESSOR_LIBS[lib]
+    bad = sorted(set(c) - {"library"} - set(defaults))
+    if bad:
+        raise ValueError("compressor %s: unknown fields %s" % (lib, bad))
+    cfg = dict(defaults)
+    cfg.update({k: v for k, v in c.items() if k != "library"})
+    cfg["@type"] = url
+    return {"name": "envoy.filters.http.compressor", "typed_config": {
+        "@type": COMPRESSOR, "response_direction_config": copy.deepcopy(COMPRESSOR_RESPONSE),
+        "compressor_library": {"name": "epl", "typed_config": cfg}}}
+
+
+def lua_filter(lu):
+    if set(lu) != {"inline"} or not isinstance(lu["inline"], str) or not lu["inline"].strip():
+        raise ValueError("lua takes {inline: source}")
+    return {"name": "envoy.filters.http.lua", "typed_config": {
+        "@type": LUA, "default_source_code": {"inline_string": lu["inline"]}}}
+
+
+def wasm_filter(w):
+    if not w.get("file") or not w.get("sha256") or w.get("runtime", WASM_RUNTIMES[0]) not in WASM_RUNTIMES:
+        raise ValueError("wasm takes {file, sha256, runtime: %s}" % "|".join(WASM_RUNTIMES))
+    return {"name": "envoy.filters.http.wasm", "typed_config": {
+        "@type": WASM, "config": {
+            "name": "epl", "root_id": "",
+            "vm_config": {"vm_id": "epl", "runtime": w.get("runtime", WASM_RUNTIMES[0]),
+                          "code": {"local": {"filename": w["file"]}}},
+            "failure_policy": "FAIL_CLOSED"}}}
+
+
 def _static_cluster(name, port, http2=False):
     c = {"name": name, "connect_timeout": "1s", "type": "STATIC", "lb_policy": "ROUND_ROBIN",
          "load_assignment": {"cluster_name": name, "endpoints": [{"lb_endpoints": [{
@@ -293,6 +356,12 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, jwt_filter(envoy_cfg["jwt_authn"]))
     if envoy_cfg.get("local_ratelimit"):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, local_ratelimit_filter(envoy_cfg["local_ratelimit"]))
+    if envoy_cfg.get("lua"):
+        hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, lua_filter(envoy_cfg["lua"]))
+    if envoy_cfg.get("wasm"):
+        hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, wasm_filter(envoy_cfg["wasm"]))
+    if envoy_cfg.get("compressor"):
+        hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, compressor_filter(envoy_cfg["compressor"]))
     chain = {"filters": [{"name": "envoy.filters.network.http_connection_manager", "typed_config": hcm}]}
     if envoy_cfg.get("tls"):
         if not cert_dir:
@@ -359,6 +428,39 @@ def origin_files(shapes):
     return out
 
 
+def body_path(shape, root):
+    return os.path.join(root, shape["body_file"])
+
+
+def origin_bodies(shapes, root):
+    """{relative path under www: bytes} for proxied shapes that serve a file from the
+    harness (`body_file`, checked against `body_sha256` and `body_bytes`)."""
+    import hashlib
+    out = {}
+    for s in shapes:
+        if s["kind"] != "proxied" or not s.get("body_file"):
+            continue
+        with open(body_path(s, root), "rb") as f:
+            b = f.read()
+        if hashlib.sha256(b).hexdigest() != s.get("body_sha256"):
+            raise ValueError("shape %s: %s does not match body_sha256" % (s["name"], s["body_file"]))
+        if len(b) != int(s["body_bytes"]):
+            raise ValueError("shape %s: body_bytes %s but the file has %d" % (s["name"], s["body_bytes"], len(b)))
+        out[s["path"].lstrip("/")] = b
+    return out
+
+
+def content_types(shapes):
+    """{path: content type} for proxied shapes that set one (else nginx's default type)."""
+    out = {}
+    for s in shapes:
+        if s["kind"] == "proxied" and s.get("content_type"):
+            if out.get(s["path"], s["content_type"]) != s["content_type"]:
+                raise ValueError("shapes on path %s differ in content_type" % s["path"])
+            out[s["path"]] = s["content_type"]
+    return out
+
+
 # gRPC allow service (ext_authz "grpc"): one static gRPC message of length 0 (an empty
 # CheckResponse, whose status code 0 means OK) with grpc-status 0 as a trailer, over h2c.
 # The static module answers POST with 405; error_page turns that into an internal GET of
@@ -368,7 +470,7 @@ AUTHZ_GRPC_BODY = b"\x00\x00\x00\x00\x00"
 
 
 def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_timeout_s=600,
-               keepalive_requests=10000000):
+               keepalive_requests=10000000, types=None):
     authz = ("  server { listen 127.0.0.1:%d; location / { return 200; } }\n" % int(authz_port)) if authz_port else ""
     if authz_grpc_port:
         authz += ("  server { listen 127.0.0.1:%d; http2 on; root /www;\n"
@@ -388,7 +490,9 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
         "  keepalive_requests %d;\n"
         "  keepalive_timeout %ds;\n"
         "  open_file_cache max=64;\n"
-        "  server { listen 127.0.0.1:%d; root /www; }\n"
+        "  server { listen 127.0.0.1:%d; root /www;%s }\n"
         "%s"
-        "}\n" % (int(workers), int(keepalive_requests), int(keepalive_timeout_s), int(port), authz)
+        "}\n" % (int(workers), int(keepalive_requests), int(keepalive_timeout_s), int(port),
+                 "".join("\n    location = %s { types { } default_type %s; }" % (p, t)
+                         for p, t in sorted((types or {}).items())) + ("\n " if types else ""), authz)
     )

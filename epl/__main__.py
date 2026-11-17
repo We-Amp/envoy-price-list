@@ -8,6 +8,7 @@ Commands (see README.md):
   status RUN_DIR                 progress of a (detached) run
   report RESULTS_JSON [--floor AA_RESULTS_JSON]   regenerate summary.md from results.json
   evidence-check SPEC RUN_DIR... [--freeze OUT]   run an evidence spec offline against recorded legs
+  request-probe CFG --arm A --shape S [--trace C] [--expect H=V]   one request through a throw-away Envoy
   scrub RUN_DIR                  replace home directory paths with ~ in a run directory
   selftest                       offline tests: statistics, validity gates, schedule, dry run
   remote HOST <run|calibrate|status|fetch|ship> ...  same, on a bench box over ssh
@@ -80,7 +81,8 @@ def cmd_render(args):
         print("# second hop")
         print(envoy_config.bootstrap_text(exp["shapes"], experiment.hop2_envoy(exp), exp["origin"]["port"]))
     print(envoy_config.nginx_conf(exp["origin"]["port"], exp["origin"].get("workers", 8),
-                                  exp["origin"].get("authz_port")))
+                                  exp["origin"].get("authz_port"), exp["origin"].get("authz_grpc_port"),
+                                  types=envoy_config.content_types(exp["shapes"])))
 
 
 def _detach(log_path):
@@ -345,6 +347,99 @@ def cmd_evidence_check(args):
     sys.exit(0 if ok else 1)
 
 
+def request_headers(shape):
+    """Request headers the client sends for a shape (its --request-header name:value arguments)."""
+    out, xs = [], list(shape.get("client_extra_args") or [])
+    for i, x in enumerate(xs):
+        if x == "--request-header" and i + 1 < len(xs):
+            k, _, v = xs[i + 1].partition(":")
+            out.append((k.strip(), v.strip()))
+    return out
+
+
+def check_expect(headers, expects):
+    """[problem] for every NAME=VALUE that the response headers do not carry (NAME= : absent)."""
+    got = {}
+    for k, v in headers:
+        got.setdefault(k.lower(), []).append(v)
+    bad = []
+    for e in expects or []:
+        k, _, v = e.partition("=")
+        have = got.get(k.lower().strip())
+        if v == "":
+            if have:
+                bad.append("%s present (%s), expected absent" % (k, have))
+        elif not have or v not in have:
+            bad.append("%s is %s, expected %s" % (k, have, v))
+    return bad
+
+
+def cmd_request_probe(args):
+    """Start the arm's Envoy (and the origin when the shape is proxied) on the SUT CPUs, send
+    one request of the shape (with the shape's client headers) from Python, print the status,
+    response headers and body size, check --expect NAME=VALUE (NAME= for absent), stop. With
+    --trace COMPONENTS (e.g. lua:trace,wasm:trace) Envoy runs with that component log level;
+    its log is kept in the output directory and the lines of those components are printed.
+    For the smoke only: not a measurement."""
+    import http.client as hc
+    exp = _load(args, check_rounds=False)
+    arm = [a for a in exp["arms"] if a["name"] == args.arm]
+    shape = [s for s in exp["shapes"] if s["name"] == args.shape]
+    if not arm or not shape:
+        sys.exit("unknown arm or shape")
+    arm, shape = arm[0], shape[0]
+    run_dir = _run_dir(dict(exp, name="%s-probe-%s-%s" % (exp["name"], arm["name"], shape["name"])), args.out)
+    os.makedirs(os.path.join(run_dir, "logs"), exist_ok=True)
+    log = lambda m: print(m, flush=True)  # noqa: E731
+    errs = experiment.check_wasm(exp)
+    if errs:
+        sys.exit("; ".join(errs))
+    bpath, _, _ = experiment.prepare_bootstraps(exp, run_dir, log)
+    from .leg import RealBackend
+    from .origin import Origin
+    signal.signal(signal.SIGTERM, _on_term)
+    be = RealBackend(exp, run_dir, log)
+    origin = Origin(exp["origin"], exp["cpus"].get("origin", ""), [shape], run_dir, log)
+    extra = list(arm.get("extra_args", []))
+    if args.trace:
+        extra += ["--component-log-level", args.trace]
+    elog_path = os.path.join(run_dir, "logs", "probe.envoy.log")
+    envoy = elog = None
+    bad = []
+    try:
+        origin.start()
+        envoy, elog = be._start_envoy(arm["binary"], bpath[arm["name"]], exp["cpus"]["sut"], exp["envoy"]["workers"],
+                                      exp["envoy"]["admin_port"], dict(arm.get("env") or {}), extra, elog_path)
+        c = hc.HTTPConnection("127.0.0.1", int(exp["envoy"]["listener_port"]), timeout=10)
+        c.request("GET", shape["path"], headers=dict(request_headers(shape)))
+        r = c.getresponse()
+        body = r.read()
+        hdrs = r.getheaders()
+        c.close()
+        print("status %d, body %d bytes" % (r.status, len(body)))
+        for k, v in hdrs:
+            print("  %s: %s" % (k, v))
+        if r.status != 200:
+            bad.append("status %d" % r.status)
+        bad += check_expect(hdrs, args.expect)
+    finally:
+        if envoy is not None:
+            be._stop_envoy(envoy, elog, elog_path)
+        origin.stop()
+        be.close()
+    if args.trace:
+        comps = [x.split(":")[0] for x in args.trace.split(",")]
+        with open(elog_path) as f:
+            lines = [ln.rstrip() for ln in f if any("[%s]" % c in ln for c in comps)]
+        print("%d log lines of %s in %s" % (len(lines), ",".join(comps), elog_path))
+        for ln in lines[:args.lines]:
+            print("  " + ln[-240:])
+    for b in bad:
+        print("PROBE FAIL %s" % b)
+    print("request-probe: %s" % ("PASS" if not bad else "FAIL"))
+    sys.exit(1 if bad else 0)
+
+
 def cmd_scrub(args):
     from .sysprobe import scrub_tree
     for p in scrub_tree(os.path.expanduser(args.run_dir)):
@@ -513,6 +608,16 @@ def main(argv=None):
     p.add_argument("--freeze", metavar="OUT", help="resolve ref items from these legs and write the frozen spec")
     p.add_argument("-v", "--verbose", action="store_true")
     p.set_defaults(fn=cmd_evidence_check)
+    p = sp.add_parser("request-probe")
+    p.add_argument("config")
+    p.add_argument("--arm", required=True)
+    p.add_argument("--shape", required=True)
+    p.add_argument("--trace", help="component log levels, e.g. lua:trace,wasm:trace")
+    p.add_argument("--expect", action="append", metavar="NAME=VALUE", help="response header (NAME= : absent)")
+    p.add_argument("--lines", type=int, default=40)
+    p.add_argument("--out")
+    common(p)
+    p.set_defaults(fn=cmd_request_probe, allow_short=True)
     p = sp.add_parser("scrub")
     p.add_argument("run_dir")
     p.set_defaults(fn=cmd_scrub)

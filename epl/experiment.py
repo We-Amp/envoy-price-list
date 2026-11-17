@@ -13,6 +13,8 @@ import time
 from . import __version__, envoy_config, stats, sysprobe, validity
 
 ALPHA = 0.05
+# the harness directory: body files and Wasm modules in a config are relative to it
+HARNESS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DEFAULTS = {
     # Rounds: at least `rounds`, then blocks of `rounds_block` until every primary
@@ -165,7 +167,33 @@ def arm_envoy(exp, arm, run_dir=""):
         e["authz_port"] = exp["origin"]["authz_port"]
     if e.get("two_hop"):
         e["upstream_port"] = exp["hop2"]["listener_port"]
+    if e.get("wasm") and e["wasm"].get("file"):
+        e["wasm"] = dict(e["wasm"], file=os.path.join(HARNESS_ROOT, e["wasm"]["file"]))
     return e
+
+
+def wasm_files(exp):
+    """{arm: (absolute path, expected sha256)} of the arms that load a Wasm module."""
+    out = {}
+    for a in exp["arms"]:
+        w = arm_envoy(exp, a).get("wasm")
+        if w:
+            out[a["name"]] = (w["file"], w.get("sha256"))
+    return out
+
+
+def check_wasm(exp):
+    """[error] for every Wasm module whose file is missing or differs from its sha256."""
+    errs = []
+    for arm, (path, want) in wasm_files(exp).items():
+        try:
+            got = sysprobe.file_hashes(path)["sha256"]
+        except OSError as e:
+            errs.append("arm %s: wasm module %s unreadable (%s)" % (arm, path, e))
+            continue
+        if got != want:
+            errs.append("arm %s: wasm module sha256 %s != %s" % (arm, got, want))
+    return errs
 
 
 def hop2_envoy(exp, arm=None):
@@ -303,6 +331,16 @@ def validate(exp, allow_short=False, check_rounds=True):
                             "origin starts only for those); use direct_response routes" % s.get("name"))
         if not str(s.get("path", "")).startswith("/"):
             errs.append("shape %s: path must start with /" % s.get("name"))
+        if s.get("body_file"):
+            if s.get("kind") != "proxied" or not s.get("body_sha256"):
+                errs.append("shape %s: body_file needs a proxied shape and body_sha256" % s.get("name"))
+            else:
+                try:
+                    envoy_config.origin_bodies([s], HARNESS_ROOT)
+                except (OSError, ValueError) as e:
+                    errs.append("shape %s: %s" % (s.get("name"), e))
+        if s.get("warmup_s") is not None and not (isinstance(s["warmup_s"], (int, float)) and s["warmup_s"] >= 0):
+            errs.append("shape %s: warmup_s must be a number >= 0" % s.get("name"))
         if int(s.get("rps", 0)) % int(exp["client"]["concurrency"]) != 0:
             errs.append("shape %s: rps must be divisible by client concurrency" % s.get("name"))
     for a in arms:
@@ -335,6 +373,10 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: a gRPC ext_authz arm needs origin.authz_grpc_port" % a.get("name"))
         elif az and az != "grpc" and not exp["origin"].get("authz_port"):
             errs.append("arm %s: an HTTP ext_authz arm needs origin.authz_port" % a.get("name"))
+        try:
+            envoy_config.bootstrap(exp.get("shapes", []), arm_envoy(exp, a, "/r"), exp["origin"]["port"], "/r/c")
+        except (ValueError, KeyError, TypeError) as e:
+            errs.append("arm %s: %s" % (a.get("name"), e))
         h2s = arm_settings(a).get("hop2_settings")
         if h2s is not None:
             if not arm_settings(a).get("two_hop"):
@@ -368,7 +410,9 @@ def validate(exp, allow_short=False, check_rounds=True):
     from . import evidence as _ev
     for a in arms:
         if "evidence" in a:
-            errs += ["arm %s: %s" % (a.get("name"), x) for x in _ev.validate_items(a["evidence"], names)]
+            # a smoke (evidence recorded) may leave out the arm a ref points at
+            ref_names = names if exp.get("evidence_mode", "gate") == "gate" else ()
+            errs += ["arm %s: %s" % (a.get("name"), x) for x in _ev.validate_items(a["evidence"], ref_names)]
     if exp.get("stop", {}).get("rows") == "confirmatory" and not exp.get("confirmatory"):
         errs.append("stop.rows = confirmatory needs confirmatory rows")
     groups = m.get("perf_event_groups")
@@ -959,7 +1003,8 @@ class Runner:
                 os.sched_setaffinity(0, hc)
             md = collect_metadata(exp, btxt, btexts)
             md["harness_cpus"] = sorted(os.sched_getaffinity(0))
-            errs = check_binaries(exp, md)
+            errs = check_binaries(exp, md) + check_wasm(exp)
+            md["wasm_sha256"] = {a: w[1] for a, w in wasm_files(exp).items()}
             if errs:
                 raise SystemExit("binary proof failed: " + "; ".join(errs))
             md["bootstrap_validate"] = validate_bootstrap(exp, bpath)
@@ -1030,6 +1075,8 @@ class Runner:
             end = {a["name"]: sysprobe.file_hashes(a["binary"])["md5"] for a in exp["arms"]}
             md["arms_md5_at_end"] = end
             md["arms_md5_unchanged"] = all(end[n] == md["arms"][n]["md5"] for n in end)
+            if wasm_files(exp):
+                md["wasm_unchanged_at_end"] = not check_wasm(exp)
             cs = md["machine"].get("cpuidle_sut_summary") or {}
             if cs.get("cpus"):
                 fp = sysprobe.cpuidle_fingerprint(sysprobe.parse_cpuset(cs["cpus"]))

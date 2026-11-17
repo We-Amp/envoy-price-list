@@ -70,11 +70,13 @@ class Origin:
         www = os.path.join(od, "www")
         os.makedirs(www, exist_ok=True)
         files = envoy_config.origin_files(self.shapes)
+        from .experiment import HARNESS_ROOT
+        bodies = envoy_config.origin_bodies(self.shapes, HARNESS_ROOT)
         for rel, size in files.items():
             p = os.path.join(www, rel)
             os.makedirs(os.path.dirname(p), exist_ok=True)
             with open(p, "wb") as f:
-                f.write(b"a" * size)
+                f.write(bodies.get(rel, b"a" * size))
         if self.cfg.get("authz_grpc_port"):
             p = os.path.join(www, envoy_config.AUTHZ_GRPC_FILE)
             os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -83,7 +85,8 @@ class Origin:
         conf = envoy_config.nginx_conf(port, self.cfg.get("workers", 8), self.cfg.get("authz_port"),
                                        self.cfg.get("authz_grpc_port"),
                                        self.cfg.get("keepalive_timeout_s", 600),
-                                       self.cfg.get("keepalive_requests", 10000000))
+                                       self.cfg.get("keepalive_requests", 10000000),
+                                       envoy_config.content_types(self.shapes))
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(conf)
         image = self.cfg.get("image", "nginx:alpine")
@@ -108,6 +111,9 @@ class Origin:
                          authz_port=self.cfg.get("authz_port"), authz_grpc_port=self.cfg.get("authz_grpc_port"),
                          nginx_conf_sha256=sysprobe.text_sha256(conf),
                          files={k: v for k, v in files.items()})
+        if bodies:
+            import hashlib
+            self.meta["body_sha256"] = {k: hashlib.sha256(v).hexdigest() for k, v in bodies.items()}
         time.sleep(0.5)
         return self.meta
 

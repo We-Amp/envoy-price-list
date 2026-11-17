@@ -608,14 +608,15 @@ class RealBackend:
             url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], shape["path"])
             cextra = list(shape.get("client_extra_args") or [])
             nh = ccfg["binary"]
-            # 4. warm-up
-            if ccfg.get("warmup_s", 0) > 0:
-                wa = nighthawk.client_args(ccfg, shape["rps"], url, ccfg["warmup_s"], False, cextra,
+            # 4. warm-up (a shape may set its own length: the JIT warm-up check)
+            warm_s = shape["warmup_s"] if shape.get("warmup_s") is not None else ccfg.get("warmup_s", 0)
+            if warm_s > 0:
+                wa = nighthawk.client_args(ccfg, shape["rps"], url, warm_s, False, cextra,
                                              shape.get("client_base_args"))
                 w = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + wa,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 try:
-                    w.wait(timeout=ccfg["warmup_s"] + 60)
+                    w.wait(timeout=warm_s + 60)
                 finally:
                     self.own.stop(w)
             # 5. measured run
@@ -750,6 +751,11 @@ class RealBackend:
             non2 = sum(_delta(q0, q1, "http.ingress_http.downstream_rq_%s" % c) for c in ("1xx", "3xx", "4xx", "5xx"))
             m["sut_stats_delta"] = _stat_deltas(q0, q1)
             m["sut_stats_window"] = _stat_window(q0, q1)
+            cu = m.get("conn_upstream") or {}
+            if cu.get("segs_total") and q1.get("cluster.origin.upstream_rq_total"):
+                # TCP segments Envoy received from the origin per response, over the connections'
+                # lifetime: a proxy for how many reads a response arrives in
+                m["upstream_segs_in_per_response"] = round(cu["segs_total"] / q1["cluster.origin.upstream_rq_total"], 3)
             if self.side:
                 from .sideservice import window_record
                 for svc in self.side:
