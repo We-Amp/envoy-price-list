@@ -297,7 +297,7 @@ def cmd_evidence_check(args):
     --freeze OUT first resolves every `ref` item from these legs (mean per-request value
     of the referenced arm plus the offset) and writes the spec, or the whole config with
     the frozen items, to OUT; the check then runs with the frozen spec. Exit 1 when any
-    leg fails an item or a ref cannot be resolved."""
+    leg fails an item, a ref cannot be resolved, or an arm of the spec has no leg."""
     from . import evidence
     spec = evidence.load_spec(args.spec)
     if not spec:
@@ -335,11 +335,14 @@ def cmd_evidence_check(args):
                 for it in ev["items"]:
                     print("      %-60s %s value=%s" % (it["label"], "ok" if it["ok"] else it["why"], it.get("value")))
             bad += 0 if ev["ok"] else 1
+    # every arm of the spec must have been checked on at least one leg: an arm that never ran
+    # has had none of its evidence exercised, reference arms (absent items) included
     missing = sorted(set(spec) - seen)
     if missing:
-        print("arms of the spec with no leg in these runs: %s" % ", ".join(missing))
-    print("evidence-check: %s (%d failing)" % ("PASS" if not bad and seen else "FAIL", bad))
-    sys.exit(0 if not bad and seen else 1)
+        print("FAIL arms of the spec with no leg in these runs: %s" % ", ".join(missing))
+    ok = not bad and not missing and bool(seen)
+    print("evidence-check: %s (%d failing legs, %d arms without a leg)" % ("PASS" if ok else "FAIL", bad, len(missing)))
+    sys.exit(0 if ok else 1)
 
 
 def cmd_scrub(args):

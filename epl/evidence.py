@@ -53,6 +53,8 @@ def validate_items(items, arm_names=()):
     errs = []
     if not isinstance(items, list):
         return ["evidence must be a list"]
+    if not items:
+        return ["evidence is empty (an arm with evidence would pass vacuously; leave the key out instead)"]
     for i, it in enumerate(items):
         w = "evidence[%d]" % i
         if not isinstance(it, dict) or not it.get("stat"):
@@ -65,6 +67,8 @@ def validate_items(items, arm_names=()):
         kinds = [k for k in KINDS if k in it]
         if not kinds:
             errs.append("%s: needs one of %s" % (w, KINDS))
+        if "equals" in it and ({"min", "max"} & set(kinds)):
+            errs.append("%s: equals cannot be combined with min or max" % w)
         if ("per_request" in it or "ref" in it) and set(kinds) - {"per_request"}:
             errs.append("%s: per_request (or ref) cannot be combined with %s" % (w, sorted(set(kinds) - {"per_request"})))
         numeric = sc != "config" and not isinstance(it.get("equals"), (str, bool))
@@ -91,6 +95,15 @@ def _path(m, dotted):
             return None
         v = v[p]
     return v
+
+
+SNAPSHOT = {"window": "sut_stats_window", "leg": "sut_stats_leg_end"}
+
+
+def snapshot_missing(m, scope):
+    """True when the stats snapshot a window or leg item reads was never taken (or is empty):
+    then no item of that scope can pass, `absent` included."""
+    return scope in SNAPSHOT and not m.get(SNAPSHOT[scope])
 
 
 def lookup(m, scope, name):
@@ -171,6 +184,9 @@ def check_item(m, it, config_dump=None):
             r["expect"] = it["equals"]
             r["ok"] = bool(vals) and all(v == it["equals"] for v in vals)
             r["why"] = "ok" if r["ok"] else ("not in /config_dump" if not vals else "values %s" % vals[:4])
+        return r
+    if snapshot_missing(m, sc):
+        r["why"] = "no %s snapshot in this leg (%s)" % (sc, m.get("leg_end_snapshot_error") or "not taken")
         return r
     v = lookup(m, sc, it["stat"])
     r["value"] = v
