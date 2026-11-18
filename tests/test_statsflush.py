@@ -226,6 +226,16 @@ class SessionHelpersTest(unittest.TestCase):
             f.write(json.dumps({"leg_id": "a", "arm": "statsd", "shape": "idle-1m", "udp": {"drop_share": 0.03}}) + "\n")
         r = SESS.statsd_interval(out, [sm])
         self.assertEqual(r["1m"]["statsd_interval_s"], 5)
+        # a saturated main thread moves the rung to 5 s too; a later smoke at 5 s never lowers it
+        with open(os.path.join(sm, "legs.jsonl"), "w") as f:
+            f.write(json.dumps({"leg_id": "b", "arm": "statsd", "shape": "idle-300k", "udp": {"drop_share": 0.0},
+                                "main": {"run_ms_per_s": 999.0}}) + "\n")
+        r = SESS.statsd_interval(out, [sm])
+        self.assertEqual(r["300k"]["statsd_interval_s"], 5)
+        with open(os.path.join(sm, "legs.jsonl"), "w") as f:
+            f.write(json.dumps({"leg_id": "c", "arm": "statsd", "shape": "idle-300k", "udp": {"drop_share": 0.0},
+                                "main": {"run_ms_per_s": 480.0}}) + "\n")
+        self.assertEqual(SESS.statsd_interval(out, [sm])["300k"]["statsd_interval_s"], 5)
 
     def test_predict_w(self):
         d = tempfile.mkdtemp()

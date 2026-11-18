@@ -3,7 +3,8 @@
 
     python3 session.py rungs OUT CAL_DIR...         merge stats-calibrate rungs.json files into OUT
     python3 session.py statsd-interval RUNGS SMOKE_DIR...   per rung: 1 s, or 5 s when the
-                                                    smoke's statsd drops reached 1% at 1 s
+                                                    smoke's statsd drops reached 1% at 1 s or
+                                                    its main thread was saturated (never lowered)
     python3 session.py budget CFG_DIR SMOKE_ROOT    seconds per leg per rung from the smoke;
                                                     expected time per run; exit 3 when the
                                                     mandatory part is above 2 h 30 min
@@ -119,11 +120,16 @@ def statsd_interval(rungs_path, smoke_dirs):
                 continue
             rung = m["shape"].split("idle-", 1)[1]
             share = (m.get("udp") or {}).get("drop_share")
+            sat = ((m.get("main") or {}).get("run_ms_per_s") or 0) >= 900.0
             if share is None:
                 continue
             r = rungs.setdefault(rung, {})
             r["statsd_drop_share_smoke"] = share
-            r["statsd_interval_s"] = 5 if share >= 0.01 else 1
+            r["statsd_main_saturated_smoke"] = sat
+            # drops of 1% or more, or a main thread busy all the time (flushes longer than the
+            # interval), move the rung's statsd to 5 s; a decision is never lowered again
+            want = 5 if (share >= 0.01 or sat) else 1
+            r["statsd_interval_s"] = max(r.get("statsd_interval_s", 1), want)
     with open(rungs_path, "w") as f:
         json.dump(rungs, f, indent=1, sort_keys=True)
     return rungs

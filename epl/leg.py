@@ -1188,9 +1188,11 @@ class RealBackend:
             main = statsrow.summarize_main(samples, bursts, window)
             main["sampler_missing"] = sampler.missing
             if interval:
-                exp_n = statsrow.expected_flushes(t1 - t0, interval, (main.get("stall_ms_p50") or 0) / 1e3)
+                exp_n = statsrow.expected_flushes(t1 - t0, interval)
                 main["expected_flushes"] = exp_n
-                main["burst_count_error"] = abs(main["bursts"] - exp_n)
+                # with the main thread saturated the bursts merge into one: no count to compare
+                main["burst_count_error"] = None if statsrow.saturated(main.get("run_ms_per_s")) else \
+                    abs(main["bursts"] - exp_n)
             m["main"] = main
             mdir = os.path.join(self.run_dir, "main")
             os.makedirs(mdir, exist_ok=True)
@@ -1246,8 +1248,11 @@ class RealBackend:
                 m["udp"] = statsrow.udp_window(u0, u1, None, m["used_cg_lines"])
                 if "error" not in m["udp"]:
                     # whole flushes between the two quiescent points
-                    exp_n = int(round((tu1 - tu0) / (interval + (main.get("burst_run_ms_mean") or 0) / 1e3))) \
-                        if interval else None
+                    # flushes the span holds: from the measured period; none when the main thread
+                    # was saturated (flushes back to back: only the whole-flush residual applies)
+                    per = main.get("period_s") if not statsrow.saturated(main.get("run_ms_per_s")) else None
+                    exp_n = int(round((tu1 - tu0) / per)) if per else None
+                    main["saturated"] = statsrow.saturated(main.get("run_ms_per_s"))
                     if kind == "statsd":
                         m["udp"]["fit"] = statsrow.flush_fit(m["udp"]["sent"], m["used_cg_lines"], exp_n)
                         if m["udp"]["fit"].get("n"):

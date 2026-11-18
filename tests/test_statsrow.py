@@ -60,7 +60,10 @@ class BurstTest(unittest.TestCase):
         self.assertNotIn("run_ms_per_period", m)
 
     def test_expected_flushes(self):
-        self.assertEqual(statsrow.expected_flushes(20.0, 1.0, 0.05), 19)
+        # flush starts are one interval apart whatever the flush takes (measured on the bench box)
+        self.assertEqual(statsrow.expected_flushes(20.0, 1.0, 0.74), 20)
+        self.assertTrue(statsrow.saturated(999.8))
+        self.assertFalse(statsrow.saturated(738.7))
         self.assertEqual(statsrow.expected_flushes(20.0, None, 0.05), 0)
 
 

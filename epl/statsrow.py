@@ -356,8 +356,17 @@ def summarize_main(samples, bursts, window_s):
     return out
 
 
-def expected_flushes(window_s, interval_s, burst_s):
-    return int(window_s // (interval_s + burst_s)) if interval_s else 0
+def expected_flushes(window_s, interval_s, burst_s=0.0):
+    """Flushes the window holds. Measured on the bench box (v1.40.2): flush starts are one
+    interval apart whatever the flush takes (1.001 s at 1 s with flushes of 20 to 740 ms), so
+    the count is window / interval; `burst_s` is kept for the signature and unused."""
+    return int(round(window_s / interval_s)) if interval_s else 0
+
+
+def saturated(run_ms_per_s, limit=900.0):
+    """The main thread busy for most of every second: flushes run back to back and no period
+    can be measured."""
+    return run_ms_per_s is not None and run_ms_per_s >= limit
 
 
 # ---------------------------------------------------------------- helpers on threads
