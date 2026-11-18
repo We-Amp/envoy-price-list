@@ -21,12 +21,16 @@ Per box (directory named after it, with box.json):
   smoke-u.json   one round of the three arms at every rung (evidence recorded)
   u-hitm.json    evidence legs outside the timed run (machines whose box lists hitm_events):
                  local and remote HITM loads per request, base and stats-reject, 2 rounds
-  micro.json     the microbenchmark runs: arms mapped to build directories by commit, the
-                 sha256 of every arm's binaries pinned from boxes/sha256/<box>.txt (unpinned
-                 entries stay null and the runner refuses them), the benchmarks with the
-                 box's thread placements and the thread and hammer counts they register, the
-                 expected benchmark names per run entry, 5 interleaved rounds of 5
-                 repetitions
+  micro.json     the microbenchmarks (time-bounded windows, narrowed set):
+                 row 1 atomic_model (Current, Relaxed, RelaxedTestFlag, OneRmw, Sharded;
+                 shared and spaced) from one build; rows 2 and 2b stat_update (counter, gauge
+                 set, the shared per-host primitive counter and its control) and row 3 the
+                 record-only histogram on fix, fix-relaxed and fix-relaxed-p1 (the box's
+                 `rows`); threads 1, 4 and top (histogram 1 and top); the gates; the smoke
+                 entries (smoke threads, every row); the sha256 of every binary used, pinned
+                 from boxes/sha256/<box>.txt (null placeholders until the rebuild: check and
+                 run refuse them); 5 interleaved rounds of 5 repetitions, 0.2 s warm-up and
+                 1 s windows
 
 boxes/sha256/<box>.txt: one line per binary, "<sha256>  <target>-<arm>-<commit>" (the build
 record's form), for example "5149...  atomic_model_benchmark-base-3a80b1543c"; a line whose
@@ -34,8 +38,8 @@ commit is not the arm's commit is an error.
 
 Thread counts (M8): one benchmark thread per physical core, siblings idle, on every box. On a
 VM without SMT a vCPU is a core; on a VM with SMT only one CPU of each core is listed, so the
-same N means the same number of cores on both VMs. Thread and histogram-worker counts stop at
-cores - 1; hammers at cores - 1 (the flushing thread takes one more).
+same N means the same number of cores on both VMs. "Top" is the largest such count that leaves
+a spare core.
 
 Shape mt-s: the 4 KB proxied request to one cluster with one upstream host, one listener,
 one route, HTTP/1.1, round robin, no decision reader of stats (`audit: mt-s`).
@@ -71,23 +75,21 @@ BASE_EVIDENCE = [{"stat": "reject_all", "scope": "config", "absent": True, "labe
                  {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "min": 1,
                   "label": "store stats present"}]
 
-# Microbenchmark arms: build directories by commit, the benchmark overlay restacked on each
-# (round 4 on x86, the third Arm build round; section 4 of the plan)
-MICRO_ARMS = {"base": "3a80b1543c", "fix": "7d877d4424", "fix-relaxed": "f5eae01224",
-              "fix-relaxed-p1": "2b94594e18", "base-relaxed": "e6e0544805", "base-relaxed-p1": "ba1e983c9d"}
+# Microbenchmark arms: the
+# benchmark overlay with the time-bounded windows on the fix stack; the base-stacked arms are
+# dropped. atomic_model contains no Envoy stat code, so it runs from one build (MODEL_ARM).
+MICRO_ARMS = {"fix": "8746c3c4bd", "fix-relaxed": "26af763b9b", "fix-relaxed-p1": "987c8093a9"}
+MODEL_ARM = "fix"
+MICRO_PAIRS = [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]]
 MICRO_BINARIES = ["atomic_model_benchmark", "stat_update_benchmark", "histogram_record_benchmark",
                   "server_stats_flush_contended_benchmark"]
-# Google Benchmark adds the registered minimum and warm-up time to the name
-TIME_PARTS = "(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?"
-FLUSH_STATS = 100000
-# (arm, reference, rows): the ordering contrast at every N, P1 on its own, the base stack at N = 1
-MICRO_PAIRS = [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"],
-               ["base-relaxed", "base", "n1"], ["base-relaxed-p1", "base-relaxed", "n1"], ["fix", "base", "n1"]]
-STAT_BENCHES = ["bmCounterIncShared", "bmCounterIncPerThreadSpaced", "bmCounterIncPerThread", "bmGaugeIncDecShared",
-                "bmGaugeIncDecPerThreadSpaced", "bmGaugeSetShared", "bmGaugeSetPerThreadSpaced",
+MODEL_VARIANTS = ["Current", "Relaxed", "RelaxedTestFlag", "OneRmw", "Sharded"]
+# row 2: counter and gauge set; row 2b: the shared per-host primitive counter and its control
+STAT_BENCHES = ["bmCounterIncShared", "bmCounterIncPerThreadSpaced", "bmGaugeSetShared", "bmGaugeSetPerThreadSpaced",
                 "bmPrimitiveCounterIncShared", "bmPrimitiveCounterIncPerThreadSpaced"]
-MIX_BENCHES = ["bmRequestMixShared", "bmRequestMixPerThreadSpaced"]
-MODEL_VARIANTS = ["Current", "Relaxed", "TestFlag", "RelaxedTestFlag", "OneRmw", "Sharded"]
+# Google Benchmark adds the registered timing to the name; the filters accept it, names are compared without it
+TIME_PARTS = "(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?"
+MICRO_GATES = {"min_window_overlap": 0.99, "min_thread_ops": 100000}
 
 
 def arm(box, name, settings=None, ev=None):
@@ -164,61 +166,58 @@ def read_sha_list(path, arms):
     return out
 
 
+def micro_runs(placement, cpus, rows, threads, hist_workers, arms):
+    runs = []
+    th = "|".join(str(t) for t in threads)
+    common = {"placement": placement, "cpus": cpus, "threads": threads}
+    if "model" in rows:
+        runs.append(dict(common, binary="atomic_model_benchmark", kind="window", arms=[MODEL_ARM], row="1",
+                         filter="^bmModel(%s)(Shared|PerThreadSpaced)%s/manual_time/threads:(%s)$" % (
+                             "|".join(MODEL_VARIANTS), TIME_PARTS, th),
+                         expect=["bmModel%s%s/manual_time/threads:%d" % (v, l, n) for v in MODEL_VARIANTS
+                                 for l in ("Shared", "PerThreadSpaced") for n in threads]))
+    if "stat" in rows:
+        runs.append(dict(common, binary="stat_update_benchmark", kind="window", arms=sorted(arms), row="2, 2b",
+                         filter="^(%s)%s/manual_time/threads:(%s)$" % ("|".join(STAT_BENCHES), TIME_PARTS, th),
+                         expect=["%s/manual_time/threads:%d" % (b, n) for b in STAT_BENCHES for n in threads]))
+    if "histogram" in rows:
+        runs.append(dict(common, binary="histogram_record_benchmark", kind="histogram", arms=sorted(arms), row="3",
+                         threads=hist_workers,
+                         filter="^bmHistogramRecordOnly/(%s)%s/manual_time$" % (
+                             "|".join(str(w) for w in hist_workers), TIME_PARTS),
+                         expect=["bmHistogramRecordOnly/%d/manual_time" % w for w in hist_workers]))
+    return runs
+
+
 def micro_config(box, sha_list=None):
     mc = box["micro"]
     arms = dict(mc.get("arms") or MICRO_ARMS)
-    places = mc["placements"]
-    first_name, first = list(places.items())[0]
-    for pname, p in places.items():
-        if max(p["threads"]) > ncpus(p["cpus"]):
-            raise SystemExit("%s/%s: %d threads on %d CPUs" % (box["name"], pname, max(p["threads"]), ncpus(p["cpus"])))
-    if max(mc["histogram_workers"]) > ncpus(first["cpus"]) or max(mc["flush_hammers"]) + 1 > ncpus(first["cpus"]):
-        raise SystemExit("%s: histogram workers or hammers + 1 above the CPUs of %s" % (box["name"], first_name))
-    runs = []
-    for pname, p in places.items():
-        ths = p["threads"]
-        th = "|".join(str(t) for t in ths)
-        common = {"placement": pname, "cpus": p["cpus"], "threads": ths, "smt": bool(p.get("smt"))}
-        runs.append(dict(common, binary="atomic_model_benchmark",
-                         filter="^bmModel(%s)(Shared|PerThreadSpaced)%s/real_time/threads:(%s)$" % (
-                             "|".join(MODEL_VARIANTS), TIME_PARTS, th),
-                         expect=["bmModel%s%s/real_time/threads:%d" % (v, l, n) for v in MODEL_VARIANTS
-                                 for l in ("Shared", "PerThreadSpaced") for n in ths]))
-        runs.append(dict(common, binary="stat_update_benchmark",
-                         filter="^(%s)%s/real_time/threads:(%s)$" % ("|".join(STAT_BENCHES), TIME_PARTS, th),
-                         expect=["%s/real_time/threads:%d" % (b, n) for b in STAT_BENCHES for n in ths]))
-        runs.append(dict(common, binary="stat_update_benchmark", needs_mix=True,
-                         filter="^(%s)%s/real_time/threads:(%s)$" % ("|".join(MIX_BENCHES), TIME_PARTS, th),
-                         expect=["%s/real_time/threads:%d" % (b, n) for b in MIX_BENCHES for n in ths]))
-    hws = mc["histogram_workers"]
-    runs.append({"binary": "histogram_record_benchmark", "placement": first_name, "cpus": first["cpus"],
-                 "threads": hws, "smt": bool(first.get("smt")),
-                 "filter": "^bmHistogramRecord/(%s)/[01]/[01]%s/manual_time$" % ("|".join(str(w) for w in hws),
-                                                                                TIME_PARTS),
-                 "expect": ["bmHistogramRecord/%d/%d/%d/manual_time" % (w, x, y) for w in hws
-                            for x in (0, 1) for y in (0, 1)]})
-    hks = mc["flush_hammers"]
-    runs.append({"binary": "server_stats_flush_contended_benchmark", "placement": first_name, "cpus": first["cpus"],
-                 "hammers": hks, "smt": bool(first.get("smt")),
-                 # the flush with K hammers, and the hammer-only baseline (K > 0) its rates are read against
-                 "filter": "^(bmFlushContended|bmHammerOnly)/%d/(%s)/[012]%s/real_time$" % (
-                     FLUSH_STATS, "|".join(str(h) for h in hks), TIME_PARTS),
-                 "expect": ["bmFlushContended/%d/%d/%d/real_time" % (FLUSH_STATS, k, m) for k in hks for m in (0, 1, 2)]
-                 + ["bmHammerOnly/%d/%d/%d/real_time" % (FLUSH_STATS, k, m) for k in hks if k > 0 for m in (0, 1, 2)]})
+    n = ncpus(mc["cpus"])
+    for what, ts in (("threads", mc["threads"]), ("histogram_workers", mc["histogram_workers"]),
+                     ("smoke threads", mc["smoke"]["threads"]),
+                     ("smoke histogram_workers", mc["smoke"]["histogram_workers"])):
+        if max(ts) > n:
+            raise SystemExit("%s: %s up to %d on %d CPUs" % (box["name"], what, max(ts), n))
+    runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["threads"], mc["histogram_workers"], arms)
+    smoke_runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["smoke"]["threads"],
+                            mc["smoke"]["histogram_workers"], arms)
     pinned = sha_list or {}
-    expected = {a: {b: (pinned.get(a) or {}).get(b) for b in MICRO_BINARIES} for a in sorted(arms)}
-    return {"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": arms,
-            # the binaries report no revision: identity is the pinned sha256 per arm and binary (MB1)
-            "expected_sha256": expected,
-            "spread_counter": "finish_spread", "max_spread": 0.10,
-            "thread_counters": {"cycles": "cycles_per_op", "instructions": "instructions_per_op"},
-            "mix_fields": 6,
-            "pairs": MICRO_PAIRS, "runs": runs, "rounds": 5, "repetitions": 5,
-            "mix": None, "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
-            "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
-            "note": "mix (STATS_BENCH_MIX) is '<counter incs>:<gauge pairs>:<gauge sets>:<primitive counter incs>:"
-                    "<primitive gauge pairs>:<histogram samples>' (M7), no default: the request-mix benchmarks are "
-                    "skipped until step 0 sets it from the uprobe counts"}
+    used = sorted({(a, r["binary"]) for r in runs + smoke_runs for a in r["arms"]})
+    expected = {}
+    for a, b in used:
+        # null is the placeholder: `check` and `run` refuse it; pins come from boxes/sha256/<box>.txt
+        expected.setdefault(a, {})[b] = (pinned.get(a) or {}).get(b)
+    return dict({"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": arms,
+                 "expected_sha256": expected, "pinned": all(v for x in expected.values() for v in x.values()),
+                 "model_reference": "bmModelCurrent", "pmu": bool(mc.get("pmu", True)),
+                 "max_invol_switches": mc.get("max_invol_switches"),
+                 "pairs": [p for p in MICRO_PAIRS if p[0] in arms and p[1] in arms], "runs": runs,
+                 "smoke": {"arm": MODEL_ARM, "runs": smoke_runs},
+                 "rounds": 5, "repetitions": 5, "warmup_s": 0.2, "window_s": 1.0,
+                 "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
+                 "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
+                 "note": "max_invol_switches: 0 on bare metal; on a VM frozen from the smoke's largest count "
+                         "(box micro.max_invol_switches), and run refuses while it is null"}, **MICRO_GATES)
 
 
 def configs(box, rates=None):

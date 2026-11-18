@@ -7,7 +7,8 @@
 #   run-u.sh smoke [EPL_ARGS...]       one round of base, stats-reject and base-A2 at every rung
 #   run-u.sh check                     the configs calibrated, the evidence checked against the smoke
 #   run-u.sh queue [EPL_ARGS...]       run U, then the HITM evidence legs (boxes that list hitm_events)
-#   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run; --mix C:G from step 0)
+#   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
+#   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
 # Before check and queue: RATES_JSON={"<box>": {"r_star": .., "k": ..}}; the configs are rewritten
 # from it (make.py --rates). Hard stop STOP_S (default 3 h 15 min) after the queue starts, through
@@ -93,6 +94,13 @@ case "$mode" in
       log "end $run rc=$?"
     done
     log "queue done; tables: python3 $S/u_table.py $R/u --hitm $R/u-hitm > $R/u.md"
+    ;;
+  micro-smoke)
+    log "micro smoke start box $BOX"
+    python3 "$S/micro.py" smoke "$C/micro.json" "$R/micro-smoke-$(date -u +%Y%m%dT%H%M%SZ)" "$@" 2>&1 | tee -a "$R/queue.log"
+    rc=${PIPESTATUS[0]}
+    log "micro smoke rc=$rc"
+    exit "$rc"
     ;;
   micro)
     log "micro start box $BOX"

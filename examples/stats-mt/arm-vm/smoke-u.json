@@ -56,36 +56,38 @@
   },
   "steal_gate": 0.02,
   "micro": {
-   "root": "~/arm/bins3",
-   "placements": {
-    "vm": {
-     "cpus": "0-15",
-     "threads": [
-      1,
-      4,
-      7,
-      12,
-      15
-     ]
-    }
-   },
-   "histogram_workers": [
+   "root": "~/arm/bins4",
+   "rows": [
+    "model",
+    "stat",
+    "histogram"
+   ],
+   "placement": "vm",
+   "cpus": "0-15",
+   "threads": [
     1,
     4,
-    7,
-    12,
     15
    ],
-   "flush_hammers": [
-    0,
+   "histogram_workers": [
     1,
-    4,
-    7,
-    12,
     15
-   ]
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": null
   },
-  "note": "The Arm VM (16 vCPU, one per core, no SMT): perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. Microbenchmarks: one thread per core on CPUs 0-15, thread counts up to 15 (cores - 1), hammers up to 15 (plus the flushing thread = 16 cores); the counts 1, 4 and 7 match the x86 VM. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/arm-vm.txt. The origin image digest and the end-to-end binary paths are set on the VM at its step 0."
+  "note": "The Arm VM (16 vCPU, one per core, no SMT): perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. Microbenchmarks: one thread per core on CPUs 0-15, threads 1, 4 and 15 (top: one spare core), histogram workers 1 and 15; the involuntary-switch bound is frozen from the session's smoke. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/arm-vm.txt after the rebuild. The origin image digest and the end-to-end binary paths are set on the VM at its step 0."
  },
  "envoy": {
   "workers": 4,

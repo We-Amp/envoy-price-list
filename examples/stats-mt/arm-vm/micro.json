@@ -54,91 +54,64 @@
   },
   "steal_gate": 0.02,
   "micro": {
-   "root": "~/arm/bins3",
-   "placements": {
-    "vm": {
-     "cpus": "0-15",
-     "threads": [
-      1,
-      4,
-      7,
-      12,
-      15
-     ]
-    }
-   },
-   "histogram_workers": [
+   "root": "~/arm/bins4",
+   "rows": [
+    "model",
+    "stat",
+    "histogram"
+   ],
+   "placement": "vm",
+   "cpus": "0-15",
+   "threads": [
     1,
     4,
-    7,
-    12,
     15
    ],
-   "flush_hammers": [
-    0,
+   "histogram_workers": [
     1,
-    4,
-    7,
-    12,
     15
-   ]
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": null
   },
-  "note": "The Arm VM (16 vCPU, one per core, no SMT): perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. Microbenchmarks: one thread per core on CPUs 0-15, thread counts up to 15 (cores - 1), hammers up to 15 (plus the flushing thread = 16 cores); the counts 1, 4 and 7 match the x86 VM. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/arm-vm.txt. The origin image digest and the end-to-end binary paths are set on the VM at its step 0."
+  "note": "The Arm VM (16 vCPU, one per core, no SMT): perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. Microbenchmarks: one thread per core on CPUs 0-15, threads 1, 4 and 15 (top: one spare core), histogram workers 1 and 15; the involuntary-switch bound is frozen from the session's smoke. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/arm-vm.txt after the rebuild. The origin image digest and the end-to-end binary paths are set on the VM at its step 0."
  },
- "root": "~/arm/bins3",
+ "root": "~/arm/bins4",
  "arms": {
-  "base": "3a80b1543c",
-  "fix": "7d877d4424",
-  "fix-relaxed": "f5eae01224",
-  "fix-relaxed-p1": "2b94594e18",
-  "base-relaxed": "e6e0544805",
-  "base-relaxed-p1": "ba1e983c9d"
+  "fix": "8746c3c4bd",
+  "fix-relaxed": "26af763b9b",
+  "fix-relaxed-p1": "987c8093a9"
  },
  "expected_sha256": {
-  "base": {
-   "atomic_model_benchmark": "514c0bd5b47b97426e26e388f6f4467914f39e42dd069a9e93b887d3c2a3dbdd",
-   "stat_update_benchmark": "c59b278773fd81dc534a8a0cef93fd3feeb064b79a19912b11254db94a7aba79",
-   "histogram_record_benchmark": "58be6e269f66f1eecc3b04d9393805c720ae6e19c84439bc9a5688c147b04aaa",
-   "server_stats_flush_contended_benchmark": "4d9f5a821d852c85864ed1587537cb935fc290385df11aa0cca7d7f837aec91e"
-  },
-  "base-relaxed": {
-   "atomic_model_benchmark": "e5eba5c034b8abb4f42a5b3468c2f7f2121053a74b3aa23c3607434b3f624035",
-   "stat_update_benchmark": "99738031b1e51fe2b75caf6e4cf388c16dc31e10e88e8677844085d66794ee65",
-   "histogram_record_benchmark": "d583ace6f2bc872a854f79c05de2001293e24413835b89e69872f126f085061e",
-   "server_stats_flush_contended_benchmark": "c6f4d5055d7920bd50428dface7f03d8669b215931996beacdfc333e8d7c4fcf"
-  },
-  "base-relaxed-p1": {
-   "atomic_model_benchmark": "ad2d95e68b64784214a7cd5e011105ac63b0ea50adcabe40f012aa31d0f74437",
-   "stat_update_benchmark": "e20c2f63e7a53751d0cd569d0e8306bed6bb52b4b7cb849e322af6ebaee18e36",
-   "histogram_record_benchmark": "169430ad2e6f6b7088c955c15a27959da98d5a98c82dc9b392d4f2fae5587d54",
-   "server_stats_flush_contended_benchmark": "16b98f65804973332c1121da4d01b05e835079c06bc9d0bdc7fb3375b70ccb26"
-  },
   "fix": {
-   "atomic_model_benchmark": "f0666d1e8c21bd2c4d7abba5213fce464f17392eff9a44e328171168d0a52389",
-   "stat_update_benchmark": "b8553566b5bfc9f9e25e7bb81d76e8384a99f5d18e205adb62c798accdc3bc03",
-   "histogram_record_benchmark": "406b240d633603df2dde1d88e2fe43337cc904f3aa6c37769c3f7d2b95e5c4fb",
-   "server_stats_flush_contended_benchmark": "aa0629e4f413983f6437affe019a382a4a0c02965544a2f4d76500d0c0754eb0"
+   "atomic_model_benchmark": null,
+   "histogram_record_benchmark": null,
+   "stat_update_benchmark": null
   },
   "fix-relaxed": {
-   "atomic_model_benchmark": "5dfb8e2e4f52b88d5a29389cd5ae6f1aa30fb90b6ee2a5bb0ef2e7a27cafa3cd",
-   "stat_update_benchmark": "9b7db1e119df2f6fa61822b4c459b89a417f3faeb60acbaf38f5358f911cd819",
-   "histogram_record_benchmark": "34901f23807e16be0ecdc13f4c89ea116e67095127ad18f72629329558110846",
-   "server_stats_flush_contended_benchmark": "aefe8efadf2d873e35b7addc4efabac6d2a1c7bb3e3022d6341bd5592f21e072"
+   "histogram_record_benchmark": null,
+   "stat_update_benchmark": null
   },
   "fix-relaxed-p1": {
-   "atomic_model_benchmark": "68880aac8f8b20d9152b15f50f87984be14b083da7cd42ee633ce5629815aa3d",
-   "stat_update_benchmark": "91daca340414c70dcad1656a0a09482bf9ea3a4c079823415c4572e363a9aaf8",
-   "histogram_record_benchmark": "427dc772644cf08af571a0e7e1deb76a010028d20d9633e8645e96292a989884",
-   "server_stats_flush_contended_benchmark": "89be1b021b3c674f437bb5ff74ccb987507ec015964acfcf0d46b40b66af59cb"
+   "histogram_record_benchmark": null,
+   "stat_update_benchmark": null
   }
  },
- "spread_counter": "finish_spread",
- "max_spread": 0.1,
- "thread_counters": {
-  "cycles": "cycles_per_op",
-  "instructions": "instructions_per_op"
- },
- "mix_fields": 6,
+ "pinned": false,
+ "model_reference": "bmModelCurrent",
+ "pmu": true,
+ "max_invol_switches": null,
  "pairs": [
   [
    "fix-relaxed",
@@ -149,21 +122,6 @@
    "fix-relaxed-p1",
    "fix-relaxed",
    "all"
-  ],
-  [
-   "base-relaxed",
-   "base",
-   "n1"
-  ],
-  [
-   "base-relaxed-p1",
-   "base-relaxed",
-   "n1"
-  ],
-  [
-   "fix",
-   "base",
-   "n1"
   ]
  ],
  "runs": [
@@ -173,74 +131,46 @@
    "threads": [
     1,
     4,
-    7,
-    12,
     15
    ],
-   "smt": false,
    "binary": "atomic_model_benchmark",
-   "filter": "^bmModel(Current|Relaxed|TestFlag|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?/real_time/threads:(1|4|7|12|15)$",
+   "kind": "window",
+   "arms": [
+    "fix"
+   ],
+   "row": "1",
+   "filter": "^bmModel(Current|Relaxed|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|4|15)$",
    "expect": [
-    "bmModelCurrentShared/real_time/threads:1",
-    "bmModelCurrentShared/real_time/threads:4",
-    "bmModelCurrentShared/real_time/threads:7",
-    "bmModelCurrentShared/real_time/threads:12",
-    "bmModelCurrentShared/real_time/threads:15",
-    "bmModelCurrentPerThreadSpaced/real_time/threads:1",
-    "bmModelCurrentPerThreadSpaced/real_time/threads:4",
-    "bmModelCurrentPerThreadSpaced/real_time/threads:7",
-    "bmModelCurrentPerThreadSpaced/real_time/threads:12",
-    "bmModelCurrentPerThreadSpaced/real_time/threads:15",
-    "bmModelRelaxedShared/real_time/threads:1",
-    "bmModelRelaxedShared/real_time/threads:4",
-    "bmModelRelaxedShared/real_time/threads:7",
-    "bmModelRelaxedShared/real_time/threads:12",
-    "bmModelRelaxedShared/real_time/threads:15",
-    "bmModelRelaxedPerThreadSpaced/real_time/threads:1",
-    "bmModelRelaxedPerThreadSpaced/real_time/threads:4",
-    "bmModelRelaxedPerThreadSpaced/real_time/threads:7",
-    "bmModelRelaxedPerThreadSpaced/real_time/threads:12",
-    "bmModelRelaxedPerThreadSpaced/real_time/threads:15",
-    "bmModelTestFlagShared/real_time/threads:1",
-    "bmModelTestFlagShared/real_time/threads:4",
-    "bmModelTestFlagShared/real_time/threads:7",
-    "bmModelTestFlagShared/real_time/threads:12",
-    "bmModelTestFlagShared/real_time/threads:15",
-    "bmModelTestFlagPerThreadSpaced/real_time/threads:1",
-    "bmModelTestFlagPerThreadSpaced/real_time/threads:4",
-    "bmModelTestFlagPerThreadSpaced/real_time/threads:7",
-    "bmModelTestFlagPerThreadSpaced/real_time/threads:12",
-    "bmModelTestFlagPerThreadSpaced/real_time/threads:15",
-    "bmModelRelaxedTestFlagShared/real_time/threads:1",
-    "bmModelRelaxedTestFlagShared/real_time/threads:4",
-    "bmModelRelaxedTestFlagShared/real_time/threads:7",
-    "bmModelRelaxedTestFlagShared/real_time/threads:12",
-    "bmModelRelaxedTestFlagShared/real_time/threads:15",
-    "bmModelRelaxedTestFlagPerThreadSpaced/real_time/threads:1",
-    "bmModelRelaxedTestFlagPerThreadSpaced/real_time/threads:4",
-    "bmModelRelaxedTestFlagPerThreadSpaced/real_time/threads:7",
-    "bmModelRelaxedTestFlagPerThreadSpaced/real_time/threads:12",
-    "bmModelRelaxedTestFlagPerThreadSpaced/real_time/threads:15",
-    "bmModelOneRmwShared/real_time/threads:1",
-    "bmModelOneRmwShared/real_time/threads:4",
-    "bmModelOneRmwShared/real_time/threads:7",
-    "bmModelOneRmwShared/real_time/threads:12",
-    "bmModelOneRmwShared/real_time/threads:15",
-    "bmModelOneRmwPerThreadSpaced/real_time/threads:1",
-    "bmModelOneRmwPerThreadSpaced/real_time/threads:4",
-    "bmModelOneRmwPerThreadSpaced/real_time/threads:7",
-    "bmModelOneRmwPerThreadSpaced/real_time/threads:12",
-    "bmModelOneRmwPerThreadSpaced/real_time/threads:15",
-    "bmModelShardedShared/real_time/threads:1",
-    "bmModelShardedShared/real_time/threads:4",
-    "bmModelShardedShared/real_time/threads:7",
-    "bmModelShardedShared/real_time/threads:12",
-    "bmModelShardedShared/real_time/threads:15",
-    "bmModelShardedPerThreadSpaced/real_time/threads:1",
-    "bmModelShardedPerThreadSpaced/real_time/threads:4",
-    "bmModelShardedPerThreadSpaced/real_time/threads:7",
-    "bmModelShardedPerThreadSpaced/real_time/threads:12",
-    "bmModelShardedPerThreadSpaced/real_time/threads:15"
+    "bmModelCurrentShared/manual_time/threads:1",
+    "bmModelCurrentShared/manual_time/threads:4",
+    "bmModelCurrentShared/manual_time/threads:15",
+    "bmModelCurrentPerThreadSpaced/manual_time/threads:1",
+    "bmModelCurrentPerThreadSpaced/manual_time/threads:4",
+    "bmModelCurrentPerThreadSpaced/manual_time/threads:15",
+    "bmModelRelaxedShared/manual_time/threads:1",
+    "bmModelRelaxedShared/manual_time/threads:4",
+    "bmModelRelaxedShared/manual_time/threads:15",
+    "bmModelRelaxedPerThreadSpaced/manual_time/threads:1",
+    "bmModelRelaxedPerThreadSpaced/manual_time/threads:4",
+    "bmModelRelaxedPerThreadSpaced/manual_time/threads:15",
+    "bmModelRelaxedTestFlagShared/manual_time/threads:1",
+    "bmModelRelaxedTestFlagShared/manual_time/threads:4",
+    "bmModelRelaxedTestFlagShared/manual_time/threads:15",
+    "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:1",
+    "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:4",
+    "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:15",
+    "bmModelOneRmwShared/manual_time/threads:1",
+    "bmModelOneRmwShared/manual_time/threads:4",
+    "bmModelOneRmwShared/manual_time/threads:15",
+    "bmModelOneRmwPerThreadSpaced/manual_time/threads:1",
+    "bmModelOneRmwPerThreadSpaced/manual_time/threads:4",
+    "bmModelOneRmwPerThreadSpaced/manual_time/threads:15",
+    "bmModelShardedShared/manual_time/threads:1",
+    "bmModelShardedShared/manual_time/threads:4",
+    "bmModelShardedShared/manual_time/threads:15",
+    "bmModelShardedPerThreadSpaced/manual_time/threads:1",
+    "bmModelShardedPerThreadSpaced/manual_time/threads:4",
+    "bmModelShardedPerThreadSpaced/manual_time/threads:15"
    ]
   },
   {
@@ -249,59 +179,36 @@
    "threads": [
     1,
     4,
-    7,
-    12,
     15
    ],
-   "smt": false,
    "binary": "stat_update_benchmark",
-   "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmCounterIncPerThread|bmGaugeIncDecShared|bmGaugeIncDecPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?/real_time/threads:(1|4|7|12|15)$",
+   "kind": "window",
+   "arms": [
+    "fix",
+    "fix-relaxed",
+    "fix-relaxed-p1"
+   ],
+   "row": "2, 2b",
+   "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|4|15)$",
    "expect": [
-    "bmCounterIncShared/real_time/threads:1",
-    "bmCounterIncShared/real_time/threads:4",
-    "bmCounterIncShared/real_time/threads:7",
-    "bmCounterIncShared/real_time/threads:12",
-    "bmCounterIncShared/real_time/threads:15",
-    "bmCounterIncPerThreadSpaced/real_time/threads:1",
-    "bmCounterIncPerThreadSpaced/real_time/threads:4",
-    "bmCounterIncPerThreadSpaced/real_time/threads:7",
-    "bmCounterIncPerThreadSpaced/real_time/threads:12",
-    "bmCounterIncPerThreadSpaced/real_time/threads:15",
-    "bmCounterIncPerThread/real_time/threads:1",
-    "bmCounterIncPerThread/real_time/threads:4",
-    "bmCounterIncPerThread/real_time/threads:7",
-    "bmCounterIncPerThread/real_time/threads:12",
-    "bmCounterIncPerThread/real_time/threads:15",
-    "bmGaugeIncDecShared/real_time/threads:1",
-    "bmGaugeIncDecShared/real_time/threads:4",
-    "bmGaugeIncDecShared/real_time/threads:7",
-    "bmGaugeIncDecShared/real_time/threads:12",
-    "bmGaugeIncDecShared/real_time/threads:15",
-    "bmGaugeIncDecPerThreadSpaced/real_time/threads:1",
-    "bmGaugeIncDecPerThreadSpaced/real_time/threads:4",
-    "bmGaugeIncDecPerThreadSpaced/real_time/threads:7",
-    "bmGaugeIncDecPerThreadSpaced/real_time/threads:12",
-    "bmGaugeIncDecPerThreadSpaced/real_time/threads:15",
-    "bmGaugeSetShared/real_time/threads:1",
-    "bmGaugeSetShared/real_time/threads:4",
-    "bmGaugeSetShared/real_time/threads:7",
-    "bmGaugeSetShared/real_time/threads:12",
-    "bmGaugeSetShared/real_time/threads:15",
-    "bmGaugeSetPerThreadSpaced/real_time/threads:1",
-    "bmGaugeSetPerThreadSpaced/real_time/threads:4",
-    "bmGaugeSetPerThreadSpaced/real_time/threads:7",
-    "bmGaugeSetPerThreadSpaced/real_time/threads:12",
-    "bmGaugeSetPerThreadSpaced/real_time/threads:15",
-    "bmPrimitiveCounterIncShared/real_time/threads:1",
-    "bmPrimitiveCounterIncShared/real_time/threads:4",
-    "bmPrimitiveCounterIncShared/real_time/threads:7",
-    "bmPrimitiveCounterIncShared/real_time/threads:12",
-    "bmPrimitiveCounterIncShared/real_time/threads:15",
-    "bmPrimitiveCounterIncPerThreadSpaced/real_time/threads:1",
-    "bmPrimitiveCounterIncPerThreadSpaced/real_time/threads:4",
-    "bmPrimitiveCounterIncPerThreadSpaced/real_time/threads:7",
-    "bmPrimitiveCounterIncPerThreadSpaced/real_time/threads:12",
-    "bmPrimitiveCounterIncPerThreadSpaced/real_time/threads:15"
+    "bmCounterIncShared/manual_time/threads:1",
+    "bmCounterIncShared/manual_time/threads:4",
+    "bmCounterIncShared/manual_time/threads:15",
+    "bmCounterIncPerThreadSpaced/manual_time/threads:1",
+    "bmCounterIncPerThreadSpaced/manual_time/threads:4",
+    "bmCounterIncPerThreadSpaced/manual_time/threads:15",
+    "bmGaugeSetShared/manual_time/threads:1",
+    "bmGaugeSetShared/manual_time/threads:4",
+    "bmGaugeSetShared/manual_time/threads:15",
+    "bmGaugeSetPerThreadSpaced/manual_time/threads:1",
+    "bmGaugeSetPerThreadSpaced/manual_time/threads:4",
+    "bmGaugeSetPerThreadSpaced/manual_time/threads:15",
+    "bmPrimitiveCounterIncShared/manual_time/threads:1",
+    "bmPrimitiveCounterIncShared/manual_time/threads:4",
+    "bmPrimitiveCounterIncShared/manual_time/threads:15",
+    "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:1",
+    "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:4",
+    "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:15"
    ]
   },
   {
@@ -309,118 +216,139 @@
    "cpus": "0-15",
    "threads": [
     1,
-    4,
-    7,
-    12,
     15
    ],
-   "smt": false,
-   "binary": "stat_update_benchmark",
-   "needs_mix": true,
-   "filter": "^(bmRequestMixShared|bmRequestMixPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?/real_time/threads:(1|4|7|12|15)$",
-   "expect": [
-    "bmRequestMixShared/real_time/threads:1",
-    "bmRequestMixShared/real_time/threads:4",
-    "bmRequestMixShared/real_time/threads:7",
-    "bmRequestMixShared/real_time/threads:12",
-    "bmRequestMixShared/real_time/threads:15",
-    "bmRequestMixPerThreadSpaced/real_time/threads:1",
-    "bmRequestMixPerThreadSpaced/real_time/threads:4",
-    "bmRequestMixPerThreadSpaced/real_time/threads:7",
-    "bmRequestMixPerThreadSpaced/real_time/threads:12",
-    "bmRequestMixPerThreadSpaced/real_time/threads:15"
-   ]
-  },
-  {
    "binary": "histogram_record_benchmark",
-   "placement": "vm",
-   "cpus": "0-15",
-   "threads": [
-    1,
-    4,
-    7,
-    12,
-    15
+   "kind": "histogram",
+   "arms": [
+    "fix",
+    "fix-relaxed",
+    "fix-relaxed-p1"
    ],
-   "smt": false,
-   "filter": "^bmHistogramRecord/(1|4|7|12|15)/[01]/[01](/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?/manual_time$",
+   "row": "3",
+   "filter": "^bmHistogramRecordOnly/(1|15)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time$",
    "expect": [
-    "bmHistogramRecord/1/0/0/manual_time",
-    "bmHistogramRecord/1/0/1/manual_time",
-    "bmHistogramRecord/1/1/0/manual_time",
-    "bmHistogramRecord/1/1/1/manual_time",
-    "bmHistogramRecord/4/0/0/manual_time",
-    "bmHistogramRecord/4/0/1/manual_time",
-    "bmHistogramRecord/4/1/0/manual_time",
-    "bmHistogramRecord/4/1/1/manual_time",
-    "bmHistogramRecord/7/0/0/manual_time",
-    "bmHistogramRecord/7/0/1/manual_time",
-    "bmHistogramRecord/7/1/0/manual_time",
-    "bmHistogramRecord/7/1/1/manual_time",
-    "bmHistogramRecord/12/0/0/manual_time",
-    "bmHistogramRecord/12/0/1/manual_time",
-    "bmHistogramRecord/12/1/0/manual_time",
-    "bmHistogramRecord/12/1/1/manual_time",
-    "bmHistogramRecord/15/0/0/manual_time",
-    "bmHistogramRecord/15/0/1/manual_time",
-    "bmHistogramRecord/15/1/0/manual_time",
-    "bmHistogramRecord/15/1/1/manual_time"
-   ]
-  },
-  {
-   "binary": "server_stats_flush_contended_benchmark",
-   "placement": "vm",
-   "cpus": "0-15",
-   "hammers": [
-    0,
-    1,
-    4,
-    7,
-    12,
-    15
-   ],
-   "smt": false,
-   "filter": "^(bmFlushContended|bmHammerOnly)/100000/(0|1|4|7|12|15)/[012](/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?/real_time$",
-   "expect": [
-    "bmFlushContended/100000/0/0/real_time",
-    "bmFlushContended/100000/0/1/real_time",
-    "bmFlushContended/100000/0/2/real_time",
-    "bmFlushContended/100000/1/0/real_time",
-    "bmFlushContended/100000/1/1/real_time",
-    "bmFlushContended/100000/1/2/real_time",
-    "bmFlushContended/100000/4/0/real_time",
-    "bmFlushContended/100000/4/1/real_time",
-    "bmFlushContended/100000/4/2/real_time",
-    "bmFlushContended/100000/7/0/real_time",
-    "bmFlushContended/100000/7/1/real_time",
-    "bmFlushContended/100000/7/2/real_time",
-    "bmFlushContended/100000/12/0/real_time",
-    "bmFlushContended/100000/12/1/real_time",
-    "bmFlushContended/100000/12/2/real_time",
-    "bmFlushContended/100000/15/0/real_time",
-    "bmFlushContended/100000/15/1/real_time",
-    "bmFlushContended/100000/15/2/real_time",
-    "bmHammerOnly/100000/1/0/real_time",
-    "bmHammerOnly/100000/1/1/real_time",
-    "bmHammerOnly/100000/1/2/real_time",
-    "bmHammerOnly/100000/4/0/real_time",
-    "bmHammerOnly/100000/4/1/real_time",
-    "bmHammerOnly/100000/4/2/real_time",
-    "bmHammerOnly/100000/7/0/real_time",
-    "bmHammerOnly/100000/7/1/real_time",
-    "bmHammerOnly/100000/7/2/real_time",
-    "bmHammerOnly/100000/12/0/real_time",
-    "bmHammerOnly/100000/12/1/real_time",
-    "bmHammerOnly/100000/12/2/real_time",
-    "bmHammerOnly/100000/15/0/real_time",
-    "bmHammerOnly/100000/15/1/real_time",
-    "bmHammerOnly/100000/15/2/real_time"
+    "bmHistogramRecordOnly/1/manual_time",
+    "bmHistogramRecordOnly/15/manual_time"
    ]
   }
  ],
+ "smoke": {
+  "arm": "fix",
+  "runs": [
+   {
+    "placement": "vm",
+    "cpus": "0-15",
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "binary": "atomic_model_benchmark",
+    "kind": "window",
+    "arms": [
+     "fix"
+    ],
+    "row": "1",
+    "filter": "^bmModel(Current|Relaxed|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4)$",
+    "expect": [
+     "bmModelCurrentShared/manual_time/threads:1",
+     "bmModelCurrentShared/manual_time/threads:2",
+     "bmModelCurrentShared/manual_time/threads:4",
+     "bmModelCurrentPerThreadSpaced/manual_time/threads:1",
+     "bmModelCurrentPerThreadSpaced/manual_time/threads:2",
+     "bmModelCurrentPerThreadSpaced/manual_time/threads:4",
+     "bmModelRelaxedShared/manual_time/threads:1",
+     "bmModelRelaxedShared/manual_time/threads:2",
+     "bmModelRelaxedShared/manual_time/threads:4",
+     "bmModelRelaxedPerThreadSpaced/manual_time/threads:1",
+     "bmModelRelaxedPerThreadSpaced/manual_time/threads:2",
+     "bmModelRelaxedPerThreadSpaced/manual_time/threads:4",
+     "bmModelRelaxedTestFlagShared/manual_time/threads:1",
+     "bmModelRelaxedTestFlagShared/manual_time/threads:2",
+     "bmModelRelaxedTestFlagShared/manual_time/threads:4",
+     "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:1",
+     "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:2",
+     "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:4",
+     "bmModelOneRmwShared/manual_time/threads:1",
+     "bmModelOneRmwShared/manual_time/threads:2",
+     "bmModelOneRmwShared/manual_time/threads:4",
+     "bmModelOneRmwPerThreadSpaced/manual_time/threads:1",
+     "bmModelOneRmwPerThreadSpaced/manual_time/threads:2",
+     "bmModelOneRmwPerThreadSpaced/manual_time/threads:4",
+     "bmModelShardedShared/manual_time/threads:1",
+     "bmModelShardedShared/manual_time/threads:2",
+     "bmModelShardedShared/manual_time/threads:4",
+     "bmModelShardedPerThreadSpaced/manual_time/threads:1",
+     "bmModelShardedPerThreadSpaced/manual_time/threads:2",
+     "bmModelShardedPerThreadSpaced/manual_time/threads:4"
+    ]
+   },
+   {
+    "placement": "vm",
+    "cpus": "0-15",
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "binary": "stat_update_benchmark",
+    "kind": "window",
+    "arms": [
+     "fix",
+     "fix-relaxed",
+     "fix-relaxed-p1"
+    ],
+    "row": "2, 2b",
+    "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4)$",
+    "expect": [
+     "bmCounterIncShared/manual_time/threads:1",
+     "bmCounterIncShared/manual_time/threads:2",
+     "bmCounterIncShared/manual_time/threads:4",
+     "bmCounterIncPerThreadSpaced/manual_time/threads:1",
+     "bmCounterIncPerThreadSpaced/manual_time/threads:2",
+     "bmCounterIncPerThreadSpaced/manual_time/threads:4",
+     "bmGaugeSetShared/manual_time/threads:1",
+     "bmGaugeSetShared/manual_time/threads:2",
+     "bmGaugeSetShared/manual_time/threads:4",
+     "bmGaugeSetPerThreadSpaced/manual_time/threads:1",
+     "bmGaugeSetPerThreadSpaced/manual_time/threads:2",
+     "bmGaugeSetPerThreadSpaced/manual_time/threads:4",
+     "bmPrimitiveCounterIncShared/manual_time/threads:1",
+     "bmPrimitiveCounterIncShared/manual_time/threads:2",
+     "bmPrimitiveCounterIncShared/manual_time/threads:4",
+     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:1",
+     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:2",
+     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:4"
+    ]
+   },
+   {
+    "placement": "vm",
+    "cpus": "0-15",
+    "threads": [
+     1,
+     2
+    ],
+    "binary": "histogram_record_benchmark",
+    "kind": "histogram",
+    "arms": [
+     "fix",
+     "fix-relaxed",
+     "fix-relaxed-p1"
+    ],
+    "row": "3",
+    "filter": "^bmHistogramRecordOnly/(1|2)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time$",
+    "expect": [
+     "bmHistogramRecordOnly/1/manual_time",
+     "bmHistogramRecordOnly/2/manual_time"
+    ]
+   }
+  ]
+ },
  "rounds": 5,
  "repetitions": 5,
- "mix": null,
+ "warmup_s": 0.2,
+ "window_s": 1.0,
  "order_seed": 41,
  "workdir": "~/epl/runs/stats-mt/micro",
  "idle": {
@@ -428,5 +356,7 @@
   "max_busy_pct": 2.0
  },
  "steal_gate": 0.02,
- "note": "mix (STATS_BENCH_MIX) is '<counter incs>:<gauge pairs>:<gauge sets>:<primitive counter incs>:<primitive gauge pairs>:<histogram samples>' (M7), no default: the request-mix benchmarks are skipped until step 0 sets it from the uprobe counts"
+ "note": "max_invol_switches: 0 on bare metal; on a VM frozen from the smoke's largest count (box micro.max_invol_switches), and run refuses while it is null",
+ "min_window_overlap": 0.99,
+ "min_thread_ops": 100000
 }

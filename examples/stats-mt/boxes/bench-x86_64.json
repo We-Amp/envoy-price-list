@@ -74,38 +74,34 @@
  },
  "steal_gate": null,
  "micro": {
-  "root": "~/epl/bins/stats/r4",
-  "placements": {
-   "one-socket": {
-    "cpus": "0-19",
-    "threads": [
-     1,
-     2,
-     4,
-     8,
-     16,
-     20
-    ]
-   },
-   "two-socket": {
-    "cpus": "0-13,20-33",
-    "threads": [
-     28
-    ]
-   }
-  },
+  "root": "~/epl/bins/stats/r5",
+  "rows": [
+   "model"
+  ],
+  "placement": "one-socket",
+  "cpus": "0-19",
+  "threads": [
+   1,
+   4,
+   19
+  ],
   "histogram_workers": [
    1,
-   4,
-   16
+   19
   ],
-  "flush_hammers": [
-   0,
-   1,
-   4,
-   8,
-   16
-  ]
+  "smoke": {
+   "threads": [
+    1,
+    2,
+    4
+   ],
+   "histogram_workers": [
+    1,
+    2
+   ]
+  },
+  "pmu": true,
+  "max_invol_switches": 0
  },
  "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core."
 }

@@ -1,35 +1,50 @@
 #!/usr/bin/env python3
 """Microbenchmark runner and table of the multi-threaded stats study (make.py writes micro.json).
 
-    python3 examples/stats-mt/micro.py run CFG OUT_DIR [--root DIR] [--mix C:G] [--dry-run]
+    python3 examples/stats-mt/micro.py smoke CFG OUT_DIR [--root DIR] [--arm ARM]   pre-flight
+    python3 examples/stats-mt/micro.py run CFG OUT_DIR [--root DIR] [--dry-run]
     python3 examples/stats-mt/micro.py table OUT_DIR [--json OUT.json] > micro.md
     python3 examples/stats-mt/micro.py check CFG [--root DIR]    binaries present, sha256 as pinned
 
-Identity: micro.json pins the sha256 of every arm's every binary (`expected_sha256`, from the
-build record); a run refuses to start when one is unpinned, missing or different, or when two
-arms carry the same binary. The binaries report no revision of their own.
+The benchmarks measure a time-bounded window inside one Google Benchmark iteration (manual time,
+no estimation runs; every thread keeps running until all have finished their window) and
+report ns_per_op, ops_per_sec, cycles_per_op, instructions_per_op, fairness and min_thread_ops
+as results, and window_overlap, invol_switches and steal_ticks as gate inputs. The record-only
+histogram benchmark reports ns_per_sample. The runner reads those counters, never the
+library's time column; conclusions rest on cycles_per_op.
 
-Runs: for each of `rounds` rounds, every run entry (binary, filter, thread placement), every
-arm in a rotated order (seeded; a different first arm each round), one process per (round,
-entry, arm): `<root>/<commit>/<binary> --benchmark_filter=F --benchmark_repetitions=R`, JSON
-out (the benchmarks set their own minimum time). The benchmarks pin their own threads from
-STATS_BENCH_CPUS (one thread per physical core, siblings idle: checked against `lscpu` at the
-start unless the placement is marked `smt`) and register the thread and hammer counts the
-entry passes in STATS_BENCH_THREADS and STATS_BENCH_HAMMERS; STATS_BENCH_PLACEMENT labels the
-placement. An output is accepted only when every expected benchmark (name and count) has all
-its repetitions and a median, no repetition errored or was skipped, and no thread finish
-spread is above the limit; otherwise the entry is re-run on the next start. Before each
-process the box must be idle (load and busy share; on a VM the steal share over the process
-is recorded and gated). Every binary's sha256 is checked at the start and at the end. The
-request-mix benchmarks need --mix (STATS_BENCH_MIX) and are skipped without it.
+Identity: micro.json pins the sha256 of every (arm, binary) the runs use (`expected_sha256`,
+from the build record). `run` and `check` refuse while a pin is the placeholder (null), when a
+binary is missing or different, or when two arms carry the same binary. `smoke` runs before the
+pins exist and records the hashes it saw.
 
-Table: per benchmark (name and thread count) and arm, the median over the repetitions of
-each round; per pair of arms (micro.json `pairs`) the paired log ratio of the time per
-iteration over the rounds (df = rounds - 1) with its 95% t interval; per arm the shared
-against the per-thread spaced ratio at each thread count (H1); per arm, hammer count and
-mode the hammers' update rate during and between flushes as a share of the hammer-only
-baseline (M6). Per-thread counters below zero (no PMU) are shown as unavailable. Fewer than 5
-complete rounds are labelled descriptive.
+Smoke (the pre-flight, first on the build host, then the first action of every VM session):
+one arm, every run entry, the smoke thread counts, 10 ms warm-up and 50 ms windows, 2
+repetitions, one round. Every gate below must pass; it prints SMOKE FAILED with every problem
+and exits 1 otherwise, and SMOKE PASSED with the largest involuntary-switch count it saw (the
+VM bound is frozen from that).
+
+Run: for each of `rounds` rounds, every run entry, every arm of that entry in a rotated order
+(seeded; a different first arm each round), one process per (round, entry, arm):
+`<root>/<commit>/<binary> --benchmark_filter=F --benchmark_repetitions=R`, JSON out. The
+benchmarks pin their own threads from STATS_BENCH_CPUS (one CPU per physical core, siblings
+idle: checked against `lscpu` at the start) and register the thread counts the entry passes in
+STATS_BENCH_THREADS; the windows come from STATS_BENCH_WARMUP / STATS_BENCH_SECONDS. Before
+each process the box must be idle; on a VM the steal share over the process is gated.
+
+Gates, per repetition, fail-closed (a failing output is not kept and the entry is re-run on the
+next start): exit 0; no repetition errored or skipped; every expected benchmark (name and
+count) has all its repetitions and a median; window_overlap >= min_window_overlap;
+invol_switches known and <= max_invol_switches (0 on bare metal; on a VM the bound frozen from
+the smoke, and `run` refuses while it is unset); min_thread_ops >= min_thread_ops (the
+operations floor); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
+the per-process steal gate. fairness is a result, never a gate.
+
+Table: per benchmark and arm the median of each round's repetition median; per pair of arms
+(micro.json `pairs`) the paired log ratio of cycles_per_op (and of ns_per_op beside it) over
+the rounds with its 95% t interval (df = rounds - 1); per model variant against Current, the
+same within the one model build; per arm the shared against the per-thread spaced ratio (H1);
+fairness medians. Fewer than 5 complete rounds are labelled descriptive.
 """
 
 import argparse
@@ -48,6 +63,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from epl import stats, sysprobe  # noqa: E402
 
+METRICS = ["cycles_per_op", "instructions_per_op", "ns_per_op", "ops_per_sec", "fairness", "min_thread_ops",
+           "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample"]
+SMOKE = {"warmup_s": 0.01, "window_s": 0.05, "repetitions": 2}
+
 
 def sha256(path):
     h = hashlib.sha256()
@@ -61,32 +80,44 @@ def binary_path(root, commit, binary):
     return os.path.join(os.path.expanduser(root), commit, binary)
 
 
-# Google Benchmark puts the registered minimum and warm-up time into the name
-# ("bmX/min_time:1.000/min_warmup_time:0.200/real_time/threads:4"); names are compared without them.
-_TIME_PARTS = re.compile(r"/min_(?:warmup_)?time:[0-9.]+")
+# Google Benchmark puts the registered timing into the name
+# ("bmX/iterations:1/manual_time/threads:4", "bmY/4/min_time:1.000/manual_time"); names are
+# compared without those parts.
+_TIME_PARTS = re.compile(r"/(?:min_(?:warmup_)?time:[0-9.]+|iterations:[0-9]+)")
 
 
 def norm_name(name):
     return _TIME_PARTS.sub("", name or "")
 
 
-def identity(cfg, root):
-    """({"arm/binary": sha256 or None}, [problem]): every arm's binaries present and equal to the
-    pinned sha256, and no two arms with the same binary (MB1)."""
+def run_arms(cfg, rc):
+    return list(rc.get("arms") or sorted(cfg["arms"]))
+
+
+def needed(cfg):
+    """[(arm, binary)] the run entries use."""
+    return sorted({(a, rc["binary"]) for rc in cfg["runs"] for a in run_arms(cfg, rc)})
+
+
+def identity(cfg, root, require_pins=True):
+    """({"arm/binary": sha256 or None}, [problem]): every binary the runs use present and equal
+    to its pinned sha256, and no two arms with the same binary."""
     exp = cfg.get("expected_sha256") or {}
     hashes, probs = {}, []
-    for a, commit in sorted(cfg["arms"].items()):
-        for b in sorted({r["binary"] for r in cfg["runs"]}):
-            p = binary_path(root, commit, b)
-            got = sha256(p) if os.path.exists(p) else None
-            hashes["%s/%s" % (a, b)] = got
-            want = (exp.get(a) or {}).get(b)
-            if got is None:
-                probs.append("%s/%s: missing (%s)" % (a, b, p))
-            elif not want:
-                probs.append("%s/%s: no sha256 pinned in the config" % (a, b))
-            elif got != want:
-                probs.append("%s/%s: sha256 %s, pinned %s" % (a, b, got[:16], want[:16]))
+    for a, b in needed(cfg):
+        p = binary_path(root, cfg["arms"][a], b)
+        got = sha256(p) if os.path.exists(p) else None
+        hashes["%s/%s" % (a, b)] = got
+        want = (exp.get(a) or {}).get(b)
+        if got is None:
+            probs.append("%s/%s: missing (%s)" % (a, b, p))
+        elif not require_pins:
+            pass
+        elif not want:
+            probs.append("%s/%s: sha256 not pinned (placeholder; pin from the build record after the rebuild)"
+                         % (a, b))
+        elif got != want:
+            probs.append("%s/%s: sha256 %s, pinned %s" % (a, b, got[:16], want[:16]))
     seen = {}
     for k, v in sorted(hashes.items()):
         if v is None:
@@ -118,11 +149,9 @@ def cpu_list(text):
 
 
 def check_cores(cfg, cores):
-    """[problem]: a placement (not marked smt) lists two CPUs of one core, or a CPU the box lacks."""
+    """[problem]: a placement lists two CPUs of one core, or a CPU the box lacks."""
     probs = []
     for rc in cfg["runs"]:
-        if rc.get("smt"):
-            continue
         seen = {}
         for c in cpu_list(rc["cpus"]):
             if c not in cores:
@@ -135,79 +164,91 @@ def check_cores(cfg, cores):
     return sorted(set(probs))
 
 
-def arm_order(cfg, rnd):
-    arms = sorted(cfg["arms"])
-    off = random.Random("epl-micro:%s" % cfg.get("order_seed", 1)).randrange(len(arms))
+def arm_order(arms, rnd, seed=1):
+    arms = sorted(arms)
+    off = random.Random("epl-micro:%s" % seed).randrange(len(arms))
     # round pair p starts at arm p + offset; its second round runs the same order reversed
     s = ((rnd - 1) // 2 + off) % len(arms)
     o = arms[s:] + arms[:s]
     return o if rnd % 2 else list(reversed(o))
 
 
-def plan(cfg, mix=None):
-    """[(round, run index, arm)] in execution order; request-mix entries only with a mix."""
+def plan(cfg):
+    """[(round, run index, arm)] in execution order."""
     out = []
     for r in range(1, int(cfg["rounds"]) + 1):
-        for i, run in enumerate(cfg["runs"]):
-            if run.get("needs_mix") and not mix:
-                continue
-            for a in arm_order(cfg, r):
+        for i, rc in enumerate(cfg["runs"]):
+            for a in arm_order(run_arms(cfg, rc), r, cfg.get("order_seed", 1)):
                 out.append((r, i, a))
     return out
 
 
-def check_mix(mix, fields):
-    """None or the reason a STATS_BENCH_MIX value is unusable (M7: `fields` non-negative integers)."""
-    parts = (mix or "").split(":")
-    if len(parts) != fields or not all(p.isdigit() for p in parts):
-        return "STATS_BENCH_MIX %r: needs %d colon-separated non-negative integers" % (mix, fields)
-    return None
+def run_env(cfg, rc):
+    """The environment of one run entry: CPUs, placement label, thread counts, windows."""
+    env = {"STATS_BENCH_CPUS": rc["cpus"], "STATS_BENCH_PLACEMENT": rc["placement"],
+           "STATS_BENCH_WARMUP": "%g" % cfg["warmup_s"], "STATS_BENCH_SECONDS": "%g" % cfg["window_s"]}
+    if rc.get("threads"):
+        env["STATS_BENCH_THREADS"] = ",".join(str(t) for t in rc["threads"])
+    return env
 
 
-def check_output(d, cfg, rc=None):
-    """[problem] of one benchmark JSON output: no repetition errored or was skipped (MB3); every
-    expected benchmark of the run entry has all its repetitions and a median (MB2); no
-    repetition finished with a spread between threads above max_spread (M2)."""
+def gate_problems(b, cfg, rc):
+    """[problem] of one repetition (an iteration entry) against the validity gates."""
+    nm = norm_name(b.get("name"))
+    if b.get("error_occurred"):
+        return ["%s: %s" % (nm, b.get("error_message") or "error")]
     probs = []
-    bms = d.get("benchmarks", [])
-    for b in bms:
-        if b.get("error_occurred"):
-            probs.append("%s: %s" % (norm_name(b.get("name")), b.get("error_message") or "error"))
-    if rc is not None and rc.get("expect"):
-        reps = int(cfg.get("repetitions", 1))
-        n_it, med = {}, set()
-        for b in bms:
-            if b.get("error_occurred"):
-                continue
-            nm = norm_name(b.get("run_name") or b.get("name"))
-            if b.get("run_type") == "iteration":
-                n_it[nm] = n_it.get(nm, 0) + 1
-            elif b.get("run_type") == "aggregate" and b.get("aggregate_name") == "median":
-                med.add(nm)
-        for nm in rc["expect"]:
-            if n_it.get(nm, 0) < reps or nm not in med:
-                probs.append("%s: %d of %d repetitions%s" % (nm, n_it.get(nm, 0), reps,
-                                                               "" if nm in med else ", no median"))
-    key, lim = cfg.get("spread_counter"), cfg.get("max_spread")
-    if key and lim is not None:
-        for b in d.get("benchmarks", []):
-            if b.get("run_type") == "iteration" and b.get(key) is not None and float(b[key]) > lim:
-                probs.append("%s: thread finish spread %.1f%% above %.0f%%" % (b.get("name"), 100 * float(b[key]),
-                                                                               100 * lim))
+    if rc.get("kind") == "window":
+        ov = b.get("window_overlap")
+        if ov is None or float(ov) < cfg["min_window_overlap"]:
+            probs.append("%s: window overlap %s below %s" % (nm, ov, cfg["min_window_overlap"]))
+        sw = b.get("invol_switches")
+        lim = cfg.get("max_invol_switches")
+        if sw is None or float(sw) < 0:
+            probs.append("%s: involuntary switches unavailable" % nm)
+        elif lim is not None and float(sw) > lim:
+            probs.append("%s: %d involuntary switches, bound %d" % (nm, float(sw), lim))
+        ops = b.get("min_thread_ops")
+        if ops is None or float(ops) < cfg["min_thread_ops"]:
+            probs.append("%s: %s operations on the slowest thread, floor %d" % (nm, ops, cfg["min_thread_ops"]))
+        if cfg.get("pmu"):
+            for k in ("cycles_per_op", "instructions_per_op"):
+                if b.get(k) is None or float(b[k]) < 0:
+                    probs.append("%s: %s unavailable on a box with a PMU" % (nm, k))
+    elif rc.get("kind") == "histogram":
+        v = b.get("ns_per_sample")
+        if v is None or float(v) <= 0:
+            probs.append("%s: no ns_per_sample" % nm)
     return probs
 
 
-def run_env(rc, mix=None):
-    """The environment of one run entry: CPUs, placement label, and the thread and hammer counts
-    the benchmarks register (MB2)."""
-    env = {"STATS_BENCH_CPUS": rc["cpus"], "STATS_BENCH_PLACEMENT": rc["placement"]}
-    if rc.get("threads"):
-        env["STATS_BENCH_THREADS"] = ",".join(str(t) for t in rc["threads"])
-    if rc.get("hammers"):
-        env["STATS_BENCH_HAMMERS"] = ",".join(str(h) for h in rc["hammers"])
-    if mix:
-        env["STATS_BENCH_MIX"] = mix
-    return env
+def check_output(d, cfg, rc):
+    """[problem] of one benchmark JSON output: every repetition passes the gates, and every
+    expected benchmark has all its repetitions and a median."""
+    probs = []
+    reps = int(cfg["repetitions"])
+    n_it, med = {}, set()
+    for b in d.get("benchmarks", []):
+        nm = norm_name(b.get("run_name") or b.get("name"))
+        if b.get("run_type") == "aggregate":
+            if b.get("aggregate_name") == "median" and not b.get("error_occurred"):
+                med.add(nm)
+            continue
+        p = gate_problems(b, cfg, rc)
+        probs.extend(p)
+        if not p:
+            n_it[nm] = n_it.get(nm, 0) + 1
+    for nm in rc["expect"]:
+        if n_it.get(nm, 0) < reps or nm not in med:
+            probs.append("%s: %d of %d repetitions valid%s" % (nm, n_it.get(nm, 0), reps,
+                                                               "" if nm in med else ", no median"))
+    return probs
+
+
+def max_switches(d):
+    v = [float(b["invol_switches"]) for b in d.get("benchmarks", [])
+         if b.get("run_type") == "iteration" and b.get("invol_switches") is not None]
+    return max(v) if v else None
 
 
 def read_steal():
@@ -216,80 +257,70 @@ def read_steal():
     return sum(v[:8]), v[7]
 
 
-def run(cfg, out, root, mix=None, dry_run=False, log=print):
-    if mix:
-        why = check_mix(mix, int(cfg.get("mix_fields", 6)))
-        if why:
-            raise SystemExit(why)
-    hashes, probs = identity(cfg, root)
+def one_process(cfg, rc, arm, root, dst, log):
+    """Run one benchmark process into dst.tmp; (record, parsed JSON or None)."""
+    env = dict(os.environ, **run_env(cfg, rc))
+    cmd = [binary_path(root, cfg["arms"][arm], rc["binary"]), "--benchmark_filter=" + rc["filter"],
+           "--benchmark_repetitions=%d" % int(cfg["repetitions"]),
+           "--benchmark_format=json", "--benchmark_out=" + dst + ".tmp", "--benchmark_out_format=json"]
+    ok, det, waited = sysprobe.wait_idle(cfg["idle"], set(), log=log)
+    if not ok:
+        raise SystemExit("box not idle before %s: %s" % (os.path.basename(dst), det))
+    s0 = read_steal()
+    t0 = time.monotonic()
+    p = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=7200)
+    s1 = read_steal()
+    steal = (s1[1] - s0[1]) / max(1, s1[0] - s0[0])
+    rec = {"exit": p.returncode, "seconds": round(time.monotonic() - t0, 1), "steal_share": steal,
+           "stderr_tail": p.stderr[-600:]}
+    probs = []
+    if p.returncode != 0:
+        probs.append("exit %d" % p.returncode)
+    if cfg.get("steal_gate") is not None and steal > cfg["steal_gate"]:
+        probs.append("steal %.2f%% above %.1f%%" % (100 * steal, 100 * cfg["steal_gate"]))
+    d = None
+    try:
+        with open(dst + ".tmp") as f:
+            d = json.load(f)
+    except (OSError, ValueError) as ex:
+        probs.append("no JSON output: %s" % ex)
+    if d is not None:
+        probs.extend(check_output(d, cfg, rc))
+        rec["max_invol_switches_seen"] = max_switches(d)
+    rec["problems"] = probs
+    return rec, d
+
+
+def start(cfg, out, root, require_pins, dry_run, log):
+    hashes, probs = identity(cfg, root, require_pins)
     if probs and not dry_run:
         raise SystemExit("binary identity (not run):\n  " + "\n  ".join(probs))
     for p in probs:
         log("identity: " + p)
-    lscpu_p = None
-    if not dry_run:
-        lscpu_p = subprocess.run(["lscpu", "-p=CPU,CORE"], capture_output=True, text=True).stdout
-        probs = check_cores(cfg, parse_lscpu(lscpu_p))
-        if probs:
-            raise SystemExit("placement (not run):\n  " + "\n  ".join(probs))
-    os.makedirs(out, exist_ok=True)
-    meta = {"config": cfg["name"], "root": root, "arms": cfg["arms"], "pairs": cfg["pairs"], "sha256_start": hashes,
-            "expected_sha256": cfg.get("expected_sha256"), "thread_counters": cfg.get("thread_counters"),
-            "mix": mix, "rounds": cfg["rounds"], "repetitions": cfg["repetitions"],
+    meta = {"config": cfg["name"], "root": root, "arms": cfg["arms"], "pairs": cfg["pairs"],
+            "sha256_start": hashes, "expected_sha256": cfg.get("expected_sha256"),
+            "model_reference": cfg.get("model_reference"), "rounds": cfg["rounds"],
+            "repetitions": cfg["repetitions"], "warmup_s": cfg["warmup_s"], "window_s": cfg["window_s"],
             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if not dry_run:
+        lp = subprocess.run(["lscpu", "-p=CPU,CORE"], capture_output=True, text=True).stdout
+        probs = check_cores(cfg, parse_lscpu(lp))
+        if probs:
+            raise SystemExit("placement (not run):\n  " + "\n  ".join(probs))
         meta["lscpu_e"] = subprocess.run(["lscpu", "-e"], capture_output=True, text=True).stdout
-        meta["lscpu_p"] = lscpu_p
+        meta["lscpu_p"] = lp
+    os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, "meta.json"), "w") as f:
         json.dump(meta, f, indent=1)
-    steps = plan(cfg, mix)
-    for n, (r, i, a) in enumerate(steps, 1):
-        rc = cfg["runs"][i]
-        tag = "r%02d-%s-%s-%s-%s" % (r, i, rc["binary"].replace("_benchmark", ""), rc["placement"], a)
-        dst = os.path.join(out, tag + ".json")
-        if os.path.exists(dst):
-            continue  # resumable: a finished process is not run again
-        env = dict(os.environ, **run_env(rc, mix))
-        cmd = [binary_path(root, cfg["arms"][a], rc["binary"]), "--benchmark_filter=" + rc["filter"],
-               "--benchmark_repetitions=%d" % int(cfg["repetitions"]),
-               "--benchmark_format=json", "--benchmark_out=" + dst + ".tmp", "--benchmark_out_format=json"]
-        if dry_run:
-            log("%d/%d %s: %s %s" % (n, len(steps), tag, " ".join("%s=%s" % kv for kv in sorted(run_env(rc, mix).items())),
-                                     " ".join(cmd)))
-            continue
-        ok, det, waited = sysprobe.wait_idle(cfg["idle"], set(), log=log)
-        if not ok:
-            raise SystemExit("box not idle before %s: %s" % (tag, det))
-        s0 = read_steal()
-        t0 = time.monotonic()
-        p = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=7200)
-        s1 = read_steal()
-        steal = (s1[1] - s0[1]) / max(1, s1[0] - s0[0])
-        rec = {"tag": tag, "round": r, "run": i, "arm": a, "exit": p.returncode, "seconds": round(time.monotonic() - t0, 1),
-               "steal_share": steal, "stderr_tail": p.stderr[-600:]}
-        if cfg.get("steal_gate") is not None and steal > cfg["steal_gate"]:
-            rec["invalid"] = "steal %.2f%% above %.1f%%" % (100 * steal, 100 * cfg["steal_gate"])
-        with open(os.path.join(out, "runs.jsonl"), "a") as f:
-            f.write(json.dumps(rec) + "\n")
-        if p.returncode == 0 and not rec.get("invalid"):
-            try:
-                with open(dst + ".tmp") as f:
-                    probs = check_output(json.load(f), cfg, rc)
-            except (OSError, ValueError) as ex:
-                probs = ["no JSON output: %s" % ex]
-            if probs:
-                rec["invalid"] = "; ".join(probs[:4])
-                with open(os.path.join(out, "runs.jsonl"), "a") as f:
-                    f.write(json.dumps(dict(rec, checked=True, problems=probs)) + "\n")
-        if p.returncode != 0 or rec.get("invalid"):
-            log("%s FAILED: exit %s %s" % (tag, p.returncode, rec.get("invalid", "")))
-            # the round's entry is re-run on the next start (no output file was kept)
-            continue
-        os.replace(dst + ".tmp", dst)
-        log("%d/%d %s done in %.0f s" % (n, len(steps), tag, rec["seconds"]))
-    if dry_run:
-        return meta
-    end = {k: sha256(binary_path(root, cfg["arms"][k.split("/")[0]], k.split("/")[1])) for k in hashes}
+    return meta, hashes
+
+
+def finish(cfg, out, root, meta, hashes):
+    end = {}
+    for k in hashes:
+        a, b = k.split("/", 1)
+        p = binary_path(root, cfg["arms"][a], b)
+        end[k] = sha256(p) if os.path.exists(p) else None
     meta["sha256_end"] = end
     meta["sha256_unchanged"] = end == hashes
     meta["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -298,37 +329,97 @@ def run(cfg, out, root, mix=None, dry_run=False, log=print):
     return meta
 
 
+def tag_of(r, i, rc, a):
+    return "r%02d-%s-%s-%s-%s" % (r, i, rc["binary"].replace("_benchmark", ""), rc["placement"], a)
+
+
+def run(cfg, out, root, dry_run=False, log=print):
+    if cfg.get("max_invol_switches") is None and not dry_run:
+        raise SystemExit("max_invol_switches is unset: freeze it from the smoke (box micro.max_invol_switches); not run")
+    meta, hashes = start(cfg, out, root, True, dry_run, log)
+    steps = plan(cfg)
+    for n, (r, i, a) in enumerate(steps, 1):
+        rc = cfg["runs"][i]
+        tag = tag_of(r, i, rc, a)
+        dst = os.path.join(out, tag + ".json")
+        if os.path.exists(dst):
+            continue  # resumable: a finished process is not run again
+        if dry_run:
+            log("%d/%d %s: %s %s" % (n, len(steps), tag, " ".join("%s=%s" % kv for kv in sorted(run_env(cfg, rc).items())),
+                                     " ".join([binary_path(root, cfg["arms"][a], rc["binary"]),
+                                               "--benchmark_filter=" + rc["filter"],
+                                               "--benchmark_repetitions=%d" % int(cfg["repetitions"])])))
+            continue
+        rec, _ = one_process(cfg, rc, a, root, dst, log)
+        rec.update(tag=tag, round=r, run=i, arm=a)
+        with open(os.path.join(out, "runs.jsonl"), "a") as f:
+            f.write(json.dumps(rec) + "\n")
+        if rec["problems"]:
+            log("%s INVALID: %s" % (tag, "; ".join(rec["problems"][:4])))
+            continue  # not kept: the entry is re-run on the next start
+        os.replace(dst + ".tmp", dst)
+        log("%d/%d %s done in %.0f s" % (n, len(steps), tag, rec["seconds"]))
+    if dry_run:
+        return meta
+    return finish(cfg, out, root, meta, hashes)
+
+
+def smoke_config(cfg, arm=None):
+    """The pre-flight configuration: one arm, every run entry, the smoke thread counts, short
+    windows, 2 repetitions, one round."""
+    sm = cfg["smoke"]
+    arm = arm or sm["arm"]
+    if arm not in cfg["arms"]:
+        raise SystemExit("smoke arm %r is not an arm of %s" % (arm, cfg["name"]))
+    c = json.loads(json.dumps(cfg))
+    c.update(name=cfg["name"] + "-smoke", rounds=1, repetitions=SMOKE["repetitions"], warmup_s=SMOKE["warmup_s"],
+             window_s=SMOKE["window_s"], pairs=[])
+    c["runs"] = [r for r in sm["runs"]]
+    for r in c["runs"]:
+        r["arms"] = [arm]
+    return c
+
+
+def smoke(cfg, out, root, arm=None, log=print):
+    """Pre-flight: (passed, problems, largest involuntary-switch count seen)."""
+    c = smoke_config(cfg, arm)
+    meta, hashes = start(c, out, root, False, False, log)
+    problems, worst = [], None
+    for i, rc in enumerate(c["runs"]):
+        a = rc["arms"][0]
+        tag = tag_of(1, i, rc, a)
+        dst = os.path.join(out, tag + ".json")
+        rec, _ = one_process(c, rc, a, root, dst, log)
+        rec.update(tag=tag, round=1, run=i, arm=a)
+        with open(os.path.join(out, "runs.jsonl"), "a") as f:
+            f.write(json.dumps(rec) + "\n")
+        problems.extend("%s: %s" % (tag, p) for p in rec["problems"])
+        if rec.get("max_invol_switches_seen") is not None:
+            worst = max(worst or 0, rec["max_invol_switches_seen"])
+        if not rec["problems"]:
+            os.replace(dst + ".tmp", dst)
+        log("%s %s in %.0f s" % (tag, "ok" if not rec["problems"] else "FAILED", rec["seconds"]))
+    meta = finish(c, out, root, meta, hashes)
+    if not meta["sha256_unchanged"]:
+        problems.append("a binary changed during the smoke")
+    meta.update(smoke_passed=not problems, smoke_problems=problems, max_invol_switches_seen=worst)
+    with open(os.path.join(out, "meta.json"), "w") as f:
+        json.dump(meta, f, indent=1)
+    return not problems, problems, worst
+
+
 # ---------------------------------------------------------------- table
 
-UNIT = {"ns": 1.0, "us": 1e3, "ms": 1e6, "s": 1e9}
-
-
-def parse_counters(out, names):
-    """{(round, arm, benchmark): {counter: median or None}} of the per-thread counters (M4) the
-    rebuilt benchmarks report, from the median aggregates; a negative value (the counter could
-    not be opened, as on a VM without a PMU) is None (MB5)."""
-    res = {}
+def arms_of(out):
     with open(os.path.join(out, "meta.json")) as f:
-        arms = sorted(json.load(f)["arms"], key=len, reverse=True)
-    for p in sorted(glob.glob(os.path.join(out, "r*.json"))):
-        base = os.path.basename(p)[:-5]
-        arm = next((a for a in arms if base.endswith("-" + a)), None)
-        with open(p) as f:
-            d = json.load(f)
-        for b in d.get("benchmarks", []):
-            if b.get("run_type") == "aggregate" and b.get("aggregate_name") == "median":
-                c = {k: (None if float(b[v]) < 0 else float(b[v])) for k, v in (names or {}).items() if v in b}
-                if c:
-                    res[(int(base[1:3]), arm, norm_name(b["run_name"]))] = c
-    return res
+        return sorted(json.load(f)["arms"], key=len, reverse=True)
 
 
 def parse(out):
-    """[(round, arm, placement, benchmark, ns per iteration)] from the JSON outputs (the median
-    aggregate of each benchmark's repetitions)."""
+    """[(round, arm, placement, benchmark, {metric: value or None})] from the median aggregates
+    of the kept outputs; a negative counter (unavailable) is None."""
     rows = []
-    with open(os.path.join(out, "meta.json")) as f:
-        arms = sorted(json.load(f)["arms"], key=len, reverse=True)
+    arms = arms_of(out)
     for p in sorted(glob.glob(os.path.join(out, "r*.json"))):
         base = os.path.basename(p)[:-5]
         rnd = int(base[1:3])
@@ -336,72 +427,27 @@ def parse(out):
         with open(p) as f:
             d = json.load(f)
         for b in d.get("benchmarks", []):
-            if b.get("run_type") != "aggregate" or b.get("aggregate_name") != "median":
-                continue
-            if b.get("error_occurred"):
-                continue
-            lab = b.get("label", "")
-            pm = re.search(r"placement=(\S+)", lab)
-            rows.append((rnd, arm, pm.group(1) if pm else "-", norm_name(b["run_name"]),
-                         float(b["real_time"]) * UNIT.get(b.get("time_unit", "ns"), 1.0)))
-    return rows
-
-
-def by_key(rows):
-    out = {}
-    for rnd, arm, pl, name, ns in rows:
-        out.setdefault((name, pl), {}).setdefault(arm, {})[rnd] = ns
-    return out
-
-
-FLUSH_MODES = {0: "shared-hot", 1: "walk (memory traffic)", 2: "private-hot"}
-
-
-def flush_rates(out):
-    """[{arm, stats, hammers, mode, during, between, rounds}]: per round the flush benchmark's
-    hammer_rate_during and hammer_rate_between over the hammer-only baseline's rate (same arm,
-    stats, hammers, mode and round), median over rounds (MB4)."""
-    with open(os.path.join(out, "meta.json")) as f:
-        arms = sorted(json.load(f)["arms"], key=len, reverse=True)
-    vals = {}
-    for p in sorted(glob.glob(os.path.join(out, "r*.json"))):
-        base = os.path.basename(p)[:-5]
-        rnd, arm = int(base[1:3]), next((a for a in arms if base.endswith("-" + a)), None)
-        with open(p) as f:
-            d = json.load(f)
-        for b in d.get("benchmarks", []):
             if b.get("run_type") != "aggregate" or b.get("aggregate_name") != "median" or b.get("error_occurred"):
                 continue
-            m = re.match(r"(bmFlushContended|bmHammerOnly)/(\d+)/(\d+)/(\d+)/", norm_name(b["run_name"]))
-            if not m or int(m.group(3)) == 0:
-                continue
-            k = (arm, int(m.group(2)), int(m.group(3)), int(m.group(4)))
-            vals.setdefault(k, {}).setdefault(rnd, {})[m.group(1)] = (b.get("hammer_rate_during"),
-                                                                        b.get("hammer_rate_between"))
-    rows = []
-    for (arm, st, k, mode), per in sorted(vals.items()):
-        dur, btw = [], []
-        for r, v in per.items():
-            ho = (v.get("bmHammerOnly") or (None,))[0]
-            fl = v.get("bmFlushContended")
-            if not ho or not fl:
-                continue
-            if fl[0] is not None:
-                dur.append(float(fl[0]) / float(ho))
-            if fl[1] is not None:
-                btw.append(float(fl[1]) / float(ho))
-        if dur or btw:
-            rows.append({"arm": arm, "stats": st, "hammers": k, "mode": FLUSH_MODES.get(mode, str(mode)),
-                         "during": stats.median(dur) if dur else None, "between": stats.median(btw) if btw else None,
-                         "rounds": max(len(dur), len(btw))})
+            pm = re.search(r"placement=(\S+)", b.get("label", ""))
+            m = {k: (None if b.get(k) is None or float(b[k]) < 0 else float(b[k])) for k in METRICS}
+            rows.append((rnd, arm, pm.group(1) if pm else "-", norm_name(b["run_name"]), m))
     return rows
+
+
+def by_key(rows, metric):
+    out = {}
+    for rnd, arm, pl, name, m in rows:
+        if m.get(metric) is not None:
+            out.setdefault((name, pl), {}).setdefault(arm, {})[rnd] = m[metric]
+    return out
 
 
 def threads_of(name):
     m = re.search(r"threads:(\d+)", name)
     if m:
         return int(m.group(1))
-    m = re.match(r"bmHistogramRecord/(\d+)/", name)
+    m = re.match(r"bmHistogramRecord(?:Only)?/(\d+)", name)
     return int(m.group(1)) if m else None
 
 
@@ -410,94 +456,107 @@ def paired(ref, arm):
     return stats.paired_log_ratio([ref[r] for r in rounds], [arm[r] for r in rounds]), rounds
 
 
+def primary(name):
+    return "ns_per_sample" if name.startswith("bmHistogramRecord") else "cycles_per_op"
+
+
 def table(out, rounds_needed=5):
     with open(os.path.join(out, "meta.json")) as f:
         meta = json.load(f)
-    cfg_pairs = meta["pairs"]
-    data = by_key(parse(out))
-    L, js = ["# Stats microbenchmarks (%s)\n" % meta.get("config"), "Time per iteration, median of the "
-             "repetitions per round; paired log ratio over the rounds with a 95%% t interval (negative: the arm "
-             "is faster). Binaries unchanged during the run: %s.\n" % meta.get("sha256_unchanged")], {"pairs": [], "h1": []}
+    rows = parse(out)
+    data = {m: by_key(rows, m) for m in METRICS}
+    L = ["# Stats microbenchmarks (%s)\n" % meta.get("config"),
+         "Per round the median over the repetitions; paired log ratio over the rounds with a 95%% t interval "
+         "(negative: faster or cheaper than the reference). Cycles per operation are the primary measure "
+         "(ns per sample for the histogram); ns per operation beside them. Binaries unchanged during the "
+         "run: %s.\n" % meta.get("sha256_unchanged")]
+    js = {"pairs": [], "model": [], "h1": [], "fairness": {}}
+
+    def fmt(p, rr):
+        return "%+.2f%% [%+.2f, %+.2f] | %d%s" % (p["effect_pct"], p["lo_pct"], p["hi_pct"], len(rr),
+                                                  " (descriptive)" if len(rr) < rounds_needed else "")
+
     L.append("## Arm against arm\n")
-    L.append("| Benchmark | Placement | Arm vs ref | Effect [95% CI] | Rounds | Ref ns |\n|---|---|---|---|---|---|")
-    for a, ref, rows in cfg_pairs:
-        for (name, pl), per in sorted(data.items()):
-            if a not in per or ref not in per:
+    L.append("| Benchmark | Placement | Arm vs ref | Measure | Effect [95% CI] | Rounds | Ref |\n|---|---|---|---|---|---|---|")
+    for a, ref, which in meta["pairs"]:
+        for (name, pl) in sorted(set(data["cycles_per_op"]) | set(data["ns_per_sample"])):
+            if which == "n1" and threads_of(name) not in (1, None):
                 continue
-            if rows == "n1" and threads_of(name) not in (1, None):
-                continue
-            p, rr = paired(per[ref], per[a])
-            if p.get("half_width_pct") is None:
-                continue
-            row = {"benchmark": name, "placement": pl, "arm": a, "ref": ref, "rounds": len(rr),
-                   "effect_pct": p["effect_pct"], "lo_pct": p["lo_pct"], "hi_pct": p["hi_pct"],
-                   "ref_ns": stats.median([per[ref][r] for r in rr]),
-                   "descriptive": len(rr) < rounds_needed}
-            js["pairs"].append(row)
-            L.append("| %s | %s | %s vs %s | %+.2f%% [%+.2f, %+.2f] | %d%s | %.2f |" % (
-                name, pl, a, ref, row["effect_pct"], row["lo_pct"], row["hi_pct"], len(rr),
-                " (descriptive)" if row["descriptive"] else "", row["ref_ns"]))
+            for metric in (primary(name), "ns_per_op"):
+                per = data[metric].get((name, pl)) or {}
+                if a not in per or ref not in per:
+                    continue
+                p, rr = paired(per[ref], per[a])
+                if p.get("half_width_pct") is None:
+                    continue
+                row = {"benchmark": name, "placement": pl, "arm": a, "ref": ref, "metric": metric, "rounds": len(rr),
+                       "effect_pct": p["effect_pct"], "lo_pct": p["lo_pct"], "hi_pct": p["hi_pct"],
+                       "ref_value": stats.median([per[ref][r] for r in rr]), "descriptive": len(rr) < rounds_needed}
+                js["pairs"].append(row)
+                L.append("| %s | %s | %s vs %s | %s | %s | %.2f |" % (name, pl, a, ref, metric, fmt(p, rr),
+                                                                     row["ref_value"]))
     L.append("")
-    cnt = parse_counters(out, meta.get("thread_counters"))
-    if cnt:
-        L.append("## Per-thread counters per operation (M4; medians over rounds)\n")
-        L.append("| Benchmark | Arm | Counter | Median per op |\n|---|---|---|---|")
-        agg = {}
-        for (r, arm, name), c in cnt.items():
-            for k, v in c.items():
-                agg.setdefault((name, arm, k), [])
-                if v is not None:
-                    agg[(name, arm, k)].append(v)
-        js["counters"] = {"%s|%s|%s" % k: (stats.median(v) if v else None) for k, v in agg.items()}
-        for (name, arm, k), v in sorted(agg.items()):
-            L.append("| %s | %s | %s | %s |" % (name, arm, k, "%.2f" % stats.median(v) if v else "unavailable (no PMU)"))
-        L.append("")
-    fl = flush_rates(out)
-    if fl:
-        js["flush"] = fl
-        L.append("## Hammer update rate during and between flushes, share of the hammer-only rate (M6)\n")
-        L.append("Median over rounds. Private-hot is the mode that can show ordering; walk measures memory "
-                 "traffic.\n")
-        L.append("| Arm | Stats | Hammers | Mode | During / hammer-only | Between / hammer-only | Rounds |\n"
-                 "|---|---|---|---|---|---|---|")
-        for row in fl:
-            L.append("| %s | %d | %d | %s | %s | %s | %d |" % (
-                row["arm"], row["stats"], row["hammers"], row["mode"],
-                "%.3f" % row["during"] if row["during"] is not None else "-",
-                "%.3f" % row["between"] if row["between"] is not None else "-", row["rounds"]))
-        L.append("")
-    L.append("## Shared against per-thread spaced, per arm (H1)\n")
-    L.append("| Benchmark | Threads | Placement | Arm | Shared / spaced [95% CI] | Rounds |\n|---|---|---|---|---|---|")
-    for (name, pl), per in sorted(data.items()):
-        if "Shared" not in name:
+    L.append("## Model variants against Current (one build)\n")
+    L.append("| Benchmark | Threads | Placement | Effect on cycles/op [95% CI] | Rounds |\n|---|---|---|---|---|")
+    for (name, pl), per in sorted(data["cycles_per_op"].items()):
+        m = re.match(r"bmModel(\w+?)(Shared|PerThreadSpaced)/", name)
+        if not m or m.group(1) == "Current":
             continue
-        spaced = name.replace("Shared", "PerThreadSpaced")
-        if (spaced, pl) not in data:
+        ref_name = name.replace("bmModel" + m.group(1), "bmModelCurrent", 1)
+        ref = data["cycles_per_op"].get((ref_name, pl))
+        if not ref:
             continue
         for a in sorted(per):
-            if a not in data[(spaced, pl)]:
+            if a not in ref:
                 continue
-            p, rr = paired(data[(spaced, pl)][a], per[a])
+            p, rr = paired(ref[a], per[a])
+            if p.get("half_width_pct") is None:
+                continue
+            js["model"].append({"benchmark": name, "placement": pl, "arm": a, "effect_pct": p["effect_pct"],
+                                "lo_pct": p["lo_pct"], "hi_pct": p["hi_pct"], "rounds": len(rr)})
+            L.append("| %s | %s | %s | %s |" % (name.split("/")[0], threads_of(name), pl, fmt(p, rr)))
+    L.append("")
+    L.append("## Shared against per-thread spaced, per arm (H1; cycles/op)\n")
+    L.append("| Benchmark | Threads | Placement | Arm | Shared / spaced [95% CI] | Rounds |\n|---|---|---|---|---|---|")
+    for (name, pl), per in sorted(data["cycles_per_op"].items()):
+        if "Shared" not in name:
+            continue
+        spaced = data["cycles_per_op"].get((name.replace("Shared", "PerThreadSpaced"), pl))
+        if not spaced:
+            continue
+        for a in sorted(per):
+            if a not in spaced:
+                continue
+            p, rr = paired(spaced[a], per[a])
             if p.get("half_width_pct") is None:
                 continue
             ratio = math.exp(p["log_mean_pct"] / 100.0)
-            js["h1"].append({"benchmark": name, "placement": pl, "arm": a, "ratio": ratio,
-                             "lo": math.exp(p["log_lo_pct"] / 100.0), "hi": math.exp(p["log_hi_pct"] / 100.0),
+            lo, hi = math.exp(p["log_lo_pct"] / 100.0), math.exp(p["log_hi_pct"] / 100.0)
+            js["h1"].append({"benchmark": name, "placement": pl, "arm": a, "ratio": ratio, "lo": lo, "hi": hi,
                              "rounds": len(rr)})
-            L.append("| %s | %s | %s | %s | %.2fx [%.2f, %.2f] | %d |" % (
-                name.split("/")[0], threads_of(name), pl, a, ratio, math.exp(p["log_lo_pct"] / 100.0),
-                math.exp(p["log_hi_pct"] / 100.0), len(rr)))
+            L.append("| %s | %s | %s | %s | %.2fx [%.2f, %.2f] | %d |" % (name.split("/")[0], threads_of(name), pl, a,
+                                                                        ratio, lo, hi, len(rr)))
+    L.append("")
+    L.append("## Fairness (slowest thread's operations over the fastest's; a result, not a gate)\n")
+    L.append("| Benchmark | Placement | Arm | Median over rounds |\n|---|---|---|---|")
+    for (name, pl), per in sorted(data["fairness"].items()):
+        if threads_of(name) in (1, None):
+            continue
+        for a in sorted(per):
+            v = stats.median(list(per[a].values()))
+            js["fairness"]["%s|%s|%s" % (name, pl, a)] = v
+            L.append("| %s | %s | %s | %.3f |" % (name, pl, a, v))
     L.append("")
     return "\n".join(L) + "\n", js
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "table", "check"])
+    ap.add_argument("cmd", choices=["run", "smoke", "table", "check"])
     ap.add_argument("path")
     ap.add_argument("out", nargs="?")
     ap.add_argument("--root")
-    ap.add_argument("--mix")
+    ap.add_argument("--arm")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--json")
     a = ap.parse_args()
@@ -520,9 +579,17 @@ def main():
         print("identity %s" % ("OK" if not probs else "FAILED"))
         return 1 if probs else 0
     if not a.out:
-        sys.exit("run needs OUT_DIR")
-    mix = a.mix or cfg.get("mix")
-    meta = run(cfg, a.out, root, mix, a.dry_run)
+        sys.exit("%s needs OUT_DIR" % a.cmd)
+    if a.cmd == "smoke":
+        ok, probs, worst = smoke(cfg, a.out, root, a.arm)
+        if not ok:
+            print("SMOKE FAILED (%d problems):" % len(probs))
+            for p in probs:
+                print("  " + p)
+            return 1
+        print("SMOKE PASSED; largest involuntary-switch count %s" % worst)
+        return 0
+    meta = run(cfg, a.out, root, a.dry_run)
     return 0 if a.dry_run or meta.get("sha256_unchanged") else 1
 
 

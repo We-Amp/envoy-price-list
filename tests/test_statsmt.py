@@ -145,60 +145,6 @@ class ConfigsTest(unittest.TestCase):
         self.assertTrue(any("main_cpu outside" in e for e in experiment.validate(experiment.load(p), allow_short=True)))
 
 
-class MicroTest(unittest.TestCase):
-    def test_plan_and_order(self):
-        cfg = json.load(open(os.path.join(MT, "bench-x86_64", "micro.json")))
-        self.assertEqual(cfg["arms"]["fix-relaxed"], "f5eae01224")
-        self.assertEqual(cfg["arms"]["fix"], "7d877d4424")
-        no_mix = MICRO.plan(cfg)
-        self.assertFalse(any(cfg["runs"][i].get("needs_mix") for _, i, _ in no_mix))
-        self.assertGreater(len(MICRO.plan(cfg, "24:4")), len(no_mix))
-        firsts = {MICRO.arm_order(cfg, r)[0] for r in range(1, 6)}
-        self.assertGreaterEqual(len(firsts), 4)
-        vm = json.load(open(os.path.join(MT, "arm-vm", "micro.json")))
-        for r in vm["runs"]:
-            self.assertNotIn("16", r["filter"].split("threads:")[-1])
-            self.assertLessEqual(max(r.get("threads") or r["hammers"]), 15)
-
-    def test_dry_run_and_table(self):
-        d = tempfile.mkdtemp()
-        root = os.path.join(d, "bins")
-        cfg = json.load(open(os.path.join(MT, "bench-x86_64", "micro.json")))
-        cfg["rounds"] = 3
-        cfg["runs"] = cfg["runs"][:1]
-        for c in cfg["arms"].values():
-            os.makedirs(os.path.join(root, c))
-            open(os.path.join(root, c, "atomic_model_benchmark"), "w").write("x")
-        out = os.path.join(d, "out")
-        lines = []
-        MICRO.run(cfg, out, root, dry_run=True, log=lines.append)
-        self.assertTrue(any(x.startswith("identity: ") for x in lines))  # unpinned: logged in a dry run
-        lines = [x for x in lines if not x.startswith("identity: ")]
-        self.assertEqual(len(lines), 3 * 6)
-        self.assertIn("--benchmark_filter=", lines[0])
-        self.assertIn("STATS_BENCH_THREADS=1,2,4,8,16,20", lines[0])
-        self.assertNotIn("min_time", lines[0].split("--benchmark_filter=")[0])
-        # synthetic outputs: fix-relaxed 10% faster than fix on the shared case, spaced 5x faster than shared
-        import math
-        for r in range(1, 4):
-            for arm in cfg["arms"]:
-                f = 0.9 if arm == "fix-relaxed" else 1.0
-                bm = []
-                for name, ns in (("bmModelCurrentShared/real_time/threads:4", 50.0 * f * (1 + 0.01 * r)),
-                                 ("bmModelCurrentPerThreadSpaced/real_time/threads:4", 10.0 * (1 + 0.01 * r))):
-                    bm.append({"name": name + "_median", "run_name": name, "run_type": "aggregate",
-                               "aggregate_name": "median", "real_time": ns, "time_unit": "ns",
-                               "label": "cpus=0-19 placement=one-socket"})
-                json.dump({"benchmarks": bm}, open(os.path.join(out, "r%02d-0-atomic_model-one-socket-%s.json" % (r, arm)), "w"))
-        text, js = MICRO.table(out)
-        row = [p for p in js["pairs"] if p["arm"] == "fix-relaxed" and p["ref"] == "fix" and "Shared" in p["benchmark"]][0]
-        self.assertAlmostEqual(row["effect_pct"], -10.0, places=6)
-        self.assertTrue(row["descriptive"])  # 3 rounds < 5
-        h1 = [x for x in js["h1"] if x["arm"] == "fix"][0]
-        self.assertAlmostEqual(h1["ratio"], 5.0, places=6)
-        del math
-
-
 class UTableTest(unittest.TestCase):
     def test_growth_and_aa(self):
         exp = json.load(open(os.path.join(MT, "bench-x86_64", "u.json")))
@@ -281,159 +227,239 @@ class ReviewUTest(unittest.TestCase):
         self.assertIn(it["stat"], [i["stat"] for i in ev if i.get("absent")])
 
 
-class MicroChecksTest(unittest.TestCase):
-    def test_mix_revision_spread_counters(self):
-        self.assertIsNone(MICRO.check_mix("24:4:2:9:3:5", 6))
-        self.assertIn("6 colon-separated", MICRO.check_mix("24:4", 6))
-        cfg = json.load(open(os.path.join(MT, "bench-x86_64", "micro.json")))
-        self.assertNotIn("revision", cfg)
+def _micro(box_name="arm-vm"):
+    return json.load(open(os.path.join(MT, box_name, "micro.json")))
+
+
+def _bench_out(names, cfg, reps=None, bad=None, extra=None):
+    """A synthetic benchmark JSON: every name with `reps` passing repetitions and a median."""
+    reps = reps or cfg["repetitions"]
+    bm = []
+    for nm in names:
+        raw = nm.replace("/manual_time", "/iterations:1/manual_time") if "threads:" in nm else \
+            nm.replace("/manual_time", "/min_time:1.000/manual_time")
+        good = {"window_overlap": 0.999, "invol_switches": 0, "min_thread_ops": 2e6, "cycles_per_op": 20.0,
+                "instructions_per_op": 9.0, "ns_per_op": 6.0, "fairness": 0.9, "ns_per_sample": 30.0}
+        good.update(extra or {})
+        for i in range(reps):
+            e = dict(good, name=raw, run_name=raw, run_type="iteration")
+            if bad and bad[0] == nm and i == 0:
+                e.update(bad[1])
+            bm.append(e)
+        bm.append(dict(good, name=raw + "_median", run_name=raw, run_type="aggregate", aggregate_name="median",
+                       label="cpus=0-15 placement=vm"))
+    return {"benchmarks": bm}
+
+
+class MicroConfigTest(unittest.TestCase):
+    def test_narrowed_set(self):
+        a = _micro("arm-vm")
+        self.assertEqual(a["arms"], {"fix": "8746c3c4bd", "fix-relaxed": "26af763b9b", "fix-relaxed-p1": "987c8093a9"})
+        self.assertEqual(a["pairs"], [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]])
+        by = {r["binary"]: r for r in a["runs"]}
+        self.assertEqual(by["atomic_model_benchmark"]["arms"], ["fix"])
+        self.assertEqual(by["atomic_model_benchmark"]["threads"], [1, 4, 15])
+        self.assertNotIn("TestFlagShared/", " ".join(x for x in by["atomic_model_benchmark"]["expect"]
+                                                    if not x.startswith("bmModelRelaxedTestFlag")))
+        self.assertEqual(len(by["atomic_model_benchmark"]["expect"]), 5 * 2 * 3)
+        self.assertIn("bmPrimitiveCounterIncShared/manual_time/threads:4", by["stat_update_benchmark"]["expect"])
+        self.assertIn("bmGaugeSetPerThreadSpaced/manual_time/threads:15", by["stat_update_benchmark"]["expect"])
+        self.assertFalse(any("GaugeIncDec" in x or "RequestMix" in x for x in by["stat_update_benchmark"]["expect"]))
+        self.assertEqual(by["histogram_record_benchmark"]["expect"],
+                         ["bmHistogramRecordOnly/1/manual_time", "bmHistogramRecordOnly/15/manual_time"])
+        self.assertNotIn("server_stats_flush_contended_benchmark", by)
+        self.assertEqual([r["threads"] for r in a["smoke"]["runs"]], [[1, 2, 4], [1, 2, 4], [1, 2]])
+        x = _micro("x86-vm")
+        self.assertEqual([r["threads"] for r in x["runs"]], [[1, 4, 7], [1, 4, 7], [1, 7]])
+        z = _micro("bench-x86_64")
+        self.assertEqual([r["binary"] for r in z["runs"]], ["atomic_model_benchmark"])  # bare metal: row 1 only
+        self.assertEqual(z["runs"][0]["threads"], [1, 4, 19])
+        self.assertEqual(z["max_invol_switches"], 0)
+        self.assertIsNone(a["max_invol_switches"])
+        self.assertNotIn("spread_counter", a)
+
+    def test_placeholders_refused(self):
+        for b in ("arm-vm", "x86-vm", "bench-x86_64"):
+            c = _micro(b)
+            self.assertFalse(c["pinned"])
+            self.assertTrue(all(v is None for x in c["expected_sha256"].values() for v in x.values()))
+        d = tempfile.mkdtemp()
+        cfg = _micro("arm-vm")
+        for a, bn in MICRO.needed(cfg):
+            os.makedirs(os.path.join(d, cfg["arms"][a]), exist_ok=True)
+            open(os.path.join(d, cfg["arms"][a], bn), "w").write(a + bn)
+        _, probs = MICRO.identity(cfg, d)
+        self.assertEqual(len(probs), len(MICRO.needed(cfg)))
+        self.assertTrue(all("not pinned" in p for p in probs))
+        self.assertEqual(MICRO.identity(cfg, d, require_pins=False)[1], [])  # the smoke runs before the pins
+        r = subprocess.run([sys.executable, os.path.join(MT, "micro.py"), "check", os.path.join(MT, "arm-vm", "micro.json"),
+                            "--root", d], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("identity FAILED", r.stdout)
         with self.assertRaises(SystemExit):
-            MICRO.run(cfg, tempfile.mkdtemp(), "/nonexistent")  # binaries missing, nothing pinned: not run
-        good = {"context": {},
-                "benchmarks": [{"name": "a/threads:4", "run_type": "iteration", "finish_spread": 0.03}]}
-        self.assertEqual(MICRO.check_output(good, cfg), [])
-        bad = dict(good, benchmarks=[{"name": "a/threads:4", "run_type": "iteration", "finish_spread": 0.2}])
-        self.assertTrue(any("spread" in p for p in MICRO.check_output(bad, cfg)))
+            MICRO.run(dict(cfg, max_invol_switches=5), os.path.join(d, "out"), d)
+
+    def test_identity_pins(self):
         d = tempfile.mkdtemp()
-        json.dump({"arms": {"fix": "x", "fix-relaxed": "y"}, "pairs": [["fix-relaxed", "fix", "all"]],
-                   "thread_counters": {"cycles": "cycles_per_op"}}, open(os.path.join(d, "meta.json"), "w"))
-        for r in (1, 2):
-            for arm in ("fix", "fix-relaxed"):
-                json.dump({"benchmarks": [{"name": "bmX/threads:1_median", "run_name": "bmX/threads:1",
-                                           "run_type": "aggregate", "aggregate_name": "median", "real_time": 10.0,
-                                           "time_unit": "ns", "cycles_per_op": 23.0 if arm == "fix" else 20.0,
-                                           "label": "placement=one-socket"}]},
-                          open(os.path.join(d, "r%02d-0-x-one-socket-%s.json" % (r, arm)), "w"))
-        text, js = MICRO.table(d)
-        self.assertIn("Per-thread counters", text)
-        self.assertEqual(js["counters"]["bmX/threads:1|fix|cycles"], 23.0)
-
-
-class MicroIdentityCoverageTest(unittest.TestCase):
-    def _cfg(self, box="arm-vm"):
-        return json.load(open(os.path.join(MT, box, "micro.json")))
-
-    def test_vm_pins(self):
-        a = self._cfg("arm-vm")
-        self.assertEqual(a["root"], "~/arm/bins3")
-        self.assertEqual(a["arms"]["base"], "3a80b1543c")
-        self.assertTrue(all(v for arm in a["expected_sha256"].values() for v in arm.values()))
-        self.assertEqual(len({v for arm in a["expected_sha256"].values() for v in arm.values()}), 24)
-        self.assertEqual(a["expected_sha256"]["fix-relaxed"]["stat_update_benchmark"][:12], "9b7db1e119df")
-        x = self._cfg("x86-vm")
-        self.assertTrue(all(v for arm in x["expected_sha256"].values() for v in arm.values()))
-        self.assertEqual(x["expected_sha256"]["base"]["atomic_model_benchmark"][:12], "a6645a5ac244")
-        for r in x["runs"]:
-            self.assertEqual(r["cpus"], "0-7")
-            self.assertLessEqual(max(r.get("threads") or r["hammers"]), 7)
-
-    def test_sha_list_commit_mismatch(self):
-        d = tempfile.mkdtemp()
-        p = os.path.join(d, "l.txt")
-        open(p, "w").write("%s  stat_update_benchmark-base-0000000000\n" % ("a" * 64))
-        with self.assertRaises(SystemExit):
-            MK.read_sha_list(p, MK.MICRO_ARMS)
-        open(p, "w").write("%s  stat_update_benchmark-base-relaxed-p1-ba1e983c9d\n" % ("b" * 64))
-        self.assertEqual(MK.read_sha_list(p, MK.MICRO_ARMS), {"base-relaxed-p1": {"stat_update_benchmark": "b" * 64}})
-
-    def test_identity(self):
-        d = tempfile.mkdtemp()
-        cfg = {"arms": {"base": "c1", "fix": "c2"}, "runs": [{"binary": "b1"}], "expected_sha256": {}}
+        cfg = {"arms": {"fix": "c1", "fix-relaxed": "c2"}, "runs": [{"binary": "b1"}], "expected_sha256": {}}
         for c, body in (("c1", b"one"), ("c2", b"two")):
             os.makedirs(os.path.join(d, c))
             open(os.path.join(d, c, "b1"), "wb").write(body)
         h, probs = MICRO.identity(cfg, d)
-        self.assertEqual(len(probs), 2)  # nothing pinned
-        cfg["expected_sha256"] = {"base": {"b1": h["base/b1"]}, "fix": {"b1": h["fix/b1"]}}
+        self.assertEqual(len(probs), 2)
+        cfg["expected_sha256"] = {"fix": {"b1": h["fix/b1"]}, "fix-relaxed": {"b1": h["fix-relaxed/b1"]}}
         self.assertEqual(MICRO.identity(cfg, d)[1], [])
-        cfg["expected_sha256"]["fix"]["b1"] = h["base/b1"]
+        cfg["expected_sha256"]["fix-relaxed"]["b1"] = h["fix/b1"]
         self.assertTrue(any("pinned" in p for p in MICRO.identity(cfg, d)[1]))
         open(os.path.join(d, "c2", "b1"), "wb").write(b"one")
         self.assertTrue(any("same binary" in p for p in MICRO.identity(cfg, d)[1]))
+
+    def test_sha_list(self):
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "l.txt")
+        open(p, "w").write("%s  stat_update_benchmark-fix-0000000000\n" % ("a" * 64))
         with self.assertRaises(SystemExit):
-            MICRO.run(cfg, os.path.join(d, "out"), d)
+            MK.read_sha_list(p, MK.MICRO_ARMS)
+        open(p, "w").write("%s  stat_update_benchmark-fix-relaxed-p1-987c8093a9\n" % ("b" * 64))
+        self.assertEqual(MK.read_sha_list(p, MK.MICRO_ARMS), {"fix-relaxed-p1": {"stat_update_benchmark": "b" * 64}})
 
     def test_filters_match_registered_names(self):
         import re
-        for box in ("arm-vm", "x86-vm", "bench-x86_64"):
-            for r in self._cfg(box)["runs"]:
+        for b in ("arm-vm", "x86-vm", "bench-x86_64"):
+            c = _micro(b)
+            for r in c["runs"] + c["smoke"]["runs"]:
                 rx = re.compile(r["filter"])
                 for nm in r["expect"]:
-                    self.assertTrue(rx.search(nm), (box, nm))
-                    raw = nm.replace("/real_time", "/min_time:1.000/min_warmup_time:0.200/real_time") \
-                        .replace("/manual_time", "/min_time:1.000/min_warmup_time:0.200/manual_time")
-                    self.assertTrue(rx.search(raw), (box, raw))
+                    raw = nm.replace("/manual_time", "/iterations:1/manual_time") if "threads:" in nm else \
+                        nm.replace("/manual_time", "/min_time:1.000/manual_time")
+                    self.assertTrue(rx.search(raw), (b, raw))
                     self.assertEqual(MICRO.norm_name(raw), nm)
-        fl = [r for r in self._cfg("arm-vm")["runs"] if r["binary"].startswith("server")][0]
-        self.assertIn("bmHammerOnly/100000/15/2/real_time", fl["expect"])
-        self.assertNotIn("bmHammerOnly/100000/0/0/real_time", fl["expect"])
+                self.assertFalse(rx.search("bmHistogramRecord/4/1/0/min_time:1.000/manual_time"))
+                self.assertFalse(rx.search("bmGaugeIncDecShared/iterations:1/manual_time/threads:4"))
 
-    def test_env_and_coverage(self):
-        cfg = self._cfg("arm-vm")
-        rc = cfg["runs"][0]
-        env = MICRO.run_env(rc, "1:2:3:4:5:6")
-        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,7,12,15")
-        self.assertEqual(env["STATS_BENCH_CPUS"], "0-15")
-        fl = [r for r in cfg["runs"] if r["binary"].startswith("server")][0]
-        self.assertEqual(MICRO.run_env(fl)["STATS_BENCH_HAMMERS"], "0,1,4,7,12,15")
+    def test_too_many_threads_refused(self):
+        b = box("x86-vm")
+        b["micro"]["threads"] = [1, 12]
+        with self.assertRaises(SystemExit):
+            MK.micro_config(b)
 
-        def out(names, reps=5, err=None):
-            bm = []
-            for nm in names:
-                raw = nm.replace("/real_time", "/min_time:1.000/min_warmup_time:0.200/real_time")
-                for i in range(reps):
-                    e = {"name": raw, "run_name": raw, "run_type": "iteration", "finish_spread": 0.01}
-                    if err == nm and i == 0:
-                        e.update(error_occurred=True, error_message="threads finished more than 10% of the run apart")
-                    bm.append(e)
-                bm.append({"name": raw + "_median", "run_name": raw, "run_type": "aggregate", "aggregate_name": "median"})
-            return {"benchmarks": bm}
-        self.assertEqual(MICRO.check_output(out(rc["expect"]), cfg, rc), [])
-        miss = MICRO.check_output(out(rc["expect"][:-1]), cfg, rc)
-        self.assertTrue(any(rc["expect"][-1] in p and "0 of 5" in p for p in miss))
-        self.assertTrue(MICRO.check_output(out(rc["expect"], reps=4), cfg, rc))
-        errd = MICRO.check_output(out(rc["expect"], err=rc["expect"][3]), cfg, rc)
-        self.assertTrue(any("10%" in p for p in errd))
+
+class MicroGateTest(unittest.TestCase):
+    def setUp(self):
+        self.cfg = dict(_micro("arm-vm"), max_invol_switches=2)
+        self.rc = [r for r in self.cfg["runs"] if r["binary"] == "stat_update_benchmark"][0]
+
+    def test_pass_and_env(self):
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg), self.cfg, self.rc), [])
+        env = MICRO.run_env(self.cfg, self.rc)
+        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,15")
+        self.assertEqual((env["STATS_BENCH_WARMUP"], env["STATS_BENCH_SECONDS"]), ("0.2", "1"))
+
+    def _fails(self, bad, word, extra=None):
+        probs = MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, bad=(self.rc["expect"][2], bad),
+                                              extra=extra), self.cfg, self.rc)
+        self.assertTrue(any(word in p for p in probs), probs)
+
+    def test_each_gate(self):
+        self._fails({"window_overlap": 0.98}, "window overlap")
+        self._fails({"invol_switches": 3}, "involuntary switches, bound 2")
+        self._fails({"invol_switches": -1}, "unavailable")
+        self._fails({"min_thread_ops": 99999}, "floor")
+        self._fails({"cycles_per_op": -1}, "cycles_per_op unavailable")
+        self._fails({"error_occurred": True, "error_message": "Skipping"}, "Skipping")
+        # fairness is a result, not a gate
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, extra={"fairness": 0.2}),
+                                            self.cfg, self.rc), [])
+
+    def test_completeness(self):
+        probs = MICRO.check_output(_bench_out(self.rc["expect"][:-1], self.cfg), self.cfg, self.rc)
+        self.assertTrue(any(self.rc["expect"][-1] in p and "0 of 5" in p for p in probs))
+        self.assertTrue(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, reps=4), self.cfg, self.rc))
+
+    def test_no_pmu_box(self):
+        cfg = dict(self.cfg, pmu=False)
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], cfg, extra={"cycles_per_op": -1,
+                                                                                      "instructions_per_op": -1}),
+                                            cfg, self.rc), [])
+
+    def test_histogram_gates(self):
+        rc = [r for r in self.cfg["runs"] if r["kind"] == "histogram"][0]
+        self.assertEqual(MICRO.check_output(_bench_out(rc["expect"], self.cfg, extra={"window_overlap": None}),
+                                            self.cfg, rc), [])
+        probs = MICRO.check_output(_bench_out(rc["expect"], self.cfg, bad=(rc["expect"][0], {"ns_per_sample": 0})),
+                                   self.cfg, rc)
+        self.assertTrue(any("ns_per_sample" in p for p in probs))
+
+    def test_run_refuses_without_switch_bound(self):
+        with self.assertRaises(SystemExit):
+            MICRO.run(_micro("arm-vm"), tempfile.mkdtemp(), "/nonexistent")
 
     def test_cores(self):
         cores = MICRO.parse_lscpu("# CPU,CORE\n" + "".join("%d,%d\n" % (c, c % 8) for c in range(16)))
         rc = {"placement": "vm", "cpus": "0-7"}
         self.assertEqual(MICRO.check_cores({"runs": [rc]}, cores), [])
         self.assertTrue(MICRO.check_cores({"runs": [dict(rc, cpus="0-8")]}, cores))
-        self.assertEqual(MICRO.check_cores({"runs": [dict(rc, cpus="0-8", smt=True)]}, cores), [])
         self.assertTrue(MICRO.check_cores({"runs": [dict(rc, cpus="0-16")]}, cores))
 
-    def test_too_many_threads_refused(self):
-        b = box("x86-vm")
-        b["micro"]["placements"]["vm"]["threads"] = [1, 12]
-        with self.assertRaises(SystemExit):
-            MK.micro_config(b)
-        b = box("x86-vm")
-        b["micro"]["flush_hammers"] = [0, 8]
-        with self.assertRaises(SystemExit):
-            MK.micro_config(b)
 
-    def test_flush_rates_and_missing_counters(self):
+class MicroPlanSmokeTableTest(unittest.TestCase):
+    def test_plan_dry_run(self):
+        cfg = dict(_micro("arm-vm"), rounds=3)
+        steps = MICRO.plan(cfg)
+        self.assertEqual(len(steps), 3 * (1 + 3 + 3))
+        self.assertEqual({a for _, i, a in steps if i == 0}, {"fix"})
+        firsts = {MICRO.arm_order(["fix", "fix-relaxed", "fix-relaxed-p1"], r)[0] for r in range(1, 6)}
+        self.assertGreaterEqual(len(firsts), 2)
+        lines = []
+        MICRO.run(cfg, tempfile.mkdtemp(), "/nonexistent", dry_run=True, log=lines.append)
+        lines = [x for x in lines if not x.startswith("identity: ")]
+        self.assertEqual(len(lines), len(steps))
+        self.assertIn("STATS_BENCH_SECONDS=1 ", lines[0])
+
+    def test_smoke_config(self):
+        cfg = _micro("arm-vm")
+        s = MICRO.smoke_config(cfg)
+        self.assertEqual((s["rounds"], s["repetitions"], s["warmup_s"], s["window_s"]), (1, 2, 0.01, 0.05))
+        self.assertEqual([r["binary"] for r in s["runs"]], ["atomic_model_benchmark", "stat_update_benchmark",
+                                                           "histogram_record_benchmark"])
+        self.assertTrue(all(r["arms"] == ["fix"] for r in s["runs"]))
+        self.assertEqual(MICRO.run_env(s, s["runs"][0])["STATS_BENCH_THREADS"], "1,2,4")
+        with self.assertRaises(SystemExit):
+            MICRO.smoke_config(cfg, "base")
+
+    def test_smoke_fails_loudly_without_binaries(self):
         d = tempfile.mkdtemp()
-        json.dump({"arms": {"fix": "x", "fix-relaxed": "y"}, "pairs": [],
-                   "thread_counters": {"cycles": "cycles_per_op"}}, open(os.path.join(d, "meta.json"), "w"))
-        for r in (1, 2):
+        r = subprocess.run([sys.executable, os.path.join(MT, "micro.py"), "smoke", os.path.join(MT, "arm-vm", "micro.json"),
+                            os.path.join(d, "out"), "--root", os.path.join(d, "none")], capture_output=True, text=True)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("missing", r.stdout + r.stderr)
+
+    def test_table(self):
+        d = tempfile.mkdtemp()
+        json.dump({"arms": {"fix": "x", "fix-relaxed": "y"}, "pairs": [["fix-relaxed", "fix", "all"]]},
+                  open(os.path.join(d, "meta.json"), "w"))
+        cfg = dict(_micro("arm-vm"), repetitions=1)
+        for r in (1, 2, 3):
             for arm in ("fix", "fix-relaxed"):
+                f = 0.9 if arm == "fix-relaxed" else 1.0
                 bm = []
-                for name, dur, btw in (("bmFlushContended/100000/4/2/real_time", 80.0, 95.0),
-                                       ("bmHammerOnly/100000/4/2/real_time", 100.0, 100.0)):
-                    bm.append({"name": name + "_median", "run_name": name, "run_type": "aggregate",
-                               "aggregate_name": "median", "real_time": 5.0, "time_unit": "ms",
-                               "hammer_rate_during": dur, "hammer_rate_between": btw, "cycles_per_op": -1,
-                               "label": "placement=vm"})
-                json.dump({"benchmarks": bm}, open(os.path.join(d, "r%02d-4-flush-vm-%s.json" % (r, arm)), "w"))
+                for nm, cyc in (("bmCounterIncShared/manual_time/threads:4", 100.0 * f * (1 + 0.01 * r)),
+                                ("bmCounterIncPerThreadSpaced/manual_time/threads:4", 20.0 * (1 + 0.01 * r)),
+                                ("bmModelRelaxedShared/manual_time/threads:4", 80.0 * (1 + 0.01 * r)),
+                                ("bmModelCurrentShared/manual_time/threads:4", 100.0 * (1 + 0.01 * r))):
+                    o = _bench_out([nm], cfg, extra={"cycles_per_op": cyc, "fairness": 0.5})
+                    bm.extend(o["benchmarks"])
+                json.dump({"benchmarks": bm}, open(os.path.join(d, "r%02d-1-stat_update-vm-%s.json" % (r, arm)), "w"))
         text, js = MICRO.table(d)
-        row = [x for x in js["flush"] if x["arm"] == "fix"][0]
-        self.assertAlmostEqual(row["during"], 0.8)
-        self.assertAlmostEqual(row["between"], 0.95)
-        self.assertEqual(row["mode"], "private-hot")
-        self.assertIn("unavailable (no PMU)", text)
-        self.assertIsNone(js["counters"]["bmHammerOnly/100000/4/2/real_time|fix|cycles"])
+        row = [p for p in js["pairs"] if p["metric"] == "cycles_per_op" and p["benchmark"].startswith("bmCounterIncShared")][0]
+        self.assertAlmostEqual(row["effect_pct"], -10.0, places=6)
+        self.assertTrue(row["descriptive"])
+        h1 = [x for x in js["h1"] if x["arm"] == "fix" and x["benchmark"].startswith("bmCounterInc")][0]
+        self.assertAlmostEqual(h1["ratio"], 5.0, places=6)
+        mo = [x for x in js["model"] if x["arm"] == "fix"][0]
+        self.assertAlmostEqual(mo["effect_pct"], -20.0, places=6)
+        self.assertIn("Fairness", text)
+        self.assertEqual(js["fairness"]["bmCounterIncShared/manual_time/threads:4|vm|fix"], 0.5)
 
 
 if __name__ == "__main__":
