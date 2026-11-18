@@ -72,6 +72,33 @@ def plan(cfg, mix=None):
     return out
 
 
+def check_mix(mix, fields):
+    """None or the reason a STATS_BENCH_MIX value is unusable (M7: `fields` non-negative integers)."""
+    parts = (mix or "").split(":")
+    if len(parts) != fields or not all(p.isdigit() for p in parts):
+        return "STATS_BENCH_MIX %r: needs %d colon-separated non-negative integers" % (mix, fields)
+    return None
+
+
+def check_output(d, cfg):
+    """[problem] of one benchmark JSON output: the binary's benchmark revision (from its
+    context) must be the configured one; no repetition may finish with a spread between
+    threads above max_spread (M2)."""
+    probs = []
+    rev = cfg.get("revision") or {}
+    if rev.get("value") is not None:
+        got = (d.get("context") or {}).get(rev["context_key"])
+        if got != rev["value"]:
+            probs.append("benchmark revision %r, expected %r" % (got, rev["value"]))
+    key, lim = cfg.get("spread_counter"), cfg.get("max_spread")
+    if key and lim is not None:
+        for b in d.get("benchmarks", []):
+            if b.get("run_type") == "iteration" and b.get(key) is not None and float(b[key]) > lim:
+                probs.append("%s: thread finish spread %.1f%% above %.0f%%" % (b.get("name"), 100 * float(b[key]),
+                                                                               100 * lim))
+    return probs
+
+
 def read_steal():
     with open("/proc/stat") as f:
         v = [int(x) for x in f.readline().split()[1:]]
@@ -79,6 +106,12 @@ def read_steal():
 
 
 def run(cfg, out, root, mix=None, dry_run=False, log=print):
+    if (cfg.get("revision") or {}).get("value") is None and not dry_run:
+        raise SystemExit("micro.json has no benchmark revision: the rebuilt overlay (M1-M9) sets it; not run")
+    if mix:
+        why = check_mix(mix, int(cfg.get("mix_fields", 6)))
+        if why:
+            raise SystemExit(why)
     os.makedirs(out, exist_ok=True)
     hashes = {}
     for a, commit in cfg["arms"].items():
@@ -89,6 +122,7 @@ def run(cfg, out, root, mix=None, dry_run=False, log=print):
     if missing:
         raise SystemExit("missing binaries: %s" % ", ".join(missing))
     meta = {"config": cfg["name"], "root": root, "arms": cfg["arms"], "pairs": cfg["pairs"], "sha256_start": hashes,
+            "revision": cfg.get("revision"), "thread_counters": cfg.get("thread_counters"),
             "mix": mix, "rounds": cfg["rounds"], "repetitions": cfg["repetitions"],
             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if not dry_run:
@@ -125,6 +159,16 @@ def run(cfg, out, root, mix=None, dry_run=False, log=print):
             rec["invalid"] = "steal %.2f%% above %.1f%%" % (100 * steal, 100 * cfg["steal_gate"])
         with open(os.path.join(out, "runs.jsonl"), "a") as f:
             f.write(json.dumps(rec) + "\n")
+        if p.returncode == 0 and not rec.get("invalid"):
+            try:
+                with open(dst + ".tmp") as f:
+                    probs = check_output(json.load(f), cfg)
+            except (OSError, ValueError) as ex:
+                probs = ["no JSON output: %s" % ex]
+            if probs:
+                rec["invalid"] = "; ".join(probs[:4])
+                with open(os.path.join(out, "runs.jsonl"), "a") as f:
+                    f.write(json.dumps(dict(rec, checked=True)) + "\n")
         if p.returncode != 0 or rec.get("invalid"):
             log("%s FAILED: exit %s %s" % (tag, p.returncode, rec.get("invalid", "")))
             # the round's entry is re-run on the next start (no output file was kept)
@@ -143,6 +187,25 @@ def run(cfg, out, root, mix=None, dry_run=False, log=print):
 # ---------------------------------------------------------------- table
 
 UNIT = {"ns": 1.0, "us": 1e3, "ms": 1e6, "s": 1e9}
+
+
+def parse_counters(out, names):
+    """{(round, arm, benchmark): {counter: median}} of the per-thread counters (M4) the rebuilt
+    benchmarks report, from the median aggregates."""
+    res = {}
+    with open(os.path.join(out, "meta.json")) as f:
+        arms = sorted(json.load(f)["arms"], key=len, reverse=True)
+    for p in sorted(glob.glob(os.path.join(out, "r*.json"))):
+        base = os.path.basename(p)[:-5]
+        arm = next((a for a in arms if base.endswith("-" + a)), None)
+        with open(p) as f:
+            d = json.load(f)
+        for b in d.get("benchmarks", []):
+            if b.get("run_type") == "aggregate" and b.get("aggregate_name") == "median":
+                c = {k: b[v] for k, v in (names or {}).items() if v in b}
+                if c:
+                    res[(int(base[1:3]), arm, b["run_name"])] = c
+    return res
 
 
 def parse(out):
@@ -217,6 +280,18 @@ def table(out, rounds_needed=5):
                 name, pl, a, ref, row["effect_pct"], row["lo_pct"], row["hi_pct"], len(rr),
                 " (descriptive)" if row["descriptive"] else "", row["ref_ns"]))
     L.append("")
+    cnt = parse_counters(out, meta.get("thread_counters"))
+    if cnt:
+        L.append("## Per-thread counters per operation (M4; medians over rounds)\n")
+        L.append("| Benchmark | Arm | Counter | Median per op |\n|---|---|---|---|")
+        agg = {}
+        for (r, arm, name), c in cnt.items():
+            for k, v in c.items():
+                agg.setdefault((name, arm, k), []).append(float(v))
+        js["counters"] = {"%s|%s|%s" % k: stats.median(v) for k, v in agg.items()}
+        for (name, arm, k), v in sorted(agg.items()):
+            L.append("| %s | %s | %s | %.2f |" % (name, arm, k, stats.median(v)))
+        L.append("")
     L.append("## Shared against per-thread spaced, per arm (H1)\n")
     L.append("| Benchmark | Threads | Placement | Arm | Shared / spaced [95% CI] | Rounds |\n|---|---|---|---|---|---|")
     for (name, pl), per in sorted(data.items()):

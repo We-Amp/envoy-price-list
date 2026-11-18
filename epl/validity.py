@@ -179,8 +179,17 @@ def verdict(m, cfg=None):
         reasons.append("rung threads not on their cores: %s" % m["rung_pin"])
     if m.get("rung_pin_after") is not None and not m["rung_pin_after"].get("ok"):
         reasons.append("rung threads left their cores during the leg: %s" % m["rung_pin_after"])
-    if m.get("responses_from") == "origin" and not m.get("responses"):
-        reasons.append("no origin response count (stub_status)")
+    if m.get("responses_from") == "origin":
+        if not m.get("origin_reads_ok") or not m.get("responses"):
+            reasons.append("no origin response count (stub_status read failed or zero)")
+        adm = m.get("responses_admin_raw")
+        if adm and m.get("responses_raw") and abs(m["responses_raw"] / float(adm) - 1.0) > 0.005:
+            reasons.append("origin response count %d differs from Envoy's %d by more than 0.5%%"
+                           % (m["responses_raw"], adm))
+    if m.get("workers_expected") is not None and (m.get("workers_perf_threads") != m["workers_expected"]
+                                                 or m.get("workers_cycles_per_req") is None):
+        reasons.append("worker-only cycles cover %s of %d worker threads" % (
+            m.get("workers_perf_threads"), m["workers_expected"]))
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]

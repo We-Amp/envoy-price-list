@@ -887,7 +887,8 @@ class RealBackend:
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
                     t_q0 = time.monotonic()
                     q0 = admin_stats(ecfg["admin_port"], adm_t)
-                    o0 = origin_requests(e) if mcfg.get("responses_from") == "origin" else None
+                    from_origin = mcfg.get("responses_from") == "origin"
+                    o0 = origin_requests(e) if from_origin else None
                     st0 = sysprobe_steal()
                     settle = float(shape.get("pre_window_settle_s") or 0)
                     if settle:
@@ -952,16 +953,18 @@ class RealBackend:
                     kb1 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     p1 = sysprobe.per_cpu_times()
                     q1 = admin_stats(ecfg["admin_port"], adm_t)
-                    o1 = origin_requests(e) if o0 is not None else None
+                    o1 = origin_requests(e) if from_origin else None
                     st1 = sysprobe_steal()
+                    qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
+                    # the response count's time base ends with the last count read, before
+                    # anything slow (thread checks, numastat) runs
+                    t2 = time.monotonic()
                     if rung["main_cpu"] is not None:
                         # where every thread ran last, after the window: still on its own set
                         m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
                     if mcfg.get("numastat"):
                         # after the window: where Envoy's memory sits, per node
                         m["numastat"] = numastat_totals(envoy.pid)
-                    qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
-                    t2 = time.monotonic()
                     e1 = sysprobe.proc_threads_detail(envoy.pid)
                     b1 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
                     c1 = sysprobe.proc_threads_cpu(cl.pid)
@@ -990,12 +993,14 @@ class RealBackend:
             win = t2 - (t_q0 if settle else t0)
             perf_s = float(mcfg["window_s"])
             resp_raw = _delta(q0, q1, "http.ingress_http.downstream_rq_2xx")
-            if o0 is not None:
+            if from_origin:
                 # responses counted at the origin (nginx stub_status): independent of Envoy's own
-                # stats, which an arm may reject; each status read is one request, not counted
+                # stats, which an arm may reject; each status read is one request, not counted.
+                # A failed read is zero responses (invalid), never a fall back to Envoy's count.
                 m["responses_admin_raw"] = resp_raw
-                resp_raw = (o1 - o0 - 1) if (o0 is not None and o1 is not None) else 0
                 m["responses_from"] = "origin"
+                m["origin_reads_ok"] = o0 is not None and o1 is not None
+                resp_raw = (o1 - o0 - 1) if m["origin_reads_ok"] else 0
             resp = resp_raw * perf_s / win if win > 0 else 0
             if st0 and st1:
                 m["steal_share"] = steal_share(st0, st1)
@@ -1039,11 +1044,13 @@ class RealBackend:
             non2 = sum(_delta(q0, q1, "http.ingress_http.downstream_rq_%s" % c) for c in ("1xx", "3xx", "4xx", "5xx"))
             m["sut_stats_delta"] = _stat_deltas(q0, q1)
             m["sut_stats_window"] = _stat_window(q0, q1)
+            m["sut_stats_window_ok"] = True
             if per_thread:
                 pt = parse_perf_per_thread(pr.stderr)
                 m["perf_per_thread"] = pt
                 wk = [v for v in pt.values() if v["comm"].startswith("wrk:")]
                 cyc = lambda v: v.get("cycles", v.get("cycles:u", 0) + v.get("cycles:k", 0))  # noqa: E731
+                m["workers_perf_threads"], m["workers_expected"] = len(wk), int(workers)
                 if wk and resp > 0:
                     m["workers_cycles_per_req"] = sum(cyc(v) for v in wk) / resp
             if sampler:
@@ -1161,6 +1168,7 @@ class RealBackend:
                 # end-of-leg snapshot: cumulative counters over the whole leg, just before the stop
                 try:
                     m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t)
+                    m["sut_stats_leg_end_ok"] = True
                     self._save_stats(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
                     sc = aenv.get("stats_clusters")
                     if sc:

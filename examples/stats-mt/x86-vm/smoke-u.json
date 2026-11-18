@@ -182,6 +182,12 @@
      "scope": "config",
      "equals": true,
      "label": "stats_matcher reject_all"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "absent": true,
+     "label": "store stats absent at the end of the leg (the read succeeded, the stat is not there)"
     }
    ]
   },
@@ -251,9 +257,16 @@
  "rounds": 1,
  "rounds_block": 1,
  "rounds_max": 1,
+ "adaptive": false,
  "r_star": 1300,
  "k": 64,
+ "session_record": {
+  "fix_envoy_static": {
+   "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+   "sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c",
+   "record": "built from 3c9cce2f2c / 71a80bcaab; source tree outside test/ identical to 977c664058"
+  }
+ },
  "smoke": true,
- "evidence_mode": "record",
- "adaptive": false
+ "evidence_mode": "record"
 }

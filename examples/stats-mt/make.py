@@ -15,8 +15,8 @@ Per box (directory named after it, with box.json):
                  stats_config reject_all (stats-reject: store stats become null objects; the
                  per-host primitive stats stay on, so this is the price of store stats, a
                  lower bound on all stat updates), and a second copy of base; every rung in
-                 every round, rung order rotated; 12 rounds minimum (one Latin square per 3),
-                 blocks of 3, cap 15; worker-only cycles per request is the primary metric;
+                 every round, rung order rotated; 15 fixed rounds (the rung and arm rotations
+                 both balance at 15); worker-only cycles per request is the primary metric;
                  responses counted at the origin
   smoke-u.json   one round of the three arms at every rung (evidence recorded)
   u-hitm.json    evidence legs outside the timed run (machines whose box lists hitm_events):
@@ -39,7 +39,15 @@ ORDER_SEED = 41
 RUNS = "~/epl/runs/stats-mt"
 DEFAULT_R_STAR = 1300  # placeholder until step 0: the 4 KB shape's per-worker rate on four workers
 DEFAULT_K = 64         # placeholder: client connections per Envoy worker
-REJECT_EVIDENCE = [{"stat": "reject_all", "scope": "config", "equals": True, "label": "stats_matcher reject_all"}]
+REJECT_EVIDENCE = [{"stat": "reject_all", "scope": "config", "equals": True, "label": "stats_matcher reject_all"},
+                   {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "absent": True,
+                    "label": "store stats absent at the end of the leg (the read succeeded, the stat is not there)"}]
+# The fix arm of later runs: the envoy-static built from 3c9cce2f2c (71a80bcaab); between that
+# and 977c664058 only files under test/ change (benchmarks, their BUILD entries, three tests),
+# which //source/exe:envoy-static does not depend on: the same source tree outside test/.
+FIX_ENVOY_STATIC = {"binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+                    "sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c",
+                    "record": "built from 3c9cce2f2c / 71a80bcaab; source tree outside test/ identical to 977c664058"}
 BASE_EVIDENCE = [{"stat": "reject_all", "scope": "config", "absent": True, "label": "no stats matcher"},
                  {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "min": 1,
                   "label": "store stats present"}]
@@ -120,11 +128,18 @@ def micro_config(box):
     runs.append({"binary": "server_stats_flush_contended_benchmark", "placement": list(mc["placements"])[0],
                  "cpus": first["cpus"], "filter": "^bmFlushContended/100000/(%s)/[012]/real_time$" % hk})
     return {"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": dict(MICRO_ARMS),
+            # the benchmark revision the rebuilt overlay reports in its context (M1-M9); runs refuse a
+            # binary that reports another (or none), and refuse to start while it is unset
+            "revision": {"context_key": "stats_bench_revision", "value": None},
+            "spread_counter": "finish_spread", "max_spread": 0.10,
+            "thread_counters": {"cycles": "cycles_per_op", "instructions": "instructions_per_op"},
+            "mix_fields": 6,
             "pairs": MICRO_PAIRS, "runs": runs, "rounds": 5, "repetitions": 5, "min_time": "0.2s",
             "mix": None, "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
             "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
-            "note": "mix (STATS_BENCH_MIX, '<counter incs>:<gauge inc/dec pairs>' in these builds) has no default: "
-                    "the request-mix benchmarks are skipped until step 0 sets it"}
+            "note": "mix (STATS_BENCH_MIX) is '<counter incs>:<gauge pairs>:<gauge sets>:<primitive counter incs>:"
+                    "<primitive gauge pairs>:<histogram samples>' (M7), no default: the request-mix benchmarks are "
+                    "skipped until step 0 sets it from the uprobe counts"}
 
 
 def configs(box, rates=None):
@@ -135,15 +150,15 @@ def configs(box, rates=None):
     arms = [arm(box, "base", ev=BASE_EVIDENCE), arm(box, "stats-reject", {"stats_reject_all": True}, REJECT_EVIDENCE),
             arm(box, "base-A2", ev=BASE_EVIDENCE)]
     u = base_cfg(box, "mt-u-" + box["name"])
-    u.update(base_arm="base", arms=arms, shapes=shapes, rounds=12, rounds_block=3, rounds_max=15,
-             stop={"target_half_width_pct": 1.0}, r_star=r_star, k=k)
+    # 15 fixed rounds: the rung rotation (period 5) and the arm rotation (period 3) both balance
+    u.update(base_arm="base", arms=arms, shapes=shapes, rounds=15, rounds_block=15, rounds_max=15, adaptive=False,
+             r_star=r_star, k=k, session_record={"fix_envoy_static": FIX_ENVOY_STATIC})
     if not rr:
         u["uncalibrated"] = True
     out["u.json"] = u
     s = json.loads(json.dumps(u))
     s.update(name="mt-smoke-u-" + box["name"], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
              evidence_mode="record", adaptive=False)
-    s.pop("stop")
     s.pop("uncalibrated", None)
     out["smoke-u.json"] = s
     if box.get("hitm_events"):
@@ -152,7 +167,6 @@ def configs(box, rates=None):
                  rounds=2, rounds_block=2, rounds_max=2, adaptive=False, box_specific=True,
                  primary_metric="cycles_total")
         h["measure"].update(perf_events=box["hitm_events"], per_thread=False)
-        h.pop("stop")
         out["u-hitm.json"] = h
     out["micro.json"] = micro_config(box)
     return out

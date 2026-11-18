@@ -122,7 +122,9 @@ class ConfigsTest(unittest.TestCase):
         self.assertEqual(c["primary_metric"], "workers_cycles_per_req")
         self.assertEqual([a["name"] for a in c["arms"]], ["base", "stats-reject", "base-A2"])
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "u.json"))
-        self.assertEqual(len(experiment.schedule(exp)), 180)
+        self.assertEqual(len(experiment.schedule(exp)), 225)  # 15 fixed rounds: rungs and arms both balance
+        self.assertFalse(exp["adaptive"])
+        self.assertIn("3c9cce2f2c", exp["session_record"]["fix_envoy_static"]["record"])
         first = [experiment.shape_order(exp, r)[0]["name"] for r in range(1, 6)]
         self.assertEqual(len(set(first)), 5)  # every rung leads one round in five
         self.assertIn("u-hitm.json", MK.configs(box("bench-x86_64")))
@@ -225,6 +227,83 @@ class UTableTest(unittest.TestCase):
         txt = open(os.path.join(MT, "run-u.sh")).read()
         self.assertIn("timeout --foreground --signal=TERM", txt)
         self.assertIn("no override", txt)
+
+
+class ReviewUTest(unittest.TestCase):
+    def ok(self, **over):
+        m = {"idle_ok": True, "preflight_ok": True, "pinning_ok": True, "perf_ok": True, "responses": 40000,
+             "target_rps": 2000, "sut_rate_2xx": 2001.0, "client_overflow": {}, "client_non2xx": {}, "sut_non2xx": 0,
+             "client_headroom": 0.6, "client_workers": 16, "client_pending_total": 16, "sut_foreign_cpus": 0.0,
+             "sut_sibling_cpus": 0.0, "envoy_exit": 0, "perf_min_running_pct": 100.0, "envoy_workers": 4,
+             "envoy_worker_max_share": 0.25, "envoy_worker_min_share": 0.25}
+        m.update(over)
+        return validity.verdict(m)
+
+    def test_u1_time_base_before_slow_reads(self):
+        src = open(os.path.join(HERE, "epl", "leg.py")).read()
+        i_t2 = src.index("                    t2 = time.monotonic()")
+        self.assertLess(src.index("o1 = origin_requests(e) if from_origin else None"), i_t2)
+        self.assertGreater(src.index('m["numastat"] = numastat_totals(envoy.pid)'), i_t2)
+        self.assertGreater(src.index('m["rung_pin_after"] = pin_check('), i_t2)
+
+    def test_u2_origin_reads(self):
+        self.assertTrue(self.ok(responses_from="origin", origin_reads_ok=True, responses_raw=40000,
+                                responses_admin_raw=40100)["valid"])
+        v = self.ok(responses_from="origin", origin_reads_ok=False, responses=0)
+        self.assertFalse(v["valid"])
+        self.assertTrue(any("stub_status read failed" in r for r in v["reasons"]))
+        v = self.ok(responses_from="origin", origin_reads_ok=True, responses_raw=40000, responses_admin_raw=40400)
+        self.assertTrue(any("differs from Envoy" in r for r in v["reasons"]))
+        # the reject arm has no Envoy count: no consistency check
+        self.assertTrue(self.ok(responses_from="origin", origin_reads_ok=True, responses_raw=40000,
+                                responses_admin_raw=0)["valid"])
+
+    def test_u3_worker_coverage(self):
+        self.assertTrue(self.ok(workers_expected=28, workers_perf_threads=28, workers_cycles_per_req=1.0)["valid"])
+        v = self.ok(workers_expected=28, workers_perf_threads=27, workers_cycles_per_req=1.0)
+        self.assertTrue(any("27 of 28" in r for r in v["reasons"]))
+        self.assertFalse(self.ok(workers_expected=4, workers_perf_threads=4)["valid"])
+
+    def test_u4_reject_absent(self):
+        from epl import evidence
+        it = {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "absent": True}
+        self.assertTrue(evidence.check_item({"sut_stats_leg_end": {}, "sut_stats_leg_end_ok": True}, it)["ok"])
+        self.assertFalse(evidence.check_item({"sut_stats_leg_end": {}}, it)["ok"])
+        self.assertFalse(evidence.check_item({}, it)["ok"])
+        self.assertFalse(evidence.check_item({"sut_stats_leg_end": {"http.ingress_http.downstream_rq_2xx": 5},
+                                              "sut_stats_leg_end_ok": True}, it)["ok"])
+        ev = [a for a in MK.configs(box("bench-x86_64"))["u.json"]["arms"] if a["name"] == "stats-reject"][0]["evidence"]
+        self.assertIn(it["stat"], [i["stat"] for i in ev if i.get("absent")])
+
+
+class MicroChecksTest(unittest.TestCase):
+    def test_mix_revision_spread_counters(self):
+        self.assertIsNone(MICRO.check_mix("24:4:2:9:3:5", 6))
+        self.assertIn("6 colon-separated", MICRO.check_mix("24:4", 6))
+        cfg = json.load(open(os.path.join(MT, "bench-x86_64", "micro.json")))
+        self.assertIsNone(cfg["revision"]["value"])
+        with self.assertRaises(SystemExit):
+            MICRO.run(cfg, tempfile.mkdtemp(), "/nonexistent")  # no revision: not run
+        cfg["revision"]["value"] = "M9"
+        good = {"context": {"stats_bench_revision": "M9"},
+                "benchmarks": [{"name": "a/threads:4", "run_type": "iteration", "finish_spread": 0.03}]}
+        self.assertEqual(MICRO.check_output(good, cfg), [])
+        self.assertTrue(MICRO.check_output(dict(good, context={}), cfg))
+        bad = dict(good, benchmarks=[{"name": "a/threads:4", "run_type": "iteration", "finish_spread": 0.2}])
+        self.assertTrue(any("spread" in p for p in MICRO.check_output(bad, cfg)))
+        d = tempfile.mkdtemp()
+        json.dump({"arms": {"fix": "x", "fix-relaxed": "y"}, "pairs": [["fix-relaxed", "fix", "all"]],
+                   "thread_counters": {"cycles": "cycles_per_op"}}, open(os.path.join(d, "meta.json"), "w"))
+        for r in (1, 2):
+            for arm in ("fix", "fix-relaxed"):
+                json.dump({"benchmarks": [{"name": "bmX/threads:1_median", "run_name": "bmX/threads:1",
+                                           "run_type": "aggregate", "aggregate_name": "median", "real_time": 10.0,
+                                           "time_unit": "ns", "cycles_per_op": 23.0 if arm == "fix" else 20.0,
+                                           "label": "placement=one-socket"}]},
+                          open(os.path.join(d, "r%02d-0-x-one-socket-%s.json" % (r, arm)), "w"))
+        text, js = MICRO.table(d)
+        self.assertIn("Per-thread counters", text)
+        self.assertEqual(js["counters"]["bmX/threads:1|fix|cycles"], 23.0)
 
 
 if __name__ == "__main__":

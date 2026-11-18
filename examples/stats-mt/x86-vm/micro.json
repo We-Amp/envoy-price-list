@@ -88,6 +88,17 @@
   "base-relaxed": "18676f7806",
   "base-relaxed-p1": "1f1a299743"
  },
+ "revision": {
+  "context_key": "stats_bench_revision",
+  "value": null
+ },
+ "spread_counter": "finish_spread",
+ "max_spread": 0.1,
+ "thread_counters": {
+  "cycles": "cycles_per_op",
+  "instructions": "instructions_per_op"
+ },
+ "mix_fields": 6,
  "pairs": [
   [
    "fix-relaxed",
@@ -159,5 +170,5 @@
   "max_busy_pct": 2.0
  },
  "steal_gate": 0.02,
- "note": "mix (STATS_BENCH_MIX, '<counter incs>:<gauge inc/dec pairs>' in these builds) has no default: the request-mix benchmarks are skipped until step 0 sets it"
+ "note": "mix (STATS_BENCH_MIX) is '<counter incs>:<gauge pairs>:<gauge sets>:<primitive counter incs>:<primitive gauge pairs>:<histogram samples>' (M7), no default: the request-mix benchmarks are skipped until step 0 sets it from the uprobe counts"
 }

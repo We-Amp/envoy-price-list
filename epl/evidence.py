@@ -105,7 +105,11 @@ SNAPSHOT = {"window": "sut_stats_window", "leg": "sut_stats_leg_end"}
 def snapshot_missing(m, scope):
     """True when the stats snapshot a window or leg item reads was never taken (or is empty):
     then no item of that scope can pass, `absent` included."""
-    return scope in SNAPSHOT and not m.get(SNAPSHOT[scope])
+    if scope not in SNAPSHOT:
+        return False
+    d = m.get(SNAPSHOT[scope])
+    # an empty snapshot counts when the read itself succeeded (an arm that rejects every stat)
+    return d is None or (not d and not m.get(SNAPSHOT[scope] + "_ok"))
 
 
 def lookup(m, scope, name):
