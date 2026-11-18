@@ -221,9 +221,9 @@ def micro_config(box, sha_list=None):
                  "rounds": 5, "repetitions": 5, "warmup_s": 0.2, "window_s": 1.0,
                  "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
                  "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
-                 "note": "involuntary-switch bound per repetition: max(max_invol_switches, invol_switches_per_s x "
-                         "window) where the box sets a rate (bare metal), else max_invol_switches, frozen from the "
-                         "box's smoke; run refuses while it is null"}, **MICRO_GATES)
+                 "note": "involuntary-switch bound per repetition: per thread max(max_invol_switches, "
+                         "invol_switches_per_s x window) where the box sets a rate, else max_invol_switches (frozen "
+                         "from the box's smoke), times the threads; run refuses while it is null"}, **MICRO_GATES)
 
 
 def configs(box, rates=None):

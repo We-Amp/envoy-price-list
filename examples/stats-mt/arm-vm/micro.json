@@ -358,7 +358,7 @@
   "max_busy_pct": 2.0
  },
  "steal_gate": 0.02,
- "note": "involuntary-switch bound per repetition: max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate (bare metal), else max_invol_switches, frozen from the box's smoke; run refuses while it is null",
+ "note": "involuntary-switch bound per repetition: per thread max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate, else max_invol_switches (frozen from the box's smoke), times the threads; run refuses while it is null",
  "ops_floor_per_s": 20000,
  "min_thread_ops_abs": 1024,
  "max_nonoverlap_s": 0.002,

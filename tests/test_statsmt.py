@@ -278,6 +278,8 @@ class MicroConfigTest(unittest.TestCase):
         self.assertEqual(MICRO.invol_limit(z), 25.0)  # 1 s window
         self.assertEqual(MICRO.invol_limit(MICRO.smoke_config(z)), 5.0)  # 0.2 s smoke
         self.assertIn("18:43:40Z", z["invol_bound_record"])
+        self.assertEqual(MICRO.invol_limit(MICRO.smoke_config(z), 4), 20.0)
+        self.assertEqual(MICRO.invol_limit(z, 19), 475.0)
         self.assertIsNone(MICRO.invol_limit(_micro("x86-vm")))
         self.assertIsNone(a["max_invol_switches"])
         self.assertNotIn("spread_counter", a)
@@ -365,7 +367,7 @@ class MicroGateTest(unittest.TestCase):
         self.assertEqual((env["STATS_BENCH_WARMUP"], env["STATS_BENCH_SECONDS"]), ("0.2", "1"))
 
     def _fails(self, bad, word, extra=None):
-        probs = MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, bad=(self.rc["expect"][2], bad),
+        probs = MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, bad=(self.rc["expect"][0], bad),
                                               extra=extra), self.cfg, self.rc)
         self.assertTrue(any(word in p for p in probs), probs)
 
@@ -373,10 +375,13 @@ class MicroGateTest(unittest.TestCase):
         self._fails({"window_overlap": 0.98}, "window overlap")
         self._fails({"invol_switches": 3}, "involuntary switches, bound 2")
         bm = dict(self.cfg, max_invol_switches=5, invol_switches_per_s=25)
-        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], bm, extra={"invol_switches": 25}), bm,
-                                            self.rc), [])
-        self.assertTrue(MICRO.check_output(_bench_out(self.rc["expect"], bm, extra={"invol_switches": 26}), bm,
-                                           self.rc))
+        one = [n for n in self.rc["expect"] if n.endswith("threads:1")]
+        four = [n for n in self.rc["expect"] if n.endswith("threads:4")]
+        rc1, rc4 = dict(self.rc, expect=one), dict(self.rc, expect=four)
+        self.assertEqual(MICRO.check_output(_bench_out(one, bm, extra={"invol_switches": 25}), bm, rc1), [])
+        self.assertTrue(MICRO.check_output(_bench_out(one, bm, extra={"invol_switches": 26}), bm, rc1))
+        self.assertEqual(MICRO.check_output(_bench_out(four, bm, extra={"invol_switches": 100}), bm, rc4), [])
+        self.assertTrue(MICRO.check_output(_bench_out(four, bm, extra={"invol_switches": 101}), bm, rc4))
         self._fails({"invol_switches": -1}, "unavailable")
         self._fails({"min_thread_ops": 19999}, "floor 20000")
         self._fails({"window_overlap": 0.9929}, "outside the common window")

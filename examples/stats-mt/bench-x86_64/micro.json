@@ -105,7 +105,7 @@
    "pmu": true,
    "max_invol_switches": 5,
    "invol_switches_per_s": 25,
-   "invol_bound_record": "frozen from the bare-metal smoke of 2026-11-18T18:43:40Z (fix build, atomic_model, 0.2 s windows): 0-4 involuntary switches per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4) without CPU isolation; bound max(5, 25/s x window): 5 at 0.2 s, 25 at 1 s"
+   "invol_bound_record": "frozen from the bare-metal smokes of 2026-11-18 (fix build, atomic_model, 0.2 s windows, no CPU isolation): 18:43:40Z 0-4 per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4); 18:45:23Z at most 6 (4 threads). The counter is summed over the threads; rule: per thread max(5, 25/s x window), times the threads (5 per thread at 0.2 s, 25 per thread at 1 s)"
   },
   "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core."
  },
@@ -125,7 +125,7 @@
  "pmu": true,
  "max_invol_switches": 5,
  "invol_switches_per_s": 25,
- "invol_bound_record": "frozen from the bare-metal smoke of 2026-11-18T18:43:40Z (fix build, atomic_model, 0.2 s windows): 0-4 involuntary switches per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4) without CPU isolation; bound max(5, 25/s x window): 5 at 0.2 s, 25 at 1 s",
+ "invol_bound_record": "frozen from the bare-metal smokes of 2026-11-18 (fix build, atomic_model, 0.2 s windows, no CPU isolation): 18:43:40Z 0-4 per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4); 18:45:23Z at most 6 (4 threads). The counter is summed over the threads; rule: per thread max(5, 25/s x window), times the threads (5 per thread at 0.2 s, 25 per thread at 1 s)",
  "pairs": [
   [
    "fix-relaxed",
@@ -252,7 +252,7 @@
   "max_busy_pct": 2.0
  },
  "steal_gate": null,
- "note": "involuntary-switch bound per repetition: max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate (bare metal), else max_invol_switches, frozen from the box's smoke; run refuses while it is null",
+ "note": "involuntary-switch bound per repetition: per thread max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate, else max_invol_switches (frozen from the box's smoke), times the threads; run refuses while it is null",
  "ops_floor_per_s": 20000,
  "min_thread_ops_abs": 1024,
  "max_nonoverlap_s": 0.002,
