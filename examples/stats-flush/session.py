@@ -26,7 +26,8 @@ MANDATORY = ["m-10k", "m-100k", "m-1m", "w", "m-300k"]
 OPTIONAL = ["s-100k", "s-1m", "x-1m"]  # run in this order; the cut order drops them from the end
 ASK_LEAD_ABOVE_S = 2.5 * 3600
 STOP_S = 3.25 * 3600
-SMOKE_OF = {"m-10k": "smoke-m-10k", "m-100k": "smoke-100k", "m-1m": "smoke-1m", "m-300k": "smoke-m-300k",
+SMOKE_OF = {"mfix-10k": "smoke-mfix-10k", "mfix-100k": "smoke-mfix-100k", "mfix-1m": "smoke-mfix-1m",
+            "m-10k": "smoke-m-10k", "m-100k": "smoke-100k", "m-1m": "smoke-1m", "m-300k": "smoke-m-300k",
             "w": "smoke-w", "s-100k": "smoke-100k", "s-1m": "smoke-1m", "x-1m": "smoke-1m"}
 DEFAULT_LOADED_CYCLES_PER_REQ = 270e3
 W_RPS = 5200

@@ -21,5 +21,17 @@
    "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
   }
  },
- "note": "The bench box of the price list."
+ "note": "The bench box of the price list.",
+ "fix_binaries": {
+  "main": {
+   "binary": "~/epl/bins/stats/envoy-static-main-5e1439980a",
+   "source": "own build of upstream main at 5e1439980a (base of the fix)",
+   "source_sha256": "6c12c950f930b67c14fd060ab6f77bfa8d9b6b14ab8bb5894082b2a6bfd92732"
+  },
+  "top": {
+   "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+   "source": "own build of 3c9cce2f2c (the approach of #43958 applied to that base)",
+   "source_sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c"
+  }
+ }
 }

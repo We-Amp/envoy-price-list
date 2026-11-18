@@ -1,0 +1,708 @@
+{
+ "name": "sf-mfix-10k",
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/stats-flush",
+ "box": {
+  "name": "bench-x86_64",
+  "arch": "x86_64",
+  "label": "bench-host",
+  "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+  "cpus": {
+   "sut": "0-3",
+   "client": "20-31,60-71",
+   "origin": "32-39,72-79"
+  },
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "collector_image": "otel/opentelemetry-collector:0.120.0@sha256:1daa4312b48312dbae2d543e67b77e897dd5d9c48e7651d1416cdb417026ad06",
+  "image_platform": "linux/amd64",
+  "binaries": {
+   "x86_64": {
+    "binary": "~/epl/bin/envoy-1.40.2",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+    "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+   }
+  },
+  "note": "The bench box of the price list.",
+  "fix_binaries": {
+   "main": {
+    "binary": "~/epl/bins/stats/envoy-static-main-5e1439980a",
+    "source": "own build of upstream main at 5e1439980a (base of the fix)",
+    "source_sha256": "6c12c950f930b67c14fd060ab6f77bfa8d9b6b14ab8bb5894082b2a6bfd92732"
+   },
+   "top": {
+    "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+    "source": "own build of 3c9cce2f2c (the approach of #43958 applied to that base)",
+    "source_sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c"
+   }
+  }
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "main_perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "main_sample_s": 0.02
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8,
+  "prime_file": true,
+  "worker_connections": 65536,
+  "worker_rlimit_nofile": 200000
+ },
+ "collector": {
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:1daa4312b48312dbae2d543e67b77e897dd5d9c48e7651d1416cdb417026ad06",
+  "platform": "linux/amd64",
+  "port": 4317,
+  "metrics_port": 8888,
+  "metrics": true
+ },
+ "stats_sink": {
+  "port": 8125,
+  "rcvbuf": 268435456,
+  "sample_every": 1
+ },
+ "order": "latin",
+ "order_seed": 32,
+ "adaptive": false,
+ "primary_metric": "main_ms_per_s",
+ "comparisons": "base",
+ "base_arm": "nosink-main",
+ "arms": [
+  {
+   "name": "nosink-main",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bins/stats/envoy-static-main-5e1439980a",
+     "source": "own build of upstream main at 5e1439980a (base of the fix)",
+     "source_sha256": "6c12c950f930b67c14fd060ab6f77bfa8d9b6b14ab8bb5894082b2a6bfd92732"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N as in this build's smoke, +/-0.5%"
+    },
+    {
+     "stat": "used_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.01,
+     "label": "used stats as in this build's smoke, +/-1%"
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    }
+   ]
+  },
+  {
+   "name": "nosink-top",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+     "source": "own build of 3c9cce2f2c (the approach of #43958 applied to that base)",
+     "source_sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N as in this build's smoke, +/-0.5%"
+    },
+    {
+     "stat": "used_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.01,
+     "label": "used stats as in this build's smoke, +/-1%"
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    }
+   ]
+  },
+  {
+   "name": "statsd-main",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bins/stats/envoy-static-main-5e1439980a",
+     "source": "own build of upstream main at 5e1439980a (base of the fix)",
+     "source_sha256": "6c12c950f930b67c14fd060ab6f77bfa8d9b6b14ab8bb5894082b2a6bfd92732"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    },
+    "stats_sink": {
+     "kind": "statsd"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N as in this build's smoke, +/-0.5%"
+    },
+    {
+     "stat": "used_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.01,
+     "label": "used stats as in this build's smoke, +/-1%"
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    },
+    {
+     "stat": "udp.fit.residual",
+     "scope": "field",
+     "max": 0.01,
+     "label": "datagrams = a whole number of flushes of the used counters and gauges, +/-1% of a flush"
+    },
+    {
+     "stat": "udp.fit.n_error",
+     "scope": "field",
+     "max": 1,
+     "label": "that number of flushes as the span and interval say, +/-1"
+    },
+    {
+     "stat": "udp.drop_share",
+     "scope": "field",
+     "max": 0.01,
+     "label": "drops under 1%"
+    }
+   ]
+  },
+  {
+   "name": "statsd-top",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+     "source": "own build of 3c9cce2f2c (the approach of #43958 applied to that base)",
+     "source_sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    },
+    "stats_sink": {
+     "kind": "statsd"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N as in this build's smoke, +/-0.5%"
+    },
+    {
+     "stat": "used_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.01,
+     "label": "used stats as in this build's smoke, +/-1%"
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    },
+    {
+     "stat": "udp.fit.residual",
+     "scope": "field",
+     "max": 0.01,
+     "label": "datagrams = a whole number of flushes of the used counters and gauges, +/-1% of a flush"
+    },
+    {
+     "stat": "udp.fit.n_error",
+     "scope": "field",
+     "max": 1,
+     "label": "that number of flushes as the span and interval say, +/-1"
+    },
+    {
+     "stat": "udp.drop_share",
+     "scope": "field",
+     "max": 0.01,
+     "label": "drops under 1%"
+    }
+   ]
+  },
+  {
+   "name": "nosink-main-A2",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bins/stats/envoy-static-main-5e1439980a",
+     "source": "own build of upstream main at 5e1439980a (base of the fix)",
+     "source_sha256": "6c12c950f930b67c14fd060ab6f77bfa8d9b6b14ab8bb5894082b2a6bfd92732"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N as in this build's smoke, +/-0.5%"
+    },
+    {
+     "stat": "used_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.01,
+     "label": "used stats as in this build's smoke, +/-1%"
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "idle-10k",
+   "path": "/idle",
+   "kind": "idle",
+   "rps": 0,
+   "bursts_visible": false,
+   "ready_timeout_s": 60,
+   "admin_timeout_s": 30,
+   "settle_s": 3.0
+  }
+ ],
+ "box_specific": true,
+ "rounds": 5,
+ "rounds_block": 5,
+ "rounds_max": 5,
+ "uncalibrated": true
+}

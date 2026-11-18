@@ -10,6 +10,9 @@
 #                                          smoke's drops (configs rewritten), then check
 #   run-session.sh check                    freeze each run's evidence from its smoke into
 #                                          $RUNS/frozen/, check every smoke leg, recompute the budget
+#   run-session.sh mfix [EPL_ARGS...]       run M-fix (two own builds, boxes with fix_binaries), after
+#                                          the queue: freeze and check against its own smoke, then
+#                                          mfix-10k, mfix-100k, mfix-1m within MFIX_STOP_S (default 80 min)
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
@@ -42,7 +45,8 @@ FROZEN=$R/frozen
 STOP_S=${STOP_S:-11700}
 RUNGS="10k 100k 300k 1m"
 MANDATORY="m-10k m-100k m-1m w m-300k"
-OPTIONAL="s-100k s-1m x-1m"
+OPTIONAL=${QUEUE_OPTIONAL-s-100k s-1m x-1m}
+MFIX="mfix-10k mfix-100k mfix-1m"
 SMOKES="smoke-m-10k smoke-100k smoke-m-300k smoke-1m smoke-w"
 mkdir -p "$R"
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$R/queue.log"; }
@@ -55,6 +59,7 @@ smoke_of() {  # the smoke a run is checked against; the 5 s statsd fallback has 
   case "$1" in
     m-10k) s=smoke-m-10k;; m-300k) s=smoke-m-300k;; w) s=smoke-w;;
     m-100k|s-100k) s=smoke-100k;; m-1m|s-1m|x-1m) s=smoke-1m;;
+    mfix-*) s=smoke-$1;;
   esac
   if [ -d "$R/smoke/$s.statsd5" ]; then echo "$s.statsd5"; else echo "$s"; fi
 }
@@ -143,6 +148,12 @@ case "$mode" in
       bg_wait $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
       log "end $s rc=$?"
     done
+    for s in smoke-mfix-10k smoke-mfix-100k smoke-mfix-1m; do
+      [ -f "$C/$s.json" ] || continue
+      log "start $s"
+      bg_wait $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
+      log "end $s rc=$?"
+    done
     log "main-thread profile at 1M (not measured)"
     bg_wait $EPL flush-profile "$C/m-1m.json" --arm nosink --shape idle-1m --out "$R/profile-1m" "$@" >> "$R/queue.log" 2>&1
     log "end profile rc=$?"
@@ -170,6 +181,39 @@ case "$mode" in
   restore)
     guard_restore
     exit $?
+    ;;
+  mfix)
+    log "M-fix start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    bad=0
+    $SESSION calibrated "$C" | tee -a "$R/queue.log"
+    for run in $MFIX; do
+      [ -f "$C/$run.json" ] || { log "no $run config (box without fix_binaries)"; exit 1; }
+      if grep -q '"uncalibrated": true' "$C/$run.json"; then log "$run uncalibrated"; bad=1; fi
+      log "freeze and check $run against $(smoke_of "$run")"
+      if ! $EPL evidence-check "$C/$run.json" "$R/smoke/$(smoke_of "$run")" --freeze "$FROZEN/$run.json" \
+          >> "$R/queue.log" 2>&1; then
+        log "evidence-check $run FAILED (details in queue.log)"
+        bad=1
+      fi
+    done
+    [ "$bad" = 0 ] || { log "M-fix not started (calibration or evidence; no override)"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    STOP_S=${MFIX_STOP_S:-4800}
+    T0=$(date +%s)
+    left() { echo $(( STOP_S - ($(date +%s) - T0) )); }
+    for run in $MFIX; do
+      L=$(left)
+      if [ "$L" -le 60 ]; then
+        log "skip $run: M-fix stop reached"
+        continue
+      fi
+      log "start $run (${L}s left before the M-fix stop)"
+      bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/$run.json" \
+        --out "$R/$run" --allow-short "$@" >> "$R/queue.log" 2>&1
+      log "end $run rc=$?"
+    done
+    log "M-fix done"
     ;;
   queue)
     log "queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"

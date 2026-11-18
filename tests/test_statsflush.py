@@ -481,3 +481,52 @@ class ReviewRTest(unittest.TestCase):
                                capture_output=True, text=True, timeout=120)
             self.assertNotEqual(r.returncode, 0, fn)
             self.assertIn(needle, r.stderr)
+
+
+class MfixTest(unittest.TestCase):
+    def test_configs(self):
+        c = MK.configs(box("bench-x86_64"))
+        self.assertNotIn("mfix-1m.json", MK.configs(box("example-aarch64")))
+        for rung in ("10k", "100k", "1m"):
+            m = c["mfix-%s.json" % rung]
+            self.assertTrue(m["box_specific"])
+            self.assertEqual(m["order_seed"], 32)
+            self.assertEqual([a["name"] for a in m["arms"]],
+                             ["nosink-main", "nosink-top", "statsd-main", "statsd-top", "nosink-main-A2"])
+            fb = box("bench-x86_64")["fix_binaries"]
+            for a in m["arms"]:
+                b = a["binaries"]["x86_64"]
+                self.assertIn(b["source_sha256"], (fb["main"]["source_sha256"], fb["top"]["source_sha256"]))
+                self.assertEqual("top" in a["name"], b["source_sha256"] == fb["top"]["source_sha256"])
+                st = [i for i in a["evidence"] if i["stat"] == "stats_total"]
+                self.assertTrue(st and "ref" in st[0])  # frozen from its own smoke, not the release's calibration
+            self.assertIn("smoke-mfix-%s.json" % rung, c)
+        exp = experiment.load(os.path.join(X86, "mfix-1m.json"))
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
+        self.assertEqual(len(experiment.schedule(exp)), 25)
+        pos = {}
+        for r in range(1, 6):
+            for i, a in enumerate(experiment.round_order(exp, r)):
+                pos.setdefault(a["name"], set()).add(i)
+        self.assertTrue(all(len(v) == 5 for v in pos.values()))
+        self.assertEqual(portability.check_dirs([X86, ARM]), [])
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        self.assertIn("  mfix)", txt)
+        self.assertIn("MFIX_STOP_S:-4800", txt)
+
+    def test_table(self):
+        tmp = tempfile.mkdtemp()
+        sess = os.path.join(tmp, "s")
+        for rung in ("100k", "1m"):
+            c = json.load(open(os.path.join(X86, "mfix-%s.json" % rung)))
+            for a in c["arms"]:
+                a["sim_flush_ms"] = {"nosink-top": 40.0, "statsd-top": 70.0, "statsd-main": 140.0}.get(a["name"], 80.0)
+            c["sim_cycles_noise"] = 0.01
+            p = os.path.join(tmp, "c-%s.json" % rung)
+            json.dump(c, open(p, "w"))
+            experiment.Runner(experiment.load(p), os.path.join(sess, "mfix-" + rung), SimBackend).run(simulate=True)
+        text, js = TAB.tables(sess)
+        self.assertIn("Run M-fix", text)
+        fix = [r for r in js["mfix"] if r["family"] == "mfix" and r["shape"] == "idle-1m" and r["arm"] == "nosink-top"][0]
+        self.assertLess(fix["effect_pct"], -20)
+        self.assertTrue(fix["verdict"].startswith("differs"), fix["verdict"])

@@ -329,7 +329,8 @@ def validate(exp, allow_short=False, check_rounds=True):
         if rmin < 12 and not allow_short:
             errs.append("rounds must be >= 12 (method rule); use --allow-short only for smoke runs")
         for label, v in (("rounds", rmin), ("rounds_max", rmax), ("rounds_block", blk)):
-            if v < 2 or v % 2:
+            if effective_order(exp) != "latin" and (v < 2 or v % 2):
+                # abba and rotate pair a forward with a reversed round; a Latin square does not
                 errs.append("%s must be even (got %d)" % (label, v))
             elif v % per:
                 errs.append("%s must be a multiple of %d (%s order, %d arms)" % (

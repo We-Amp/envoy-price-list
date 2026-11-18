@@ -51,7 +51,7 @@ def box_literals(box):
             out.add(str(box[k]))
     if box.get("perf_events"):
         out.add(box["perf_events"])
-    for b in (box.get("binaries") or {}).values():
+    for b in list((box.get("binaries") or {}).values()) + list((box.get("fix_binaries") or {}).values()):
         for k in ("binary", "source"):
             if b.get(k):
                 out.add(b[k])
@@ -86,7 +86,8 @@ def check_dirs(dirs):
     problems = []
     loaded = {d: load_dir(d) for d in dirs}
     lits = {d: box_literals(b) for d, (b, _) in loaded.items()}
-    names = {d: set(c) for d, (_, c) in loaded.items()}
+    names = {d: {fn for fn, (_, t) in c.items() if not json.loads(t).get("box_specific")}
+             for d, (_, c) in loaded.items()}
     ref = dirs[0]
     for d in dirs[1:]:
         if names[d] != names[ref]:
@@ -102,6 +103,10 @@ def check_dirs(dirs):
         foreign -= own  # a literal two boxes share is not foreign
         for fn, (path, text) in cfgs.items():
             raw = json.loads(text)
+            if raw.get("box_specific"):
+                # a config only this box has (own builds for it): checked for foreign literals
+                # and family literals, not compared with the other boxes
+                pass
             if raw.get("box") != box:
                 problems.append("%s/%s: box block differs from box.json" % (os.path.basename(d), fn))
             body = text
@@ -125,7 +130,8 @@ def check_dirs(dirs):
                 if box.get("arch") and a.get("binaries") and experiment.norm_arch(box["arch"]) not in a["binaries"]:
                     problems.append("%s/%s: arm %s has no binary for %s" % (os.path.basename(d), fn, a["name"],
                                                                              box["arch"]))
-            boots.setdefault(fn, {})[d] = bt
+            if not raw.get("box_specific"):
+                boots.setdefault(fn, {})[d] = bt
     for fn, per in boots.items():
         ds = list(per)
         for o in ds[1:]:

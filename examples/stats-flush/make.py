@@ -31,6 +31,12 @@ Rungs (K generated clusters, target N stats): 10k (100), 100k (1,000), 300k (3,0
   s-100k.json, s-1m.json   run S, other paths: nosink, dogstatsd-buf, otlp, prom; 4 rounds
   x-1m.json          run X, conditions: statsd, statsd-5s (30 s window), statsd-cold,
                      nosink-cold; 4 rounds (one Latin square; the plan's 3 would not balance)
+  mfix-<rung>.json   run M-fix (boxes with fix_binaries only): the run-M design at 10k, 100k
+                     and 1M with two own builds instead of the release: base (upstream main at
+                     the fix's base) and top (the fix on that base), each with nosink and the
+                     statsd sink, plus a second copy of base nosink as the A/A; 5 rounds, one
+                     Latin square, seed 32; N and used counts frozen from its own smoke
+                     (smoke-mfix-<rung>.json), since the builds' stat sets may differ
   sibling.json       the sibling row (stats updates per request): base, stats-reject on s
                      and fh, 12 rounds (not in this session's queue)
   ab-template.json   the fix A/B (base, fix, base-A2, official): a template for the later
@@ -222,6 +228,35 @@ def rung_calibrated(cal, rung):
     return all(c.get(k) is not None for k in CAL_KEYS)
 
 
+MFIX_RUNGS = [("10k", 100), ("100k", 1000), ("1m", 10000)]
+MFIX_SEED = 32
+
+
+def mfix_arms(box, k, rung, cal):
+    """nosink and statsd on each of the two builds, and a second copy of base nosink."""
+    fb = box["fix_binaries"]
+    c = (cal or {}).get(rung) or {}
+    visible = rung != "10k"
+    sd_int = c.get("statsd_interval_s", INTERVAL_S)
+    common = [it for it in ev_common(k, rung, None) if it.get("stat") not in ("stats_total", "used_total")] + [
+        {"stat": "stats_total", "scope": "field", "ref": {"arm": "self"}, "tol": 0.005,
+         "label": "N as in this build's smoke, +/-0.5%"},
+        {"stat": "used_total", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
+         "label": "used stats as in this build's smoke, +/-1%"}]
+    out = []
+    for name, build, sink in (("nosink-main", "main", None), ("nosink-top", "top", None),
+                              ("statsd-main", "main", "statsd"), ("statsd-top", "top", "statsd"),
+                              ("nosink-main-A2", "main", None)):
+        st = stats_set(k, stats_flush={"interval_s": sd_int if sink else INTERVAL_S})
+        ev = common + ev_periodic(sd_int if sink else INTERVAL_S, visible)
+        if sink:
+            st["stats_sink"] = {"kind": "statsd"}
+            ev = ev + EV_STATSD + ([TOP_RUNG_MAIN] if rung == RUNGS[-1][0] else [])
+        a = {"name": name, "binaries": {box["arch"]: dict(fb[build])}, "settings": st, "evidence": ev}
+        out.append(a)
+    return out
+
+
 def configs(box, cal=None):
     out = {}
 
@@ -287,6 +322,18 @@ def configs(box, cal=None):
             cfg("smoke-statsd5-%s.json" % rung, "sf-smoke-statsd5-" + rung, rung, k, ["statsd", "nosink"],
                 [idle_shape(rung, cal)], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
                 evidence_mode="record")
+    if box.get("fix_binaries"):
+        for rung, k in MFIX_RUNGS:
+            for fn, name, kw in (("mfix-%s.json" % rung, "sf-mfix-" + rung, dict(rounds=5, rounds_block=5, rounds_max=5)),
+                                 ("smoke-mfix-%s.json" % rung, "sf-smoke-mfix-" + rung,
+                                  dict(rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record"))):
+                c = base_cfg(box, name)
+                arms = mfix_arms(box, k, rung, cal)
+                c.update(base_arm="nosink-main", arms=arms, shapes=[idle_shape(rung, cal)], order_seed=MFIX_SEED,
+                         box_specific=True, **kw)
+                if not rung_calibrated(cal, rung):
+                    c["uncalibrated"] = True
+                out[fn] = c
     sw = json.loads(json.dumps(w))
     sw.update(name="sf-smoke-w", rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
     sw.pop("confirmatory")

@@ -356,6 +356,46 @@ def tables(sess):
         L.append("")
     js["confirmatory"], js["secondary"] = conf, sec
 
+    # run M-fix: the fix build against its base build, per rung (its own family and A/A)
+    mf = {r: load(os.path.join(sess, "mfix-" + r)) for r in ("10k", "100k", "1m")}
+    mf = {k: v for k, v in mf.items() if v}
+    if mf:
+        rows = []
+        L.append("## Run M-fix: top (the fix) against main (its base), own builds\n")
+        L.append("Main-thread run time per second and cycles per second at the same interval; the A/A is a "
+                 "second copy of main without a sink. Two own builds, not upstream releases.\n")
+        L.append("| Rung | Arm | main thread ms/s | M cycles/s |\n|---|---|---|---|")
+        for rung, res in mf.items():
+            by = FT.usable_legs(res)
+            for a in ("nosink-main", "nosink-top", "statsd-main", "statsd-top", "nosink-main-A2"):
+                ms = mean([g(m, "main", "run_ms_per_s") for (s_, aa_, r_), m in by.items() if aa_ == a])
+                cy = mean([g(m, "main_perf", "cycles_per_s") for (s_, aa_, r_), m in by.items() if aa_ == a])
+                L.append("| %s | %s | %s | %s |" % (rung, a, "-" if ms is None else "%.2f" % ms,
+                                                   "-" if cy is None else "%.1f" % (cy / 1e6)))
+        L.append("")
+        for rung, res in mf.items():
+            for a, b, lab in (("nosink-top", "nosink-main", "fix, no sink"), ("statsd-top", "statsd-main",
+                                                                               "fix, statsd sink")):
+                rows.append(ratio_row(res, "idle-" + rung, a, b, "main_ms_per_s", lab, "mfix"))
+        aa_mf = {}
+        for rung, res in mf.items():
+            r = ratio_row(res, "idle-" + rung, "nosink-main-A2", "nosink-main", "main_ms_per_s", "A/A", "mfix-aa")
+            if not r.get("missing"):
+                aa_mf[rung] = max(abs(r["lo"]), abs(r["hi"]))
+                r["verdict"] = "A/A half-width %.2f%%, reach %.2f%%" % (r["hw"], aa_mf[rung])
+            rows.append(r)
+        k = FT.holm([r for r in rows if r["family"] == "mfix"])
+        for r in rows:
+            if r["family"] == "mfix":
+                r["verdict"] = verdict(r, aa_mf.get(r["shape"].replace("idle-", ""), pooled))
+        L.append("### Fix rows (Holm over %d rows; a finding must clear the larger of 1%% and the rung's own A/A "
+                 "reach)\n" % k)
+        L.append(HDR)
+        for r in rows:
+            L.append(fmt_ratio(r))
+        L.append("")
+        js["mfix"] = rows
+
     # exploratory
     L.append("## Exploratory\n")
     if runs.get("w"):
