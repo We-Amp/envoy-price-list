@@ -3,13 +3,13 @@
  "arch": "x86_64",
  "label": "x86-vm",
  "kind": "cloud-vm",
- "machine_label": "a current x86 cloud VM, 32 vCPU (16 cores, siblings idle), spot, PMU on",
+ "machine_label": "a current x86 cloud VM, 16 vCPU (8 cores with SMT, one thread per core, siblings idle), spot, PMU on",
  "cpus": {
-  "sut": "0-12",
-  "client": "13-14",
-  "origin": "15"
+  "sut": "0-4",
+  "client": "5-6",
+  "origin": "7"
  },
- "main_cpu": 12,
+ "main_cpu": 4,
  "rungs": [
   {
    "name": "1w",
@@ -22,17 +22,11 @@
    "workers": 4,
    "worker_cpus": "0-3",
    "client_concurrency": 2
-  },
-  {
-   "name": "12w",
-   "workers": 12,
-   "worker_cpus": "0-11",
-   "client_concurrency": 2
   }
  ],
  "growth": [
   [
-   "12w",
+   "4w",
    "1w"
   ]
  ],
@@ -52,28 +46,28 @@
  },
  "steal_gate": 0.02,
  "micro": {
-  "root": "~/epl/bins/stats/r3",
+  "root": "~/epl/bins/stats/r4",
   "placements": {
    "vm": {
-    "cpus": "0-14",
+    "cpus": "0-7",
     "threads": [
      1,
-     2,
      4,
-     8
+     7
     ]
    }
   },
   "histogram_workers": [
    1,
-   4
+   4,
+   7
   ],
   "flush_hammers": [
    0,
    1,
    4,
-   8
+   7
   ]
  },
- "note": "The x86 comparison VM (not created yet): 16 physical cores whose siblings stay idle. CPU numbers assume the first 16 logical CPUs are one per core; check with lscpu -e at its step 0 and edit. Perf through sudo; steal gated at 2%."
+ "note": "The x86 comparison VM: 16 vCPU = 8 cores with SMT. Threads map to physical cores, as on the Arm VM (where a vCPU is a core): one CPU per core is listed and its sibling stays idle, so N threads use N cores on both VMs. CPU numbers assume CPUs 0-7 are one per core and 8-15 their siblings; the micro runner checks this with lscpu -p=CPU,CORE at the start and refuses otherwise (edit the lists then). Microbenchmarks: thread and histogram-worker counts up to 7 (cores - 1), hammers up to 7 (plus the flushing thread = 8 cores). End to end only 1w and 4w fit (SUT 0-4 with the main thread on 4, client 5-6, origin 7, siblings idle); the 12-worker rung of the Arm VM has no x86 counterpart here. Perf through sudo, PMU standard; steal gated at 2%. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/x86-vm.txt (from the round-4 build record)."
 }

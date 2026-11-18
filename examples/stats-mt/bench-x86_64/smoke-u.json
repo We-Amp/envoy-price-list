@@ -78,7 +78,7 @@
   },
   "steal_gate": null,
   "micro": {
-   "root": "~/epl/bins/stats/r3",
+   "root": "~/epl/bins/stats/r4",
    "placements": {
     "one-socket": {
      "cpus": "0-19",

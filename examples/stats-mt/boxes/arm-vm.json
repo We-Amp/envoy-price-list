@@ -3,7 +3,7 @@
  "arch": "aarch64",
  "label": "arm-vm",
  "kind": "cloud-vm",
- "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (no SMT), spot, PMU on",
+ "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (16 cores, no SMT), spot, PMU on",
  "cpus": {
   "sut": "0-12",
   "client": "13-14",
@@ -52,28 +52,34 @@
  },
  "steal_gate": 0.02,
  "micro": {
-  "root": "~/epl/bins/stats/r3-arm64",
+  "root": "~/arm/bins3",
   "placements": {
    "vm": {
-    "cpus": "0-14",
+    "cpus": "0-15",
     "threads": [
      1,
-     2,
      4,
-     8
+     7,
+     12,
+     15
     ]
    }
   },
   "histogram_workers": [
    1,
-   4
+   4,
+   7,
+   12,
+   15
   ],
   "flush_hammers": [
    0,
    1,
    4,
-   8
+   7,
+   12,
+   15
   ]
  },
- "note": "The Arm VM: perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. The origin image digest and the binary paths are set on the VM at its step 0."
+ "note": "The Arm VM (16 vCPU, one per core, no SMT): perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. Microbenchmarks: one thread per core on CPUs 0-15, thread counts up to 15 (cores - 1), hammers up to 15 (plus the flushing thread = 16 cores); the counts 1, 4 and 7 match the x86 VM. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/arm-vm.txt. The origin image digest and the end-to-end binary paths are set on the VM at its step 0."
 }

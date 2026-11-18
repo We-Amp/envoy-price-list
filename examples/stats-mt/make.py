@@ -22,8 +22,20 @@ Per box (directory named after it, with box.json):
   u-hitm.json    evidence legs outside the timed run (machines whose box lists hitm_events):
                  local and remote HITM loads per request, base and stats-reject, 2 rounds
   micro.json     the microbenchmark runs: arms mapped to build directories by commit, the
-                 benchmarks with the box's thread placements, 5 interleaved rounds of 5
+                 sha256 of every arm's binaries pinned from boxes/sha256/<box>.txt (unpinned
+                 entries stay null and the runner refuses them), the benchmarks with the
+                 box's thread placements and the thread and hammer counts they register, the
+                 expected benchmark names per run entry, 5 interleaved rounds of 5
                  repetitions
+
+boxes/sha256/<box>.txt: one line per binary, "<sha256>  <target>-<arm>-<commit>" (the build
+record's form), for example "5149...  atomic_model_benchmark-base-3a80b1543c"; a line whose
+commit is not the arm's commit is an error.
+
+Thread counts (M8): one benchmark thread per physical core, siblings idle, on every box. On a
+VM without SMT a vCPU is a core; on a VM with SMT only one CPU of each core is listed, so the
+same N means the same number of cores on both VMs. Thread and histogram-worker counts stop at
+cores - 1; hammers at cores - 1 (the flushing thread takes one more).
 
 Shape mt-s: the 4 KB proxied request to one cluster with one upstream host, one listener,
 one route, HTTP/1.1, round robin, no decision reader of stats (`audit: mt-s`).
@@ -59,9 +71,15 @@ BASE_EVIDENCE = [{"stat": "reject_all", "scope": "config", "absent": True, "labe
                  {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "min": 1,
                   "label": "store stats present"}]
 
-# Microbenchmark arms: build directories by commit (section 4 of the plan)
-MICRO_ARMS = {"base": "18fa8fc6fa", "fix": "977c664058", "fix-relaxed": "d2c62bf670",
-              "fix-relaxed-p1": "8c8d7169ae", "base-relaxed": "18676f7806", "base-relaxed-p1": "1f1a299743"}
+# Microbenchmark arms: build directories by commit, the benchmark overlay restacked on each
+# (round 4 on x86, the third Arm build round; section 4 of the plan)
+MICRO_ARMS = {"base": "3a80b1543c", "fix": "7d877d4424", "fix-relaxed": "f5eae01224",
+              "fix-relaxed-p1": "2b94594e18", "base-relaxed": "e6e0544805", "base-relaxed-p1": "ba1e983c9d"}
+MICRO_BINARIES = ["atomic_model_benchmark", "stat_update_benchmark", "histogram_record_benchmark",
+                  "server_stats_flush_contended_benchmark"]
+# Google Benchmark adds the registered minimum and warm-up time to the name
+TIME_PARTS = "(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?"
+FLUSH_STATS = 100000
 # (arm, reference, rows): the ordering contrast at every N, P1 on its own, the base stack at N = 1
 MICRO_PAIRS = [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"],
                ["base-relaxed", "base", "n1"], ["base-relaxed-p1", "base-relaxed", "n1"], ["fix", "base", "n1"]]
@@ -117,33 +135,85 @@ def base_cfg(box, name):
     }
 
 
-def micro_config(box):
+def ncpus(text):
+    n = 0
+    for part in text.split(","):
+        a, _, b = part.partition("-")
+        n += int(b or a) - int(a) + 1
+    return n
+
+
+def read_sha_list(path, arms):
+    """{arm: {binary: sha256}} from a build record list ("<sha256>  <target>-<arm>-<commit>")."""
+    out = {}
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            h, name = line.split()[:2]
+            target = next((b for b in MICRO_BINARIES if name.startswith(b + "-")), None)
+            if target is None or len(h) != 64:
+                raise SystemExit("%s: not a benchmark line: %r" % (path, line))
+            arm_name, _, commit = name[len(target) + 1:].rpartition("-")
+            if arm_name not in arms:
+                continue
+            if arms[arm_name] != commit:
+                raise SystemExit("%s: %s is %s, the arm's commit is %s" % (path, name, commit, arms[arm_name]))
+            out.setdefault(arm_name, {})[target] = h
+    return out
+
+
+def micro_config(box, sha_list=None):
     mc = box["micro"]
+    arms = dict(mc.get("arms") or MICRO_ARMS)
+    places = mc["placements"]
+    first_name, first = list(places.items())[0]
+    for pname, p in places.items():
+        if max(p["threads"]) > ncpus(p["cpus"]):
+            raise SystemExit("%s/%s: %d threads on %d CPUs" % (box["name"], pname, max(p["threads"]), ncpus(p["cpus"])))
+    if max(mc["histogram_workers"]) > ncpus(first["cpus"]) or max(mc["flush_hammers"]) + 1 > ncpus(first["cpus"]):
+        raise SystemExit("%s: histogram workers or hammers + 1 above the CPUs of %s" % (box["name"], first_name))
     runs = []
-    for pname, p in mc["placements"].items():
-        th = "|".join(str(t) for t in p["threads"])
-        runs.append({"binary": "atomic_model_benchmark", "placement": pname, "cpus": p["cpus"],
-                     "filter": "^bmModel(%s)(Shared|PerThreadSpaced)/real_time/threads:(%s)$" % (
-                         "|".join(MODEL_VARIANTS), th)})
-        runs.append({"binary": "stat_update_benchmark", "placement": pname, "cpus": p["cpus"],
-                     "filter": "^(%s)/real_time/threads:(%s)$" % ("|".join(STAT_BENCHES), th)})
-        runs.append({"binary": "stat_update_benchmark", "placement": pname, "cpus": p["cpus"], "needs_mix": True,
-                     "filter": "^(%s)/real_time/threads:(%s)$" % ("|".join(MIX_BENCHES), th)})
-    first = list(mc["placements"].values())[0]
-    hw = "|".join(str(w) for w in mc["histogram_workers"])
-    runs.append({"binary": "histogram_record_benchmark", "placement": list(mc["placements"])[0], "cpus": first["cpus"],
-                 "filter": "^bmHistogramRecord/(%s)/[01]/[01]/manual_time$" % hw})
-    hk = "|".join(str(h) for h in mc["flush_hammers"])
-    runs.append({"binary": "server_stats_flush_contended_benchmark", "placement": list(mc["placements"])[0],
-                 "cpus": first["cpus"], "filter": "^bmFlushContended/100000/(%s)/[012]/real_time$" % hk})
-    return {"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": dict(MICRO_ARMS),
-            # the benchmark revision the rebuilt overlay reports in its context (M1-M9); runs refuse a
-            # binary that reports another (or none), and refuse to start while it is unset
-            "revision": {"context_key": "stats_bench_revision", "value": None},
+    for pname, p in places.items():
+        ths = p["threads"]
+        th = "|".join(str(t) for t in ths)
+        common = {"placement": pname, "cpus": p["cpus"], "threads": ths, "smt": bool(p.get("smt"))}
+        runs.append(dict(common, binary="atomic_model_benchmark",
+                         filter="^bmModel(%s)(Shared|PerThreadSpaced)%s/real_time/threads:(%s)$" % (
+                             "|".join(MODEL_VARIANTS), TIME_PARTS, th),
+                         expect=["bmModel%s%s/real_time/threads:%d" % (v, l, n) for v in MODEL_VARIANTS
+                                 for l in ("Shared", "PerThreadSpaced") for n in ths]))
+        runs.append(dict(common, binary="stat_update_benchmark",
+                         filter="^(%s)%s/real_time/threads:(%s)$" % ("|".join(STAT_BENCHES), TIME_PARTS, th),
+                         expect=["%s/real_time/threads:%d" % (b, n) for b in STAT_BENCHES for n in ths]))
+        runs.append(dict(common, binary="stat_update_benchmark", needs_mix=True,
+                         filter="^(%s)%s/real_time/threads:(%s)$" % ("|".join(MIX_BENCHES), TIME_PARTS, th),
+                         expect=["%s/real_time/threads:%d" % (b, n) for b in MIX_BENCHES for n in ths]))
+    hws = mc["histogram_workers"]
+    runs.append({"binary": "histogram_record_benchmark", "placement": first_name, "cpus": first["cpus"],
+                 "threads": hws, "smt": bool(first.get("smt")),
+                 "filter": "^bmHistogramRecord/(%s)/[01]/[01]%s/manual_time$" % ("|".join(str(w) for w in hws),
+                                                                                TIME_PARTS),
+                 "expect": ["bmHistogramRecord/%d/%d/%d/manual_time" % (w, x, y) for w in hws
+                            for x in (0, 1) for y in (0, 1)]})
+    hks = mc["flush_hammers"]
+    runs.append({"binary": "server_stats_flush_contended_benchmark", "placement": first_name, "cpus": first["cpus"],
+                 "hammers": hks, "smt": bool(first.get("smt")),
+                 # the flush with K hammers, and the hammer-only baseline (K > 0) its rates are read against
+                 "filter": "^(bmFlushContended|bmHammerOnly)/%d/(%s)/[012]%s/real_time$" % (
+                     FLUSH_STATS, "|".join(str(h) for h in hks), TIME_PARTS),
+                 "expect": ["bmFlushContended/%d/%d/%d/real_time" % (FLUSH_STATS, k, m) for k in hks for m in (0, 1, 2)]
+                 + ["bmHammerOnly/%d/%d/%d/real_time" % (FLUSH_STATS, k, m) for k in hks if k > 0 for m in (0, 1, 2)]})
+    pinned = sha_list or {}
+    expected = {a: {b: (pinned.get(a) or {}).get(b) for b in MICRO_BINARIES} for a in sorted(arms)}
+    return {"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": arms,
+            # the binaries report no revision: identity is the pinned sha256 per arm and binary (MB1)
+            "expected_sha256": expected,
             "spread_counter": "finish_spread", "max_spread": 0.10,
             "thread_counters": {"cycles": "cycles_per_op", "instructions": "instructions_per_op"},
             "mix_fields": 6,
-            "pairs": MICRO_PAIRS, "runs": runs, "rounds": 5, "repetitions": 5, "min_time": "0.2s",
+            "pairs": MICRO_PAIRS, "runs": runs, "rounds": 5, "repetitions": 5,
             "mix": None, "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
             "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
             "note": "mix (STATS_BENCH_MIX) is '<counter incs>:<gauge pairs>:<gauge sets>:<primitive counter incs>:"
@@ -177,7 +247,9 @@ def configs(box, rates=None):
                  primary_metric="cycles_total")
         h["measure"].update(perf_events=box["hitm_events"], per_thread=False)
         out["u-hitm.json"] = h
-    out["micro.json"] = micro_config(box)
+    sl = os.path.join(HERE, "boxes", "sha256", box["name"] + ".txt")
+    arms = (box.get("micro") or {}).get("arms") or MICRO_ARMS
+    out["micro.json"] = micro_config(box, read_sha_list(sl, arms) if os.path.exists(sl) else None)
     return out
 
 
