@@ -83,26 +83,26 @@
  },
  "root": "~/epl/bins/stats/r5",
  "arms": {
-  "fix": "31d69168d1",
-  "fix-relaxed": "7699549df0",
-  "fix-relaxed-p1": "2b30d6892f"
+  "fix": "d2f2238974",
+  "fix-relaxed": "e74e595e3c",
+  "fix-relaxed-p1": "f8bd66d7e7"
  },
  "expected_sha256": {
   "fix": {
-   "atomic_model_benchmark": null,
-   "histogram_record_benchmark": null,
-   "stat_update_benchmark": null
+   "atomic_model_benchmark": "64247742b7b695d1130c42f74306e48542a2009c303c3a98ee9f78ca4cea0adb",
+   "histogram_record_benchmark": "545127d679b328a57ff615d1f4314cc2effc05247b0f54a652397a4cabdcfa23",
+   "stat_update_benchmark": "986670653682a3306453647c049f62b4dbb255ae762b2915a66ca59f21cbb2d5"
   },
   "fix-relaxed": {
-   "histogram_record_benchmark": null,
-   "stat_update_benchmark": null
+   "histogram_record_benchmark": "695af54879cb77144ad5993dc4ef663de315230637611e458e8eebd449f01366",
+   "stat_update_benchmark": "b2e597325665e50fefa467765cbd0aa623a2c073ebb7451df8d95219349d4d03"
   },
   "fix-relaxed-p1": {
-   "histogram_record_benchmark": null,
-   "stat_update_benchmark": null
+   "histogram_record_benchmark": "dc03f2b91f7c8dda89e0c48e3c550da92337c33af2ce2b8ed76bfde7615dd40d",
+   "stat_update_benchmark": "1d70718cb9cf7d20c16a438da89613c90d7c0707d45f53e96e7737dbf0d535c8"
   }
  },
- "pinned": false,
+ "pinned": true,
  "model_reference": "bmModelCurrent",
  "pmu": true,
  "max_invol_switches": null,

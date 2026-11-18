@@ -254,7 +254,7 @@ def _bench_out(names, cfg, reps=None, bad=None, extra=None):
 class MicroConfigTest(unittest.TestCase):
     def test_narrowed_set(self):
         a = _micro("arm-vm")
-        self.assertEqual(a["arms"], {"fix": "31d69168d1", "fix-relaxed": "7699549df0", "fix-relaxed-p1": "2b30d6892f"})
+        self.assertEqual(a["arms"], {"fix": "d2f2238974", "fix-relaxed": "e74e595e3c", "fix-relaxed-p1": "f8bd66d7e7"})
         self.assertEqual(a["pairs"], [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]])
         by = {r["binary"]: r for r in a["runs"]}
         self.assertEqual(by["atomic_model_benchmark"]["arms"], ["fix"])
@@ -279,10 +279,14 @@ class MicroConfigTest(unittest.TestCase):
         self.assertNotIn("spread_counter", a)
 
     def test_placeholders_refused(self):
-        for b in ("arm-vm", "x86-vm", "bench-x86_64"):
+        c = _micro("arm-vm")
+        self.assertFalse(c["pinned"])
+        self.assertTrue(all(v is None for x in c["expected_sha256"].values() for v in x.values()))
+        for b in ("x86-vm", "bench-x86_64"):  # round 5, from the build record
             c = _micro(b)
-            self.assertFalse(c["pinned"])
-            self.assertTrue(all(v is None for x in c["expected_sha256"].values() for v in x.values()))
+            self.assertTrue(c["pinned"])
+            self.assertEqual(c["expected_sha256"]["fix"]["atomic_model_benchmark"][:12], "64247742b7b6")
+            self.assertEqual(c["expected_sha256"]["fix-relaxed-p1"]["stat_update_benchmark"][:12], "1d70718cb9cf")
         d = tempfile.mkdtemp()
         cfg = _micro("arm-vm")
         for a, bn in MICRO.needed(cfg):
@@ -320,7 +324,7 @@ class MicroConfigTest(unittest.TestCase):
         open(p, "w").write("%s  stat_update_benchmark-fix-0000000000\n" % ("a" * 64))
         with self.assertRaises(SystemExit):
             MK.read_sha_list(p, MK.MICRO_ARMS)
-        open(p, "w").write("%s  stat_update_benchmark-fix-relaxed-p1-2b30d6892f\n" % ("b" * 64))
+        open(p, "w").write("%s  stat_update_benchmark-fix-relaxed-p1-f8bd66d7e7\n" % ("b" * 64))
         self.assertEqual(MK.read_sha_list(p, MK.MICRO_ARMS), {"fix-relaxed-p1": {"stat_update_benchmark": "b" * 64}})
 
     def test_filters_match_registered_names(self):

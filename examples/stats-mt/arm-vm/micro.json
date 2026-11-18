@@ -89,9 +89,9 @@
  },
  "root": "~/arm/bins5",
  "arms": {
-  "fix": "31d69168d1",
-  "fix-relaxed": "7699549df0",
-  "fix-relaxed-p1": "2b30d6892f"
+  "fix": "d2f2238974",
+  "fix-relaxed": "e74e595e3c",
+  "fix-relaxed-p1": "f8bd66d7e7"
  },
  "expected_sha256": {
   "fix": {

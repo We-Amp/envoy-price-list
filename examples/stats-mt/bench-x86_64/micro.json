@@ -109,16 +109,16 @@
  },
  "root": "~/epl/bins/stats/r5",
  "arms": {
-  "fix": "31d69168d1",
-  "fix-relaxed": "7699549df0",
-  "fix-relaxed-p1": "2b30d6892f"
+  "fix": "d2f2238974",
+  "fix-relaxed": "e74e595e3c",
+  "fix-relaxed-p1": "f8bd66d7e7"
  },
  "expected_sha256": {
   "fix": {
-   "atomic_model_benchmark": null
+   "atomic_model_benchmark": "64247742b7b695d1130c42f74306e48542a2009c303c3a98ee9f78ca4cea0adb"
   }
  },
- "pinned": false,
+ "pinned": true,
  "model_reference": "bmModelCurrent",
  "pmu": true,
  "max_invol_switches": 0,
