@@ -90,7 +90,8 @@ class Origin:
                                        self.cfg.get("keepalive_timeout_s", 600),
                                        self.cfg.get("keepalive_requests", 10000000),
                                        envoy_config.content_types(self.shapes),
-                                       self.cfg.get("worker_connections", 8192), self.cfg.get("worker_rlimit_nofile"))
+                                       self.cfg.get("worker_connections", 8192), self.cfg.get("worker_rlimit_nofile"),
+                                       bool(self.cfg.get("stub_status")))
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(conf)
         image = self.cfg.get("image", "nginx:alpine")

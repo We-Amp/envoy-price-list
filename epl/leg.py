@@ -495,6 +495,134 @@ def nofile_for(aenv, exp=None):
     return 4 * int(sc["count"]) + 4096 + 1024 if sc else None
 
 
+# ---------------------------------------------------------------- rungs (multi-threaded stats)
+
+def rung_of(e, shape):
+    """A shape may be a rung: `workers` (the concurrency), `worker_cpus` (their set) and
+    `main_cpu` (the main thread's one core, outside the worker set, the same at every rung).
+    Returns {workers, main_cpu, worker_set, sut_set, start_cpus}; without them the
+    experiment's envoy.workers and cpus.sut as before."""
+    if shape.get("main_cpu") is None:
+        return {"workers": int(shape.get("workers") or e["envoy"]["workers"]), "main_cpu": None,
+                "worker_set": None, "sut_set": sysprobe.parse_cpuset(e["cpus"]["sut"]),
+                "start_cpus": e["cpus"]["sut"]}
+    ws = sysprobe.parse_cpuset(shape["worker_cpus"])
+    main = int(shape["main_cpu"])
+    return {"workers": int(shape["workers"]), "main_cpu": main, "worker_set": ws, "sut_set": ws | {main},
+            "start_cpus": str(main)}
+
+
+def _wrk_tids(pid):
+    out = []
+    try:
+        tids = os.listdir("/proc/%d/task" % pid)
+    except OSError:
+        return out
+    for t in tids:
+        try:
+            with open("/proc/%d/task/%s/comm" % (pid, t)) as f:
+                if f.read().startswith("wrk:"):
+                    out.append(int(t))
+        except OSError:
+            continue
+    return sorted(out)
+
+
+def _last_cpu(pid, tid):
+    try:
+        with open("/proc/%d/task/%d/stat" % (pid, tid)) as f:
+            return int(f.read().rsplit(")", 1)[1].split()[36])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _allowed(pid, tid):
+    try:
+        with open("/proc/%d/task/%d/status" % (pid, tid)) as f:
+            for line in f:
+                if line.startswith("Cpus_allowed_list:"):
+                    return sysprobe.parse_cpuset(line.split(":", 1)[1].strip())
+    except OSError:
+        return None
+    return None
+
+
+def pin_check(pid, main_cpu, worker_set, workers):
+    """Main thread (tid = pid) allowed on main_cpu only and last on it; every wrk: thread
+    allowed on the worker set and last inside it; as many wrk: threads as workers."""
+    wt = _wrk_tids(pid)
+    main_ok = _allowed(pid, pid) == {main_cpu} and _last_cpu(pid, pid) == main_cpu
+    bad = [t for t in wt if _allowed(pid, t) != worker_set or _last_cpu(pid, t) not in worker_set]
+    return {"ok": main_ok and len(wt) == workers and not bad, "main_ok": main_ok, "workers_found": len(wt),
+            "bad_workers": bad[:8]}
+
+
+def pin_rung(pid, main_cpu, worker_set, workers, wait_s=10.0):
+    """Move every wrk: thread of the Envoy this run started onto the worker set (the process
+    started on the main core only), then verify; the leg only proceeds when this holds."""
+    end = time.monotonic() + wait_s
+    while len(_wrk_tids(pid)) < workers and time.monotonic() < end:
+        time.sleep(0.05)
+    for t in _wrk_tids(pid):
+        try:
+            os.sched_setaffinity(t, worker_set)
+        except OSError as ex:
+            return {"ok": False, "error": "could not move %d: %s" % (t, ex)}
+    time.sleep(0.2)  # let each moved thread run once on its new set
+    r = pin_check(pid, main_cpu, worker_set, workers)
+    if not r["ok"]:
+        # a thread that has not run since the move still shows its old last CPU: check once more
+        time.sleep(1.0)
+        r = pin_check(pid, main_cpu, worker_set, workers)
+    return r
+
+
+def client_for(ccfg, shape):
+    """A rung fixes the client's workers and connections per worker (`client_concurrency`,
+    `client_connections_per_worker`), so connections per Envoy worker are the same at every rung."""
+    c = dict(ccfg)
+    if shape.get("client_concurrency"):
+        c["concurrency"] = int(shape["client_concurrency"])
+    if shape.get("client_connections_per_worker"):
+        c["connections_per_worker"] = int(shape["client_connections_per_worker"])
+    return c
+
+
+def parse_stub_status(text):
+    """`requests` of an nginx stub_status page (the third number of its counters line)."""
+    lines = (text or "").splitlines()
+    for i, ln in enumerate(lines):
+        if ln.strip().startswith("server accepts handled requests") and i + 1 < len(lines):
+            try:
+                return int(lines[i + 1].split()[2])
+            except (IndexError, ValueError):
+                return None
+    return None
+
+
+def origin_requests(e):
+    try:
+        st, body = admin_get(e["origin"]["port"], envoy_config.ORIGIN_STATUS_PATH, timeout=5.0)
+    except OSError:
+        return None
+    return parse_stub_status(body) if st == 200 else None
+
+
+def sysprobe_steal():
+    """(total jiffies, steal jiffies) of the first line of /proc/stat."""
+    try:
+        with open("/proc/stat") as f:
+            v = [int(x) for x in f.readline().split()[1:]]
+    except (OSError, ValueError):
+        return None
+    return (sum(v[:8]), v[7]) if len(v) >= 8 else None
+
+
+def steal_share(a, b):
+    tot = b[0] - a[0]
+    return (b[1] - a[1]) / tot if tot > 0 else 0.0
+
+
 IDLE_KEEP_RE = re.compile(r"^(server\.|cluster_manager\.|.*watchdog|http\.ingress_http\.|"
                           r"cluster\.(origin|otel_collector)\.|stats\.|runtime\.)")
 EMFILE_RE = re.compile(r"(?i)(too many open files|EMFILE)")
@@ -610,7 +738,11 @@ class RealBackend:
         if isinstance(bootstrap_path, dict):
             bootstrap_path = bootstrap_path[arm["name"]]
         hop2_set = sysprobe.parse_cpuset(e["cpus"].get("hop2", ""))
-        sut_set = sysprobe.parse_cpuset(e["cpus"]["sut"])
+        rung = rung_of(e, shape)
+        workers = rung["workers"]
+        sut_set = rung["sut_set"]
+        if rung["main_cpu"] is not None:
+            m.update(rung_workers=workers, rung_worker_cpus=shape["worker_cpus"], rung_main_cpu=rung["main_cpu"])
         # the during-window checks cover every hop's CPUs (an idle hop2 set must stay idle)
         sut_set = sut_set | hop2_set
         sib_set = sysprobe.siblings_of(sut_set)
@@ -675,11 +807,15 @@ class RealBackend:
                 pin_ok = sysprobe.parse_cpuset(m["hop2_cpus_allowed"]) == hop2_set
             elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
             sink, sink_out = self._sink_start(aenv, leg_id)
-            envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, e["cpus"]["sut"], ecfg["workers"],
+            # a rung starts Envoy on the main core only (its stats are allocated there, at config
+            # load) and moves the workers to their set once they exist
+            envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, rung["start_cpus"], workers,
                                             ecfg["admin_port"], env, arm.get("extra_args", []), elog_path,
                                             ready_timeout_s=float(shape.get("ready_timeout_s", 60)),
                                             nofile=nofile_for(aenv, e))
             m["envoy_pid"] = envoy.pid
+            if rung["main_cpu"] is not None:
+                m["rung_pin"] = pin_rung(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
             self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
@@ -689,7 +825,11 @@ class RealBackend:
             self._prime(m, arm, shape, aenv)
             sut_cpus = sysprobe.cpus_allowed(envoy.pid)
             m["sut_cpus_allowed"] = sut_cpus
-            pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
+            if rung["main_cpu"] is not None:
+                pin_ok = pin_ok and bool(m["rung_pin"].get("ok"))
+            else:
+                pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
+            ccfg = client_for(ccfg, shape)
             scheme = "https" if aenv.get("tls") else "http"
             url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], shape["path"])
             cextra = list(shape.get("client_extra_args") or [])
@@ -722,6 +862,8 @@ class RealBackend:
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
                     t_q0 = time.monotonic()
                     q0 = admin_stats(ecfg["admin_port"], adm_t)
+                    o0 = origin_requests(e) if mcfg.get("responses_from") == "origin" else None
+                    st0 = sysprobe_steal()
                     settle = float(shape.get("pre_window_settle_s") or 0)
                     if settle:
                         # an admin stats read flushes under stats_flush_on_admin: let that flush end
@@ -734,7 +876,7 @@ class RealBackend:
                     kb0 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     r0, rwhy0 = sysprobe.cpu_run_ns()
                     side_u0 = {svc.name: svc.usage_us() for svc in self.side}
-                    i0 = sysprobe.cpuidle_counts(sysprobe.parse_cpuset(e["cpus"]["sut"]) | hop2_set)
+                    i0 = sysprobe.cpuidle_counts(sut_set)
                     t0 = time.monotonic()
                     events = perf_events(mcfg, rnd)
                     if events != PERF_EVENTS:
@@ -777,7 +919,7 @@ class RealBackend:
                         m["timeline_errors"] = len(tl.errors)
                         if not tl.burst or tl.burst.get("error"):
                             raise RuntimeError("burst not applied: %s" % (tl.burst or "never reached"))
-                    i1 = sysprobe.cpuidle_counts(sysprobe.parse_cpuset(e["cpus"]["sut"]) | hop2_set)
+                    i1 = sysprobe.cpuidle_counts(sut_set)
                     m["cpuidle_residency"] = sysprobe.cpuidle_residency(i0, i1, t1 - t0)
                     r1, rwhy1 = sysprobe.cpu_run_ns()
                     side_u1 = {svc.name: svc.usage_us() for svc in self.side}
@@ -785,6 +927,11 @@ class RealBackend:
                     kb1 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     p1 = sysprobe.per_cpu_times()
                     q1 = admin_stats(ecfg["admin_port"], adm_t)
+                    o1 = origin_requests(e) if o0 is not None else None
+                    st1 = sysprobe_steal()
+                    if rung["main_cpu"] is not None:
+                        # where every thread ran last, after the window: still on its own set
+                        m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
                     qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
                     t2 = time.monotonic()
                     e1 = sysprobe.proc_threads_detail(envoy.pid)
@@ -815,7 +962,15 @@ class RealBackend:
             win = t2 - (t_q0 if settle else t0)
             perf_s = float(mcfg["window_s"])
             resp_raw = _delta(q0, q1, "http.ingress_http.downstream_rq_2xx")
+            if o0 is not None:
+                # responses counted at the origin (nginx stub_status): independent of Envoy's own
+                # stats, which an arm may reject; each status read is one request, not counted
+                m["responses_admin_raw"] = resp_raw
+                resp_raw = (o1 - o0 - 1) if (o0 is not None and o1 is not None) else 0
+                m["responses_from"] = "origin"
             resp = resp_raw * perf_s / win if win > 0 else 0
+            if st0 and st1:
+                m["steal_share"] = steal_share(st0, st1)
             busy_win = t1 - t0
             miss = [x for x in (rwhy0, rwhy1) if x]
             if k0 is None or k1 is None or kb0 is None or kb1 is None:
@@ -836,7 +991,7 @@ class RealBackend:
             m["sut_cpu_busy_pct"] = {str(k): round(v, 1)
                                      for k, v in sysprobe.per_cpu_busy_pct(p0, p1, sut_set | sib_set).items()}
             m["envoy_threads"] = sysprobe.threads_summary(e0, e1, t2 - t0)
-            ws = _worker_share(m["envoy_threads"], int(ecfg["workers"]), envoy.pid)
+            ws = _worker_share(m["envoy_threads"], int(workers), envoy.pid)
             m.update(ws)
             m.update({"envoy_" + k: v for k, v in _worker_busy(m["envoy_threads"]).items()})
             if hop_b:
@@ -935,7 +1090,10 @@ class RealBackend:
                 extra = {k: v / resp for k, v in pv.items() if k not in BASE_EVENT_NAMES}
                 if extra:
                     m["per_req"]["events"] = extra
-                m["sut_busy"] = tc / 1000.0 / (mcfg["window_s"] * ecfg["workers"])
+                m["sut_busy"] = tc / 1000.0 / (mcfg["window_s"] * workers)
+                if pv.get("ref-cycles"):
+                    # average core frequency over the window, relative to the reference clock
+                    m["freq_ratio"] = ctot / pv["ref-cycles"]
                 m["eff_ghz"] = ctot / (tc / 1000.0) / 1e9 if tc else None
                 if hop2_set:
                     # two-hop experiment: every hop together and per hop (a single-hop arm has one hop)

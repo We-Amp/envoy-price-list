@@ -448,6 +448,26 @@ def validate(exp, allow_short=False, check_rounds=True):
         t = s.get("stop_target_half_width_pct")
         if t is not None and not (isinstance(t, (int, float)) and t > 0):
             errs.append("shape %s: stop_target_half_width_pct must be a positive number" % s.get("name"))
+    if exp.get("audit") == "mt-s":
+        for a in arms:
+            try:
+                b = envoy_config.bootstrap(exp.get("shapes", []), small_clusters(arm_envoy(exp, a, "/r")),
+                                           exp["origin"]["port"], "/r/c")
+                errs += ["arm %s: audit: %s" % (a.get("name"), p) for p in envoy_config.audit_mt_s(b)]
+            except (ValueError, KeyError, TypeError) as e:
+                errs.append("arm %s: audit: %s" % (a.get("name"), e))
+    if exp["measure"].get("responses_from") == "origin" and not exp["origin"].get("stub_status"):
+        errs.append("measure.responses_from origin needs origin.stub_status")
+    for s in exp.get("shapes", []):
+        if s.get("main_cpu") is not None:
+            ws = sysprobe.parse_cpuset(s.get("worker_cpus", ""))
+            if not ws or int(s["main_cpu"]) in ws or len(ws) != int(s.get("workers", 0)):
+                errs.append("shape %s: a rung needs workers = the size of worker_cpus and a main_cpu outside it"
+                            % s.get("name"))
+            if not (ws | {int(s["main_cpu"])}) <= sysprobe.parse_cpuset(exp["cpus"]["sut"]):
+                errs.append("shape %s: rung CPUs must lie inside cpus.sut" % s.get("name"))
+    if exp.get("shape_order", "fixed") not in ("fixed", "latin"):
+        errs.append("shape_order must be fixed or latin")
     if exp.get("evidence_mode", "gate") not in ("gate", "record"):
         errs.append("evidence_mode must be gate or record")
     from . import evidence as _ev
@@ -514,13 +534,24 @@ def round_order(exp, r):
     return fwd if forward else list(reversed(fwd))
 
 
+def shape_order(exp, r):
+    """Shapes of round r: as configured, or (shape_order latin) rotated by round from a seeded
+    offset, so a drift over the session is not aliased onto one shape (a rung)."""
+    sh = exp["shapes"]
+    if exp.get("shape_order") != "latin" or len(sh) < 2:
+        return list(sh)
+    off = random.Random("epl-shapes:%s" % exp.get("order_seed", 1)).randrange(len(sh))
+    s = (r - 1 + off) % len(sh)
+    return sh[s:] + sh[:s]
+
+
 def schedule(exp, first=1, last=None):
     """[(round, shape, arm)] for rounds first..last (default: the minimum rounds)."""
     last = exp["rounds"] if last is None else last
     out = []
     for r in range(first, last + 1):
         order = round_order(exp, r)
-        for sh in exp["shapes"]:
+        for sh in shape_order(exp, r):
             for a in order:
                 out.append((r, sh, a))
     return out

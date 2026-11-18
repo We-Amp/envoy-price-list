@@ -62,6 +62,8 @@ DEFAULTS = {
     # at most this share of the container's CPU set; the container's cpuset and every
     # process in it must sit on the configured set. None turns the gate off.
     "max_side_service_busy": 0.5,
+    # Cloud VMs: share of CPU time stolen by the hypervisor over the window (None: not gated)
+    "max_steal_share": None,
 }
 
 
@@ -169,6 +171,16 @@ def verdict(m, cfg=None):
         if not sv.get("pids_ok"):
             reasons.append("side service %s: processes off the configured set: %s"
                            % (name, sv.get("bad_pids") or "no process found"))
+    if c["max_steal_share"] is not None and (m.get("steal_share") is None or m["steal_share"] > c["max_steal_share"]):
+        reasons.append("steal time %s of the CPU time in the window, limit %.1f%%" % (
+            "unknown" if m.get("steal_share") is None else "%.2f%%" % (100 * m["steal_share"]),
+            100 * c["max_steal_share"]))
+    if m.get("rung_pin") is not None and not m["rung_pin"].get("ok"):
+        reasons.append("rung threads not on their cores: %s" % m["rung_pin"])
+    if m.get("rung_pin_after") is not None and not m["rung_pin_after"].get("ok"):
+        reasons.append("rung threads left their cores during the leg: %s" % m["rung_pin_after"])
+    if m.get("responses_from") == "origin" and not m.get("responses"):
+        reasons.append("no origin response count (stub_status)")
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]
