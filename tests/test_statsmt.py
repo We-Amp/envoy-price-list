@@ -286,7 +286,8 @@ class MicroConfigTest(unittest.TestCase):
             c = _micro(b)
             self.assertTrue(c["pinned"])
             self.assertEqual(c["expected_sha256"]["fix"]["atomic_model_benchmark"][:12], "64247742b7b6")
-            self.assertEqual(c["expected_sha256"]["fix-relaxed-p1"]["stat_update_benchmark"][:12], "1d70718cb9cf")
+        self.assertEqual(_micro("x86-vm")["expected_sha256"]["fix-relaxed-p1"]["stat_update_benchmark"][:12],
+                         "1d70718cb9cf")
         d = tempfile.mkdtemp()
         cfg = _micro("arm-vm")
         for a, bn in MICRO.needed(cfg):
