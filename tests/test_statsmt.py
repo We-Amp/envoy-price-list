@@ -274,7 +274,11 @@ class MicroConfigTest(unittest.TestCase):
         z = _micro("bench-x86_64")
         self.assertEqual([r["binary"] for r in z["runs"]], ["atomic_model_benchmark"])  # bare metal: row 1 only
         self.assertEqual(z["runs"][0]["threads"], [1, 4, 19])
-        self.assertEqual(z["max_invol_switches"], 0)
+        self.assertEqual((z["max_invol_switches"], z["invol_switches_per_s"]), (5, 25))
+        self.assertEqual(MICRO.invol_limit(z), 25.0)  # 1 s window
+        self.assertEqual(MICRO.invol_limit(MICRO.smoke_config(z)), 5.0)  # 0.2 s smoke
+        self.assertIn("18:43:40Z", z["invol_bound_record"])
+        self.assertIsNone(MICRO.invol_limit(_micro("x86-vm")))
         self.assertIsNone(a["max_invol_switches"])
         self.assertNotIn("spread_counter", a)
 
@@ -368,6 +372,11 @@ class MicroGateTest(unittest.TestCase):
     def test_each_gate(self):
         self._fails({"window_overlap": 0.98}, "window overlap")
         self._fails({"invol_switches": 3}, "involuntary switches, bound 2")
+        bm = dict(self.cfg, max_invol_switches=5, invol_switches_per_s=25)
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], bm, extra={"invol_switches": 25}), bm,
+                                            self.rc), [])
+        self.assertTrue(MICRO.check_output(_bench_out(self.rc["expect"], bm, extra={"invol_switches": 26}), bm,
+                                           self.rc))
         self._fails({"invol_switches": -1}, "unavailable")
         self._fails({"min_thread_ops": 19999}, "floor 20000")
         self._fails({"window_overlap": 0.9929}, "outside the common window")

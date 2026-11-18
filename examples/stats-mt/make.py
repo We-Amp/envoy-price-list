@@ -214,13 +214,16 @@ def micro_config(box, sha_list=None):
                  "expected_sha256": expected, "pinned": all(v for x in expected.values() for v in x.values()),
                  "model_reference": "bmModelCurrent", "pmu": bool(mc.get("pmu", True)),
                  "max_invol_switches": mc.get("max_invol_switches"),
+                 "invol_switches_per_s": mc.get("invol_switches_per_s"),
+                 "invol_bound_record": mc.get("invol_bound_record"),
                  "pairs": [p for p in MICRO_PAIRS if p[0] in arms and p[1] in arms], "runs": runs,
                  "smoke": {"arm": MODEL_ARM, "runs": smoke_runs},
                  "rounds": 5, "repetitions": 5, "warmup_s": 0.2, "window_s": 1.0,
                  "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
                  "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
-                 "note": "max_invol_switches: 0 on bare metal; on a VM frozen from the smoke's largest count "
-                         "(box micro.max_invol_switches), and run refuses while it is null"}, **MICRO_GATES)
+                 "note": "involuntary-switch bound per repetition: max(max_invol_switches, invol_switches_per_s x "
+                         "window) where the box sets a rate (bare metal), else max_invol_switches, frozen from the "
+                         "box's smoke; run refuses while it is null"}, **MICRO_GATES)
 
 
 def configs(box, rates=None):

@@ -112,6 +112,8 @@
  "model_reference": "bmModelCurrent",
  "pmu": true,
  "max_invol_switches": null,
+ "invol_switches_per_s": null,
+ "invol_bound_record": null,
  "pairs": [
   [
    "fix-relaxed",
@@ -356,7 +358,7 @@
   "max_busy_pct": 2.0
  },
  "steal_gate": 0.02,
- "note": "max_invol_switches: 0 on bare metal; on a VM frozen from the smoke's largest count (box micro.max_invol_switches), and run refuses while it is null",
+ "note": "involuntary-switch bound per repetition: max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate (bare metal), else max_invol_switches, frozen from the box's smoke; run refuses while it is null",
  "ops_floor_per_s": 20000,
  "min_thread_ops_abs": 1024,
  "max_nonoverlap_s": 0.002,

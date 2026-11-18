@@ -105,7 +105,9 @@
     ]
    },
    "pmu": true,
-   "max_invol_switches": 0
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "frozen from the bare-metal smoke of 2026-11-18T18:43:40Z (fix build, atomic_model, 0.2 s windows): 0-4 involuntary switches per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4) without CPU isolation; bound max(5, 25/s x window): 5 at 0.2 s, 25 at 1 s"
   },
   "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core."
  },

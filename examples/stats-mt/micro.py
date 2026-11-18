@@ -42,8 +42,10 @@ next start): exit 0; no repetition errored or skipped; every expected benchmark 
 count) has all its repetitions and a median; the time outside the common window,
 (1 - window_overlap) * window_s, at most 2 ms + 0.5% of the window (overlap about 0.990 at
 0.2 s, 0.993 at 1 s: batch granularity passes, a descheduled thread does not); invol_switches
-known and <= max_invol_switches (0 on bare metal; on a VM the bound frozen from the smoke, and
-`run` refuses while it is unset); the slowest thread's operations at least 20,000 per second
+known and <= the bound: max(max_invol_switches, invol_switches_per_s * window_s) when the box
+sets a rate (bare metal: max(5, 25/s x window), frozen from the bare-metal smoke),
+else max_invol_switches (on a VM frozen from that VM's smoke; `run` refuses while it is unset);
+the counts per repetition are recorded in runs.jsonl and the bound in meta.json; the slowest thread's operations at least 20,000 per second
 of window and never under 1,024 (a stalled thread, not a slow contended one); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
 the per-process steal gate. fairness is a result, never a gate.
 
@@ -82,6 +84,15 @@ def ops_floor(cfg):
 
 def max_nonoverlap_s(cfg):
     return cfg["max_nonoverlap_s"] + cfg["max_nonoverlap_share"] * cfg["window_s"]
+
+
+def invol_limit(cfg):
+    """The involuntary-switch bound per repetition, or None while unset."""
+    flat = cfg.get("max_invol_switches")
+    if flat is None:
+        return None
+    rate = cfg.get("invol_switches_per_s")
+    return max(float(flat), float(rate) * cfg["window_s"]) if rate else float(flat)
 
 
 def select_binaries(cfg, binaries):
@@ -236,11 +247,11 @@ def gate_problems(b, cfg, rc):
             probs.append("%s: window overlap %s: %s ms outside the common window, limit %.2f ms" % (
                 nm, ov, "?" if ov is None else "%.2f" % (1000 * (1.0 - float(ov)) * cfg["window_s"]), 1000 * lim_s))
         sw = b.get("invol_switches")
-        lim = cfg.get("max_invol_switches")
+        lim = invol_limit(cfg)
         if sw is None or float(sw) < 0:
             probs.append("%s: involuntary switches unavailable" % nm)
         elif lim is not None and float(sw) > lim:
-            probs.append("%s: %d involuntary switches, bound %d" % (nm, float(sw), lim))
+            probs.append("%s: %d involuntary switches, bound %g" % (nm, float(sw), lim))
         ops = b.get("min_thread_ops")
         if ops is None or float(ops) < ops_floor(cfg):
             probs.append("%s: %s operations on the slowest thread, floor %d" % (nm, ops, ops_floor(cfg)))
@@ -320,6 +331,11 @@ def one_process(cfg, rc, arm, root, dst, log):
     if d is not None:
         probs.extend(check_output(d, cfg, rc))
         rec["max_invol_switches_seen"] = max_switches(d)
+        sw = {}
+        for b in d.get("benchmarks", []):
+            if b.get("run_type") == "iteration" and b.get("invol_switches") is not None:
+                sw.setdefault(norm_name(b.get("name")), []).append(b["invol_switches"])
+        rec["invol_switches"] = sw
         dist = {}
         for b in d.get("benchmarks", []):
             if b.get("run_type") == "iteration" and b.get("min_distance_bytes") is not None:
@@ -341,6 +357,9 @@ def start(cfg, out, root, require_pins, dry_run, log):
             "sha256_start": hashes, "expected_sha256": cfg.get("expected_sha256"),
             "model_reference": cfg.get("model_reference"), "rounds": cfg["rounds"],
             "repetitions": cfg["repetitions"], "warmup_s": cfg["warmup_s"], "window_s": cfg["window_s"],
+            "invol_bound": {"max_invol_switches": cfg.get("max_invol_switches"),
+                            "invol_switches_per_s": cfg.get("invol_switches_per_s"), "limit": invol_limit(cfg),
+                            "record": cfg.get("invol_bound_record")},
             "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     if not dry_run:
         lp = subprocess.run(["lscpu", "-p=CPU,CORE"], capture_output=True, text=True).stdout
