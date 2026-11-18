@@ -89,7 +89,10 @@ STAT_BENCHES = ["bmCounterIncShared", "bmCounterIncPerThreadSpaced", "bmGaugeSet
                 "bmPrimitiveCounterIncShared", "bmPrimitiveCounterIncPerThreadSpaced"]
 # Google Benchmark adds the registered timing to the name; the filters accept it, names are compared without it
 TIME_PARTS = "(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?"
-MICRO_GATES = {"min_window_overlap": 0.99, "min_thread_ops": 100000}
+# gates, first revision: the operations floor is a rate (a stalled thread, not a slow
+# contended one), the overlap gate an absolute time (batch granularity passes)
+MICRO_GATES = {"ops_floor_per_s": 20000, "min_thread_ops_abs": 1024, "max_nonoverlap_s": 0.002,
+               "max_nonoverlap_share": 0.005}
 
 
 def arm(box, name, settings=None, ev=None):

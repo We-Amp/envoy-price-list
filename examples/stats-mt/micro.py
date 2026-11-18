@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Microbenchmark runner and table of the multi-threaded stats study (make.py writes micro.json).
 
-    python3 examples/stats-mt/micro.py smoke CFG OUT_DIR [--root DIR] [--arm ARM]   pre-flight
-    python3 examples/stats-mt/micro.py run CFG OUT_DIR [--root DIR] [--dry-run]
+    python3 examples/stats-mt/micro.py smoke CFG OUT_DIR [--root DIR] [--arm ARM] [--binaries B,..]   pre-flight
+    python3 examples/stats-mt/micro.py run CFG OUT_DIR [--root DIR] [--binaries B,..] [--dry-run]
+
+--binaries restricts smoke, run and check to the run entries of those binaries (for example
+atomic_model_benchmark,histogram_record_benchmark while stat_update_benchmark is rebuilt); the
+identity check then covers only those binaries.
     python3 examples/stats-mt/micro.py table OUT_DIR [--json OUT.json] > micro.md
     python3 examples/stats-mt/micro.py check CFG [--root DIR]    binaries present, sha256 as pinned
 
@@ -19,10 +23,11 @@ binary is missing or different, or when two arms carry the same binary. `smoke` 
 pins exist and records the hashes it saw.
 
 Smoke (the pre-flight, first on the build host, then the first action of every VM session):
-one arm, every run entry, the smoke thread counts, 10 ms warm-up and 50 ms windows, 2
-repetitions, one round. Every gate below must pass; it prints SMOKE FAILED with every problem
-and exits 1 otherwise, and SMOKE PASSED with the largest involuntary-switch count it saw (the
-VM bound is frozen from that).
+one arm, every run entry, the smoke thread counts, 50 ms warm-up and 200 ms windows, 2
+repetitions, one round. It is judged per binary: each binary prints SMOKE PASSED or SMOKE FAILED
+with every problem, so a binary that passes can run while another is rebuilt; the exit status is
+1 if any binary failed. It also prints the largest involuntary-switch count it saw (the VM bound
+is frozen from that).
 
 Run: for each of `rounds` rounds, every run entry, every arm of that entry in a rotated order
 (seeded; a different first arm each round), one process per (round, entry, arm):
@@ -34,17 +39,20 @@ each process the box must be idle; on a VM the steal share over the process is g
 
 Gates, per repetition, fail-closed (a failing output is not kept and the entry is re-run on the
 next start): exit 0; no repetition errored or skipped; every expected benchmark (name and
-count) has all its repetitions and a median; window_overlap >= min_window_overlap;
-invol_switches known and <= max_invol_switches (0 on bare metal; on a VM the bound frozen from
-the smoke, and `run` refuses while it is unset); min_thread_ops >= min_thread_ops (the
-operations floor); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
+count) has all its repetitions and a median; the time outside the common window,
+(1 - window_overlap) * window_s, at most 2 ms + 0.5% of the window (overlap about 0.990 at
+0.2 s, 0.993 at 1 s: batch granularity passes, a descheduled thread does not); invol_switches
+known and <= max_invol_switches (0 on bare metal; on a VM the bound frozen from the smoke, and
+`run` refuses while it is unset); the slowest thread's operations at least 20,000 per second
+of window and never under 1,024 (a stalled thread, not a slow contended one); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
 the per-process steal gate. fairness is a result, never a gate.
 
 Table: per benchmark and arm the median of each round's repetition median; per pair of arms
 (micro.json `pairs`) the paired log ratio of cycles_per_op (and of ns_per_op beside it) over
 the rounds with its 95% t interval (df = rounds - 1); per model variant against Current, the
 same within the one model build; per arm the shared against the per-thread spaced ratio (H1);
-fairness medians. Fewer than 5 complete rounds are labelled descriptive.
+fairness medians; the spacing distance (min_distance_bytes) of the spaced stat_update cases,
+recorded per process and tabulated as the minimum seen. Fewer than 5 complete rounds are labelled descriptive.
 """
 
 import argparse
@@ -64,8 +72,31 @@ sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from epl import stats, sysprobe  # noqa: E402
 
 METRICS = ["cycles_per_op", "instructions_per_op", "ns_per_op", "ops_per_sec", "fairness", "min_thread_ops",
-           "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample"]
-SMOKE = {"warmup_s": 0.01, "window_s": 0.05, "repetitions": 2}
+           "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample", "min_distance_bytes"]
+SMOKE = {"warmup_s": 0.05, "window_s": 0.2, "repetitions": 2}
+
+
+def ops_floor(cfg):
+    return max(int(cfg["min_thread_ops_abs"]), int(math.ceil(cfg["ops_floor_per_s"] * cfg["window_s"])))
+
+
+def max_nonoverlap_s(cfg):
+    return cfg["max_nonoverlap_s"] + cfg["max_nonoverlap_share"] * cfg["window_s"]
+
+
+def select_binaries(cfg, binaries):
+    """cfg restricted to the run entries (and smoke entries) of the given binaries."""
+    if not binaries:
+        return cfg
+    want = set(binaries)
+    known = {r["binary"] for r in cfg["runs"]} | {r["binary"] for r in (cfg.get("smoke") or {}).get("runs", [])}
+    if want - known:
+        raise SystemExit("unknown binaries: %s" % ", ".join(sorted(want - known)))
+    c = json.loads(json.dumps(cfg))
+    c["runs"] = [r for r in c["runs"] if r["binary"] in want]
+    if c.get("smoke"):
+        c["smoke"]["runs"] = [r for r in c["smoke"]["runs"] if r["binary"] in want]
+    return c
 
 
 def sha256(path):
@@ -200,8 +231,10 @@ def gate_problems(b, cfg, rc):
     probs = []
     if rc.get("kind") == "window":
         ov = b.get("window_overlap")
-        if ov is None or float(ov) < cfg["min_window_overlap"]:
-            probs.append("%s: window overlap %s below %s" % (nm, ov, cfg["min_window_overlap"]))
+        lim_s = max_nonoverlap_s(cfg)
+        if ov is None or (1.0 - float(ov)) * cfg["window_s"] > lim_s + 1e-12:
+            probs.append("%s: window overlap %s: %s ms outside the common window, limit %.2f ms" % (
+                nm, ov, "?" if ov is None else "%.2f" % (1000 * (1.0 - float(ov)) * cfg["window_s"]), 1000 * lim_s))
         sw = b.get("invol_switches")
         lim = cfg.get("max_invol_switches")
         if sw is None or float(sw) < 0:
@@ -209,8 +242,8 @@ def gate_problems(b, cfg, rc):
         elif lim is not None and float(sw) > lim:
             probs.append("%s: %d involuntary switches, bound %d" % (nm, float(sw), lim))
         ops = b.get("min_thread_ops")
-        if ops is None or float(ops) < cfg["min_thread_ops"]:
-            probs.append("%s: %s operations on the slowest thread, floor %d" % (nm, ops, cfg["min_thread_ops"]))
+        if ops is None or float(ops) < ops_floor(cfg):
+            probs.append("%s: %s operations on the slowest thread, floor %d" % (nm, ops, ops_floor(cfg)))
         if cfg.get("pmu"):
             for k in ("cycles_per_op", "instructions_per_op"):
                 if b.get(k) is None or float(b[k]) < 0:
@@ -287,6 +320,13 @@ def one_process(cfg, rc, arm, root, dst, log):
     if d is not None:
         probs.extend(check_output(d, cfg, rc))
         rec["max_invol_switches_seen"] = max_switches(d)
+        dist = {}
+        for b in d.get("benchmarks", []):
+            if b.get("run_type") == "iteration" and b.get("min_distance_bytes") is not None:
+                nm = norm_name(b.get("name"))
+                dist[nm] = min(dist.get(nm, float("inf")), float(b["min_distance_bytes"]))
+        if dist:
+            rec["min_distance_bytes"] = dist
     rec["problems"] = probs
     return rec, d
 
@@ -381,10 +421,11 @@ def smoke_config(cfg, arm=None):
 
 
 def smoke(cfg, out, root, arm=None, log=print):
-    """Pre-flight: (passed, problems, largest involuntary-switch count seen)."""
+    """Pre-flight: (passed, problems, largest involuntary-switch count seen, {binary: [problem]})."""
     c = smoke_config(cfg, arm)
     meta, hashes = start(c, out, root, False, False, log)
     problems, worst = [], None
+    per_bin = {rc["binary"]: [] for rc in c["runs"]}
     for i, rc in enumerate(c["runs"]):
         a = rc["arms"][0]
         tag = tag_of(1, i, rc, a)
@@ -394,18 +435,22 @@ def smoke(cfg, out, root, arm=None, log=print):
         with open(os.path.join(out, "runs.jsonl"), "a") as f:
             f.write(json.dumps(rec) + "\n")
         problems.extend("%s: %s" % (tag, p) for p in rec["problems"])
+        per_bin[rc["binary"]].extend("%s: %s" % (tag, p) for p in rec["problems"])
         if rec.get("max_invol_switches_seen") is not None:
             worst = max(worst or 0, rec["max_invol_switches_seen"])
         if not rec["problems"]:
             os.replace(dst + ".tmp", dst)
         log("%s %s in %.0f s" % (tag, "ok" if not rec["problems"] else "FAILED", rec["seconds"]))
     meta = finish(c, out, root, meta, hashes)
-    if not meta["sha256_unchanged"]:
-        problems.append("a binary changed during the smoke")
-    meta.update(smoke_passed=not problems, smoke_problems=problems, max_invol_switches_seen=worst)
+    for k, v in meta["sha256_end"].items():
+        if v != hashes.get(k):
+            problems.append("%s changed during the smoke" % k)
+            per_bin[k.split("/", 1)[1]].append("%s changed during the smoke" % k)
+    meta.update(smoke_passed=not problems, smoke_problems=problems, max_invol_switches_seen=worst,
+                smoke_binaries={b: not p for b, p in per_bin.items()})
     with open(os.path.join(out, "meta.json"), "w") as f:
         json.dump(meta, f, indent=1)
-    return not problems, problems, worst
+    return not problems, problems, worst, per_bin
 
 
 # ---------------------------------------------------------------- table
@@ -537,6 +582,18 @@ def table(out, rounds_needed=5):
             L.append("| %s | %s | %s | %s | %.2fx [%.2f, %.2f] | %d |" % (name.split("/")[0], threads_of(name), pl, a,
                                                                         ratio, lo, hi, len(rr)))
     L.append("")
+    dist = {}
+    for rnd, arm, pl, name, m in rows:
+        if m.get("min_distance_bytes") is not None:
+            k = (name, pl, arm)
+            dist[k] = min(dist.get(k, float("inf")), m["min_distance_bytes"])
+    if dist:
+        js["min_distance_bytes"] = {"%s|%s|%s" % k: v for k, v in dist.items()}
+        L.append("## Spacing of the spaced cases (min_distance_bytes, the smallest seen over rounds)\n")
+        L.append("| Benchmark | Placement | Arm | Bytes |\n|---|---|---|---|")
+        for (name, pl, arm), v in sorted(dist.items()):
+            L.append("| %s | %s | %s | %d |" % (name, pl, arm, v))
+        L.append("")
     L.append("## Fairness (slowest thread's operations over the fastest's; a result, not a gate)\n")
     L.append("| Benchmark | Placement | Arm | Median over rounds |\n|---|---|---|---|")
     for (name, pl), per in sorted(data["fairness"].items()):
@@ -557,6 +614,7 @@ def main():
     ap.add_argument("out", nargs="?")
     ap.add_argument("--root")
     ap.add_argument("--arm")
+    ap.add_argument("--binaries", help="comma-separated binaries to restrict to")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--json")
     a = ap.parse_args()
@@ -570,6 +628,7 @@ def main():
     with open(a.path) as f:
         cfg = json.load(f)
     root = a.root or cfg["root"]
+    cfg = select_binaries(cfg, [b for b in (a.binaries or "").split(",") if b])
     if a.cmd == "check":
         hashes, probs = identity(cfg, root)
         for k, v in sorted(hashes.items()):
@@ -581,14 +640,16 @@ def main():
     if not a.out:
         sys.exit("%s needs OUT_DIR" % a.cmd)
     if a.cmd == "smoke":
-        ok, probs, worst = smoke(cfg, a.out, root, a.arm)
-        if not ok:
-            print("SMOKE FAILED (%d problems):" % len(probs))
-            for p in probs:
-                print("  " + p)
-            return 1
-        print("SMOKE PASSED; largest involuntary-switch count %s" % worst)
-        return 0
+        ok, probs, worst, per_bin = smoke(cfg, a.out, root, a.arm)
+        for b, ps in sorted(per_bin.items()):
+            if ps:
+                print("SMOKE FAILED %s (%d problems):" % (b, len(ps)))
+                for p in ps:
+                    print("  " + p)
+            else:
+                print("SMOKE PASSED %s" % b)
+        print("largest involuntary-switch count %s" % worst)
+        return 0 if ok else 1
     meta = run(cfg, a.out, root, a.dry_run)
     return 0 if a.dry_run or meta.get("sha256_unchanged") else 1
 

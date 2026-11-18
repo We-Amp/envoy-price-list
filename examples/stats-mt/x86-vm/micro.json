@@ -351,6 +351,8 @@
  },
  "steal_gate": 0.02,
  "note": "max_invol_switches: 0 on bare metal; on a VM frozen from the smoke's largest count (box micro.max_invol_switches), and run refuses while it is null",
- "min_window_overlap": 0.99,
- "min_thread_ops": 100000
+ "ops_floor_per_s": 20000,
+ "min_thread_ops_abs": 1024,
+ "max_nonoverlap_s": 0.002,
+ "max_nonoverlap_share": 0.005
 }

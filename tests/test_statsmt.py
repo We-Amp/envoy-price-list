@@ -364,9 +364,13 @@ class MicroGateTest(unittest.TestCase):
         self._fails({"window_overlap": 0.98}, "window overlap")
         self._fails({"invol_switches": 3}, "involuntary switches, bound 2")
         self._fails({"invol_switches": -1}, "unavailable")
-        self._fails({"min_thread_ops": 99999}, "floor")
+        self._fails({"min_thread_ops": 19999}, "floor 20000")
+        self._fails({"window_overlap": 0.9929}, "outside the common window")
         self._fails({"cycles_per_op": -1}, "cycles_per_op unavailable")
         self._fails({"error_occurred": True, "error_message": "Skipping"}, "Skipping")
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg,
+                                                       extra={"window_overlap": 0.9931, "min_thread_ops": 20000}),
+                                            self.cfg, self.rc), [])
         # fairness is a result, not a gate
         self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, extra={"fairness": 0.2}),
                                             self.cfg, self.rc), [])
@@ -419,13 +423,54 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
     def test_smoke_config(self):
         cfg = _micro("arm-vm")
         s = MICRO.smoke_config(cfg)
-        self.assertEqual((s["rounds"], s["repetitions"], s["warmup_s"], s["window_s"]), (1, 2, 0.01, 0.05))
+        self.assertEqual((s["rounds"], s["repetitions"], s["warmup_s"], s["window_s"]), (1, 2, 0.05, 0.2))
+        self.assertEqual(MICRO.ops_floor(s), 4000)
+        self.assertAlmostEqual(MICRO.max_nonoverlap_s(s), 0.003)
+        self.assertEqual(MICRO.ops_floor(dict(s, window_s=0.01)), 1024)
+        self.assertAlmostEqual(MICRO.max_nonoverlap_s(cfg), 0.007)
         self.assertEqual([r["binary"] for r in s["runs"]], ["atomic_model_benchmark", "stat_update_benchmark",
                                                            "histogram_record_benchmark"])
         self.assertTrue(all(r["arms"] == ["fix"] for r in s["runs"]))
         self.assertEqual(MICRO.run_env(s, s["runs"][0])["STATS_BENCH_THREADS"], "1,2,4")
         with self.assertRaises(SystemExit):
             MICRO.smoke_config(cfg, "base")
+
+    def test_smoke_per_binary_and_select(self):
+        cfg = _micro("arm-vm")
+        c2 = MICRO.select_binaries(cfg, ["atomic_model_benchmark", "histogram_record_benchmark"])
+        self.assertEqual([r["binary"] for r in c2["runs"]], ["atomic_model_benchmark", "histogram_record_benchmark"])
+        self.assertEqual(len(c2["smoke"]["runs"]), 2)
+        self.assertEqual({b for _, b in MICRO.needed(c2)}, {"atomic_model_benchmark", "histogram_record_benchmark"})
+        with self.assertRaises(SystemExit):
+            MICRO.select_binaries(cfg, ["nope"])
+        d = tempfile.mkdtemp()
+        saved = (MICRO.start, MICRO.finish, MICRO.one_process)
+
+        def fake_start(c, out, root, require_pins, dry_run, log):
+            os.makedirs(out, exist_ok=True)
+            return {}, {}
+
+        def fake_finish(c, out, root, meta, hashes):
+            return dict(meta, sha256_end={}, sha256_unchanged=True)
+
+        def fake_one(c, rc, arm, root, dst, log):
+            probs = ["%s: spacing" % rc["expect"][0]] if rc["binary"] == "stat_update_benchmark" else []
+            open(dst + ".tmp", "w").write("{}")
+            return {"exit": 0, "seconds": 1.0, "problems": probs, "max_invol_switches_seen": 1,
+                    "min_distance_bytes": {"x": 704.0}}, {}
+        MICRO.start, MICRO.finish, MICRO.one_process = fake_start, fake_finish, fake_one
+        try:
+            ok, probs, worst, per_bin = MICRO.smoke(cfg, d, "/x", log=lambda *a: None)
+        finally:
+            MICRO.start, MICRO.finish, MICRO.one_process = saved
+        self.assertFalse(ok)
+        self.assertEqual(per_bin["atomic_model_benchmark"], [])
+        self.assertEqual(per_bin["histogram_record_benchmark"], [])
+        self.assertEqual(len(per_bin["stat_update_benchmark"]), 1)
+        meta = json.load(open(os.path.join(d, "meta.json")))
+        self.assertEqual(meta["smoke_binaries"], {"atomic_model_benchmark": True, "histogram_record_benchmark": True,
+                                                  "stat_update_benchmark": False})
+        self.assertEqual(worst, 1)
 
     def test_smoke_fails_loudly_without_binaries(self):
         d = tempfile.mkdtemp()
@@ -447,7 +492,8 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
                                 ("bmCounterIncPerThreadSpaced/manual_time/threads:4", 20.0 * (1 + 0.01 * r)),
                                 ("bmModelRelaxedShared/manual_time/threads:4", 80.0 * (1 + 0.01 * r)),
                                 ("bmModelCurrentShared/manual_time/threads:4", 100.0 * (1 + 0.01 * r))):
-                    o = _bench_out([nm], cfg, extra={"cycles_per_op": cyc, "fairness": 0.5})
+                    o = _bench_out([nm], cfg, extra={"cycles_per_op": cyc, "fairness": 0.5,
+                                                     "min_distance_bytes": 512.0 + r})
                     bm.extend(o["benchmarks"])
                 json.dump({"benchmarks": bm}, open(os.path.join(d, "r%02d-1-stat_update-vm-%s.json" % (r, arm)), "w"))
         text, js = MICRO.table(d)
@@ -459,6 +505,8 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
         mo = [x for x in js["model"] if x["arm"] == "fix"][0]
         self.assertAlmostEqual(mo["effect_pct"], -20.0, places=6)
         self.assertIn("Fairness", text)
+        self.assertIn("Spacing", text)
+        self.assertEqual(js["min_distance_bytes"]["bmCounterIncShared/manual_time/threads:4|vm|fix"], 513.0)
         self.assertEqual(js["fairness"]["bmCounterIncShared/manual_time/threads:4|vm|fix"], 0.5)
 
 
