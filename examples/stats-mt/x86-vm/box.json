@@ -1,0 +1,79 @@
+{
+ "name": "x86-vm",
+ "arch": "x86_64",
+ "label": "x86-vm",
+ "kind": "cloud-vm",
+ "machine_label": "a current x86 cloud VM, 32 vCPU (16 cores, siblings idle), spot, PMU on",
+ "cpus": {
+  "sut": "0-12",
+  "client": "13-14",
+  "origin": "15"
+ },
+ "main_cpu": 12,
+ "rungs": [
+  {
+   "name": "1w",
+   "workers": 1,
+   "worker_cpus": "0",
+   "client_concurrency": 1
+  },
+  {
+   "name": "4w",
+   "workers": 4,
+   "worker_cpus": "0-3",
+   "client_concurrency": 2
+  },
+  {
+   "name": "12w",
+   "workers": 12,
+   "worker_cpus": "0-11",
+   "client_concurrency": 2
+  }
+ ],
+ "growth": [
+  [
+   "12w",
+   "1w"
+  ]
+ ],
+ "cross_socket": [],
+ "perf": "sudo -n /usr/bin/perf",
+ "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+ "hitm_events": null,
+ "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:PIN-THE-AMD64-DIGEST-ON-THE-VM",
+ "image_platform": "linux/amd64",
+ "binaries": {
+  "x86_64": {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ },
+ "steal_gate": 0.02,
+ "micro": {
+  "root": "~/epl/bins/stats/r3",
+  "placements": {
+   "vm": {
+    "cpus": "0-14",
+    "threads": [
+     1,
+     2,
+     4,
+     8
+    ]
+   }
+  },
+  "histogram_workers": [
+   1,
+   4
+  ],
+  "flush_hammers": [
+   0,
+   1,
+   4,
+   8
+  ]
+ },
+ "note": "The x86 comparison VM (not created yet): 16 physical cores whose siblings stay idle. CPU numbers assume the first 16 logical CPUs are one per core; check with lscpu -e at its step 0 and edit. Perf through sudo; steal gated at 2%."
+}

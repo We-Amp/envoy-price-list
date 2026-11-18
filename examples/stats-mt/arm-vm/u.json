@@ -1,0 +1,260 @@
+{
+ "name": "mt-u-arm-vm",
+ "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (no SMT), spot, PMU on",
+ "workdir": "~/epl/runs/stats-mt",
+ "box": {
+  "name": "arm-vm",
+  "arch": "aarch64",
+  "label": "arm-vm",
+  "kind": "cloud-vm",
+  "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (no SMT), spot, PMU on",
+  "cpus": {
+   "sut": "0-12",
+   "client": "13-14",
+   "origin": "15"
+  },
+  "main_cpu": 12,
+  "rungs": [
+   {
+    "name": "1w",
+    "workers": 1,
+    "worker_cpus": "0",
+    "client_concurrency": 1
+   },
+   {
+    "name": "4w",
+    "workers": 4,
+    "worker_cpus": "0-3",
+    "client_concurrency": 2
+   },
+   {
+    "name": "12w",
+    "workers": 12,
+    "worker_cpus": "0-11",
+    "client_concurrency": 2
+   }
+  ],
+  "growth": [
+   [
+    "12w",
+    "1w"
+   ]
+  ],
+  "cross_socket": [],
+  "perf": "sudo -n /usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations",
+  "hitm_events": null,
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-ON-THE-VM",
+  "image_platform": "linux/arm64",
+  "binaries": {
+   "aarch64": {
+    "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+    "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+   }
+  },
+  "steal_gate": 0.02,
+  "micro": {
+   "root": "~/epl/bins/stats/r3-arm64",
+   "placements": {
+    "vm": {
+     "cpus": "0-14",
+     "threads": [
+      1,
+      2,
+      4,
+      8
+     ]
+    }
+   },
+   "histogram_workers": [
+    1,
+    4
+   ],
+   "flush_hammers": [
+    0,
+    1,
+    4,
+    8
+   ]
+  },
+  "note": "The Arm VM: perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. The origin image digest and the binary paths are set on the VM at its step 0."
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-12",
+  "client": "13-14",
+  "origin": "15"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 4,
+  "connections_per_worker": 16,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "sudo -n /usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations",
+  "per_thread": true,
+  "numastat": false,
+  "responses_from": "origin"
+ },
+ "validity": {
+  "max_steal_share": 0.02,
+  "max_non2xx": 0
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-ON-THE-VM",
+  "platform": "linux/arm64",
+  "port": 8092,
+  "workers": 8,
+  "stub_status": true
+ },
+ "audit": "mt-s",
+ "order": "latin",
+ "shape_order": "latin",
+ "order_seed": 41,
+ "primary_metric": "workers_cycles_per_req",
+ "comparisons": "base",
+ "base_arm": "base",
+ "arms": [
+  {
+   "name": "base",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "absent": true,
+     "label": "no stats matcher"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "min": 1,
+     "label": "store stats present"
+    }
+   ]
+  },
+  {
+   "name": "stats-reject",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_reject_all": true
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "equals": true,
+     "label": "stats_matcher reject_all"
+    }
+   ]
+  },
+  {
+   "name": "base-A2",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "absent": true,
+     "label": "no stats matcher"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "min": 1,
+     "label": "store stats present"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "mt-1w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 1300,
+   "workers": 1,
+   "worker_cpus": "0",
+   "main_cpu": 12,
+   "client_concurrency": 1,
+   "client_connections_per_worker": 64
+  },
+  {
+   "name": "mt-4w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200,
+   "workers": 4,
+   "worker_cpus": "0-3",
+   "main_cpu": 12,
+   "client_concurrency": 2,
+   "client_connections_per_worker": 128
+  },
+  {
+   "name": "mt-12w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 15600,
+   "workers": 12,
+   "worker_cpus": "0-11",
+   "main_cpu": 12,
+   "client_concurrency": 2,
+   "client_connections_per_worker": 384
+  }
+ ],
+ "rounds": 12,
+ "rounds_block": 3,
+ "rounds_max": 15,
+ "stop": {
+  "target_half_width_pct": 1.0
+ },
+ "r_star": 1300,
+ "k": 64,
+ "uncalibrated": true
+}

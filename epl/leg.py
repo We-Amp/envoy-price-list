@@ -608,6 +608,31 @@ def origin_requests(e):
     return parse_stub_status(body) if st == 200 else None
 
 
+def parse_numastat(text):
+    """{node: MB} from the Total line of `numastat -p PID`."""
+    lines = (text or "").splitlines()
+    head = None
+    for ln in lines:
+        f = ln.split()
+        if f and f[0] == "Node" and head is None:
+            head = [x for x in f if x not in ("Node",) and x != "Total"]
+        if f and f[0] == "Total" and head:
+            vals = f[1:1 + len(head)]
+            try:
+                return {"node%s" % h: float(v) for h, v in zip(head, vals)}
+            except ValueError:
+                return None
+    return None
+
+
+def numastat_totals(pid):
+    try:
+        r = subprocess.run(["numastat", "-p", str(pid)], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as ex:
+        return {"error": str(ex)}
+    return parse_numastat(r.stdout) or {"error": "no Total line"}
+
+
 def sysprobe_steal():
     """(total jiffies, steal jiffies) of the first line of /proc/stat."""
     try:
@@ -932,6 +957,9 @@ class RealBackend:
                     if rung["main_cpu"] is not None:
                         # where every thread ran last, after the window: still on its own set
                         m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
+                    if mcfg.get("numastat"):
+                        # after the window: where Envoy's memory sits, per node
+                        m["numastat"] = numastat_totals(envoy.pid)
                     qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
                     t2 = time.monotonic()
                     e1 = sysprobe.proc_threads_detail(envoy.pid)

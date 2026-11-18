@@ -1,0 +1,163 @@
+{
+ "name": "mt-micro-arm-vm",
+ "box": {
+  "name": "arm-vm",
+  "arch": "aarch64",
+  "label": "arm-vm",
+  "kind": "cloud-vm",
+  "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (no SMT), spot, PMU on",
+  "cpus": {
+   "sut": "0-12",
+   "client": "13-14",
+   "origin": "15"
+  },
+  "main_cpu": 12,
+  "rungs": [
+   {
+    "name": "1w",
+    "workers": 1,
+    "worker_cpus": "0",
+    "client_concurrency": 1
+   },
+   {
+    "name": "4w",
+    "workers": 4,
+    "worker_cpus": "0-3",
+    "client_concurrency": 2
+   },
+   {
+    "name": "12w",
+    "workers": 12,
+    "worker_cpus": "0-11",
+    "client_concurrency": 2
+   }
+  ],
+  "growth": [
+   [
+    "12w",
+    "1w"
+   ]
+  ],
+  "cross_socket": [],
+  "perf": "sudo -n /usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations",
+  "hitm_events": null,
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-ON-THE-VM",
+  "image_platform": "linux/arm64",
+  "binaries": {
+   "aarch64": {
+    "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+    "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+   }
+  },
+  "steal_gate": 0.02,
+  "micro": {
+   "root": "~/epl/bins/stats/r3-arm64",
+   "placements": {
+    "vm": {
+     "cpus": "0-14",
+     "threads": [
+      1,
+      2,
+      4,
+      8
+     ]
+    }
+   },
+   "histogram_workers": [
+    1,
+    4
+   ],
+   "flush_hammers": [
+    0,
+    1,
+    4,
+    8
+   ]
+  },
+  "note": "The Arm VM: perf through sudo; the harness is not pinned (no core left); steal time gated at 2%. The origin image digest and the binary paths are set on the VM at its step 0."
+ },
+ "root": "~/epl/bins/stats/r3-arm64",
+ "arms": {
+  "base": "18fa8fc6fa",
+  "fix": "977c664058",
+  "fix-relaxed": "d2c62bf670",
+  "fix-relaxed-p1": "8c8d7169ae",
+  "base-relaxed": "18676f7806",
+  "base-relaxed-p1": "1f1a299743"
+ },
+ "pairs": [
+  [
+   "fix-relaxed",
+   "fix",
+   "all"
+  ],
+  [
+   "fix-relaxed-p1",
+   "fix-relaxed",
+   "all"
+  ],
+  [
+   "base-relaxed",
+   "base",
+   "n1"
+  ],
+  [
+   "base-relaxed-p1",
+   "base-relaxed",
+   "n1"
+  ],
+  [
+   "fix",
+   "base",
+   "n1"
+  ]
+ ],
+ "runs": [
+  {
+   "binary": "atomic_model_benchmark",
+   "placement": "vm",
+   "cpus": "0-14",
+   "filter": "^bmModel(Current|Relaxed|TestFlag|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)/real_time/threads:(1|2|4|8)$"
+  },
+  {
+   "binary": "stat_update_benchmark",
+   "placement": "vm",
+   "cpus": "0-14",
+   "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmCounterIncPerThread|bmGaugeIncDecShared|bmGaugeIncDecPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)/real_time/threads:(1|2|4|8)$"
+  },
+  {
+   "binary": "stat_update_benchmark",
+   "placement": "vm",
+   "cpus": "0-14",
+   "needs_mix": true,
+   "filter": "^(bmRequestMixShared|bmRequestMixPerThreadSpaced)/real_time/threads:(1|2|4|8)$"
+  },
+  {
+   "binary": "histogram_record_benchmark",
+   "placement": "vm",
+   "cpus": "0-14",
+   "filter": "^bmHistogramRecord/(1|4)/[01]/[01]/manual_time$"
+  },
+  {
+   "binary": "server_stats_flush_contended_benchmark",
+   "placement": "vm",
+   "cpus": "0-14",
+   "filter": "^bmFlushContended/100000/(0|1|4|8)/[012]/real_time$"
+  }
+ ],
+ "rounds": 5,
+ "repetitions": 5,
+ "min_time": "0.2s",
+ "mix": null,
+ "order_seed": 41,
+ "workdir": "~/epl/runs/stats-mt/micro",
+ "idle": {
+  "max_load1": 4.0,
+  "max_busy_pct": 2.0
+ },
+ "steal_gate": 0.02,
+ "note": "mix (STATS_BENCH_MIX, '<counter incs>:<gauge inc/dec pairs>' in these builds) has no default: the request-mix benchmarks are skipped until step 0 sets it"
+}

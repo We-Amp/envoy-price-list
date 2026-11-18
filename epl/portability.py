@@ -49,8 +49,9 @@ def box_literals(box):
     for k in BOX_KEYS_LITERAL:
         if box.get(k):
             out.add(str(box[k]))
-    if box.get("perf_events"):
-        out.add(box["perf_events"])
+    for k in ("perf_events", "hitm_events"):
+        if box.get(k):
+            out.add(box[k])
     for b in list((box.get("binaries") or {}).values()) + list((box.get("fix_binaries") or {}).values()):
         for k in ("binary", "source"):
             if b.get(k):
@@ -66,7 +67,10 @@ def load_dir(d):
         if os.path.basename(p) == "box.json":
             continue
         with open(p) as f:
-            cfgs[os.path.basename(p)] = (p, f.read())
+            text = f.read()
+        if "shapes" not in json.loads(text):
+            continue  # not an experiment config (a microbenchmark plan, say)
+        cfgs[os.path.basename(p)] = (p, text)
     return box, cfgs
 
 
