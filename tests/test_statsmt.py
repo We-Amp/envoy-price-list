@@ -313,7 +313,7 @@ class MicroIdentityCoverageTest(unittest.TestCase):
     def _cfg(self, box="arm-vm"):
         return json.load(open(os.path.join(MT, box, "micro.json")))
 
-    def test_arm_vm_pinned_and_x86_unpinned(self):
+    def test_vm_pins(self):
         a = self._cfg("arm-vm")
         self.assertEqual(a["root"], "~/arm/bins3")
         self.assertEqual(a["arms"]["base"], "3a80b1543c")
@@ -321,7 +321,8 @@ class MicroIdentityCoverageTest(unittest.TestCase):
         self.assertEqual(len({v for arm in a["expected_sha256"].values() for v in arm.values()}), 24)
         self.assertEqual(a["expected_sha256"]["fix-relaxed"]["stat_update_benchmark"][:12], "9b7db1e119df")
         x = self._cfg("x86-vm")
-        self.assertFalse(any(v for arm in x["expected_sha256"].values() for v in arm.values()))
+        self.assertTrue(all(v for arm in x["expected_sha256"].values() for v in arm.values()))
+        self.assertEqual(x["expected_sha256"]["base"]["atomic_model_benchmark"][:12], "a6645a5ac244")
         for r in x["runs"]:
             self.assertEqual(r["cpus"], "0-7")
             self.assertLessEqual(max(r.get("threads") or r["hammers"]), 7)
