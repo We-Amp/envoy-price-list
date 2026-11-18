@@ -543,3 +543,19 @@ class MfixTest(unittest.TestCase):
         fix = [r for r in js["mfix"] if r["family"] == "mfix" and r["shape"] == "idle-1m" and r["arm"] == "nosink-top"][0]
         self.assertLess(fix["effect_pct"], -20)
         self.assertTrue(fix["verdict"].startswith("differs"), fix["verdict"])
+
+
+class ObservationTest(unittest.TestCase):
+    def test_saturation_observation_and_labels(self):
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, "cal", "1m-statsd"))
+        leg = {"stats_total": 1180396, "main": {"run_ms_per_s": 999.8}, "quiesce": {"span_s": 26.5},
+               "udp": {"fit": {"n": 11}, "dropped": 0}}
+        with open(os.path.join(d, "cal", "1m-statsd", "calibrate-legs.jsonl"), "w") as f:
+            f.write(json.dumps(leg) + "\n")
+        text, js = TAB.tables(d)
+        self.assertIn("busy 100% of the time", text)
+        self.assertIn("about 2.4 s", text)
+        self.assertIn("flushes start one interval apart", text)
+        txt = open(os.path.join(SF, "table.py")).read()
+        self.assertIn("own builds (5e1439980a / 3c9cce2f2c)", txt)

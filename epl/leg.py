@@ -982,6 +982,10 @@ class RealBackend:
                         # (a used-only read after the window; it flushes under on_admin)
                         names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1))
                         post = statsrow.stats_read(ecfg["admin_port"], max(10.0, adm_t), usedonly=True)
+                        if post.get("status") != 200:
+                            # fail closed: no counts from a failed read (the evidence then fails too)
+                            m["error"] = m.get("error") or "post-window /stats?usedonly returned %s" % post.get("status")
+                            raise RuntimeError("post-window /stats returned %s" % post.get("status"))
                         m["gen_cx_connect_fail"] = statsrow.generated_sum(post["numeric"], names,
                                                                           "upstream_cx_connect_fail")
                         m["gen_cx_overflow"] = statsrow.generated_sum(post["numeric"], names, "upstream_cx_overflow")

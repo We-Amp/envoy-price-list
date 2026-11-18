@@ -368,12 +368,37 @@ def tables(sess):
         L.append("")
     js["confirmatory"], js["secondary"] = conf, sec
 
+    # observation, not a result: the plain statsd sink at 1 s at the top rung
+    js["observations"] = []
+    cp = os.path.join(sess, "cal", "1m-statsd", "calibrate-legs.jsonl")
+    if os.path.exists(cp):
+        with open(cp) as f:
+            m0 = json.loads(f.readline())
+        mn, u = m0.get("main") or {}, m0.get("udp") or {}
+        n = (u.get("fit") or {}).get("n")
+        span = (m0.get("quiesce") or {}).get("span_s")
+        if (mn.get("run_ms_per_s") or 0) >= 900:
+            per = span / n if n and span else None
+            txt = ("At about %.0f stats (1M rung) the plain statsd sink at a 1 s interval kept the main thread busy "
+                   "%.0f%% of the time: flushes of about %s s ran back to back (%s whole flushes in %.1f s), with %s "
+                   "drops. Recorded as an observation, not a priced row; the rung's statsd arms run at 5 s." % (
+                       m0.get("stats_total") or 0, (mn.get("run_ms_per_s") or 0) / 10.0,
+                       "%.1f" % per if per else "?", n, span or 0,
+                       "no" if not u.get("dropped") else "%d" % u["dropped"]))
+            js["observations"].append(txt)
+    L.append("## Observations\n")
+    L.append("- Flush scheduling (measured): flushes start one interval apart whatever they take (1.001 s at 1 s "
+             "with flushes of 20 to 740 ms); the derived share of a core is d / interval, capped at 1.")
+    for t in js["observations"]:
+        L.append("- " + t)
+    L.append("")
+
     # run M-fix: the fix build against its base build, per rung (its own family and A/A)
     mf = {r: load(os.path.join(sess, "mfix-" + r)) for r in ("10k", "100k", "1m")}
     mf = {k: v for k, v in mf.items() if v}
     if mf:
         rows = []
-        L.append("## Run M-fix: top (the fix) against main (its base), own builds\n")
+        L.append("## Run M-fix: own builds (5e1439980a / 3c9cce2f2c): top (the fix) against main (its base)\n")
         L.append("Main-thread run time per second and cycles per second at the same interval; the A/A is a "
                  "second copy of main without a sink. Two own builds, not upstream releases.\n")
         L.append("| Rung | Arm | main thread ms/s | M cycles/s |\n|---|---|---|---|")
@@ -386,8 +411,8 @@ def tables(sess):
                                                    "-" if cy is None else "%.1f" % (cy / 1e6)))
         L.append("")
         for rung, res in mf.items():
-            for a, b, lab in (("nosink-top", "nosink-main", "fix, no sink"), ("statsd-top", "statsd-main",
-                                                                               "fix, statsd sink")):
+            for a, b, lab in (("nosink-top", "nosink-main", "own builds (5e1439980a / 3c9cce2f2c), no sink"),
+                              ("statsd-top", "statsd-main", "own builds (5e1439980a / 3c9cce2f2c), statsd sink")):
                 rows.append(ratio_row(res, "idle-" + rung, a, b, "main_ms_per_s", lab, "mfix"))
         aa_mf = {}
         for rung, res in mf.items():
