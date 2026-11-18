@@ -191,7 +191,9 @@ def shapes(rates):
         "j16-c": j("j16-c", "j16", r("j16-c", 10400), ramp, 3),
         "s-ae": dict(S["s"], name="s-ae", client_extra_args=list(ACCEPT)),
         "s-9600": dict(S["s"], name="s-9600", rps=r("s-9600", 9600)),
-        "fh-13600": dict(S["fh"], name="fh-13600", rps=r("fh-13600", 13600)),
+        # the smoke showed client pool overflow at start-up at this rate: ramped, 3 s lead-in
+        "fh-13600": dict(S["fh"], name="fh-13600", rps=r("fh-13600", 13600), client_extra_args=list(ramp),
+                         lead_in_s=3),
         "s-wu5": dict(S["s"], name="s-wu5", warmup_s=5),
         "s-wu30": dict(S["s"], name="s-wu30", warmup_s=30),
     }

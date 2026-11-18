@@ -162,7 +162,12 @@
    "body_bytes": 128,
    "request_headers_added": 57,
    "response_headers_added": 52,
-   "rps": 13600
+   "rps": 13600,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
   }
  ],
  "adaptive": false
