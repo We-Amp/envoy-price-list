@@ -117,7 +117,8 @@
   "workers": 4,
   "listener_port": 10110,
   "admin_port": 9921,
-  "exact_balance": true
+  "exact_balance": true,
+  "nofile": 65536
  },
  "cpus": {
   "sut": "0-13,19,20-33",
@@ -130,6 +131,7 @@
   "concurrency": 4,
   "connections_per_worker": 16,
   "warmup_s": 5,
+  "nofile": 65536,
   "duration_s": 25,
   "idle_strategy": "poll",
   "extra_args": [
@@ -236,7 +238,7 @@
    "worker_cpus": "0",
    "main_cpu": 19,
    "client_concurrency": 1,
-   "client_connections_per_worker": 64
+   "client_connections_per_worker": 16
   },
   {
    "name": "mt-4w",
@@ -248,7 +250,7 @@
    "worker_cpus": "0-3",
    "main_cpu": 19,
    "client_concurrency": 4,
-   "client_connections_per_worker": 64
+   "client_connections_per_worker": 16
   },
   {
    "name": "mt-14w-one",
@@ -260,7 +262,7 @@
    "worker_cpus": "0-13",
    "main_cpu": 19,
    "client_concurrency": 14,
-   "client_connections_per_worker": 64
+   "client_connections_per_worker": 16
   },
   {
    "name": "mt-14w-split",
@@ -272,7 +274,7 @@
    "worker_cpus": "0-6,20-26",
    "main_cpu": 19,
    "client_concurrency": 14,
-   "client_connections_per_worker": 64
+   "client_connections_per_worker": 16
   },
   {
    "name": "mt-28w",
@@ -284,7 +286,7 @@
    "worker_cpus": "0-13,20-33",
    "main_cpu": 19,
    "client_concurrency": 14,
-   "client_connections_per_worker": 128
+   "client_connections_per_worker": 32
   }
  ],
  "rounds": 2,
@@ -292,7 +294,7 @@
  "rounds_max": 2,
  "adaptive": false,
  "r_star": 1300,
- "k": 64,
+ "k": 16,
  "session_record": {
   "fix_envoy_static": {
    "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",

@@ -85,7 +85,8 @@
   "workers": 4,
   "listener_port": 10110,
   "admin_port": 9921,
-  "exact_balance": true
+  "exact_balance": true,
+  "nofile": 65536
  },
  "cpus": {
   "sut": "0-12",
@@ -97,6 +98,7 @@
   "concurrency": 4,
   "connections_per_worker": 16,
   "warmup_s": 5,
+  "nofile": 65536,
   "duration_s": 25,
   "idle_strategy": "poll",
   "extra_args": [
@@ -227,7 +229,7 @@
    "worker_cpus": "0",
    "main_cpu": 12,
    "client_concurrency": 1,
-   "client_connections_per_worker": 64
+   "client_connections_per_worker": 16
   },
   {
    "name": "mt-4w",
@@ -239,7 +241,7 @@
    "worker_cpus": "0-3",
    "main_cpu": 12,
    "client_concurrency": 2,
-   "client_connections_per_worker": 128
+   "client_connections_per_worker": 32
   },
   {
    "name": "mt-12w",
@@ -251,7 +253,7 @@
    "worker_cpus": "0-11",
    "main_cpu": 12,
    "client_concurrency": 2,
-   "client_connections_per_worker": 384
+   "client_connections_per_worker": 96
   }
  ],
  "rounds": 1,
@@ -259,7 +261,7 @@
  "rounds_max": 1,
  "adaptive": false,
  "r_star": 1300,
- "k": 64,
+ "k": 16,
  "session_record": {
   "fix_envoy_static": {
    "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",

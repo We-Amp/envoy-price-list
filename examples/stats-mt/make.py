@@ -38,7 +38,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ORDER_SEED = 41
 RUNS = "~/epl/runs/stats-mt"
 DEFAULT_R_STAR = 1300  # placeholder until step 0: the 4 KB shape's per-worker rate on four workers
-DEFAULT_K = 64         # placeholder: client connections per Envoy worker
+DEFAULT_K = 16         # placeholder: client connections per Envoy worker
+NOFILE = 65536         # soft fd limit of the harness's own Envoy and client (1,024 is too few at 28 workers)
 REJECT_EVIDENCE = [{"stat": "reject_all", "scope": "config", "equals": True, "label": "stats_matcher reject_all"},
                    {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "absent": True,
                     "label": "store stats absent at the end of the leg (the read succeeded, the stat is not there)"}]
@@ -91,9 +92,10 @@ def rung_shapes(box, r_star, k):
 def base_cfg(box, name):
     return {
         "name": name, "machine_label": box["machine_label"], "workdir": RUNS, "box": box,
-        "envoy": {"workers": 4, "listener_port": 10110, "admin_port": 9921, "exact_balance": True},
+        "envoy": {"workers": 4, "listener_port": 10110, "admin_port": 9921, "exact_balance": True, "nofile": NOFILE},
         "cpus": dict(box["cpus"]),
         "client": {"binary": box["client_binary"], "concurrency": 4, "connections_per_worker": 16, "warmup_s": 5,
+                   "nofile": NOFILE,
                    "duration_s": 25, "idle_strategy": "poll",
                    "extra_args": ["--prefetch-connections", "--max-pending-requests", "1000",
                                   "--experimental-h1-connection-reuse-strategy", "lru"]},

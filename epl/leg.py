@@ -577,6 +577,11 @@ def pin_rung(pid, main_cpu, worker_set, workers, wait_s=10.0):
     return r
 
 
+def client_kw(ccfg):
+    """Popen keywords for the client: a soft fd limit (client.nofile) for this child only."""
+    return {"preexec_fn": _nofile_preexec(int(ccfg["nofile"]))} if ccfg.get("nofile") else {}
+
+
 def client_for(ccfg, shape):
     """A rung fixes the client's workers and connections per worker (`client_concurrency`,
     `client_connections_per_worker`), so connections per Envoy worker are the same at every rung."""
@@ -865,7 +870,7 @@ class RealBackend:
                 wa = nighthawk.client_args(ccfg, shape["rps"], url, warm_s, False, cextra,
                                              shape.get("client_base_args"))
                 w = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + wa,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **client_kw(ccfg))
                 try:
                     w.wait(timeout=warm_s + 60)
                 finally:
@@ -876,7 +881,8 @@ class RealBackend:
                                          shape.get("client_base_args"))
             m["client_args"] = ma
             with open(nh_json, "w") as out, open(os.path.join(self.run_dir, "logs", leg_id + ".client.log"), "w") as cerr:
-                cl = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + ma, stdout=out, stderr=cerr)
+                cl = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + ma, stdout=out, stderr=cerr,
+                                    **client_kw(ccfg))
                 try:
                     time.sleep(mcfg["lead_in_s"])
                     cl_cpus = sysprobe.cpus_allowed(cl.pid)
