@@ -347,7 +347,7 @@ class ReviewRTest(unittest.TestCase):
         self.assertTrue(c["m-1m.json"]["shapes"][0]["bursts_visible"])
         st = [a for a in c["m-100k.json"]["arms"] if a["name"] == "statsd"][0]
         stats_ = [i["stat"] for i in st["evidence"]]
-        self.assertIn("udp.fit.residual", stats_)
+        self.assertIn("udp.sent_per_flush", stats_)
         self.assertIn("udp.fit.n_error", stats_)
         self.assertNotIn("main_over_busiest_other", stats_)
         st1m = [a for a in c["m-1m.json"]["arms"] if a["name"] == "statsd"][0]

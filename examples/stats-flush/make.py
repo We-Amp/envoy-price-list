@@ -113,13 +113,14 @@ def ev_periodic(interval, visible=True):
 EV_FLUSH_OFF = [{"stat": "main.bursts", "scope": "field", "max": 0, "label": "no main-thread burst in the window"},
                 {"stat": "flush_interval_s", "scope": "field", "absent": True}]
 # Between two quiescent points (no flush in progress, the sink's queue read empty) the
-# datagrams are a whole number n of flushes of the used counter and gauge lines: the
-# residual after n whole flushes is under 1% of one flush, and n is the number of flushes the
-# span holds, +/-1 (a flush at either edge falls in or out as a whole, never in part).
-EV_STATSD = [{"stat": "udp.fit.residual", "scope": "field", "max": 0.01,
-              "label": "datagrams = a whole number of flushes of the used counters and gauges, +/-1% of a flush"},
+# datagrams are a whole number n of flushes (n = the nearest whole number of used-line
+# counts); per flush they are the used counter and gauge lines within 1% (the smoke showed
+# a flush sending 16 to 20 lines more than the used-only count, 0.05% to 0.6%), and n is
+# the number of flushes the span holds by the measured period, +/-1 (where one exists).
+EV_STATSD = [{"stat": "udp.sent_per_flush", "scope": "field", "per": "field:used_cg_lines", "per_request": 1.0,
+              "tol": 0.01, "label": "datagrams per whole flush = used counters and gauges, +/-1%"},
              {"stat": "udp.fit.n_error", "scope": "field", "max": 1,
-              "label": "that number of flushes as the span and interval say, +/-1"},
+              "label": "that number of flushes as the span and the measured period say, +/-1"},
              {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
 TOP_RUNG_MAIN = {"stat": "main_over_busiest_other", "scope": "field", "min": 10,
                  "label": "the main thread is the busiest thread by a factor of 10 (idle statsd leg, top rung)"}

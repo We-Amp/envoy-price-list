@@ -1248,10 +1248,11 @@ class RealBackend:
                 m["udp"] = statsrow.udp_window(u0, u1, None, m["used_cg_lines"])
                 if "error" not in m["udp"]:
                     # whole flushes between the two quiescent points
-                    # flushes the span holds: from the measured period; none when the main thread
-                    # was saturated (flushes back to back: only the whole-flush residual applies)
+                    # flushes the span holds: by the measured period, else the interval (flush
+                    # starts are one interval apart); a saturated main thread then fails the count,
+                    # closed: its flushes are longer than the interval
                     per = main.get("period_s") if not statsrow.saturated(main.get("run_ms_per_s")) else None
-                    exp_n = int(round((tu1 - tu0) / per)) if per else None
+                    exp_n = int(round((tu1 - tu0) / (per or interval)))
                     main["saturated"] = statsrow.saturated(main.get("run_ms_per_s"))
                     if kind == "statsd":
                         m["udp"]["fit"] = statsrow.flush_fit(m["udp"]["sent"], m["used_cg_lines"], exp_n)
