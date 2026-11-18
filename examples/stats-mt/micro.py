@@ -23,7 +23,7 @@ binary is missing or different, or when two arms carry the same binary. `smoke` 
 pins exist and records the hashes it saw.
 
 Smoke (the pre-flight, first on the build host, then the first action of every VM session):
-one arm, every run entry, the smoke thread counts, 50 ms warm-up and 200 ms windows, 2
+one arm, every run entry, the smoke thread counts (1, 2, 4 and the box's top count), 50 ms warm-up and 200 ms windows, 2
 repetitions, one round. It is judged per binary: each binary prints SMOKE PASSED or SMOKE FAILED
 with every problem, so a binary that passes can run while another is rebuilt; the exit status is
 1 if any binary failed. It also prints the largest involuntary-switch count it saw (the VM bound
@@ -427,7 +427,7 @@ def run(cfg, out, root, dry_run=False, log=print):
 
 
 def smoke_config(cfg, arm=None):
-    """The pre-flight configuration: one arm, every run entry, the smoke thread counts, short
+    """The pre-flight configuration: one arm, every run entry, the smoke thread counts (1, 2, 4 and the box's top count), short
     windows, 2 repetitions, one round."""
     sm = cfg["smoke"]
     arm = arm or sm["arm"]

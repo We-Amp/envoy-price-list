@@ -27,7 +27,7 @@ Per box (directory named after it, with box.json):
                  set, the shared per-host primitive counter and its control) and row 3 the
                  record-only histogram on fix, fix-relaxed and fix-relaxed-p1 (the box's
                  `rows`); threads 1, 4 and top (histogram 1 and top); the gates; the smoke
-                 entries (smoke threads, every row); the sha256 of every binary used, pinned
+                 entries (smoke threads plus the box's top count, every row); the sha256 of every binary used, pinned
                  from boxes/sha256/<box>.txt (null placeholders until the rebuild: check and
                  run refuse them); 5 interleaved rounds of 5 repetitions, 0.2 s warm-up and
                  1 s windows
@@ -202,8 +202,10 @@ def micro_config(box, sha_list=None):
         if max(ts) > n:
             raise SystemExit("%s: %s up to %d on %d CPUs" % (box["name"], what, max(ts), n))
     runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["threads"], mc["histogram_workers"], arms)
-    smoke_runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["smoke"]["threads"],
-                            mc["smoke"]["histogram_workers"], arms)
+    # the smoke always includes the box's top count beside its own (1, 2, 4)
+    smoke_threads = sorted(set(mc["smoke"]["threads"]) | {max(mc["threads"])})
+    smoke_hist = sorted(set(mc["smoke"]["histogram_workers"]) | {max(mc["histogram_workers"])})
+    smoke_runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], smoke_threads, smoke_hist, arms)
     pinned = sha_list or {}
     used = sorted({(a, r["binary"]) for r in runs + smoke_runs for a in r["arms"]})
     expected = {}

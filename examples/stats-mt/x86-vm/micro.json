@@ -238,7 +238,8 @@
     "threads": [
      1,
      2,
-     4
+     4,
+     7
     ],
     "binary": "atomic_model_benchmark",
     "kind": "window",
@@ -246,38 +247,48 @@
      "fix"
     ],
     "row": "1",
-    "filter": "^bmModel(Current|Relaxed|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4)$",
+    "filter": "^bmModel(Current|Relaxed|RelaxedTestFlag|OneRmw|Sharded)(Shared|PerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4|7)$",
     "expect": [
      "bmModelCurrentShared/manual_time/threads:1",
      "bmModelCurrentShared/manual_time/threads:2",
      "bmModelCurrentShared/manual_time/threads:4",
+     "bmModelCurrentShared/manual_time/threads:7",
      "bmModelCurrentPerThreadSpaced/manual_time/threads:1",
      "bmModelCurrentPerThreadSpaced/manual_time/threads:2",
      "bmModelCurrentPerThreadSpaced/manual_time/threads:4",
+     "bmModelCurrentPerThreadSpaced/manual_time/threads:7",
      "bmModelRelaxedShared/manual_time/threads:1",
      "bmModelRelaxedShared/manual_time/threads:2",
      "bmModelRelaxedShared/manual_time/threads:4",
+     "bmModelRelaxedShared/manual_time/threads:7",
      "bmModelRelaxedPerThreadSpaced/manual_time/threads:1",
      "bmModelRelaxedPerThreadSpaced/manual_time/threads:2",
      "bmModelRelaxedPerThreadSpaced/manual_time/threads:4",
+     "bmModelRelaxedPerThreadSpaced/manual_time/threads:7",
      "bmModelRelaxedTestFlagShared/manual_time/threads:1",
      "bmModelRelaxedTestFlagShared/manual_time/threads:2",
      "bmModelRelaxedTestFlagShared/manual_time/threads:4",
+     "bmModelRelaxedTestFlagShared/manual_time/threads:7",
      "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:1",
      "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:2",
      "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:4",
+     "bmModelRelaxedTestFlagPerThreadSpaced/manual_time/threads:7",
      "bmModelOneRmwShared/manual_time/threads:1",
      "bmModelOneRmwShared/manual_time/threads:2",
      "bmModelOneRmwShared/manual_time/threads:4",
+     "bmModelOneRmwShared/manual_time/threads:7",
      "bmModelOneRmwPerThreadSpaced/manual_time/threads:1",
      "bmModelOneRmwPerThreadSpaced/manual_time/threads:2",
      "bmModelOneRmwPerThreadSpaced/manual_time/threads:4",
+     "bmModelOneRmwPerThreadSpaced/manual_time/threads:7",
      "bmModelShardedShared/manual_time/threads:1",
      "bmModelShardedShared/manual_time/threads:2",
      "bmModelShardedShared/manual_time/threads:4",
+     "bmModelShardedShared/manual_time/threads:7",
      "bmModelShardedPerThreadSpaced/manual_time/threads:1",
      "bmModelShardedPerThreadSpaced/manual_time/threads:2",
-     "bmModelShardedPerThreadSpaced/manual_time/threads:4"
+     "bmModelShardedPerThreadSpaced/manual_time/threads:4",
+     "bmModelShardedPerThreadSpaced/manual_time/threads:7"
     ]
    },
    {
@@ -286,7 +297,8 @@
     "threads": [
      1,
      2,
-     4
+     4,
+     7
     ],
     "binary": "stat_update_benchmark",
     "kind": "window",
@@ -296,26 +308,32 @@
      "fix-relaxed-p1"
     ],
     "row": "2, 2b",
-    "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4)$",
+    "filter": "^(bmCounterIncShared|bmCounterIncPerThreadSpaced|bmGaugeSetShared|bmGaugeSetPerThreadSpaced|bmPrimitiveCounterIncShared|bmPrimitiveCounterIncPerThreadSpaced)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time/threads:(1|2|4|7)$",
     "expect": [
      "bmCounterIncShared/manual_time/threads:1",
      "bmCounterIncShared/manual_time/threads:2",
      "bmCounterIncShared/manual_time/threads:4",
+     "bmCounterIncShared/manual_time/threads:7",
      "bmCounterIncPerThreadSpaced/manual_time/threads:1",
      "bmCounterIncPerThreadSpaced/manual_time/threads:2",
      "bmCounterIncPerThreadSpaced/manual_time/threads:4",
+     "bmCounterIncPerThreadSpaced/manual_time/threads:7",
      "bmGaugeSetShared/manual_time/threads:1",
      "bmGaugeSetShared/manual_time/threads:2",
      "bmGaugeSetShared/manual_time/threads:4",
+     "bmGaugeSetShared/manual_time/threads:7",
      "bmGaugeSetPerThreadSpaced/manual_time/threads:1",
      "bmGaugeSetPerThreadSpaced/manual_time/threads:2",
      "bmGaugeSetPerThreadSpaced/manual_time/threads:4",
+     "bmGaugeSetPerThreadSpaced/manual_time/threads:7",
      "bmPrimitiveCounterIncShared/manual_time/threads:1",
      "bmPrimitiveCounterIncShared/manual_time/threads:2",
      "bmPrimitiveCounterIncShared/manual_time/threads:4",
+     "bmPrimitiveCounterIncShared/manual_time/threads:7",
      "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:1",
      "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:2",
-     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:4"
+     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:4",
+     "bmPrimitiveCounterIncPerThreadSpaced/manual_time/threads:7"
     ]
    },
    {
@@ -323,7 +341,8 @@
     "cpus": "0-7",
     "threads": [
      1,
-     2
+     2,
+     7
     ],
     "binary": "histogram_record_benchmark",
     "kind": "histogram",
@@ -333,10 +352,11 @@
      "fix-relaxed-p1"
     ],
     "row": "3",
-    "filter": "^bmHistogramRecordOnly/(1|2)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time$",
+    "filter": "^bmHistogramRecordOnly/(1|2|7)(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?/manual_time$",
     "expect": [
      "bmHistogramRecordOnly/1/manual_time",
-     "bmHistogramRecordOnly/2/manual_time"
+     "bmHistogramRecordOnly/2/manual_time",
+     "bmHistogramRecordOnly/7/manual_time"
     ]
    }
   ]

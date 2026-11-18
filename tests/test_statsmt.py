@@ -258,22 +258,24 @@ class MicroConfigTest(unittest.TestCase):
         self.assertEqual(a["pairs"], [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]])
         by = {r["binary"]: r for r in a["runs"]}
         self.assertEqual(by["atomic_model_benchmark"]["arms"], ["fix"])
-        self.assertEqual(by["atomic_model_benchmark"]["threads"], [1, 4, 15])
+        self.assertEqual(by["atomic_model_benchmark"]["threads"], [1, 4, 12])
         self.assertNotIn("TestFlagShared/", " ".join(x for x in by["atomic_model_benchmark"]["expect"]
                                                     if not x.startswith("bmModelRelaxedTestFlag")))
         self.assertEqual(len(by["atomic_model_benchmark"]["expect"]), 5 * 2 * 3)
         self.assertIn("bmPrimitiveCounterIncShared/manual_time/threads:4", by["stat_update_benchmark"]["expect"])
-        self.assertIn("bmGaugeSetPerThreadSpaced/manual_time/threads:15", by["stat_update_benchmark"]["expect"])
+        self.assertIn("bmGaugeSetPerThreadSpaced/manual_time/threads:12", by["stat_update_benchmark"]["expect"])
         self.assertFalse(any("GaugeIncDec" in x or "RequestMix" in x for x in by["stat_update_benchmark"]["expect"]))
         self.assertEqual(by["histogram_record_benchmark"]["expect"],
-                         ["bmHistogramRecordOnly/1/manual_time", "bmHistogramRecordOnly/15/manual_time"])
+                         ["bmHistogramRecordOnly/1/manual_time", "bmHistogramRecordOnly/12/manual_time"])
         self.assertNotIn("server_stats_flush_contended_benchmark", by)
-        self.assertEqual([r["threads"] for r in a["smoke"]["runs"]], [[1, 2, 4], [1, 2, 4], [1, 2]])
+        self.assertEqual([r["threads"] for r in a["smoke"]["runs"]], [[1, 2, 4, 12], [1, 2, 4, 12], [1, 2, 12]])
         x = _micro("x86-vm")
         self.assertEqual([r["threads"] for r in x["runs"]], [[1, 4, 7], [1, 4, 7], [1, 7]])
         z = _micro("bench-x86_64")
         self.assertEqual([r["binary"] for r in z["runs"]], ["atomic_model_benchmark"])  # bare metal: row 1 only
         self.assertEqual(z["runs"][0]["threads"], [1, 4, 19])
+        self.assertEqual(z["smoke"]["runs"][0]["threads"], [1, 2, 4, 19])  # smoke includes the top count
+        self.assertEqual([r["threads"] for r in x["smoke"]["runs"]], [[1, 2, 4, 7], [1, 2, 4, 7], [1, 2, 7]])
         self.assertEqual((z["max_invol_switches"], z["invol_switches_per_s"]), (5, 25))
         self.assertEqual(MICRO.invol_limit(z), 25.0)  # 1 s window
         self.assertEqual(MICRO.invol_limit(MICRO.smoke_config(z)), 5.0)  # 0.2 s smoke
@@ -285,9 +287,10 @@ class MicroConfigTest(unittest.TestCase):
         self.assertNotIn("spread_counter", a)
 
     def test_placeholders_refused(self):
-        c = _micro("arm-vm")
-        self.assertFalse(c["pinned"])
-        self.assertTrue(all(v is None for x in c["expected_sha256"].values() for v in x.values()))
+        c = _micro("arm-vm")  # round 5b arm64, from the build record
+        self.assertTrue(c["pinned"])
+        self.assertEqual(c["expected_sha256"]["fix"]["atomic_model_benchmark"][:12], "c70704f22adf")
+        self.assertEqual(c["expected_sha256"]["fix"]["stat_update_benchmark"][:12], "9c2618e65488")
         for b in ("x86-vm", "bench-x86_64"):  # round 5, from the build record
             c = _micro(b)
             self.assertTrue(c["pinned"])
@@ -296,6 +299,10 @@ class MicroConfigTest(unittest.TestCase):
                          "1d70718cb9cf")
         d = tempfile.mkdtemp()
         cfg = _micro("arm-vm")
+        cfg["expected_sha256"] = {a: {b: None for b in x} for a, x in cfg["expected_sha256"].items()}
+        cfg["pinned"] = False
+        cfgp = os.path.join(d, "unpinned.json")
+        json.dump(cfg, open(cfgp, "w"))
         for a, bn in MICRO.needed(cfg):
             os.makedirs(os.path.join(d, cfg["arms"][a]), exist_ok=True)
             open(os.path.join(d, cfg["arms"][a], bn), "w").write(a + bn)
@@ -303,7 +310,7 @@ class MicroConfigTest(unittest.TestCase):
         self.assertEqual(len(probs), len(MICRO.needed(cfg)))
         self.assertTrue(all("not pinned" in p for p in probs))
         self.assertEqual(MICRO.identity(cfg, d, require_pins=False)[1], [])  # the smoke runs before the pins
-        r = subprocess.run([sys.executable, os.path.join(MT, "micro.py"), "check", os.path.join(MT, "arm-vm", "micro.json"),
+        r = subprocess.run([sys.executable, os.path.join(MT, "micro.py"), "check", cfgp,
                             "--root", d], capture_output=True, text=True)
         self.assertEqual(r.returncode, 1)
         self.assertIn("identity FAILED", r.stdout)
@@ -363,7 +370,7 @@ class MicroGateTest(unittest.TestCase):
     def test_pass_and_env(self):
         self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg), self.cfg, self.rc), [])
         env = MICRO.run_env(self.cfg, self.rc)
-        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,15")
+        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,12")
         self.assertEqual((env["STATS_BENCH_WARMUP"], env["STATS_BENCH_SECONDS"]), ("0.2", "1"))
 
     def _fails(self, bad, word, extra=None):
@@ -450,7 +457,7 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
         self.assertEqual([r["binary"] for r in s["runs"]], ["atomic_model_benchmark", "stat_update_benchmark",
                                                            "histogram_record_benchmark"])
         self.assertTrue(all(r["arms"] == ["fix"] for r in s["runs"]))
-        self.assertEqual(MICRO.run_env(s, s["runs"][0])["STATS_BENCH_THREADS"], "1,2,4")
+        self.assertEqual(MICRO.run_env(s, s["runs"][0])["STATS_BENCH_THREADS"], "1,2,4,12")
         with self.assertRaises(SystemExit):
             MICRO.smoke_config(cfg, "base")
 
