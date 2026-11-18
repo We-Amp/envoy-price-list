@@ -150,7 +150,12 @@
    "path": "/s",
    "kind": "proxied",
    "body_bytes": 4096,
-   "rps": 9600
+   "rps": 9600,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
   },
   {
    "name": "fh-13600",
