@@ -11,7 +11,9 @@ verdict and stay out of every Holm step.
   run time per flush period minus flush-off's run time over the same wall time, paired by
   round (at a rung where bursts are under the sampler's resolution: run time per second
   minus flush-off's, times the interval). A difference, not a ratio: a t interval only.
-  Derived, labelled as derived: share of one core at the default 5 s interval, d / (5 s + d).
+  Derived, labelled as derived: share of one core at the default 5 s interval, d / 5 s capped at
+  1 (flushes start one interval apart whatever they take, measured on the bench box; a flush
+  longer than the interval keeps the main thread busy all the time).
   Fit cost = a + b N with an intercept, quoted per stat and per cluster of the stock mix;
   scaling exponents between rungs.
 - Ratio rows (v2): mean paired log ratio, 95% t interval, widened by 0.34 (an assumption for
@@ -134,6 +136,14 @@ def price_ratio_row(res, shape, arm, ref, label, family):
     return r
 
 
+def share_of_core_pct(d_ms, interval_s):
+    """Derived: the main thread's share of one core when a flush of d ms starts every interval
+    (flush starts are one interval apart whatever the flush takes), capped at 100%."""
+    if d_ms is None:
+        return None
+    return 100.0 * min(1.0, d_ms / (interval_s * 1000.0))
+
+
 def t_interval(xs):
     n = len(xs)
     if n < 2:
@@ -234,7 +244,9 @@ def tables(sess):
     # the curve
     L.append("## The curve (run M): main-thread price of a flush\n")
     L.append("Paired by round against flush-off (same wall time); milliseconds always beside cycles. Derived: "
-             "share of one core at the default 5 s interval, d / (5 s + d).\n")
+             "share of one core at the default 5 s interval, d / 5 s capped at 1: flushes start one interval "
+             "apart whatever they take (measured), so a flush longer than the interval keeps the main thread "
+             "busy all the time.\n")
     L.append("| Rung | N | Arm | ms per flush [95% CI] | M cycles per flush [95% CI] | Share of a core at 5 s "
              "(derived) | Stall p50 / max (ms) | /ready max (ms) | VmHWM (MB) |\n|---|---|---|---|---|---|---|---|---|")
     curve = {}
@@ -254,7 +266,7 @@ def tables(sess):
             nN = mean([m.get("stats_total") for m in mine.values()])
             d = tm.get("mean")
             row = {"rung": rung, "clusters": k, "n_stats": nN, "arm": a, "ms": tm, "cycles": tc,
-                   "share_at_5s_pct": 100.0 * d / (5000.0 + d) if d is not None else None,
+                   "share_at_5s_pct": share_of_core_pct(d, DEFAULT_INTERVAL_S),
                    "stall_p50_ms": mean(stall), "stall_max_ms": max([x for x in stall_max if x is not None] or [0]),
                    "ready_max_ms": max([x for x in ready if x is not None] or [0]), "vm_hwm_kb": mean(hwm)}
             curve.setdefault(a, []).append(row)

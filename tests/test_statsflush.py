@@ -302,7 +302,10 @@ class TableTest(unittest.TestCase):
         nos = {r["rung"]: r for r in self.js["curve"]["nosink"]}
         self.assertAlmostEqual(nos["1m"]["ms"]["mean"], 80.0, delta=3.0)
         self.assertAlmostEqual(nos["10k"]["ms"]["mean"], 1.0, delta=0.3)
-        self.assertAlmostEqual(nos["1m"]["share_at_5s_pct"], 100 * 80 / 5080.0, delta=0.1)
+        self.assertAlmostEqual(nos["1m"]["share_at_5s_pct"], 100 * nos["1m"]["ms"]["mean"] / 5000.0, places=6)
+        self.assertAlmostEqual(TAB.share_of_core_pct(80.0, 5.0), 1.6)
+        self.assertEqual(TAB.share_of_core_pct(7400.0, 5.0), 100.0)  # a flush longer than the interval
+        self.assertIsNone(TAB.share_of_core_pct(None, 5.0))
         self.assertIn("Fit cost = a + b N", self.text)
         self.assertIsNotNone(self.js["fit"]["nosink"])
 
