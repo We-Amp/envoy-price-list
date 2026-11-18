@@ -431,6 +431,15 @@
      "label": "used stats (cold) as in the smoke"
     },
     {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N (cold) as in the smoke, +/-0.5%"
+    },
+    {
      "stat": "uptime.error_s",
      "scope": "field",
      "max": 2.0,
@@ -541,6 +550,15 @@
      },
      "tol": 0.01,
      "label": "used stats (cold) as in the smoke"
+    },
+    {
+     "stat": "stats_total",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0.005,
+     "label": "N (cold) as in the smoke, +/-0.5%"
     },
     {
      "stat": "uptime.error_s",

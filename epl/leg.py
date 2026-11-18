@@ -683,6 +683,9 @@ class RealBackend:
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
             self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+            if aenv.get("stats_clusters"):
+                lim = statsrow.parse_limits(statsrow.read("/proc/%d/limits" % envoy.pid))
+                m["nofile_soft"], m["nofile_hard"] = lim if lim else (None, None)
             self._prime(m, arm, shape, aenv)
             sut_cpus = sysprobe.cpus_allowed(envoy.pid)
             m["sut_cpus_allowed"] = sut_cpus
@@ -973,6 +976,15 @@ class RealBackend:
                 try:
                     m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t)
                     self._save_stats(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+                    sc = aenv.get("stats_clusters")
+                    if sc:
+                        # the generated clusters' connect failures and overflows over the leg
+                        # (a used-only read after the window; it flushes under on_admin)
+                        names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1))
+                        post = statsrow.stats_read(ecfg["admin_port"], max(10.0, adm_t), usedonly=True)
+                        m["gen_cx_connect_fail"] = statsrow.generated_sum(post["numeric"], names,
+                                                                          "upstream_cx_connect_fail")
+                        m["gen_cx_overflow"] = statsrow.generated_sum(post["numeric"], names, "upstream_cx_overflow")
                 except (OSError, RuntimeError) as ex:
                     m["leg_end_snapshot_error"] = str(ex)
             if envoy is not None:

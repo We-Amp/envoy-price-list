@@ -95,7 +95,11 @@ def ev_common(k, rung, cal, primed=True, otlp=False):
                 {"stat": "used_total", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
                  "label": "used stats (cold) as in the smoke"}]
     c = (cal or {}).get(rung) or {}
-    if c.get("stats_total"):
+    if not primed:
+        # an unprimed store lacks the stats a first request creates: N as in the cold smoke
+        out.append({"stat": "stats_total", "scope": "field", "ref": {"arm": "self"}, "tol": 0.005,
+                    "label": "N (cold) as in the smoke, +/-0.5%"})
+    elif c.get("stats_total"):
         out.append({"stat": "stats_total", "scope": "field", "per_request": c["stats_total"], "tol": 0.005,
                     "label": "N within 0.5% of the calibration"})
     return out
