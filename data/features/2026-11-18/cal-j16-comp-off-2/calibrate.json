@@ -1,0 +1,90 @@
+[
+ {
+  "rps": 11200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.594282125,
+  "client_headroom": 0.7211144107775664,
+  "rate": 11202.120690813654,
+  "ins_u_k": 170.66791532319542,
+  "cyc_total_k": 474.5708155786584,
+  "p99_us": 799.903,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 43335641,
+   "cluster.origin.upstream_rq_total": 224537,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 3735172995,
+   "http.ingress_http.downstream_rq_2xx": 224536,
+   "http.ingress_http.downstream_rq_completed": 224536,
+   "http.ingress_http.downstream_rq_total": 224537,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 418.223,
+  "worker_max_share": 0.252,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0021,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 11.2,
+    "busy_of_set": 0.03493,
+    "cpus_used": 0.5589,
+    "cpu_us_per_request": 49.881
+   }
+  },
+  "evidence_failed": []
+ },
+ {
+  "rps": 12000,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.631330875,
+  "client_headroom": 0.7152591140904725,
+  "rate": 12002.302078112178,
+  "ins_u_k": 170.4584304690151,
+  "cyc_total_k": 471.8318199870482,
+  "p99_us": 1000.7989999999999,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 46452398,
+   "cluster.origin.upstream_rq_total": 240685,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 4003811610,
+   "http.ingress_http.downstream_rq_2xx": 240686,
+   "http.ingress_http.downstream_rq_completed": 240686,
+   "http.ingress_http.downstream_rq_total": 240683,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 441.503,
+  "worker_max_share": 0.2528,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0005,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 11.2316,
+    "busy_of_set": 0.03502,
+    "cpus_used": 0.5603,
+    "cpu_us_per_request": 46.665
+   }
+  },
+  "evidence_failed": []
+ }
+]

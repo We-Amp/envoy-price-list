@@ -1,0 +1,161 @@
+[
+ {
+  "rps": 3600,
+  "valid": false,
+  "reasons": [
+   "evidence: compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ],
+  "sut_busy": 0.528638375,
+  "client_headroom": 0.7520600967741207,
+  "rate": 3600.7159748761146,
+  "ins_u_k": 1645.075413190234,
+  "cyc_total_k": 1329.0474154559358,
+  "p99_us": 3228.159,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 13930161,
+   "cluster.origin.upstream_rq_total": 72177,
+   "http.ingress_http.compressor.epl.gzip.header_compressor_used": 72177,
+   "http.ingress_http.compressor.epl.gzip.request.not_compressed": 72176,
+   "http.ingress_http.compressor.epl.gzip.response.compressed": 72177,
+   "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 307907325,
+   "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 1182547968,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 329416071,
+   "http.ingress_http.downstream_rq_2xx": 72177,
+   "http.ingress_http.downstream_rq_completed": 72177,
+   "http.ingress_http.downstream_rq_total": 72177,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 926.751,
+  "worker_max_share": 0.2514,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0002,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 5.4292,
+    "busy_of_set": 0.01693,
+    "cpus_used": 0.2709,
+    "cpu_us_per_request": 75.22
+   }
+  },
+  "evidence_failed": [
+   "compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ]
+ },
+ {
+  "rps": 4000,
+  "valid": false,
+  "reasons": [
+   "evidence: compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ],
+  "sut_busy": 0.581068,
+  "client_headroom": 0.7530769541663962,
+  "rate": 4000.901594158422,
+  "ins_u_k": 1644.9025581156075,
+  "cyc_total_k": 1315.9148461404347,
+  "p99_us": 3220.0950000000003,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 15479565,
+   "cluster.origin.upstream_rq_total": 80205,
+   "http.ingress_http.compressor.epl.gzip.header_compressor_used": 80205,
+   "http.ingress_http.compressor.epl.gzip.request.not_compressed": 80205,
+   "http.ingress_http.compressor.epl.gzip.response.compressed": 80205,
+   "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 342150415,
+   "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 1314062336,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 366051207,
+   "http.ingress_http.downstream_rq_2xx": 80205,
+   "http.ingress_http.downstream_rq_completed": 80205,
+   "http.ingress_http.downstream_rq_total": 80206,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 980.031,
+  "worker_max_share": 0.2516,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0001,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 6.021,
+    "busy_of_set": 0.01878,
+    "cpus_used": 0.3005,
+    "cpu_us_per_request": 75.071
+   }
+  },
+  "evidence_failed": [
+   "compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ]
+ },
+ {
+  "rps": 4400,
+  "valid": false,
+  "reasons": [
+   "evidence: compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ],
+  "sut_busy": 0.634406,
+  "client_headroom": 0.7635222041735226,
+  "rate": 4400.931604059294,
+  "ins_u_k": 1644.7488663021898,
+  "cyc_total_k": 1308.3038298957454,
+  "p99_us": 3559.679,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 17025109,
+   "cluster.origin.upstream_rq_total": 88213,
+   "http.ingress_http.compressor.epl.gzip.header_compressor_used": 88213,
+   "http.ingress_http.compressor.epl.gzip.request.not_compressed": 88212,
+   "http.ingress_http.compressor.epl.gzip.response.compressed": 88213,
+   "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 376312515,
+   "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 1445265408,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 402595127,
+   "http.ingress_http.downstream_rq_2xx": 88213,
+   "http.ingress_http.downstream_rq_completed": 88213,
+   "http.ingress_http.downstream_rq_total": 88212,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 1171.327,
+  "worker_max_share": 0.2507,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 6.4705,
+    "busy_of_set": 0.02018,
+    "cpus_used": 0.3229,
+    "cpu_us_per_request": 73.351
+   }
+  },
+  "evidence_failed": [
+   "compressed bytes per request within 2% of the smoke mean: reference value not frozen (run evidence-check --freeze on the smoke)"
+  ]
+ }
+]

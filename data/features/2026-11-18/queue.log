@@ -1,0 +1,1421 @@
+2026-11-17T23:50:49Z smoke start pid 1233808 harness 0.x 6dd53317484c week5-s2
+2026-11-17T23:50:49Z calibrate j16 gzip at 2000,2400,2800
+origin container f206fadb0bd6 (epl-origin-1233822) started
+{"rps": 2000, "valid": false, "reasons": ["evidence: window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing"], "sut_busy": 0.3158785, "client_headroom": 0.7815126672860059, "rate": 2000.406168149907, "ins_u_k": 1645.6994278790376, "cyc_total_k": 1417.181321242334, "p99_us": 1495.807, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 7739686, "cluster.origin.upstream_rq_total": 40101, "http.ingress_http.compressor.epl.gzip.header_compressor_used": 40102, "http.ingress_http.compressor.epl.gzip.request.not_compressed": 40102, "http.ingress_http.compressor.epl.gzip.response.compressed": 40102, "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 171079426, "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 657031168, "http.ingress_http.downstream_cx_tx_bytes_total": 183030120, "http.ingress_http.downstream_rq_2xx": 40102, "http.ingress_http.downstream_rq_completed": 40102, "http.ingress_http.downstream_rq_total": 40102, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 819.7429999999999, "worker_max_share": 0.2507, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0004, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 3.1532, "busy_of_set": 0.00983, "cpus_used": 0.1573, "cpu_us_per_request": 78.629}}, "evidence_failed": ["window:http.ingress_http.compressor.epl.gzip.compressed: missing", "window:http.ingress_http.compressor.epl.gzip.not_compressed: missing", "window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing", "compressed bytes per request within 2% of the smoke mean: missing"]}
+{"rps": 2400, "valid": false, "reasons": ["evidence: window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing"], "sut_busy": 0.37260262499999997, "client_headroom": 0.7714863371167908, "rate": 2400.4911241565414, "ins_u_k": 1645.6884056124431, "cyc_total_k": 1399.0416500415236, "p99_us": 1903.4869999999999, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 9285809, "cluster.origin.upstream_rq_total": 48112, "http.ingress_http.compressor.epl.gzip.header_compressor_used": 48112, "http.ingress_http.compressor.epl.gzip.request.not_compressed": 48112, "http.ingress_http.compressor.epl.gzip.response.compressed": 48112, "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 205245943, "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 788267008, "http.ingress_http.downstream_cx_tx_bytes_total": 219583319, "http.ingress_http.downstream_rq_2xx": 48112, "http.ingress_http.downstream_rq_completed": 48112, "http.ingress_http.downstream_rq_total": 48112, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 826.5269999999999, "worker_max_share": 0.2532, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0004, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 3.8632, "busy_of_set": 0.01205, "cpus_used": 0.1928, "cpu_us_per_request": 80.295}}, "evidence_failed": ["window:http.ingress_http.compressor.epl.gzip.compressed: missing", "window:http.ingress_http.compressor.epl.gzip.not_compressed: missing", "window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing", "compressed bytes per request within 2% of the smoke mean: missing"]}
+{"rps": 2800, "valid": false, "reasons": ["evidence: window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing"], "sut_busy": 0.42377612499999995, "client_headroom": 0.7680959917474823, "rate": 2800.552598584973, "ins_u_k": 1645.527530344713, "cyc_total_k": 1365.111955576792, "p99_us": 2198.6549999999997, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 10837915, "cluster.origin.upstream_rq_total": 56156, "http.ingress_http.compressor.epl.gzip.header_compressor_used": 56155, "http.ingress_http.compressor.epl.gzip.request.not_compressed": 56155, "http.ingress_http.compressor.epl.gzip.response.compressed": 56155, "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes": 239561553, "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes": 920043520, "http.ingress_http.downstream_cx_tx_bytes_total": 256291487, "http.ingress_http.downstream_rq_2xx": 56155, "http.ingress_http.downstream_rq_completed": 56155, "http.ingress_http.downstream_rq_total": 56155, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 836.607, "worker_max_share": 0.2512, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0123, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 4.2884, "busy_of_set": 0.01337, "cpus_used": 0.2139, "cpu_us_per_request": 76.367}}, "evidence_failed": ["window:http.ingress_http.compressor.epl.gzip.compressed: missing", "window:http.ingress_http.compressor.epl.gzip.not_compressed: missing", "window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing", "compressed bytes per request within 2% of the smoke mean: missing"]}
+origin container f206fadb0bd6 stopped
+2026-11-17T23:52:45Z calibrate j16 comp-off at 5200,7600,10400 (ramped shape)
+origin container be01b9755a5c (epl-origin-1234488) started
+{"rps": 5200, "valid": true, "reasons": [], "sut_busy": 0.321815625, "client_headroom": 0.7515391649815442, "rate": 5201.0136962517945, "ins_u_k": 171.27859031442028, "cyc_total_k": 544.917332344743, "p99_us": 616.4789999999999, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 20119671, "cluster.origin.upstream_rq_total": 104246, "http.ingress_http.downstream_cx_tx_bytes_total": 1734148845, "http.ingress_http.downstream_rq_2xx": 104246, "http.ingress_http.downstream_rq_completed": 104246, "http.ingress_http.downstream_rq_total": 104246, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 399.63100000000003, "worker_max_share": 0.2515, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0113, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 5.7145, "busy_of_set": 0.01782, "cpus_used": 0.2852, "cpu_us_per_request": 54.817}}, "evidence_failed": []}
+{"rps": 7600, "valid": true, "reasons": [], "sut_busy": 0.4364627499999999, "client_headroom": 0.7350223887866852, "rate": 7601.514033168407, "ins_u_k": 171.08132569058017, "cyc_total_k": 510.83807049573477, "p99_us": 675.1030000000001, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 29399883, "cluster.origin.upstream_rq_total": 152329, "http.ingress_http.downstream_cx_tx_bytes_total": 2534009550, "http.ingress_http.downstream_rq_2xx": 152330, "http.ingress_http.downstream_rq_completed": 152330, "http.ingress_http.downstream_rq_total": 152329, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 387.295, "worker_max_share": 0.2506, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0101, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 8.0945, "busy_of_set": 0.02525, "cpus_used": 0.404, "cpu_us_per_request": 53.138}}, "evidence_failed": []}
+{"rps": 10400, "valid": true, "reasons": [], "sut_busy": 0.562583625, "client_headroom": 0.7265580267199074, "rate": 10401.972174792192, "ins_u_k": 170.66909001181463, "cyc_total_k": 483.9560185374722, "p99_us": 865.343, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 40233745, "cluster.origin.upstream_rq_total": 208466, "http.ingress_http.downstream_cx_tx_bytes_total": 3467815275, "http.ingress_http.downstream_rq_2xx": 208464, "http.ingress_http.downstream_rq_completed": 208464, "http.ingress_http.downstream_rq_total": 208466, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 408.031, "worker_max_share": 0.252, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0034, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 9.1653, "busy_of_set": 0.02859, "cpus_used": 0.4575, "cpu_us_per_request": 43.966}}, "evidence_failed": []}
+origin container be01b9755a5c stopped
+2026-11-17T23:54:42Z JIT warm-up check
+2026-11-17T23:54:47Z run features-jit-check: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['lua-header', 'wasm-header'], shapes ['s-wu5', 's-wu30']
+2026-11-17T23:54:47Z origin container 00ba769858d4 (epl-origin-1235221) started
+2026-11-17T23:55:26Z r01-s-wu5-lua-header VALID ins_u=195.4k cyc_tot=578.2k busy=33.9% rate=5201.1/5200 p99=803us 
+2026-11-17T23:56:04Z r01-s-wu5-wasm-header VALID ins_u=203.1k cyc_tot=612.8k busy=35.9% rate=5201.2/5200 p99=849us 
+2026-11-17T23:57:08Z r01-s-wu30-lua-header VALID ins_u=195.2k cyc_tot=591.4k busy=34.7% rate=5201.0/5200 p99=885us 
+2026-11-17T23:58:12Z r01-s-wu30-wasm-header VALID ins_u=202.9k cyc_tot=607.0k busy=35.5% rate=5201.2/5200 p99=873us 
+2026-11-17T23:58:50Z r02-s-wu5-wasm-header VALID ins_u=203.1k cyc_tot=611.7k busy=35.9% rate=5201.2/5200 p99=822us 
+2026-11-17T23:59:28Z r02-s-wu5-lua-header VALID ins_u=195.4k cyc_tot=584.0k busy=34.4% rate=5201.1/5200 p99=761us 
+2026-11-18T00:00:32Z r02-s-wu30-wasm-header VALID ins_u=203.2k cyc_tot=606.3k busy=35.6% rate=5201.2/5200 p99=769us 
+2026-11-18T00:01:36Z r02-s-wu30-lua-header VALID ins_u=195.2k cyc_tot=581.2k busy=34.1% rate=5201.0/5200 p99=751us 
+2026-11-18T00:01:36Z after 2 rounds: s-wu5 wasm-header vs lua-header: not enough pairs
+2026-11-18T00:01:36Z origin container 00ba769858d4 stopped
+2026-11-18T00:01:37Z done: ~/epl/runs/features-2026-11-18/jit-check/summary.md
+~/epl/runs/features-2026-11-18/jit-check/summary.md
+JIT lua-header: instructions:u per request, 5 s warm-up 195408, 30 s 195235, difference +0.089%
+JIT wasm-header: instructions:u per request, 5 s warm-up 203102, 30 s 203053, difference +0.024%
+JIT check: PASS (limit 0.5%)
+2026-11-18T00:01:37Z probe gzip j4
+origin container a1c183243f4e (epl-origin-1237015) started
+status 200, body 1364 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:39 GMT
+  content-type: application/json
+  last-modified: Wed, 18 Nov 2026 00:01:37 GMT
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+  content-encoding: gzip
+  vary: Accept-Encoding
+  transfer-encoding: chunked
+origin container a1c183243f4e stopped
+request-probe: PASS
+2026-11-18T00:01:39Z end probe gzip j4 rc=0
+2026-11-18T00:01:39Z probe brotli j4
+origin container 98d7f2404a45 (epl-origin-1237188) started
+status 200, body 1351 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:40 GMT
+  content-type: application/json
+  last-modified: Wed, 18 Nov 2026 00:01:39 GMT
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+  content-encoding: br
+  vary: Accept-Encoding
+  transfer-encoding: chunked
+origin container 98d7f2404a45 stopped
+request-probe: PASS
+2026-11-18T00:01:40Z end probe brotli j4 rc=0
+2026-11-18T00:01:40Z probe zstd j4
+origin container 6ceea3042cb4 (epl-origin-1237362) started
+status 200, body 1366 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:42 GMT
+  content-type: application/json
+  last-modified: Wed, 18 Nov 2026 00:01:40 GMT
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+  content-encoding: zstd
+  vary: Accept-Encoding
+  transfer-encoding: chunked
+origin container 6ceea3042cb4 stopped
+request-probe: PASS
+2026-11-18T00:01:42Z end probe zstd j4 rc=0
+2026-11-18T00:01:42Z probe comp-off j4
+origin container d72b9f7056c9 (epl-origin-1237533) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:43 GMT
+  content-type: application/json
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:42 GMT
+  etag: "6afceae6-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+origin container d72b9f7056c9 stopped
+request-probe: PASS
+2026-11-18T00:01:43Z end probe comp-off j4 rc=0
+2026-11-18T00:01:43Z probe gzip s-ae
+origin container 9a4f28e486a4 (epl-origin-1237708) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:45 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:43 GMT
+  etag: "6afceae7-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+origin container 9a4f28e486a4 stopped
+request-probe: PASS
+2026-11-18T00:01:45Z end probe gzip s-ae rc=0
+2026-11-18T00:01:45Z probe lua-header s
+origin container 5ec4000f759e (epl-origin-1237876) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:46 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:45 GMT
+  etag: "6afceae9-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+  x-epl-filter: 1
+origin container 5ec4000f759e stopped
+request-probe: PASS
+2026-11-18T00:01:46Z end probe lua-header s rc=0
+2026-11-18T00:01:46Z probe wasm-header s
+origin container 4056cdc76bc0 (epl-origin-1238046) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:48 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:46 GMT
+  etag: "6afceaea-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+  x-epl-filter: 1
+origin container 4056cdc76bc0 stopped
+request-probe: PASS
+2026-11-18T00:01:48Z end probe wasm-header s rc=0
+2026-11-18T00:01:48Z probe filter-off s
+origin container 40246139b7a3 (epl-origin-1238231) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:49 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:48 GMT
+  etag: "6afceaec-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+origin container 40246139b7a3 stopped
+request-probe: PASS
+2026-11-18T00:01:49Z end probe filter-off s rc=0
+2026-11-18T00:01:49Z probe lua-empty s
+origin container 95dfb02a6410 (epl-origin-1238402) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:51 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:49 GMT
+  etag: "6afceaed-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+origin container 95dfb02a6410 stopped
+129 log lines of lua in ~/epl/runs/features-2026-11-18/probe/lua-empty-s/logs/probe.envoy.log
+  [2026-11-18 00:01:50.931][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua13BufferWrapperE
+  [2026-11-18 00:01:50.931][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua18MetadataMapWrapperE
+  [2026-11-18 00:01:50.931][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua19MetadataMapIteratorE
+  [2026-11-18 00:01:50.931][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua17ConnectionWrapperE
+  [2026-11-18 00:01:50.931][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua20SslConnectionWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua21ParsedX509NameWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua16HeaderMapWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17HeaderMapIteratorE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17StreamInfoWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua25DynamicMetadataMapWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua26DynamicMetadataMapIteratorE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua18FilterStateWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua19StreamHandleWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua16PublicKeyWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua27ConnectionStreamInfoWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua35ConnectionDynamicMetadataMapWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua36ConnectionDynamicMetadataMapIteratorE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua18VirtualHostWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua12RouteWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua14CounterWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua12GaugeWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua16HistogramWrapperE
+  [2026-11-18 00:01:50.932][1238513][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17StatsScopeWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua13BufferWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua18MetadataMapWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua19MetadataMapIteratorE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua17ConnectionWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua13BufferWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua20SslConnectionWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua18MetadataMapWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua19MetadataMapIteratorE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua21ParsedX509NameWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua17ConnectionWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua16HeaderMapWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua20SslConnectionWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17HeaderMapIteratorE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions7Filters6Common3Lua21ParsedX509NameWrapperE
+  [2026-11-18 00:01:50.933][1238518][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17StreamInfoWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua16HeaderMapWrapperE
+  [2026-11-18 00:01:50.933][1238519][debug][lua] [./source/extensions/filters/common/lua/lua.h:204] registering new type: N5Envoy10Extensions11HttpFilters3Lua17HeaderMapIteratorE
+request-probe: PASS
+2026-11-18T00:01:51Z end probe lua-empty s rc=0
+2026-11-18T00:01:51Z probe wasm-empty s
+origin container 269ac59d11e0 (epl-origin-1238568) started
+status 200, body 4096 bytes
+  server: envoy
+  date: Wed, 18 Nov 2026 00:01:52 GMT
+  content-type: application/octet-stream
+  content-length: 4096
+  last-modified: Wed, 18 Nov 2026 00:01:51 GMT
+  etag: "6afceaef-1000"
+  accept-ranges: bytes
+  x-envoy-upstream-service-time: 0
+origin container 269ac59d11e0 stopped
+100 log lines of wasm in ~/epl/runs/features-2026-11-18/probe/wasm-empty-s/logs/probe.envoy.log
+  [2026-11-18 00:01:52.420][1238677][debug][wasm] [source/extensions/common/wasm/wasm.cc:83] Base Wasm created 1 now active
+  [2026-11-18 00:01:52.517][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.518][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.519][1238677][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 2 now active
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_context_create(1, 0)
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_context_create return: void
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_vm_start(1, 0)
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_vm_start return: 1
+  [2026-11-18 00:01:52.520][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_configure(1, 0)
+  [2026-11-18 00:01:52.521][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_configure return: 1
+  [2026-11-18 00:01:52.521][1238677][debug][wasm] [source/extensions/common/wasm/wasm.cc:144] ~Wasm 1 remaining active
+  [2026-11-18 00:01:52.522][1238677][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 2 now active
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_context_create(1, 0)
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_context_create return: void
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_vm_start(1, 0)
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_vm_start return: 1
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_configure(1, 0)
+  [2026-11-18 00:01:52.523][1238677][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_configure return: 1
+  [2026-11-18 00:01:52.526][1238699][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 3 now active
+  [2026-11-18 00:01:52.526][1238698][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 4 now active
+  [2026-11-18 00:01:52.527][1238701][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 5 now active
+  [2026-11-18 00:01:52.527][1238703][debug][wasm] [source/extensions/common/wasm/wasm.cc:101] Thread-Local Wasm created 6 now active
+  [2026-11-18 00:01:52.527][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_context_create(1, 0)
+  [2026-11-18 00:01:52.528][1238698][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.528][1238701][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_context_create return: void
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_vm_start(1, 0)
+  [2026-11-18 00:01:52.528][1238698][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.528][1238698][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_context_create(1, 0)
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] proxy_on_vm_start return: 1
+  [2026-11-18 00:01:52.528][1238699][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_configure(1, 0)
+  [2026-11-18 00:01:52.528][1238701][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host<-vm] _initialize return: void
+  [2026-11-18 00:01:52.528][1238701][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] proxy_on_context_create(1, 0)
+  [2026-11-18 00:01:52.528][1238703][trace][wasm] [source/extensions/common/wasm/wasm_vm.cc:39] [host->vm] _initialize()
+request-probe: PASS
+2026-11-18T00:01:52Z end probe wasm-empty s rc=0
+2026-11-18T00:01:52Z start smoke-aa
+2026-11-18T00:01:57Z run features-smoke-aa: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['base', 'base-A2'], shapes ['s', 'fh', 'j16']
+2026-11-18T00:01:57Z origin container 749f3b46d180 (epl-origin-1238749) started
+2026-11-18T00:02:37Z r01-s-base VALID ins_u=163.8k cyc_tot=523.8k busy=31.0% rate=5201.1/5200 p99=635us 
+2026-11-18T00:03:15Z r01-s-base-A2 VALID ins_u=163.8k cyc_tot=531.0k busy=31.4% rate=5201.1/5200 p99=669us 
+2026-11-18T00:03:54Z r01-fh-base VALID ins_u=164.7k cyc_tot=281.3k busy=25.6% rate=8001.6/8000 p99=370us 
+2026-11-18T00:04:32Z r01-fh-base-A2 VALID ins_u=164.8k cyc_tot=278.0k busy=25.3% rate=8001.6/8000 p99=363us 
+2026-11-18T00:05:11Z r01-j16-base VALID ins_u=172.1k cyc_tot=645.6k busy=18.3% rate=2400.4/2400 p99=713us 
+2026-11-18T00:05:49Z r01-j16-base-A2 VALID ins_u=172.2k cyc_tot=649.8k busy=18.4% rate=2400.5/2400 p99=695us 
+2026-11-18T00:06:28Z r02-s-base-A2 VALID ins_u=163.7k cyc_tot=519.7k busy=30.8% rate=5201.0/5200 p99=628us 
+2026-11-18T00:07:06Z r02-s-base VALID ins_u=163.9k cyc_tot=522.6k busy=31.1% rate=5201.1/5200 p99=617us 
+2026-11-18T00:07:44Z r02-fh-base-A2 VALID ins_u=164.8k cyc_tot=278.7k busy=25.3% rate=8001.6/8000 p99=365us 
+2026-11-18T00:08:23Z r02-fh-base VALID ins_u=164.8k cyc_tot=280.4k busy=25.5% rate=8001.5/8000 p99=371us 
+2026-11-18T00:09:01Z r02-j16-base-A2 VALID ins_u=172.2k cyc_tot=637.6k busy=18.1% rate=2400.5/2400 p99=714us 
+2026-11-18T00:09:40Z r02-j16-base VALID ins_u=172.2k cyc_tot=641.0k busy=18.2% rate=2400.5/2400 p99=688us 
+2026-11-18T00:09:40Z after 2 rounds: s base-A2 vs base: not enough pairs
+2026-11-18T00:09:40Z origin container 749f3b46d180 stopped
+2026-11-18T00:09:41Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-aa/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-aa/summary.md
+2026-11-18T00:09:41Z end smoke-aa rc=0
+2026-11-18T00:09:41Z start smoke-f1
+2026-11-18T00:09:46Z run features-smoke-f1: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['filter-off', 'lua-empty'], shapes ['s', 'fh']
+2026-11-18T00:09:46Z origin container f6cfca688854 (epl-origin-1241104) started
+2026-11-18T00:10:25Z r01-s-filter-off VALID ins_u=163.9k cyc_tot=525.0k busy=31.3% rate=5201.0/5200 p99=623us 
+2026-11-18T00:11:04Z r01-s-lua-empty VALID ins_u=181.6k cyc_tot=565.0k busy=33.4% rate=5201.1/5200 p99=708us 
+2026-11-18T00:11:42Z r01-fh-filter-off VALID ins_u=164.7k cyc_tot=286.0k busy=26.0% rate=8001.6/8000 p99=377us 
+2026-11-18T00:12:21Z r01-fh-lua-empty VALID ins_u=182.0k cyc_tot=310.1k busy=28.0% rate=8001.5/8000 p99=402us 
+2026-11-18T00:12:59Z r02-s-lua-empty VALID ins_u=181.5k cyc_tot=570.2k busy=33.6% rate=5201.1/5200 p99=670us 
+2026-11-18T00:13:38Z r02-s-filter-off VALID ins_u=163.8k cyc_tot=523.6k busy=31.1% rate=5201.0/5200 p99=612us 
+2026-11-18T00:14:16Z r02-fh-lua-empty VALID ins_u=181.9k cyc_tot=314.9k busy=28.4% rate=8001.6/8000 p99=407us 
+2026-11-18T00:14:55Z r02-fh-filter-off VALID ins_u=164.7k cyc_tot=279.6k busy=25.4% rate=8001.7/8000 p99=373us 
+2026-11-18T00:14:55Z after 2 rounds: s lua-empty vs filter-off: not enough pairs
+2026-11-18T00:14:55Z origin container f6cfca688854 stopped
+2026-11-18T00:14:56Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-f1/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-f1/summary.md
+2026-11-18T00:14:56Z end smoke-f1 rc=0
+2026-11-18T00:14:56Z start smoke-f2
+2026-11-18T00:15:01Z run features-smoke-f2: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['lua-header', 'wasm-empty'], shapes ['s', 'fh']
+2026-11-18T00:15:01Z origin container baf31d243717 (epl-origin-1242618) started
+2026-11-18T00:15:41Z r01-s-lua-header VALID ins_u=195.3k cyc_tot=584.4k busy=34.3% rate=5201.0/5200 p99=802us 
+2026-11-18T00:16:19Z r01-s-wasm-empty VALID ins_u=184.0k cyc_tot=576.5k busy=33.8% rate=5201.1/5200 p99=803us 
+2026-11-18T00:16:58Z r01-fh-lua-header VALID ins_u=195.1k cyc_tot=332.4k busy=29.9% rate=8001.6/8000 p99=433us 
+2026-11-18T00:17:36Z r01-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.7k busy=29.1% rate=8001.8/8000 p99=413us 
+2026-11-18T00:18:15Z r02-s-wasm-empty VALID ins_u=184.3k cyc_tot=582.9k busy=34.4% rate=5201.2/5200 p99=739us 
+2026-11-18T00:18:53Z r02-s-lua-header VALID ins_u=195.4k cyc_tot=591.1k busy=34.6% rate=5201.0/5200 p99=852us 
+2026-11-18T00:19:32Z r02-fh-wasm-empty VALID ins_u=182.8k cyc_tot=320.4k busy=28.8% rate=8001.8/8000 p99=412us 
+2026-11-18T00:20:10Z r02-fh-lua-header VALID ins_u=195.2k cyc_tot=332.3k busy=29.9% rate=8001.7/8000 p99=432us 
+2026-11-18T00:20:10Z after 2 rounds: s wasm-empty vs lua-header: not enough pairs
+2026-11-18T00:20:10Z origin container baf31d243717 stopped
+2026-11-18T00:20:12Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-f2/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-f2/summary.md
+2026-11-18T00:20:12Z end smoke-f2 rc=0
+2026-11-18T00:20:12Z start smoke-f3
+2026-11-18T00:20:16Z run features-smoke-f3: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['wasm-header', 'filter-off'], shapes ['s', 'fh']
+2026-11-18T00:20:17Z origin container 6eb65f0e4ec8 (epl-origin-1244207) started
+2026-11-18T00:20:56Z r01-s-wasm-header VALID ins_u=203.1k cyc_tot=614.4k busy=36.0% rate=5201.2/5200 p99=830us 
+2026-11-18T00:21:34Z r01-s-filter-off VALID ins_u=163.8k cyc_tot=528.0k busy=31.4% rate=5201.1/5200 p99=624us 
+2026-11-18T00:22:13Z r01-fh-wasm-header VALID ins_u=200.9k cyc_tot=351.0k busy=31.4% rate=8001.8/8000 p99=484us 
+2026-11-18T00:22:51Z r01-fh-filter-off VALID ins_u=164.7k cyc_tot=289.5k busy=26.3% rate=8001.6/8000 p99=371us 
+2026-11-18T00:23:30Z r02-s-filter-off VALID ins_u=163.9k cyc_tot=524.0k busy=31.2% rate=5201.1/5200 p99=624us 
+2026-11-18T00:24:08Z r02-s-wasm-header VALID ins_u=203.1k cyc_tot=604.1k busy=35.5% rate=5201.2/5200 p99=721us 
+2026-11-18T00:24:47Z r02-fh-filter-off VALID ins_u=164.7k cyc_tot=278.4k busy=25.3% rate=8001.6/8000 p99=372us 
+2026-11-18T00:25:25Z r02-fh-wasm-header VALID ins_u=201.0k cyc_tot=351.0k busy=31.5% rate=8001.8/8000 p99=440us 
+2026-11-18T00:25:25Z after 2 rounds: s filter-off vs wasm-header: not enough pairs
+2026-11-18T00:25:25Z origin container 6eb65f0e4ec8 stopped
+2026-11-18T00:25:27Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-f3/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-f3/summary.md
+2026-11-18T00:25:27Z end smoke-f3 rc=0
+2026-11-18T00:25:27Z start smoke-14a
+2026-11-18T00:25:32Z run features-smoke-14a: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['comp-off', 'gzip'], shapes ['j4', 'j16']
+2026-11-18T00:25:32Z origin container a93b6b4d5fec (epl-origin-1245787) started
+2026-11-18T00:26:11Z r01-j4-comp-off VALID ins_u=168.6k cyc_tot=519.3k busy=30.9% rate=5201.0/5200 p99=633us 
+2026-11-18T00:26:50Z r01-j4-gzip VALID ins_u=584.2k cyc_tot=792.2k busy=45.9% rate=5201.1/5200 p99=1347us 
+2026-11-18T00:27:28Z r01-j16-comp-off VALID ins_u=172.0k cyc_tot=645.6k busy=18.4% rate=2400.5/2400 p99=714us 
+2026-11-18T00:28:06Z r01-j16-gzip VALID ins_u=1645.7k cyc_tot=1398.6k busy=37.2% rate=2400.4/2400 p99=1648us 
+2026-11-18T00:28:45Z r02-j4-gzip VALID ins_u=584.1k cyc_tot=797.4k busy=46.2% rate=5201.1/5200 p99=1326us 
+2026-11-18T00:29:24Z r02-j4-comp-off VALID ins_u=168.6k cyc_tot=528.9k busy=31.5% rate=5201.1/5200 p99=624us 
+2026-11-18T00:30:02Z r02-j16-gzip VALID ins_u=1645.6k cyc_tot=1409.3k busy=37.5% rate=2400.5/2400 p99=1628us 
+2026-11-18T00:30:40Z r02-j16-comp-off VALID ins_u=172.0k cyc_tot=638.0k busy=18.2% rate=2400.5/2400 p99=699us 
+2026-11-18T00:30:40Z after 2 rounds: j4 gzip vs comp-off: not enough pairs
+2026-11-18T00:30:41Z origin container a93b6b4d5fec stopped
+2026-11-18T00:30:42Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-14a/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-14a/summary.md
+2026-11-18T00:30:42Z end smoke-14a rc=0
+2026-11-18T00:30:42Z start smoke-14b
+2026-11-18T00:30:47Z run features-smoke-14b: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['brotli', 'zstd'], shapes ['j4', 'j16']
+2026-11-18T00:30:47Z origin container ac8d28935027 (epl-origin-1247303) started
+2026-11-18T00:31:26Z r01-j4-brotli VALID ins_u=534.4k cyc_tot=814.2k busy=47.1% rate=5201.1/5200 p99=2016us 
+2026-11-18T00:32:05Z r01-j4-zstd VALID ins_u=402.8k cyc_tot=818.9k busy=47.4% rate=5201.1/5200 p99=1261us 
+2026-11-18T00:32:43Z r01-j16-brotli VALID ins_u=1230.4k cyc_tot=1303.5k busy=34.8% rate=2400.5/2400 p99=1441us 
+2026-11-18T00:33:22Z r01-j16-zstd VALID ins_u=742.8k cyc_tot=1114.2k busy=30.0% rate=2400.5/2400 p99=1036us 
+2026-11-18T00:34:01Z r02-j4-zstd VALID ins_u=402.0k cyc_tot=812.5k busy=46.9% rate=5201.1/5200 p99=2690us 
+2026-11-18T00:34:39Z r02-j4-brotli VALID ins_u=534.7k cyc_tot=816.0k busy=47.3% rate=5201.1/5200 p99=1221us 
+2026-11-18T00:35:18Z r02-j16-zstd VALID ins_u=742.9k cyc_tot=1106.1k busy=29.8% rate=2400.5/2400 p99=1008us 
+2026-11-18T00:35:56Z r02-j16-brotli VALID ins_u=1230.5k cyc_tot=1301.9k busy=34.8% rate=2400.5/2400 p99=1441us 
+2026-11-18T00:35:56Z after 2 rounds: j4 zstd vs brotli: not enough pairs
+2026-11-18T00:35:56Z origin container ac8d28935027 stopped
+2026-11-18T00:35:58Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-14b/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-14b/summary.md
+2026-11-18T00:35:58Z end smoke-14b rc=0
+2026-11-18T00:35:58Z start smoke-lc
+2026-11-18T00:36:02Z run features-smoke-lc: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['comp-off', 'comp-off-A2'], shapes ['j16-a']
+2026-11-18T00:36:03Z origin container 8f83a007e866 (epl-origin-1248815) started
+2026-11-18T00:36:42Z r01-j16-a-comp-off VALID ins_u=171.2k cyc_tot=535.8k busy=31.6% rate=5201.1/5200 p99=646us 
+2026-11-18T00:37:20Z r01-j16-a-comp-off-A2 VALID ins_u=171.2k cyc_tot=540.9k busy=31.9% rate=5201.0/5200 p99=720us 
+2026-11-18T00:37:59Z r02-j16-a-comp-off-A2 VALID ins_u=171.3k cyc_tot=536.2k busy=31.7% rate=5201.0/5200 p99=648us 
+2026-11-18T00:38:37Z r02-j16-a-comp-off VALID ins_u=171.3k cyc_tot=538.4k busy=31.9% rate=5201.0/5200 p99=635us 
+2026-11-18T00:38:37Z after 2 rounds: j16-a comp-off-A2 vs comp-off: not enough pairs
+2026-11-18T00:38:38Z origin container 8f83a007e866 stopped
+2026-11-18T00:38:39Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-lc/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-lc/summary.md
+2026-11-18T00:38:39Z end smoke-lc rc=0
+2026-11-18T00:38:39Z start smoke-14bidle
+2026-11-18T00:38:44Z run features-smoke-14bidle: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['comp-off', 'gzip'], shapes ['s-ae']
+2026-11-18T00:38:44Z origin container 4ebb0c283e4f (epl-origin-1249652) started
+2026-11-18T00:39:23Z r01-s-ae-comp-off VALID ins_u=168.9k cyc_tot=526.7k busy=31.3% rate=5201.0/5200 p99=616us 
+2026-11-18T00:40:02Z r01-s-ae-gzip VALID ins_u=182.5k cyc_tot=555.5k busy=32.9% rate=5201.1/5200 p99=631us 
+2026-11-18T00:40:40Z r02-s-ae-gzip VALID ins_u=182.5k cyc_tot=554.5k busy=32.7% rate=5201.0/5200 p99=706us 
+2026-11-18T00:41:19Z r02-s-ae-comp-off VALID ins_u=168.8k cyc_tot=532.1k busy=31.5% rate=5201.0/5200 p99=611us 
+2026-11-18T00:41:19Z after 2 rounds: s-ae gzip vs comp-off: not enough pairs
+2026-11-18T00:41:19Z origin container 4ebb0c283e4f stopped
+2026-11-18T00:41:20Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-14bidle/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-14bidle/summary.md
+2026-11-18T00:41:20Z end smoke-14bidle rc=0
+2026-11-18T00:41:20Z start smoke-sfh
+2026-11-18T00:41:25Z run features-smoke-sfh: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['base', 'base-A2'], shapes ['s-9600', 'fh-13600']
+2026-11-18T00:41:25Z origin container 0a4abb91f6e9 (epl-origin-1250556) started
+2026-11-18T00:42:05Z r01-s-9600-base VALID ins_u=163.2k cyc_tot=469.2k busy=50.2% rate=9601.9/9600 p99=1478us 
+2026-11-18T00:42:43Z r01-s-9600-base-A2 VALID ins_u=163.3k cyc_tot=476.5k busy=51.1% rate=9601.9/9600 p99=1356us 
+2026-11-18T00:43:22Z r01-fh-13600-base INVALID ins_u=164.4k cyc_tot=258.1k busy=39.3% rate=13602.6/13600 p99=556us client overflow/pool-exhausted counters 103 (upstream_cx_overflow=103); client pending total 83 above 16 (queue absorbed a burst)
+2026-11-18T00:44:00Z r01-fh-13600-base-A2 VALID ins_u=164.5k cyc_tot=257.1k busy=39.3% rate=13602.7/13600 p99=423us 
+2026-11-18T00:44:39Z r02-s-9600-base-A2 VALID ins_u=163.2k cyc_tot=469.3k busy=50.2% rate=9601.9/9600 p99=1403us 
+2026-11-18T00:45:18Z r02-s-9600-base VALID ins_u=163.4k cyc_tot=467.4k busy=50.1% rate=9601.9/9600 p99=1078us 
+2026-11-18T00:45:56Z r02-fh-13600-base-A2 INVALID ins_u=164.3k cyc_tot=250.7k busy=38.1% rate=13602.7/13600 p99=618us client overflow/pool-exhausted counters 152 (upstream_cx_overflow=152); client pending total 116 above 16 (queue absorbed a burst)
+2026-11-18T00:46:35Z r02-fh-13600-base VALID ins_u=164.5k cyc_tot=259.2k busy=39.6% rate=13602.7/13600 p99=480us 
+2026-11-18T00:46:35Z re-running round 1 shape fh-13600 (attempt 1): invalid ['r01-fh-13600-base']
+2026-11-18T00:47:13Z r01-fh-13600-base.rr1 INVALID ins_u=164.4k cyc_tot=261.2k busy=39.8% rate=13602.7/13600 p99=464us client overflow/pool-exhausted counters 1 (upstream_cx_overflow=1); client pending total 17 above 16 (queue absorbed a burst)
+2026-11-18T00:47:52Z r01-fh-13600-base-A2.rr1 VALID ins_u=164.4k cyc_tot=252.5k busy=38.5% rate=13602.7/13600 p99=529us 
+2026-11-18T00:47:52Z re-running round 2 shape fh-13600 (attempt 1): invalid ['r02-fh-13600-base-A2']
+2026-11-18T00:48:30Z r02-fh-13600-base-A2.rr1 VALID ins_u=164.4k cyc_tot=257.7k busy=39.3% rate=13602.6/13600 p99=525us 
+2026-11-18T00:49:09Z r02-fh-13600-base.rr1 INVALID ins_u=164.5k cyc_tot=256.2k busy=39.1% rate=13602.7/13600 p99=457us client overflow/pool-exhausted counters 157 (upstream_cx_overflow=157); client pending total 123 above 16 (queue absorbed a burst)
+2026-11-18T00:49:09Z after 2 rounds: s-9600 base-A2 vs base: not enough pairs
+2026-11-18T00:49:09Z origin container 0a4abb91f6e9 stopped
+2026-11-18T00:49:10Z done: ~/epl/runs/features-2026-11-18/smoke/smoke-sfh/summary.md
+~/epl/runs/features-2026-11-18/smoke/smoke-sfh/summary.md
+2026-11-18T00:49:10Z end smoke-sfh rc=0
+2026-11-18T00:49:10Z freeze and check aa-2 against ~/epl/runs/features-2026-11-18/smoke/smoke-aa
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/aa-2.json
+PASS r01-s-base                   
+PASS r01-fh-base                  
+PASS r01-j16-base                 
+PASS r02-s-base                   
+PASS r02-fh-base                  
+PASS r02-j16-base                 
+PASS r01-s-base-A2                
+PASS r01-fh-base-A2               
+PASS r01-j16-base-A2              
+PASS r02-s-base-A2                
+PASS r02-fh-base-A2               
+PASS r02-j16-base-A2              
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T00:49:11Z freeze and check run-f against ~/epl/runs/features-2026-11-18/smoke/smoke-f1 ~/epl/runs/features-2026-11-18/smoke/smoke-f2 ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/run-f.json
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-lua-empty              
+PASS r01-fh-lua-empty             
+PASS r02-s-lua-empty              
+PASS r02-fh-lua-empty             
+note: arm filter-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+PASS r01-s-lua-header             
+PASS r01-fh-lua-header            
+PASS r02-s-lua-header             
+PASS r02-fh-lua-header            
+PASS r01-s-wasm-empty             
+PASS r01-fh-wasm-empty            
+PASS r02-s-wasm-empty             
+PASS r02-fh-wasm-empty            
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-wasm-header            
+PASS r01-fh-wasm-header           
+PASS r02-s-wasm-header            
+PASS r02-fh-wasm-header           
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T00:49:11Z freeze and check 14-compression against ~/epl/runs/features-2026-11-18/smoke/smoke-14a ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+FREEZE PROBLEM gzip compressed bytes per request within 2% of the smoke mean on j16: no value of arm gzip in the legs
+FREEZE PROBLEM gzip compressed bytes per request within 2% of the smoke mean on j4: no value of arm gzip in the legs
+FREEZE PROBLEM brotli compressed bytes per request within 2% of the smoke mean on j16: no value of arm brotli in the legs
+FREEZE PROBLEM brotli compressed bytes per request within 2% of the smoke mean on j4: no value of arm brotli in the legs
+FREEZE PROBLEM zstd compressed bytes per request within 2% of the smoke mean on j16: no value of arm zstd in the legs
+FREEZE PROBLEM zstd compressed bytes per request within 2% of the smoke mean on j4: no value of arm zstd in the legs
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14-compression.json
+note: arm brotli: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+note: arm zstd: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+PASS r01-j4-comp-off              
+PASS r01-j16-comp-off             
+PASS r02-j4-comp-off              
+PASS r02-j16-comp-off             
+FAIL r01-j4-gzip                  window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r01-j16-gzip                 window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j4-gzip                  window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j16-gzip                 window:http.ingress_http.compressor.epl.gzip.compressed: missing; window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+note: arm comp-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+note: arm gzip: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+FAIL r01-j4-brotli                window:http.ingress_http.compressor.epl.brotli.compressed: missing; window:http.ingress_http.compressor.epl.brotli.not_compressed: missing; window:http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r01-j16-brotli               window:http.ingress_http.compressor.epl.brotli.compressed: missing; window:http.ingress_http.compressor.epl.brotli.not_compressed: missing; window:http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j4-brotli                window:http.ingress_http.compressor.epl.brotli.compressed: missing; window:http.ingress_http.compressor.epl.brotli.not_compressed: missing; window:http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j16-brotli               window:http.ingress_http.compressor.epl.brotli.compressed: missing; window:http.ingress_http.compressor.epl.brotli.not_compressed: missing; window:http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r01-j4-zstd                  window:http.ingress_http.compressor.epl.zstd.compressed: missing; window:http.ingress_http.compressor.epl.zstd.not_compressed: missing; window:http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r01-j16-zstd                 window:http.ingress_http.compressor.epl.zstd.compressed: missing; window:http.ingress_http.compressor.epl.zstd.not_compressed: missing; window:http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j4-zstd                  window:http.ingress_http.compressor.epl.zstd.compressed: missing; window:http.ingress_http.compressor.epl.zstd.not_compressed: missing; window:http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+FAIL r02-j16-zstd                 window:http.ingress_http.compressor.epl.zstd.compressed: missing; window:http.ingress_http.compressor.epl.zstd.not_compressed: missing; window:http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes: missing; compressed bytes per request within 2% of the smoke mean: missing
+evidence-check: FAIL (18 failing legs, 0 arms without a leg)
+2026-11-18T00:49:11Z evidence-check 14-compression FAILED (details in queue.log)
+2026-11-18T00:49:11Z freeze and check lc-j16 against ~/epl/runs/features-2026-11-18/smoke/smoke-lc
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-j16.json
+PASS r01-j16-a-comp-off           
+PASS r02-j16-a-comp-off           
+PASS r01-j16-a-comp-off-A2        
+PASS r02-j16-a-comp-off-A2        
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T00:49:11Z freeze and check 14b against ~/epl/runs/features-2026-11-18/smoke/smoke-14bidle
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14b.json
+PASS r01-s-ae-comp-off            
+PASS r02-s-ae-comp-off            
+FAIL r01-s-ae-gzip                window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.compressed: missing
+FAIL r02-s-ae-gzip                window:http.ingress_http.compressor.epl.gzip.not_compressed: missing; window:http.ingress_http.compressor.epl.gzip.compressed: missing
+evidence-check: FAIL (2 failing legs, 0 arms without a leg)
+2026-11-18T00:49:11Z evidence-check 14b FAILED (details in queue.log)
+2026-11-18T00:49:11Z freeze and check lc-sfh against ~/epl/runs/features-2026-11-18/smoke/smoke-sfh
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-sfh.json
+PASS r01-s-9600-base              
+PASS r02-s-9600-base              
+PASS r01-fh-13600-base.rr1        
+PASS r02-fh-13600-base.rr1        
+PASS r01-s-9600-base-A2           
+PASS r02-s-9600-base-A2           
+PASS r01-fh-13600-base-A2.rr1     
+PASS r02-fh-13600-base-A2.rr1     
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+seconds per leg (smoke, 63 gaps): 38.5
+aa-2              192 legs at the cap  worst case  2.05 h
+run-f             300 legs at the cap  worst case  3.21 h
+14-compression    192 legs at the cap  worst case  2.05 h
+lc-j16             72 legs at the cap  worst case  0.77 h
+14b                64 legs at the cap  worst case  0.68 h  (optional)
+lc-sfh             48 legs at the cap  worst case  0.51 h  (optional)
+mandatory worst case 8.09 h (ask the lead above 9.50 h); with 14b 8.77 h; with both optional 9.28 h; stop at 10 h
+2026-11-18T00:49:12Z smoke done rc=1
+2026-11-18T01:00:58Z configs rewritten from ~/epl/runs/features-2026-11-18/rates.json
+aa-2.json
+run-f.json
+14-compression.json
+lc-j16.json
+14b.json
+lc-sfh.json
+jit-check.json
+smoke-aa.json
+smoke-f1.json
+smoke-f2.json
+smoke-f3.json
+smoke-14a.json
+smoke-14b.json
+smoke-lc.json
+smoke-14bidle.json
+smoke-sfh.json
+2026-11-18T01:00:58Z freeze and check aa-2 against ~/epl/runs/features-2026-11-18/smoke/smoke-aa
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/aa-2.json
+PASS r01-s-base                   
+PASS r01-fh-base                  
+PASS r01-j16-base                 
+PASS r02-s-base                   
+PASS r02-fh-base                  
+PASS r02-j16-base                 
+PASS r01-s-base-A2                
+PASS r01-fh-base-A2               
+PASS r01-j16-base-A2              
+PASS r02-s-base-A2                
+PASS r02-fh-base-A2               
+PASS r02-j16-base-A2              
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:00:59Z freeze and check run-f against ~/epl/runs/features-2026-11-18/smoke/smoke-f1 ~/epl/runs/features-2026-11-18/smoke/smoke-f2 ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/run-f.json
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-lua-empty              
+PASS r01-fh-lua-empty             
+PASS r02-s-lua-empty              
+PASS r02-fh-lua-empty             
+note: arm filter-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+PASS r01-s-lua-header             
+PASS r01-fh-lua-header            
+PASS r02-s-lua-header             
+PASS r02-fh-lua-header            
+PASS r01-s-wasm-empty             
+PASS r01-fh-wasm-empty            
+PASS r02-s-wasm-empty             
+PASS r02-fh-wasm-empty            
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-wasm-header            
+PASS r01-fh-wasm-header           
+PASS r02-s-wasm-header            
+PASS r02-fh-wasm-header           
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:00:59Z freeze and check 14-compression against ~/epl/runs/features-2026-11-18/smoke/smoke-14a ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14-compression.json
+note: arm brotli: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+note: arm zstd: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+PASS r01-j4-comp-off              
+PASS r01-j16-comp-off             
+PASS r02-j4-comp-off              
+PASS r02-j16-comp-off             
+PASS r01-j4-gzip                  
+PASS r01-j16-gzip                 
+PASS r02-j4-gzip                  
+PASS r02-j16-gzip                 
+note: arm comp-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+note: arm gzip: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+PASS r01-j4-brotli                
+PASS r01-j16-brotli               
+PASS r02-j4-brotli                
+PASS r02-j16-brotli               
+PASS r01-j4-zstd                  
+PASS r01-j16-zstd                 
+PASS r02-j4-zstd                  
+PASS r02-j16-zstd                 
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:00:59Z freeze and check lc-j16 against ~/epl/runs/features-2026-11-18/smoke/smoke-lc
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-j16.json
+PASS r01-j16-a-comp-off           
+PASS r02-j16-a-comp-off           
+PASS r01-j16-a-comp-off-A2        
+PASS r02-j16-a-comp-off-A2        
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:00:59Z freeze and check 14b against ~/epl/runs/features-2026-11-18/smoke/smoke-14bidle
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14b.json
+PASS r01-s-ae-comp-off            
+PASS r02-s-ae-comp-off            
+PASS r01-s-ae-gzip                
+PASS r02-s-ae-gzip                
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:00:59Z freeze and check lc-sfh against ~/epl/runs/features-2026-11-18/smoke/smoke-sfh
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-sfh.json
+PASS r01-fh-13600-base            
+PASS r02-s-9600-base              
+PASS r02-fh-13600-base            
+PASS r01-s-9600-base.rr1          
+PASS r01-fh-13600-base-A2         
+PASS r02-s-9600-base-A2           
+PASS r02-fh-13600-base-A2         
+PASS r01-s-9600-base-A2.rr1       
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+seconds per leg (smoke, 61 gaps): 38.5
+aa-2              192 legs at the cap  worst case  2.05 h
+run-f             300 legs at the cap  worst case  3.21 h
+14-compression    192 legs at the cap  worst case  2.05 h
+lc-j16             72 legs at the cap  worst case  0.77 h
+14b                64 legs at the cap  worst case  0.68 h  (optional)
+lc-sfh             48 legs at the cap  worst case  0.51 h  (optional)
+mandatory worst case 8.09 h (ask the lead above 9.50 h); with 14b 8.77 h; with both optional 9.28 h; stop at 10 h
+2026-11-18T01:01:19Z queue start pid 1256829 harness 0.x 4fc7986fe46f week5-s2 args: --set client.binary=~/nighthawk-dogfood/bazel-bin/nighthawk_client
+2026-11-18T01:01:19Z configs rewritten from ~/epl/runs/features-2026-11-18/rates.json
+aa-2.json
+run-f.json
+14-compression.json
+lc-j16.json
+14b.json
+lc-sfh.json
+jit-check.json
+smoke-aa.json
+smoke-f1.json
+smoke-f2.json
+smoke-f3.json
+smoke-14a.json
+smoke-14b.json
+smoke-lc.json
+smoke-14bidle.json
+smoke-sfh.json
+2026-11-18T01:01:19Z freeze and check aa-2 against ~/epl/runs/features-2026-11-18/smoke/smoke-aa
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/aa-2.json
+PASS r01-s-base                   
+PASS r01-fh-base                  
+PASS r01-j16-base                 
+PASS r02-s-base                   
+PASS r02-fh-base                  
+PASS r02-j16-base                 
+PASS r01-s-base-A2                
+PASS r01-fh-base-A2               
+PASS r01-j16-base-A2              
+PASS r02-s-base-A2                
+PASS r02-fh-base-A2               
+PASS r02-j16-base-A2              
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:01:19Z freeze and check run-f against ~/epl/runs/features-2026-11-18/smoke/smoke-f1 ~/epl/runs/features-2026-11-18/smoke/smoke-f2 ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/run-f.json
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f1
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-lua-empty              
+PASS r01-fh-lua-empty             
+PASS r02-s-lua-empty              
+PASS r02-fh-lua-empty             
+note: arm filter-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+note: arm wasm-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f2
+PASS r01-s-lua-header             
+PASS r01-fh-lua-header            
+PASS r02-s-lua-header             
+PASS r02-fh-lua-header            
+PASS r01-s-wasm-empty             
+PASS r01-fh-wasm-empty            
+PASS r02-s-wasm-empty             
+PASS r02-fh-wasm-empty            
+note: arm lua-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm lua-header: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+note: arm wasm-empty: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-f3
+PASS r01-s-filter-off             
+PASS r01-fh-filter-off            
+PASS r02-s-filter-off             
+PASS r02-fh-filter-off            
+PASS r01-s-wasm-header            
+PASS r01-fh-wasm-header           
+PASS r02-s-wasm-header            
+PASS r02-fh-wasm-header           
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:01:19Z freeze and check 14-compression against ~/epl/runs/features-2026-11-18/smoke/smoke-14a ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14-compression.json
+note: arm brotli: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+note: arm zstd: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14a
+PASS r01-j4-comp-off              
+PASS r01-j16-comp-off             
+PASS r02-j4-comp-off              
+PASS r02-j16-comp-off             
+PASS r01-j4-gzip                  
+PASS r01-j16-gzip                 
+PASS r02-j4-gzip                  
+PASS r02-j16-gzip                 
+note: arm comp-off: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+note: arm gzip: no legs in ~/epl/runs/features-2026-11-18/smoke/smoke-14b
+PASS r01-j4-brotli                
+PASS r01-j16-brotli               
+PASS r02-j4-brotli                
+PASS r02-j16-brotli               
+PASS r01-j4-zstd                  
+PASS r01-j16-zstd                 
+PASS r02-j4-zstd                  
+PASS r02-j16-zstd                 
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:01:19Z freeze and check lc-j16 against ~/epl/runs/features-2026-11-18/smoke/smoke-lc
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-j16.json
+PASS r01-j16-a-comp-off           
+PASS r02-j16-a-comp-off           
+PASS r01-j16-a-comp-off-A2        
+PASS r02-j16-a-comp-off-A2        
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:01:20Z freeze and check 14b against ~/epl/runs/features-2026-11-18/smoke/smoke-14bidle
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/14b.json
+PASS r01-s-ae-comp-off            
+PASS r02-s-ae-comp-off            
+PASS r01-s-ae-gzip                
+PASS r02-s-ae-gzip                
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-18T01:01:20Z freeze and check lc-sfh against ~/epl/runs/features-2026-11-18/smoke/smoke-sfh
+frozen spec written to ~/epl/runs/features-2026-11-18/frozen/lc-sfh.json
+PASS r01-fh-13600-base            
+PASS r02-s-9600-base              
+PASS r02-fh-13600-base            
+PASS r01-s-9600-base.rr1          
+PASS r01-fh-13600-base-A2         
+PASS r02-s-9600-base-A2           
+PASS r02-fh-13600-base-A2         
+PASS r01-s-9600-base-A2.rr1       
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+seconds per leg (smoke, 61 gaps): 38.5
+aa-2              192 legs at the cap  worst case  2.05 h
+run-f             300 legs at the cap  worst case  3.21 h
+14-compression    192 legs at the cap  worst case  2.05 h
+lc-j16             72 legs at the cap  worst case  0.77 h
+14b                64 legs at the cap  worst case  0.68 h  (optional)
+lc-sfh             48 legs at the cap  worst case  0.51 h  (optional)
+mandatory worst case 8.09 h (ask the lead above 9.50 h); with 14b 8.77 h; with both optional 9.28 h; stop at 10 h
+2026-11-18T01:01:20Z start aa-2 (36000s left before the stop)
+2026-11-18T01:01:25Z run features-aa-2: abba order, rounds 16..32 in blocks of 4 (adaptive True), arms ['base', 'base-A2'], shapes ['s', 'fh', 'j16']
+2026-11-18T01:01:25Z origin container 4fdd49f90569 (epl-origin-1256907) started
+2026-11-18T01:02:04Z r01-s-base VALID ins_u=163.9k cyc_tot=518.0k busy=30.8% rate=5201.1/5200 p99=633us 
+2026-11-18T01:02:43Z r01-s-base-A2 VALID ins_u=164.0k cyc_tot=526.4k busy=31.3% rate=5201.1/5200 p99=616us 
+2026-11-18T01:03:21Z r01-fh-base VALID ins_u=164.8k cyc_tot=283.9k busy=25.8% rate=8001.6/8000 p99=367us 
+2026-11-18T01:04:00Z r01-fh-base-A2 VALID ins_u=164.7k cyc_tot=289.1k busy=26.2% rate=8001.6/8000 p99=368us 
+2026-11-18T01:04:38Z r01-j16-base VALID ins_u=171.9k cyc_tot=573.0k busy=26.4% rate=4000.8/4000 p99=617us 
+2026-11-18T01:05:17Z r01-j16-base-A2 VALID ins_u=171.9k cyc_tot=570.2k busy=26.2% rate=4000.8/4000 p99=605us 
+2026-11-18T01:05:55Z r02-s-base-A2 VALID ins_u=163.8k cyc_tot=523.0k busy=31.0% rate=5201.1/5200 p99=608us 
+2026-11-18T01:06:34Z r02-s-base VALID ins_u=163.9k cyc_tot=532.0k busy=31.6% rate=5201.1/5200 p99=622us 
+2026-11-18T01:07:12Z r02-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.2k busy=25.5% rate=8001.6/8000 p99=365us 
+2026-11-18T01:07:51Z r02-fh-base VALID ins_u=164.8k cyc_tot=282.5k busy=25.7% rate=8001.6/8000 p99=370us 
+2026-11-18T01:08:29Z r02-j16-base-A2 VALID ins_u=171.8k cyc_tot=565.8k busy=26.0% rate=4000.8/4000 p99=613us 
+2026-11-18T01:09:07Z r02-j16-base VALID ins_u=171.9k cyc_tot=572.9k busy=26.3% rate=4000.8/4000 p99=636us 
+2026-11-18T01:09:46Z r03-s-base VALID ins_u=163.9k cyc_tot=524.2k busy=31.1% rate=5201.0/5200 p99=654us 
+2026-11-18T01:10:24Z r03-s-base-A2 VALID ins_u=163.8k cyc_tot=525.5k busy=31.1% rate=5201.0/5200 p99=599us 
+2026-11-18T01:11:03Z r03-fh-base VALID ins_u=164.7k cyc_tot=282.7k busy=25.7% rate=8001.5/8000 p99=370us 
+2026-11-18T01:11:41Z r03-fh-base-A2 VALID ins_u=164.7k cyc_tot=284.4k busy=25.8% rate=8001.6/8000 p99=372us 
+2026-11-18T01:12:20Z r03-j16-base VALID ins_u=172.0k cyc_tot=582.4k busy=27.0% rate=4000.8/4000 p99=668us 
+2026-11-18T01:12:58Z r03-j16-base-A2 VALID ins_u=171.8k cyc_tot=574.7k busy=26.5% rate=4000.8/4000 p99=661us 
+2026-11-18T01:13:37Z r04-s-base-A2 VALID ins_u=163.9k cyc_tot=524.2k busy=31.1% rate=5201.1/5200 p99=666us 
+2026-11-18T01:14:15Z r04-s-base VALID ins_u=164.0k cyc_tot=533.9k busy=31.7% rate=5201.1/5200 p99=627us 
+2026-11-18T01:14:53Z r04-fh-base-A2 VALID ins_u=164.7k cyc_tot=283.4k busy=25.8% rate=8001.6/8000 p99=372us 
+2026-11-18T01:15:32Z r04-fh-base VALID ins_u=164.7k cyc_tot=283.6k busy=25.7% rate=8001.5/8000 p99=375us 
+2026-11-18T01:16:10Z r04-j16-base-A2 VALID ins_u=171.9k cyc_tot=573.0k busy=26.4% rate=4000.8/4000 p99=636us 
+2026-11-18T01:16:49Z r04-j16-base VALID ins_u=172.0k cyc_tot=566.4k busy=26.1% rate=4000.8/4000 p99=616us 
+2026-11-18T01:17:27Z r05-s-base-A2 VALID ins_u=164.0k cyc_tot=529.4k busy=31.5% rate=5201.1/5200 p99=609us 
+2026-11-18T01:18:06Z r05-s-base VALID ins_u=164.0k cyc_tot=522.2k busy=31.1% rate=5201.0/5200 p99=618us 
+2026-11-18T01:18:44Z r05-fh-base-A2 VALID ins_u=164.8k cyc_tot=277.1k busy=25.2% rate=8001.6/8000 p99=375us 
+2026-11-18T01:19:23Z r05-fh-base VALID ins_u=164.8k cyc_tot=275.8k busy=25.1% rate=8001.6/8000 p99=371us 
+2026-11-18T01:20:01Z r05-j16-base-A2 VALID ins_u=171.9k cyc_tot=550.5k busy=25.3% rate=4000.8/4000 p99=617us 
+2026-11-18T01:20:39Z r05-j16-base VALID ins_u=172.0k cyc_tot=565.5k busy=26.0% rate=4000.8/4000 p99=653us 
+2026-11-18T01:21:18Z r06-s-base VALID ins_u=163.9k cyc_tot=529.8k busy=31.5% rate=5201.1/5200 p99=629us 
+2026-11-18T01:21:56Z r06-s-base-A2 VALID ins_u=163.9k cyc_tot=527.1k busy=31.3% rate=5201.1/5200 p99=643us 
+2026-11-18T01:22:35Z r06-fh-base VALID ins_u=164.8k cyc_tot=268.8k busy=24.5% rate=8001.7/8000 p99=373us 
+2026-11-18T01:23:13Z r06-fh-base-A2 VALID ins_u=164.8k cyc_tot=284.8k busy=25.9% rate=8001.6/8000 p99=366us 
+2026-11-18T01:23:52Z r06-j16-base VALID ins_u=171.9k cyc_tot=572.7k busy=26.4% rate=4000.8/4000 p99=607us 
+2026-11-18T01:24:30Z r06-j16-base-A2 VALID ins_u=171.9k cyc_tot=566.3k busy=26.1% rate=4000.8/4000 p99=633us 
+2026-11-18T01:25:08Z r07-s-base VALID ins_u=163.9k cyc_tot=527.0k busy=31.3% rate=5201.1/5200 p99=629us 
+2026-11-18T01:25:47Z r07-s-base-A2 VALID ins_u=163.9k cyc_tot=524.9k busy=31.1% rate=5201.1/5200 p99=631us 
+2026-11-18T01:26:25Z r07-fh-base VALID ins_u=164.8k cyc_tot=275.2k busy=25.0% rate=8001.6/8000 p99=368us 
+2026-11-18T01:27:04Z r07-fh-base-A2 VALID ins_u=164.8k cyc_tot=275.2k busy=25.1% rate=8001.5/8000 p99=371us 
+2026-11-18T01:27:42Z r07-j16-base VALID ins_u=172.0k cyc_tot=568.3k busy=26.2% rate=4000.8/4000 p99=627us 
+2026-11-18T01:28:20Z r07-j16-base-A2 VALID ins_u=172.0k cyc_tot=567.8k busy=26.1% rate=4000.8/4000 p99=611us 
+2026-11-18T01:28:59Z r08-s-base-A2 VALID ins_u=163.8k cyc_tot=536.4k busy=31.7% rate=5201.0/5200 p99=640us 
+2026-11-18T01:29:38Z r08-s-base VALID ins_u=163.9k cyc_tot=526.1k busy=31.3% rate=5201.0/5200 p99=622us 
+2026-11-18T01:30:16Z r08-fh-base-A2 VALID ins_u=164.8k cyc_tot=276.0k busy=25.1% rate=8001.6/8000 p99=366us 
+2026-11-18T01:30:54Z r08-fh-base VALID ins_u=164.8k cyc_tot=274.7k busy=25.0% rate=8001.6/8000 p99=368us 
+2026-11-18T01:31:33Z r08-j16-base-A2 VALID ins_u=172.0k cyc_tot=576.4k busy=26.6% rate=4000.8/4000 p99=683us 
+2026-11-18T01:32:11Z r08-j16-base VALID ins_u=172.0k cyc_tot=572.1k busy=26.5% rate=4000.8/4000 p99=661us 
+2026-11-18T01:32:49Z r09-s-base VALID ins_u=163.8k cyc_tot=528.7k busy=31.3% rate=5201.0/5200 p99=640us 
+2026-11-18T01:33:28Z r09-s-base-A2 VALID ins_u=163.8k cyc_tot=524.9k busy=31.0% rate=5201.1/5200 p99=648us 
+2026-11-18T01:34:06Z r09-fh-base VALID ins_u=164.8k cyc_tot=284.0k busy=25.8% rate=8001.6/8000 p99=366us 
+2026-11-18T01:34:45Z r09-fh-base-A2 VALID ins_u=164.8k cyc_tot=282.8k busy=25.7% rate=8001.6/8000 p99=369us 
+2026-11-18T01:35:23Z r09-j16-base VALID ins_u=172.0k cyc_tot=573.8k busy=26.5% rate=4000.8/4000 p99=636us 
+2026-11-18T01:36:02Z r09-j16-base-A2 VALID ins_u=172.0k cyc_tot=577.9k busy=26.7% rate=4000.8/4000 p99=642us 
+2026-11-18T01:36:40Z r10-s-base-A2 VALID ins_u=163.9k cyc_tot=524.1k busy=31.1% rate=5201.1/5200 p99=640us 
+2026-11-18T01:37:19Z r10-s-base VALID ins_u=163.9k cyc_tot=527.6k busy=31.3% rate=5201.1/5200 p99=623us 
+2026-11-18T01:37:57Z r10-fh-base-A2 VALID ins_u=164.7k cyc_tot=280.4k busy=25.5% rate=8001.6/8000 p99=372us 
+2026-11-18T01:38:35Z r10-fh-base VALID ins_u=164.8k cyc_tot=283.7k busy=25.8% rate=8001.6/8000 p99=368us 
+2026-11-18T01:39:14Z r10-j16-base-A2 VALID ins_u=171.9k cyc_tot=562.6k busy=25.9% rate=4000.8/4000 p99=632us 
+2026-11-18T01:39:52Z r10-j16-base VALID ins_u=171.9k cyc_tot=569.3k busy=26.2% rate=4000.8/4000 p99=648us 
+2026-11-18T01:40:31Z r11-s-base-A2 VALID ins_u=163.8k cyc_tot=517.4k busy=30.7% rate=5201.1/5200 p99=630us 
+2026-11-18T01:41:09Z r11-s-base VALID ins_u=164.0k cyc_tot=528.7k busy=31.4% rate=5201.0/5200 p99=626us 
+2026-11-18T01:41:47Z r11-fh-base-A2 VALID ins_u=164.8k cyc_tot=275.0k busy=25.0% rate=8001.6/8000 p99=366us 
+2026-11-18T01:42:26Z r11-fh-base VALID ins_u=164.7k cyc_tot=276.9k busy=25.1% rate=8001.6/8000 p99=372us 
+2026-11-18T01:43:04Z r11-j16-base-A2 VALID ins_u=171.9k cyc_tot=571.4k busy=26.4% rate=4000.8/4000 p99=637us 
+2026-11-18T01:43:43Z r11-j16-base VALID ins_u=172.0k cyc_tot=560.7k busy=25.9% rate=4000.8/4000 p99=653us 
+2026-11-18T01:44:21Z r12-s-base VALID ins_u=163.9k cyc_tot=522.4k busy=31.1% rate=5201.1/5200 p99=633us 
+2026-11-18T01:45:00Z r12-s-base-A2 VALID ins_u=164.0k cyc_tot=522.3k busy=31.2% rate=5201.0/5200 p99=609us 
+2026-11-18T01:45:38Z r12-fh-base VALID ins_u=164.8k cyc_tot=282.7k busy=25.7% rate=8001.6/8000 p99=362us 
+2026-11-18T01:46:17Z r12-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.1k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-18T01:46:55Z r12-j16-base VALID ins_u=171.9k cyc_tot=557.9k busy=25.6% rate=4000.8/4000 p99=625us 
+2026-11-18T01:47:33Z r12-j16-base-A2 VALID ins_u=172.0k cyc_tot=584.6k busy=27.1% rate=4000.9/4000 p99=658us 
+2026-11-18T01:48:12Z r13-s-base VALID ins_u=163.9k cyc_tot=534.3k busy=31.7% rate=5201.1/5200 p99=633us 
+2026-11-18T01:48:50Z r13-s-base-A2 VALID ins_u=164.0k cyc_tot=535.0k busy=31.9% rate=5201.0/5200 p99=630us 
+2026-11-18T01:49:29Z r13-fh-base VALID ins_u=164.8k cyc_tot=283.1k busy=25.7% rate=8001.6/8000 p99=370us 
+2026-11-18T01:50:07Z r13-fh-base-A2 VALID ins_u=164.8k cyc_tot=284.3k busy=25.8% rate=8001.6/8000 p99=367us 
+2026-11-18T01:50:46Z r13-j16-base VALID ins_u=171.9k cyc_tot=576.7k busy=26.5% rate=4000.8/4000 p99=640us 
+2026-11-18T01:51:24Z r13-j16-base-A2 VALID ins_u=171.9k cyc_tot=567.7k busy=26.2% rate=4000.8/4000 p99=641us 
+2026-11-18T01:52:02Z r14-s-base-A2 VALID ins_u=163.9k cyc_tot=530.4k busy=31.5% rate=5201.0/5200 p99=626us 
+2026-11-18T01:52:41Z r14-s-base VALID ins_u=164.0k cyc_tot=523.7k busy=31.1% rate=5201.1/5200 p99=635us 
+2026-11-18T01:53:19Z r14-fh-base-A2 VALID ins_u=164.7k cyc_tot=271.3k busy=24.6% rate=8001.6/8000 p99=369us 
+2026-11-18T01:53:58Z r14-fh-base VALID ins_u=164.7k cyc_tot=281.5k busy=25.6% rate=8001.7/8000 p99=370us 
+2026-11-18T01:54:36Z r14-j16-base-A2 VALID ins_u=171.9k cyc_tot=559.2k busy=25.8% rate=4000.8/4000 p99=623us 
+2026-11-18T01:55:15Z r14-j16-base VALID ins_u=172.0k cyc_tot=570.4k busy=26.3% rate=4000.8/4000 p99=632us 
+2026-11-18T01:55:53Z r15-s-base-A2 VALID ins_u=163.9k cyc_tot=527.6k busy=31.4% rate=5201.0/5200 p99=614us 
+2026-11-18T01:56:32Z r15-s-base VALID ins_u=164.0k cyc_tot=526.5k busy=31.3% rate=5201.1/5200 p99=630us 
+2026-11-18T01:57:10Z r15-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.7k busy=25.5% rate=8001.6/8000 p99=368us 
+2026-11-18T01:57:48Z r15-fh-base VALID ins_u=164.8k cyc_tot=279.0k busy=25.4% rate=8001.6/8000 p99=368us 
+2026-11-18T01:58:27Z r15-j16-base-A2 VALID ins_u=171.8k cyc_tot=566.6k busy=25.9% rate=4000.8/4000 p99=590us 
+2026-11-18T01:59:05Z r15-j16-base VALID ins_u=171.9k cyc_tot=562.4k busy=25.8% rate=4000.8/4000 p99=638us 
+2026-11-18T01:59:44Z r16-s-base VALID ins_u=163.8k cyc_tot=523.8k busy=31.1% rate=5201.0/5200 p99=622us 
+2026-11-18T02:00:22Z r16-s-base-A2 VALID ins_u=163.8k cyc_tot=525.9k busy=31.2% rate=5201.0/5200 p99=621us 
+2026-11-18T02:01:01Z r16-fh-base VALID ins_u=164.7k cyc_tot=272.4k busy=24.7% rate=8001.6/8000 p99=372us 
+2026-11-18T02:01:39Z r16-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.7k busy=25.5% rate=8001.6/8000 p99=363us 
+2026-11-18T02:02:17Z r16-j16-base VALID ins_u=171.8k cyc_tot=570.5k busy=26.2% rate=4000.8/4000 p99=627us 
+2026-11-18T02:02:56Z r16-j16-base-A2 VALID ins_u=171.9k cyc_tot=563.4k busy=25.9% rate=4000.8/4000 p99=607us 
+2026-11-18T02:02:56Z after 16 rounds: widest cycles_total half-width against its target 1.09% (fh base-A2 vs base) > target 1.00%
+2026-11-18T02:03:34Z r17-s-base VALID ins_u=163.9k cyc_tot=528.7k busy=31.3% rate=5201.1/5200 p99=645us 
+2026-11-18T02:04:13Z r17-s-base-A2 VALID ins_u=164.0k cyc_tot=523.2k busy=31.1% rate=5201.1/5200 p99=638us 
+2026-11-18T02:04:51Z r17-fh-base VALID ins_u=164.8k cyc_tot=278.4k busy=25.3% rate=8001.7/8000 p99=371us 
+2026-11-18T02:05:30Z r17-fh-base-A2 VALID ins_u=164.8k cyc_tot=274.2k busy=25.0% rate=8001.6/8000 p99=360us 
+2026-11-18T02:06:08Z r17-j16-base VALID ins_u=171.9k cyc_tot=562.1k busy=25.9% rate=4000.8/4000 p99=636us 
+2026-11-18T02:06:47Z r17-j16-base-A2 VALID ins_u=172.0k cyc_tot=571.8k busy=26.4% rate=4000.8/4000 p99=631us 
+2026-11-18T02:07:25Z r18-s-base-A2 VALID ins_u=163.9k cyc_tot=529.3k busy=31.4% rate=5201.1/5200 p99=628us 
+2026-11-18T02:08:04Z r18-s-base VALID ins_u=163.9k cyc_tot=522.8k busy=31.1% rate=5201.0/5200 p99=636us 
+2026-11-18T02:08:42Z r18-fh-base-A2 VALID ins_u=164.8k cyc_tot=290.8k busy=26.4% rate=8001.6/8000 p99=370us 
+2026-11-18T02:09:20Z r18-fh-base VALID ins_u=164.8k cyc_tot=285.1k busy=25.9% rate=8001.6/8000 p99=373us 
+2026-11-18T02:09:59Z r18-j16-base-A2 VALID ins_u=172.0k cyc_tot=566.4k busy=26.1% rate=4000.8/4000 p99=622us 
+2026-11-18T02:10:37Z r18-j16-base VALID ins_u=171.9k cyc_tot=569.6k busy=26.3% rate=4000.8/4000 p99=646us 
+2026-11-18T02:11:16Z r19-s-base VALID ins_u=163.8k cyc_tot=524.5k busy=31.1% rate=5201.0/5200 p99=611us 
+2026-11-18T02:11:54Z r19-s-base-A2 VALID ins_u=163.8k cyc_tot=521.4k busy=31.0% rate=5201.1/5200 p99=608us 
+2026-11-18T02:12:32Z r19-fh-base VALID ins_u=164.7k cyc_tot=285.9k busy=26.0% rate=8001.6/8000 p99=372us 
+2026-11-18T02:13:11Z r19-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.9k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-18T02:13:49Z r19-j16-base VALID ins_u=171.8k cyc_tot=568.7k busy=26.0% rate=4000.8/4000 p99=590us 
+2026-11-18T02:14:28Z r19-j16-base-A2 VALID ins_u=171.9k cyc_tot=566.3k busy=26.0% rate=4000.8/4000 p99=640us 
+2026-11-18T02:15:06Z r20-s-base-A2 VALID ins_u=163.9k cyc_tot=525.3k busy=31.1% rate=5201.1/5200 p99=632us 
+2026-11-18T02:15:45Z r20-s-base VALID ins_u=163.9k cyc_tot=522.6k busy=31.0% rate=5201.1/5200 p99=646us 
+2026-11-18T02:16:23Z r20-fh-base-A2 VALID ins_u=164.8k cyc_tot=282.1k busy=25.7% rate=8001.6/8000 p99=366us 
+2026-11-18T02:17:02Z r20-fh-base VALID ins_u=164.8k cyc_tot=281.9k busy=25.6% rate=8001.6/8000 p99=367us 
+2026-11-18T02:17:40Z r20-j16-base-A2 VALID ins_u=172.0k cyc_tot=567.8k busy=26.3% rate=4000.8/4000 p99=649us 
+2026-11-18T02:18:19Z r20-j16-base VALID ins_u=171.8k cyc_tot=570.1k busy=26.2% rate=4000.8/4000 p99=646us 
+2026-11-18T02:18:19Z after 20 rounds: widest cycles_total half-width against its target 0.92% (fh base-A2 vs base) <= target 1.00%
+2026-11-18T02:18:19Z origin container 4fdd49f90569 stopped
+2026-11-18T02:18:20Z done: ~/epl/runs/features-2026-11-18/aa-2/summary.md
+~/epl/runs/features-2026-11-18/aa-2/summary.md
+2026-11-18T02:18:20Z end aa-2 rc=0
+2026-11-18T02:18:20Z AA-2 floor: rounds 20, stop: widest cycles_total half-width against its target 0.92% (fh base-A2 vs base) <= target 1.00%
+2026-11-18T02:18:20Z start run-f (31380s left before the stop)
+2026-11-18T02:18:28Z run features-run-f: rotate order, rounds 20..30 in blocks of 10 (adaptive True), arms ['filter-off', 'lua-empty', 'lua-header', 'wasm-empty', 'wasm-header'], shapes ['s', 'fh']
+2026-11-18T02:18:28Z origin container 67cb1459c940 (epl-origin-1268866) started
+2026-11-18T02:19:07Z r01-s-filter-off VALID ins_u=163.9k cyc_tot=524.4k busy=31.1% rate=5201.1/5200 p99=617us 
+2026-11-18T02:19:46Z r01-s-lua-empty VALID ins_u=181.5k cyc_tot=566.8k busy=33.5% rate=5201.1/5200 p99=665us 
+2026-11-18T02:20:24Z r01-s-lua-header VALID ins_u=195.4k cyc_tot=589.6k busy=34.6% rate=5201.0/5200 p99=782us 
+2026-11-18T02:21:03Z r01-s-wasm-empty VALID ins_u=184.2k cyc_tot=577.8k busy=34.1% rate=5201.2/5200 p99=706us 
+2026-11-18T02:21:41Z r01-s-wasm-header VALID ins_u=203.0k cyc_tot=610.2k busy=35.8% rate=5201.3/5200 p99=788us 
+2026-11-18T02:22:20Z r01-fh-filter-off VALID ins_u=164.7k cyc_tot=288.0k busy=26.1% rate=8001.7/8000 p99=376us 
+2026-11-18T02:22:58Z r01-fh-lua-empty VALID ins_u=181.9k cyc_tot=305.2k busy=27.5% rate=8001.6/8000 p99=403us 
+2026-11-18T02:23:37Z r01-fh-lua-header VALID ins_u=195.2k cyc_tot=320.0k busy=28.8% rate=8001.7/8000 p99=428us 
+2026-11-18T02:24:15Z r01-fh-wasm-empty VALID ins_u=182.8k cyc_tot=320.6k busy=28.9% rate=8001.9/8000 p99=410us 
+2026-11-18T02:24:54Z r01-fh-wasm-header VALID ins_u=200.9k cyc_tot=343.6k busy=30.8% rate=8001.8/8000 p99=469us 
+2026-11-18T02:25:32Z r02-s-wasm-header VALID ins_u=202.9k cyc_tot=603.0k busy=35.3% rate=5201.2/5200 p99=907us 
+2026-11-18T02:26:11Z r02-s-wasm-empty VALID ins_u=184.1k cyc_tot=572.5k busy=33.7% rate=5201.2/5200 p99=842us 
+2026-11-18T02:26:49Z r02-s-lua-header VALID ins_u=195.3k cyc_tot=594.3k busy=34.9% rate=5201.1/5200 p99=785us 
+2026-11-18T02:27:28Z r02-s-lua-empty VALID ins_u=181.6k cyc_tot=568.5k busy=33.6% rate=5201.1/5200 p99=684us 
+2026-11-18T02:28:06Z r02-s-filter-off VALID ins_u=163.8k cyc_tot=527.2k busy=31.3% rate=5201.1/5200 p99=617us 
+2026-11-18T02:28:45Z r02-fh-wasm-header VALID ins_u=201.0k cyc_tot=344.5k busy=31.0% rate=8001.9/8000 p99=436us 
+2026-11-18T02:29:23Z r02-fh-wasm-empty VALID ins_u=182.8k cyc_tot=313.1k busy=28.2% rate=8001.8/8000 p99=407us 
+2026-11-18T02:30:02Z r02-fh-lua-header VALID ins_u=195.2k cyc_tot=332.2k busy=29.9% rate=8001.6/8000 p99=447us 
+2026-11-18T02:30:40Z r02-fh-lua-empty VALID ins_u=181.9k cyc_tot=313.8k busy=28.3% rate=8001.6/8000 p99=398us 
+2026-11-18T02:31:18Z r02-fh-filter-off VALID ins_u=164.7k cyc_tot=288.9k busy=26.2% rate=8001.5/8000 p99=373us 
+2026-11-18T02:31:57Z r03-s-lua-empty VALID ins_u=181.5k cyc_tot=566.3k busy=33.4% rate=5201.0/5200 p99=680us 
+2026-11-18T02:32:35Z r03-s-lua-header VALID ins_u=195.4k cyc_tot=594.6k busy=34.9% rate=5201.0/5200 p99=785us 
+2026-11-18T02:33:14Z r03-s-wasm-empty VALID ins_u=184.2k cyc_tot=576.8k busy=34.0% rate=5201.2/5200 p99=734us 
+2026-11-18T02:33:52Z r03-s-wasm-header VALID ins_u=202.9k cyc_tot=616.7k busy=36.1% rate=5201.1/5200 p99=884us 
+2026-11-18T02:34:31Z r03-s-filter-off VALID ins_u=163.9k cyc_tot=533.6k busy=31.7% rate=5201.1/5200 p99=612us 
+2026-11-18T02:35:09Z r03-fh-lua-empty VALID ins_u=181.9k cyc_tot=314.8k busy=28.4% rate=8001.6/8000 p99=404us 
+2026-11-18T02:35:48Z r03-fh-lua-header VALID ins_u=195.2k cyc_tot=331.3k busy=29.8% rate=8001.6/8000 p99=431us 
+2026-11-18T02:36:26Z r03-fh-wasm-empty VALID ins_u=182.8k cyc_tot=327.9k busy=29.5% rate=8001.8/8000 p99=406us 
+2026-11-18T02:37:04Z r03-fh-wasm-header VALID ins_u=201.0k cyc_tot=353.5k busy=31.7% rate=8001.7/8000 p99=449us 
+2026-11-18T02:37:43Z r03-fh-filter-off VALID ins_u=164.7k cyc_tot=282.2k busy=25.6% rate=8001.6/8000 p99=369us 
+2026-11-18T02:38:21Z r04-s-filter-off VALID ins_u=163.8k cyc_tot=522.7k busy=31.0% rate=5201.0/5200 p99=628us 
+2026-11-18T02:39:00Z r04-s-wasm-header VALID ins_u=202.9k cyc_tot=601.9k busy=35.2% rate=5201.1/5200 p99=1125us 
+2026-11-18T02:39:38Z r04-s-wasm-empty VALID ins_u=184.2k cyc_tot=573.0k busy=33.7% rate=5201.2/5200 p99=813us 
+2026-11-18T02:40:17Z r04-s-lua-header VALID ins_u=195.6k cyc_tot=582.9k busy=34.4% rate=5201.1/5200 p99=683us 
+2026-11-18T02:40:55Z r04-s-lua-empty VALID ins_u=181.4k cyc_tot=564.7k busy=33.3% rate=5201.0/5200 p99=748us 
+2026-11-18T02:41:34Z r04-fh-filter-off VALID ins_u=164.7k cyc_tot=283.9k busy=25.8% rate=8001.5/8000 p99=370us 
+2026-11-18T02:42:12Z r04-fh-wasm-header VALID ins_u=201.0k cyc_tot=349.8k busy=31.4% rate=8001.8/8000 p99=440us 
+2026-11-18T02:42:51Z r04-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.2k busy=29.0% rate=8001.8/8000 p99=417us 
+2026-11-18T02:43:29Z r04-fh-lua-header VALID ins_u=195.1k cyc_tot=326.9k busy=29.4% rate=8001.6/8000 p99=422us 
+2026-11-18T02:44:08Z r04-fh-lua-empty VALID ins_u=181.9k cyc_tot=302.9k busy=27.3% rate=8001.6/8000 p99=396us 
+2026-11-18T02:44:46Z r05-s-lua-empty VALID ins_u=181.6k cyc_tot=565.3k busy=33.4% rate=5201.1/5200 p99=671us 
+2026-11-18T02:45:25Z r05-s-filter-off VALID ins_u=163.9k cyc_tot=526.5k busy=31.3% rate=5201.0/5200 p99=623us 
+2026-11-18T02:46:03Z r05-s-wasm-header VALID ins_u=202.9k cyc_tot=604.8k busy=35.4% rate=5201.1/5200 p99=818us 
+2026-11-18T02:46:42Z r05-s-wasm-empty VALID ins_u=184.3k cyc_tot=574.3k busy=33.8% rate=5201.3/5200 p99=850us 
+2026-11-18T02:47:20Z r05-s-lua-header VALID ins_u=195.5k cyc_tot=585.2k busy=34.4% rate=5201.1/5200 p99=719us 
+2026-11-18T02:47:59Z r05-fh-lua-empty VALID ins_u=182.0k cyc_tot=309.4k busy=28.0% rate=8001.6/8000 p99=402us 
+2026-11-18T02:48:37Z r05-fh-filter-off VALID ins_u=164.8k cyc_tot=277.5k busy=25.2% rate=8001.6/8000 p99=365us 
+2026-11-18T02:49:16Z r05-fh-wasm-header VALID ins_u=201.0k cyc_tot=345.9k busy=31.0% rate=8001.8/8000 p99=448us 
+2026-11-18T02:49:54Z r05-fh-wasm-empty VALID ins_u=182.8k cyc_tot=324.2k busy=29.2% rate=8001.9/8000 p99=402us 
+2026-11-18T02:50:33Z r05-fh-lua-header VALID ins_u=195.2k cyc_tot=331.4k busy=29.8% rate=8001.6/8000 p99=433us 
+2026-11-18T02:51:11Z r06-s-lua-header VALID ins_u=195.4k cyc_tot=591.6k busy=34.8% rate=5201.0/5200 p99=707us 
+2026-11-18T02:51:50Z r06-s-wasm-empty VALID ins_u=184.2k cyc_tot=581.5k busy=34.2% rate=5201.2/5200 p99=726us 
+2026-11-18T02:52:28Z r06-s-wasm-header VALID ins_u=202.9k cyc_tot=604.7k busy=35.4% rate=5201.1/5200 p99=867us 
+2026-11-18T02:53:07Z r06-s-filter-off VALID ins_u=163.9k cyc_tot=529.0k busy=31.4% rate=5201.1/5200 p99=620us 
+2026-11-18T02:53:45Z r06-s-lua-empty VALID ins_u=181.6k cyc_tot=564.8k busy=33.4% rate=5201.0/5200 p99=686us 
+2026-11-18T02:54:24Z r06-fh-lua-header VALID ins_u=195.2k cyc_tot=330.0k busy=29.7% rate=8001.6/8000 p99=419us 
+2026-11-18T02:55:02Z r06-fh-wasm-empty VALID ins_u=182.8k cyc_tot=319.5k busy=28.8% rate=8001.7/8000 p99=415us 
+2026-11-18T02:55:40Z r06-fh-wasm-header VALID ins_u=201.0k cyc_tot=347.4k busy=31.1% rate=8001.8/8000 p99=441us 
+2026-11-18T02:56:19Z r06-fh-filter-off VALID ins_u=164.7k cyc_tot=282.6k busy=25.7% rate=8001.6/8000 p99=371us 
+2026-11-18T02:56:57Z r06-fh-lua-empty VALID ins_u=181.9k cyc_tot=305.2k busy=27.5% rate=8001.6/8000 p99=400us 
+2026-11-18T02:57:36Z r07-s-wasm-empty VALID ins_u=184.2k cyc_tot=586.3k busy=34.4% rate=5201.2/5200 p99=747us 
+2026-11-18T02:58:14Z r07-s-wasm-header VALID ins_u=203.2k cyc_tot=607.7k busy=35.7% rate=5201.2/5200 p99=745us 
+2026-11-18T02:58:53Z r07-s-filter-off VALID ins_u=163.9k cyc_tot=521.4k busy=31.0% rate=5201.1/5200 p99=622us 
+2026-11-18T02:59:31Z r07-s-lua-empty VALID ins_u=181.3k cyc_tot=561.9k busy=33.0% rate=5201.0/5200 p99=803us 
+2026-11-18T03:00:10Z r07-s-lua-header VALID ins_u=195.5k cyc_tot=590.8k busy=34.7% rate=5201.0/5200 p99=795us 
+2026-11-18T03:00:48Z r07-fh-wasm-empty VALID ins_u=182.8k cyc_tot=315.0k busy=28.4% rate=8001.8/8000 p99=410us 
+2026-11-18T03:01:26Z r07-fh-wasm-header VALID ins_u=200.9k cyc_tot=348.5k busy=31.2% rate=8001.9/8000 p99=457us 
+2026-11-18T03:02:05Z r07-fh-filter-off VALID ins_u=164.8k cyc_tot=279.8k busy=25.4% rate=8001.6/8000 p99=369us 
+2026-11-18T03:02:43Z r07-fh-lua-empty VALID ins_u=181.9k cyc_tot=304.1k busy=27.4% rate=8001.6/8000 p99=404us 
+2026-11-18T03:03:22Z r07-fh-lua-header VALID ins_u=195.1k cyc_tot=334.5k busy=30.1% rate=8001.6/8000 p99=426us 
+2026-11-18T03:04:00Z r08-s-lua-header VALID ins_u=195.5k cyc_tot=584.9k busy=34.4% rate=5201.0/5200 p99=778us 
+2026-11-18T03:04:39Z r08-s-lua-empty VALID ins_u=181.4k cyc_tot=560.4k busy=33.0% rate=5201.0/5200 p99=706us 
+2026-11-18T03:05:17Z r08-s-filter-off VALID ins_u=163.8k cyc_tot=525.0k busy=31.2% rate=5201.0/5200 p99=637us 
+2026-11-18T03:05:56Z r08-s-wasm-header VALID ins_u=203.0k cyc_tot=606.0k busy=35.5% rate=5201.2/5200 p99=919us 
+2026-11-18T03:06:34Z r08-s-wasm-empty VALID ins_u=184.2k cyc_tot=573.0k busy=33.7% rate=5201.2/5200 p99=723us 
+2026-11-18T03:07:13Z r08-fh-lua-header VALID ins_u=195.1k cyc_tot=324.8k busy=29.2% rate=8001.5/8000 p99=425us 
+2026-11-18T03:07:51Z r08-fh-lua-empty VALID ins_u=181.9k cyc_tot=313.4k busy=28.2% rate=8001.6/8000 p99=409us 
+2026-11-18T03:08:29Z r08-fh-filter-off VALID ins_u=164.7k cyc_tot=284.1k busy=25.9% rate=8001.7/8000 p99=372us 
+2026-11-18T03:09:08Z r08-fh-wasm-header VALID ins_u=200.9k cyc_tot=352.1k busy=31.5% rate=8001.8/8000 p99=456us 
+2026-11-18T03:09:46Z r08-fh-wasm-empty VALID ins_u=182.8k cyc_tot=314.5k busy=28.3% rate=8001.8/8000 p99=404us 
+2026-11-18T03:10:25Z r09-s-wasm-header VALID ins_u=203.1k cyc_tot=615.6k busy=36.1% rate=5201.2/5200 p99=767us 
+2026-11-18T03:11:03Z r09-s-filter-off VALID ins_u=163.8k cyc_tot=526.8k busy=31.3% rate=5201.0/5200 p99=597us 
+2026-11-18T03:11:42Z r09-s-lua-empty VALID ins_u=181.4k cyc_tot=564.3k busy=33.2% rate=5201.1/5200 p99=707us 
+2026-11-18T03:12:20Z r09-s-lua-header VALID ins_u=195.5k cyc_tot=586.7k busy=34.5% rate=5201.0/5200 p99=803us 
+2026-11-18T03:12:59Z r09-s-wasm-empty VALID ins_u=184.1k cyc_tot=578.1k busy=34.0% rate=5201.1/5200 p99=736us 
+2026-11-18T03:13:37Z r09-fh-wasm-header VALID ins_u=201.0k cyc_tot=348.8k busy=31.2% rate=8001.8/8000 p99=444us 
+2026-11-18T03:14:16Z r09-fh-filter-off VALID ins_u=164.8k cyc_tot=282.8k busy=25.7% rate=8001.6/8000 p99=367us 
+2026-11-18T03:14:54Z r09-fh-lua-empty VALID ins_u=181.9k cyc_tot=311.7k busy=28.1% rate=8001.6/8000 p99=401us 
+2026-11-18T03:15:32Z r09-fh-lua-header VALID ins_u=195.2k cyc_tot=331.6k busy=29.9% rate=8001.6/8000 p99=421us 
+2026-11-18T03:16:11Z r09-fh-wasm-empty VALID ins_u=182.8k cyc_tot=321.6k busy=28.9% rate=8001.8/8000 p99=413us 
+2026-11-18T03:16:49Z r10-s-wasm-empty VALID ins_u=184.1k cyc_tot=568.0k busy=33.4% rate=5201.1/5200 p99=866us 
+2026-11-18T03:17:28Z r10-s-lua-header VALID ins_u=195.3k cyc_tot=591.0k busy=34.8% rate=5201.0/5200 p99=773us 
+2026-11-18T03:18:06Z r10-s-lua-empty VALID ins_u=181.4k cyc_tot=564.0k busy=33.2% rate=5201.1/5200 p99=753us 
+2026-11-18T03:18:45Z r10-s-filter-off VALID ins_u=163.8k cyc_tot=522.8k busy=30.9% rate=5201.0/5200 p99=635us 
+2026-11-18T03:19:23Z r10-s-wasm-header VALID ins_u=203.2k cyc_tot=616.9k busy=36.2% rate=5201.1/5200 p99=785us 
+2026-11-18T03:20:02Z r10-fh-wasm-empty VALID ins_u=182.8k cyc_tot=325.3k busy=29.3% rate=8001.8/8000 p99=418us 
+2026-11-18T03:20:40Z r10-fh-lua-header VALID ins_u=195.2k cyc_tot=323.3k busy=29.0% rate=8001.6/8000 p99=421us 
+2026-11-18T03:21:19Z r10-fh-lua-empty VALID ins_u=181.9k cyc_tot=315.0k busy=28.4% rate=8001.6/8000 p99=410us 
+2026-11-18T03:21:57Z r10-fh-filter-off VALID ins_u=164.7k cyc_tot=279.7k busy=25.5% rate=8001.6/8000 p99=374us 
+2026-11-18T03:22:36Z r10-fh-wasm-header VALID ins_u=200.9k cyc_tot=347.5k busy=31.1% rate=8001.9/8000 p99=444us 
+2026-11-18T03:23:14Z r11-s-wasm-header VALID ins_u=203.0k cyc_tot=603.5k busy=35.4% rate=5201.2/5200 p99=793us 
+2026-11-18T03:23:52Z r11-s-wasm-empty VALID ins_u=184.3k cyc_tot=574.9k busy=33.9% rate=5201.2/5200 p99=734us 
+2026-11-18T03:24:31Z r11-s-lua-header VALID ins_u=195.3k cyc_tot=584.0k busy=34.3% rate=5201.1/5200 p99=819us 
+2026-11-18T03:25:10Z r11-s-lua-empty VALID ins_u=181.3k cyc_tot=565.0k busy=33.2% rate=5201.1/5200 p99=756us 
+2026-11-18T03:25:48Z r11-s-filter-off VALID ins_u=163.8k cyc_tot=524.1k busy=31.0% rate=5201.1/5200 p99=632us 
+2026-11-18T03:26:27Z r11-fh-wasm-header VALID ins_u=201.0k cyc_tot=348.9k busy=31.3% rate=8001.8/8000 p99=453us 
+2026-11-18T03:27:05Z r11-fh-wasm-empty VALID ins_u=182.8k cyc_tot=312.9k busy=28.2% rate=8001.8/8000 p99=404us 
+2026-11-18T03:27:43Z r11-fh-lua-header VALID ins_u=195.1k cyc_tot=330.2k busy=29.6% rate=8001.6/8000 p99=439us 
+2026-11-18T03:28:22Z r11-fh-lua-empty VALID ins_u=181.9k cyc_tot=305.2k busy=27.5% rate=8001.6/8000 p99=397us 
+2026-11-18T03:29:00Z r11-fh-filter-off VALID ins_u=164.8k cyc_tot=275.8k busy=25.1% rate=8001.6/8000 p99=365us 
+2026-11-18T03:29:39Z r12-s-filter-off VALID ins_u=163.8k cyc_tot=528.4k busy=31.4% rate=5201.1/5200 p99=654us 
+2026-11-18T03:30:17Z r12-s-lua-empty VALID ins_u=181.5k cyc_tot=568.2k busy=33.5% rate=5201.0/5200 p99=672us 
+2026-11-18T03:30:56Z r12-s-lua-header VALID ins_u=195.4k cyc_tot=584.8k busy=34.4% rate=5201.1/5200 p99=822us 
+2026-11-18T03:31:34Z r12-s-wasm-empty VALID ins_u=184.1k cyc_tot=579.7k busy=34.0% rate=5201.1/5200 p99=793us 
+2026-11-18T03:32:13Z r12-s-wasm-header VALID ins_u=203.1k cyc_tot=608.3k busy=35.6% rate=5201.2/5200 p99=814us 
+2026-11-18T03:32:51Z r12-fh-filter-off VALID ins_u=164.7k cyc_tot=286.6k busy=26.1% rate=8001.6/8000 p99=372us 
+2026-11-18T03:33:30Z r12-fh-lua-empty VALID ins_u=181.9k cyc_tot=307.9k busy=27.8% rate=8001.6/8000 p99=402us 
+2026-11-18T03:34:08Z r12-fh-lua-header VALID ins_u=195.1k cyc_tot=331.3k busy=29.7% rate=8001.6/8000 p99=428us 
+2026-11-18T03:34:47Z r12-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.5k busy=29.1% rate=8001.8/8000 p99=411us 
+2026-11-18T03:35:25Z r12-fh-wasm-header VALID ins_u=201.0k cyc_tot=347.4k busy=31.2% rate=8001.8/8000 p99=444us 
+2026-11-18T03:36:04Z r13-s-lua-empty VALID ins_u=181.4k cyc_tot=565.7k busy=33.3% rate=5201.1/5200 p99=675us 
+2026-11-18T03:36:42Z r13-s-lua-header VALID ins_u=195.5k cyc_tot=588.8k busy=34.6% rate=5201.0/5200 p99=807us 
+2026-11-18T03:37:21Z r13-s-wasm-empty VALID ins_u=184.2k cyc_tot=580.3k busy=34.1% rate=5201.1/5200 p99=737us 
+2026-11-18T03:37:59Z r13-s-wasm-header VALID ins_u=203.1k cyc_tot=609.6k busy=35.7% rate=5201.2/5200 p99=813us 
+2026-11-18T03:38:38Z r13-s-filter-off VALID ins_u=163.9k cyc_tot=527.8k busy=31.4% rate=5201.0/5200 p99=637us 
+2026-11-18T03:39:16Z r13-fh-lua-empty VALID ins_u=181.9k cyc_tot=310.6k busy=28.0% rate=8001.6/8000 p99=403us 
+2026-11-18T03:39:54Z r13-fh-lua-header VALID ins_u=195.1k cyc_tot=325.6k busy=29.3% rate=8001.6/8000 p99=419us 
+2026-11-18T03:40:33Z r13-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.4k busy=29.0% rate=8001.8/8000 p99=413us 
+2026-11-18T03:41:11Z r13-fh-wasm-header VALID ins_u=201.0k cyc_tot=350.4k busy=31.4% rate=8001.9/8000 p99=438us 
+2026-11-18T03:41:50Z r13-fh-filter-off VALID ins_u=164.8k cyc_tot=277.3k busy=25.2% rate=8001.6/8000 p99=370us 
+2026-11-18T03:42:28Z r14-s-filter-off VALID ins_u=163.9k cyc_tot=527.6k busy=31.3% rate=5201.0/5200 p99=645us 
+2026-11-18T03:43:07Z r14-s-wasm-header VALID ins_u=203.1k cyc_tot=606.1k busy=35.5% rate=5201.2/5200 p99=875us 
+2026-11-18T03:43:45Z r14-s-wasm-empty VALID ins_u=184.4k cyc_tot=581.9k busy=34.3% rate=5201.2/5200 p99=701us 
+2026-11-18T03:44:24Z r14-s-lua-header VALID ins_u=195.4k cyc_tot=585.9k busy=34.4% rate=5201.1/5200 p99=966us 
+2026-11-18T03:45:02Z r14-s-lua-empty VALID ins_u=181.3k cyc_tot=558.4k busy=32.9% rate=5201.0/5200 p99=762us 
+2026-11-18T03:45:41Z r14-fh-filter-off VALID ins_u=164.7k cyc_tot=281.3k busy=25.6% rate=8001.7/8000 p99=369us 
+2026-11-18T03:46:19Z r14-fh-wasm-header VALID ins_u=200.9k cyc_tot=348.4k busy=31.2% rate=8001.8/8000 p99=447us 
+2026-11-18T03:46:58Z r14-fh-wasm-empty VALID ins_u=182.8k cyc_tot=321.0k busy=28.9% rate=8001.8/8000 p99=421us 
+2026-11-18T03:47:36Z r14-fh-lua-header VALID ins_u=195.2k cyc_tot=330.6k busy=29.7% rate=8001.6/8000 p99=429us 
+2026-11-18T03:48:15Z r14-fh-lua-empty VALID ins_u=181.9k cyc_tot=313.4k busy=28.3% rate=8001.6/8000 p99=408us 
+2026-11-18T03:48:53Z r15-s-lua-empty VALID ins_u=181.4k cyc_tot=557.9k busy=32.8% rate=5201.1/5200 p99=730us 
+2026-11-18T03:49:31Z r15-s-filter-off VALID ins_u=163.9k cyc_tot=522.7k busy=31.1% rate=5201.0/5200 p99=618us 
+2026-11-18T03:50:10Z r15-s-wasm-header VALID ins_u=203.0k cyc_tot=603.9k busy=35.4% rate=5201.2/5200 p99=841us 
+2026-11-18T03:50:48Z r15-s-wasm-empty VALID ins_u=184.2k cyc_tot=577.5k busy=34.0% rate=5201.3/5200 p99=738us 
+2026-11-18T03:51:27Z r15-s-lua-header VALID ins_u=195.4k cyc_tot=590.7k busy=34.7% rate=5201.0/5200 p99=742us 
+2026-11-18T03:52:05Z r15-fh-lua-empty VALID ins_u=181.9k cyc_tot=309.6k busy=28.0% rate=8001.6/8000 p99=406us 
+2026-11-18T03:52:44Z r15-fh-filter-off VALID ins_u=164.7k cyc_tot=281.0k busy=25.6% rate=8001.6/8000 p99=375us 
+2026-11-18T03:53:22Z r15-fh-wasm-header VALID ins_u=201.0k cyc_tot=343.1k busy=30.8% rate=8001.9/8000 p99=436us 
+2026-11-18T03:54:01Z r15-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.7k busy=29.1% rate=8001.9/8000 p99=410us 
+2026-11-18T03:54:39Z r15-fh-lua-header VALID ins_u=195.1k cyc_tot=329.8k busy=29.7% rate=8001.6/8000 p99=421us 
+2026-11-18T03:55:17Z r16-s-lua-header VALID ins_u=195.3k cyc_tot=587.8k busy=34.5% rate=5201.0/5200 p99=887us 
+2026-11-18T03:55:56Z r16-s-wasm-empty VALID ins_u=184.2k cyc_tot=580.6k busy=34.2% rate=5201.2/5200 p99=665us 
+2026-11-18T03:56:34Z r16-s-wasm-header VALID ins_u=203.0k cyc_tot=612.8k busy=35.9% rate=5201.2/5200 p99=955us 
+2026-11-18T03:57:13Z r16-s-filter-off VALID ins_u=163.8k cyc_tot=527.0k busy=31.2% rate=5201.0/5200 p99=628us 
+2026-11-18T03:57:51Z r16-s-lua-empty VALID ins_u=181.6k cyc_tot=567.6k busy=33.5% rate=5201.1/5200 p99=711us 
+2026-11-18T03:58:30Z r16-fh-lua-header VALID ins_u=195.1k cyc_tot=329.3k busy=29.6% rate=8001.6/8000 p99=439us 
+2026-11-18T03:59:08Z r16-fh-wasm-empty VALID ins_u=182.8k cyc_tot=317.4k busy=28.6% rate=8001.8/8000 p99=408us 
+2026-11-18T03:59:47Z r16-fh-wasm-header VALID ins_u=201.0k cyc_tot=339.2k busy=30.4% rate=8001.8/8000 p99=460us 
+2026-11-18T04:00:25Z r16-fh-filter-off VALID ins_u=164.8k cyc_tot=282.0k busy=25.6% rate=8001.6/8000 p99=368us 
+2026-11-18T04:01:04Z r16-fh-lua-empty VALID ins_u=181.9k cyc_tot=308.2k busy=27.8% rate=8001.6/8000 p99=403us 
+2026-11-18T04:01:42Z r17-s-wasm-empty VALID ins_u=184.2k cyc_tot=576.0k busy=33.9% rate=5201.2/5200 p99=748us 
+2026-11-18T04:02:21Z r17-s-wasm-header VALID ins_u=202.9k cyc_tot=604.4k busy=35.4% rate=5201.2/5200 p99=774us 
+2026-11-18T04:02:59Z r17-s-filter-off VALID ins_u=163.8k cyc_tot=524.0k busy=31.1% rate=5201.0/5200 p99=605us 
+2026-11-18T04:03:37Z r17-s-lua-empty VALID ins_u=181.5k cyc_tot=561.9k busy=33.1% rate=5201.1/5200 p99=710us 
+2026-11-18T04:04:16Z r17-s-lua-header VALID ins_u=195.3k cyc_tot=584.6k busy=34.3% rate=5201.1/5200 p99=772us 
+2026-11-18T04:04:54Z r17-fh-wasm-empty VALID ins_u=182.8k cyc_tot=323.5k busy=29.1% rate=8001.8/8000 p99=420us 
+2026-11-18T04:05:33Z r17-fh-wasm-header VALID ins_u=201.0k cyc_tot=347.9k busy=31.2% rate=8001.8/8000 p99=452us 
+2026-11-18T04:06:11Z r17-fh-filter-off VALID ins_u=164.8k cyc_tot=280.4k busy=25.5% rate=8001.6/8000 p99=364us 
+2026-11-18T04:06:50Z r17-fh-lua-empty VALID ins_u=181.9k cyc_tot=309.5k busy=27.9% rate=8001.6/8000 p99=399us 
+2026-11-18T04:07:28Z r17-fh-lua-header VALID ins_u=195.2k cyc_tot=329.9k busy=29.7% rate=8001.6/8000 p99=431us 
+2026-11-18T04:08:07Z r18-s-lua-header VALID ins_u=195.4k cyc_tot=585.5k busy=34.4% rate=5201.1/5200 p99=806us 
+2026-11-18T04:08:45Z r18-s-lua-empty VALID ins_u=181.5k cyc_tot=564.0k busy=33.2% rate=5201.2/5200 p99=722us 
+2026-11-18T04:09:24Z r18-s-filter-off VALID ins_u=163.8k cyc_tot=528.0k busy=31.4% rate=5201.0/5200 p99=617us 
+2026-11-18T04:10:02Z r18-s-wasm-header VALID ins_u=202.9k cyc_tot=608.1k busy=35.6% rate=5201.2/5200 p99=865us 
+2026-11-18T04:10:41Z r18-s-wasm-empty VALID ins_u=184.2k cyc_tot=579.8k busy=34.2% rate=5201.2/5200 p99=778us 
+2026-11-18T04:11:19Z r18-fh-lua-header VALID ins_u=195.2k cyc_tot=331.4k busy=29.8% rate=8001.6/8000 p99=427us 
+2026-11-18T04:11:57Z r18-fh-lua-empty VALID ins_u=181.9k cyc_tot=312.8k busy=28.2% rate=8001.6/8000 p99=413us 
+2026-11-18T04:12:36Z r18-fh-filter-off VALID ins_u=164.7k cyc_tot=284.0k busy=25.9% rate=8001.7/8000 p99=373us 
+2026-11-18T04:13:14Z r18-fh-wasm-header VALID ins_u=201.0k cyc_tot=354.1k busy=31.8% rate=8001.9/8000 p99=455us 
+2026-11-18T04:13:53Z r18-fh-wasm-empty VALID ins_u=182.8k cyc_tot=324.6k busy=29.3% rate=8001.8/8000 p99=409us 
+2026-11-18T04:14:31Z r19-s-wasm-header VALID ins_u=202.9k cyc_tot=609.6k busy=35.7% rate=5201.3/5200 p99=990us 
+2026-11-18T04:15:10Z r19-s-filter-off VALID ins_u=163.8k cyc_tot=527.7k busy=31.3% rate=5201.0/5200 p99=616us 
+2026-11-18T04:15:48Z r19-s-lua-empty VALID ins_u=181.5k cyc_tot=566.4k busy=33.4% rate=5201.1/5200 p99=693us 
+2026-11-18T04:16:27Z r19-s-lua-header VALID ins_u=195.5k cyc_tot=589.5k busy=34.7% rate=5201.1/5200 p99=740us 
+2026-11-18T04:17:05Z r19-s-wasm-empty VALID ins_u=184.1k cyc_tot=570.9k busy=33.5% rate=5201.2/5200 p99=848us 
+2026-11-18T04:17:44Z r19-fh-wasm-header VALID ins_u=200.9k cyc_tot=346.7k busy=31.1% rate=8001.8/8000 p99=471us 
+2026-11-18T04:18:22Z r19-fh-filter-off VALID ins_u=164.8k cyc_tot=286.8k busy=26.1% rate=8001.5/8000 p99=372us 
+2026-11-18T04:19:00Z r19-fh-lua-empty VALID ins_u=181.9k cyc_tot=312.0k busy=28.1% rate=8001.6/8000 p99=405us 
+2026-11-18T04:19:39Z r19-fh-lua-header VALID ins_u=195.1k cyc_tot=328.0k busy=29.5% rate=8001.6/8000 p99=412us 
+2026-11-18T04:20:17Z r19-fh-wasm-empty VALID ins_u=182.8k cyc_tot=317.7k busy=28.6% rate=8001.8/8000 p99=408us 
+2026-11-18T04:20:56Z r20-s-wasm-empty VALID ins_u=184.2k cyc_tot=578.5k busy=34.1% rate=5201.2/5200 p99=704us 
+2026-11-18T04:21:34Z r20-s-lua-header VALID ins_u=195.4k cyc_tot=587.1k busy=34.5% rate=5201.0/5200 p99=738us 
+2026-11-18T04:22:13Z r20-s-lua-empty VALID ins_u=181.5k cyc_tot=560.6k busy=33.1% rate=5201.0/5200 p99=722us 
+2026-11-18T04:22:51Z r20-s-filter-off VALID ins_u=163.8k cyc_tot=527.4k busy=31.3% rate=5201.0/5200 p99=619us 
+2026-11-18T04:23:30Z r20-s-wasm-header VALID ins_u=203.0k cyc_tot=612.2k busy=35.9% rate=5201.2/5200 p99=809us 
+2026-11-18T04:24:08Z r20-fh-wasm-empty VALID ins_u=182.8k cyc_tot=322.3k busy=29.0% rate=8001.8/8000 p99=410us 
+2026-11-18T04:24:47Z r20-fh-lua-header VALID ins_u=195.2k cyc_tot=331.1k busy=29.8% rate=8001.6/8000 p99=431us 
+2026-11-18T04:25:25Z r20-fh-lua-empty VALID ins_u=181.9k cyc_tot=308.9k busy=27.9% rate=8001.6/8000 p99=413us 
+2026-11-18T04:26:04Z r20-fh-filter-off VALID ins_u=164.7k cyc_tot=277.4k busy=25.2% rate=8001.6/8000 p99=367us 
+2026-11-18T04:26:42Z r20-fh-wasm-header VALID ins_u=201.0k cyc_tot=345.3k busy=30.9% rate=8001.8/8000 p99=452us 
+2026-11-18T04:26:42Z after 20 rounds: widest cycles_total half-width against its target 0.86% (fh lua-header vs filter-off) <= target 1.50%
+2026-11-18T04:26:42Z origin container 67cb1459c940 stopped
+2026-11-18T04:26:46Z done: ~/epl/runs/features-2026-11-18/run-f/summary.md
+~/epl/runs/features-2026-11-18/run-f/summary.md
+2026-11-18T04:26:46Z end run-f rc=0
+2026-11-18T04:26:46Z start 14-compression (23674s left before the stop)
+2026-11-18T04:26:53Z run features-compression: rotate order, rounds 16..24 in blocks of 8 (adaptive True), arms ['comp-off', 'gzip', 'brotli', 'zstd'], shapes ['j4', 'j16']
+2026-11-18T04:26:53Z origin container 311ebaa2b3f5 (epl-origin-1289844) started
+2026-11-18T04:27:32Z r01-j4-comp-off VALID ins_u=168.6k cyc_tot=527.1k busy=31.4% rate=5201.1/5200 p99=629us 
+2026-11-18T04:28:11Z r01-j4-gzip VALID ins_u=584.1k cyc_tot=789.8k busy=45.8% rate=5201.1/5200 p99=1306us 
+2026-11-18T04:28:49Z r01-j4-brotli VALID ins_u=534.5k cyc_tot=813.7k busy=47.1% rate=5201.0/5200 p99=1961us 
+2026-11-18T04:29:28Z r01-j4-zstd VALID ins_u=402.5k cyc_tot=816.9k busy=47.2% rate=5201.1/5200 p99=1809us 
+2026-11-18T04:30:06Z r01-j16-comp-off VALID ins_u=171.7k cyc_tot=572.1k busy=26.5% rate=4000.8/4000 p99=648us 
+2026-11-18T04:30:45Z r01-j16-gzip VALID ins_u=1645.1k cyc_tot=1324.7k busy=58.5% rate=4000.7/4000 p99=2394us 
+2026-11-18T04:31:24Z r01-j16-brotli VALID ins_u=1229.8k cyc_tot=1210.3k busy=53.5% rate=4000.7/4000 p99=3614us 
+2026-11-18T04:32:02Z r01-j16-zstd VALID ins_u=762.6k cyc_tot=1020.7k busy=45.3% rate=4000.7/4000 p99=2130us 
+2026-11-18T04:32:41Z r02-j4-zstd VALID ins_u=402.5k cyc_tot=817.3k busy=47.3% rate=5201.1/5200 p99=1801us 
+2026-11-18T04:33:20Z r02-j4-brotli VALID ins_u=534.5k cyc_tot=810.0k busy=46.9% rate=5201.1/5200 p99=1696us 
+2026-11-18T04:33:58Z r02-j4-gzip VALID ins_u=584.1k cyc_tot=799.6k busy=46.3% rate=5201.1/5200 p99=1445us 
+2026-11-18T04:34:37Z r02-j4-comp-off VALID ins_u=168.6k cyc_tot=542.0k busy=32.2% rate=5201.0/5200 p99=631us 
+2026-11-18T04:35:15Z r02-j16-zstd VALID ins_u=763.1k cyc_tot=1030.4k busy=45.8% rate=4000.8/4000 p99=1750us 
+2026-11-18T04:35:54Z r02-j16-brotli VALID ins_u=1229.7k cyc_tot=1219.5k busy=53.9% rate=4000.8/4000 p99=3731us 
+2026-11-18T04:36:32Z r02-j16-gzip VALID ins_u=1645.1k cyc_tot=1320.6k busy=58.4% rate=4000.8/4000 p99=2531us 
+2026-11-18T04:37:11Z r02-j16-comp-off VALID ins_u=171.7k cyc_tot=578.1k busy=26.8% rate=4000.8/4000 p99=634us 
+2026-11-18T04:37:49Z r03-j4-gzip VALID ins_u=584.1k cyc_tot=786.0k busy=45.6% rate=5201.1/5200 p99=1560us 
+2026-11-18T04:38:28Z r03-j4-brotli VALID ins_u=534.6k cyc_tot=816.6k busy=47.3% rate=5201.0/5200 p99=1541us 
+2026-11-18T04:39:06Z r03-j4-zstd VALID ins_u=402.2k cyc_tot=816.5k busy=47.2% rate=5201.1/5200 p99=1877us 
+2026-11-18T04:39:45Z r03-j4-comp-off VALID ins_u=168.6k cyc_tot=530.5k busy=31.5% rate=5201.0/5200 p99=627us 
+2026-11-18T04:40:24Z r03-j16-gzip VALID ins_u=1644.8k cyc_tot=1313.6k busy=58.0% rate=4000.8/4000 p99=3460us 
+2026-11-18T04:41:02Z r03-j16-brotli VALID ins_u=1229.7k cyc_tot=1214.3k busy=53.7% rate=4000.8/4000 p99=2960us 
+2026-11-18T04:41:41Z r03-j16-zstd VALID ins_u=762.9k cyc_tot=1031.9k busy=45.9% rate=4000.8/4000 p99=1922us 
+2026-11-18T04:42:19Z r03-j16-comp-off VALID ins_u=171.7k cyc_tot=579.3k busy=26.6% rate=4000.8/4000 p99=645us 
+2026-11-18T04:42:58Z r04-j4-comp-off VALID ins_u=168.6k cyc_tot=526.8k busy=31.3% rate=5201.0/5200 p99=629us 
+2026-11-18T04:43:36Z r04-j4-zstd VALID ins_u=402.1k cyc_tot=802.1k busy=46.3% rate=5201.0/5200 p99=1825us 
+2026-11-18T04:44:15Z r04-j4-brotli VALID ins_u=534.5k cyc_tot=810.0k busy=46.9% rate=5200.9/5200 p99=1449us 
+2026-11-18T04:44:53Z r04-j4-gzip VALID ins_u=584.1k cyc_tot=789.8k busy=45.8% rate=5201.0/5200 p99=1708us 
+2026-11-18T04:45:32Z r04-j16-comp-off VALID ins_u=171.6k cyc_tot=565.6k busy=25.9% rate=4000.7/4000 p99=589us 
+2026-11-18T04:46:10Z r04-j16-zstd VALID ins_u=762.8k cyc_tot=1020.7k busy=45.4% rate=4000.8/4000 p99=1501us 
+2026-11-18T04:46:49Z r04-j16-brotli VALID ins_u=1229.9k cyc_tot=1216.1k busy=53.8% rate=4000.8/4000 p99=2712us 
+2026-11-18T04:47:28Z r04-j16-gzip VALID ins_u=1644.8k cyc_tot=1315.0k busy=58.0% rate=4000.8/4000 p99=2957us 
+2026-11-18T04:48:06Z r05-j4-gzip VALID ins_u=584.2k cyc_tot=797.6k busy=46.3% rate=5201.1/5200 p99=1338us 
+2026-11-18T04:48:45Z r05-j4-comp-off VALID ins_u=168.6k cyc_tot=528.4k busy=31.4% rate=5201.1/5200 p99=626us 
+2026-11-18T04:49:23Z r05-j4-zstd VALID ins_u=402.6k cyc_tot=818.1k busy=47.4% rate=5201.1/5200 p99=1301us 
+2026-11-18T04:50:02Z r05-j4-brotli VALID ins_u=534.5k cyc_tot=811.6k busy=47.0% rate=5201.0/5200 p99=1829us 
+2026-11-18T04:50:41Z r05-j16-gzip VALID ins_u=1644.9k cyc_tot=1318.9k busy=58.2% rate=4000.9/4000 p99=3768us 
+2026-11-18T04:51:19Z r05-j16-comp-off VALID ins_u=171.5k cyc_tot=567.2k busy=26.0% rate=4000.8/4000 p99=589us 
+2026-11-18T04:51:58Z r05-j16-zstd VALID ins_u=762.8k cyc_tot=1029.7k busy=45.8% rate=4000.8/4000 p99=1557us 
+2026-11-18T04:52:36Z r05-j16-brotli VALID ins_u=1229.9k cyc_tot=1223.3k busy=54.1% rate=4000.7/4000 p99=3091us 
+2026-11-18T04:53:15Z r06-j4-brotli VALID ins_u=534.7k cyc_tot=817.1k busy=47.3% rate=5201.1/5200 p99=1452us 
+2026-11-18T04:53:53Z r06-j4-zstd VALID ins_u=402.2k cyc_tot=810.3k busy=46.9% rate=5201.0/5200 p99=1758us 
+2026-11-18T04:54:32Z r06-j4-comp-off VALID ins_u=168.6k cyc_tot=525.9k busy=31.3% rate=5201.0/5200 p99=665us 
+2026-11-18T04:55:10Z r06-j4-gzip VALID ins_u=584.1k cyc_tot=787.7k busy=45.7% rate=5200.9/5200 p99=1724us 
+2026-11-18T04:55:49Z r06-j16-brotli VALID ins_u=1229.8k cyc_tot=1221.2k busy=54.0% rate=4000.8/4000 p99=3540us 
+2026-11-18T04:56:28Z r06-j16-zstd VALID ins_u=763.3k cyc_tot=1032.6k busy=45.9% rate=4000.9/4000 p99=1414us 
+2026-11-18T04:57:06Z r06-j16-comp-off VALID ins_u=171.7k cyc_tot=572.1k busy=26.4% rate=4000.8/4000 p99=640us 
+2026-11-18T04:57:45Z r06-j16-gzip VALID ins_u=1644.9k cyc_tot=1321.2k busy=58.3% rate=4000.8/4000 p99=3704us 
+2026-11-18T04:58:23Z r07-j4-zstd VALID ins_u=402.7k cyc_tot=821.3k busy=47.6% rate=5201.1/5200 p99=1639us 
+2026-11-18T04:59:02Z r07-j4-comp-off VALID ins_u=168.6k cyc_tot=528.4k busy=31.4% rate=5201.0/5200 p99=632us 
+2026-11-18T04:59:40Z r07-j4-gzip VALID ins_u=584.2k cyc_tot=791.8k busy=45.9% rate=5201.0/5200 p99=1411us 
+2026-11-18T05:00:19Z r07-j4-brotli VALID ins_u=534.6k cyc_tot=815.9k busy=47.3% rate=5201.1/5200 p99=1554us 
+2026-11-18T05:00:57Z r07-j16-zstd VALID ins_u=763.1k cyc_tot=1028.7k busy=45.7% rate=4000.8/4000 p99=1595us 
+2026-11-18T05:01:36Z r07-j16-comp-off VALID ins_u=171.7k cyc_tot=574.8k busy=26.6% rate=4000.8/4000 p99=662us 
+2026-11-18T05:02:14Z r07-j16-gzip VALID ins_u=1644.9k cyc_tot=1318.5k busy=58.2% rate=4000.9/4000 p99=3272us 
+2026-11-18T05:02:53Z r07-j16-brotli VALID ins_u=1230.1k cyc_tot=1221.7k busy=54.0% rate=4000.9/4000 p99=2943us 
+2026-11-18T05:03:32Z r08-j4-brotli VALID ins_u=534.3k cyc_tot=799.1k busy=46.2% rate=5201.1/5200 p99=2515us 
+2026-11-18T05:04:10Z r08-j4-gzip VALID ins_u=583.9k cyc_tot=786.3k busy=45.5% rate=5201.2/5200 p99=2237us 
+2026-11-18T05:04:49Z r08-j4-comp-off VALID ins_u=168.5k cyc_tot=528.4k busy=31.4% rate=5201.0/5200 p99=635us 
+2026-11-18T05:05:27Z r08-j4-zstd VALID ins_u=402.4k cyc_tot=815.0k busy=47.1% rate=5201.0/5200 p99=1598us 
+2026-11-18T05:06:06Z r08-j16-brotli VALID ins_u=1229.7k cyc_tot=1216.8k busy=53.8% rate=4000.8/4000 p99=4050us 
+2026-11-18T05:06:45Z r08-j16-gzip VALID ins_u=1644.7k cyc_tot=1316.5k busy=58.1% rate=4000.8/4000 p99=4495us 
+2026-11-18T05:07:23Z r08-j16-comp-off VALID ins_u=171.6k cyc_tot=568.6k busy=26.1% rate=4000.8/4000 p99=624us 
+2026-11-18T05:08:02Z r08-j16-zstd VALID ins_u=763.1k cyc_tot=1036.6k busy=46.1% rate=4000.9/4000 p99=1992us 
+2026-11-18T05:08:40Z r09-j4-comp-off VALID ins_u=168.6k cyc_tot=534.9k busy=31.8% rate=5201.0/5200 p99=641us 
+2026-11-18T05:09:19Z r09-j4-gzip VALID ins_u=584.2k cyc_tot=799.3k busy=46.3% rate=5201.1/5200 p99=1630us 
+2026-11-18T05:09:57Z r09-j4-brotli VALID ins_u=534.6k cyc_tot=806.9k busy=46.8% rate=5201.1/5200 p99=1867us 
+2026-11-18T05:10:36Z r09-j4-zstd VALID ins_u=402.6k cyc_tot=823.6k busy=47.7% rate=5201.1/5200 p99=1385us 
+2026-11-18T05:11:15Z r09-j16-comp-off VALID ins_u=171.8k cyc_tot=565.4k busy=26.0% rate=4000.8/4000 p99=627us 
+2026-11-18T05:11:53Z r09-j16-gzip VALID ins_u=1644.8k cyc_tot=1321.1k busy=58.3% rate=4000.7/4000 p99=3060us 
+2026-11-18T05:12:32Z r09-j16-brotli VALID ins_u=1229.6k cyc_tot=1215.0k busy=53.7% rate=4000.8/4000 p99=2682us 
+2026-11-18T05:13:11Z r09-j16-zstd VALID ins_u=742.3k cyc_tot=1016.7k busy=45.1% rate=4000.8/4000 p99=3319us 
+2026-11-18T05:13:49Z r10-j4-zstd VALID ins_u=402.7k cyc_tot=820.1k busy=47.4% rate=5201.1/5200 p99=1318us 
+2026-11-18T05:14:28Z r10-j4-brotli VALID ins_u=534.6k cyc_tot=809.0k busy=46.9% rate=5201.0/5200 p99=1745us 
+2026-11-18T05:15:06Z r10-j4-gzip VALID ins_u=584.0k cyc_tot=792.1k busy=45.9% rate=5201.1/5200 p99=1416us 
+2026-11-18T05:15:45Z r10-j4-comp-off VALID ins_u=168.6k cyc_tot=528.9k busy=31.4% rate=5201.0/5200 p99=628us 
+2026-11-18T05:16:23Z r10-j16-zstd VALID ins_u=763.4k cyc_tot=1034.8k busy=46.0% rate=4000.8/4000 p99=1552us 
+2026-11-18T05:17:02Z r10-j16-brotli VALID ins_u=1229.8k cyc_tot=1220.2k busy=53.9% rate=4000.8/4000 p99=3263us 
+2026-11-18T05:17:41Z r10-j16-gzip VALID ins_u=1644.8k cyc_tot=1313.7k busy=57.9% rate=4000.7/4000 p99=3995us 
+2026-11-18T05:18:19Z r10-j16-comp-off VALID ins_u=171.6k cyc_tot=568.1k busy=26.1% rate=4000.8/4000 p99=606us 
+2026-11-18T05:18:58Z r11-j4-comp-off VALID ins_u=168.7k cyc_tot=526.9k busy=31.4% rate=5201.0/5200 p99=626us 
+2026-11-18T05:19:36Z r11-j4-zstd VALID ins_u=402.5k cyc_tot=821.8k busy=47.6% rate=5201.1/5200 p99=1442us 
+2026-11-18T05:20:15Z r11-j4-brotli VALID ins_u=534.7k cyc_tot=806.1k busy=46.7% rate=5201.0/5200 p99=1405us 
+2026-11-18T05:20:54Z r11-j4-gzip VALID ins_u=584.0k cyc_tot=792.2k busy=45.8% rate=5201.1/5200 p99=1722us 
+2026-11-18T05:21:32Z r11-j16-comp-off VALID ins_u=171.8k cyc_tot=565.6k busy=26.2% rate=4000.8/4000 p99=638us 
+2026-11-18T05:22:11Z r11-j16-zstd VALID ins_u=763.1k cyc_tot=1036.5k busy=46.1% rate=4000.8/4000 p99=1727us 
+2026-11-18T05:22:49Z r11-j16-brotli VALID ins_u=1229.6k cyc_tot=1211.8k busy=53.6% rate=4000.9/4000 p99=3736us 
+2026-11-18T05:23:28Z r11-j16-gzip VALID ins_u=1644.9k cyc_tot=1312.2k busy=57.9% rate=4000.8/4000 p99=3789us 
+2026-11-18T05:24:06Z r12-j4-gzip VALID ins_u=584.1k cyc_tot=795.6k busy=46.1% rate=5201.0/5200 p99=1606us 
+2026-11-18T05:24:45Z r12-j4-brotli VALID ins_u=534.5k cyc_tot=810.4k busy=46.9% rate=5201.1/5200 p99=1713us 
+2026-11-18T05:25:24Z r12-j4-zstd VALID ins_u=402.3k cyc_tot=811.3k busy=46.9% rate=5201.1/5200 p99=1324us 
+2026-11-18T05:26:02Z r12-j4-comp-off VALID ins_u=168.6k cyc_tot=529.4k busy=31.4% rate=5201.0/5200 p99=623us 
+2026-11-18T05:26:41Z r12-j16-gzip VALID ins_u=1645.0k cyc_tot=1313.9k busy=58.0% rate=4000.9/4000 p99=3377us 
+2026-11-18T05:27:19Z r12-j16-brotli VALID ins_u=1229.8k cyc_tot=1223.7k busy=54.1% rate=4000.7/4000 p99=2444us 
+2026-11-18T05:27:58Z r12-j16-zstd VALID ins_u=762.9k cyc_tot=1026.7k busy=45.6% rate=4000.9/4000 p99=1653us 
+2026-11-18T05:28:36Z r12-j16-comp-off VALID ins_u=171.5k cyc_tot=574.5k busy=26.4% rate=4000.8/4000 p99=608us 
+2026-11-18T05:29:15Z r13-j4-brotli VALID ins_u=534.5k cyc_tot=813.7k busy=47.1% rate=5201.1/5200 p99=1443us 
+2026-11-18T05:29:54Z r13-j4-zstd VALID ins_u=402.6k cyc_tot=813.8k busy=47.1% rate=5201.1/5200 p99=1543us 
+2026-11-18T05:30:32Z r13-j4-comp-off VALID ins_u=168.5k cyc_tot=531.1k busy=31.5% rate=5201.0/5200 p99=628us 
+2026-11-18T05:31:11Z r13-j4-gzip VALID ins_u=584.0k cyc_tot=791.0k busy=45.8% rate=5200.9/5200 p99=1941us 
+2026-11-18T05:31:49Z r13-j16-brotli VALID ins_u=1229.8k cyc_tot=1219.0k busy=53.9% rate=4000.8/4000 p99=2695us 
+2026-11-18T05:32:28Z r13-j16-zstd VALID ins_u=742.5k cyc_tot=1016.6k busy=45.2% rate=4000.8/4000 p99=1548us 
+2026-11-18T05:33:06Z r13-j16-comp-off VALID ins_u=171.6k cyc_tot=578.6k busy=26.6% rate=4000.8/4000 p99=592us 
+2026-11-18T05:33:45Z r13-j16-gzip VALID ins_u=1644.9k cyc_tot=1319.0k busy=58.2% rate=4000.8/4000 p99=2905us 
+2026-11-18T05:34:23Z r14-j4-gzip VALID ins_u=584.2k cyc_tot=795.8k busy=46.2% rate=5201.0/5200 p99=1224us 
+2026-11-18T05:35:02Z r14-j4-comp-off VALID ins_u=168.5k cyc_tot=523.5k busy=31.1% rate=5201.0/5200 p99=628us 
+2026-11-18T05:35:41Z r14-j4-zstd VALID ins_u=402.6k cyc_tot=826.0k busy=47.8% rate=5200.9/5200 p99=1406us 
+2026-11-18T05:36:19Z r14-j4-brotli VALID ins_u=534.8k cyc_tot=814.1k busy=47.2% rate=5200.9/5200 p99=1503us 
+2026-11-18T05:36:58Z r14-j16-gzip VALID ins_u=1645.0k cyc_tot=1315.1k busy=58.0% rate=4000.6/4000 p99=3825us 
+2026-11-18T05:37:36Z r14-j16-comp-off VALID ins_u=171.6k cyc_tot=558.9k busy=25.7% rate=4000.8/4000 p99=599us 
+2026-11-18T05:38:15Z r14-j16-zstd VALID ins_u=742.6k cyc_tot=1030.6k busy=45.8% rate=4000.8/4000 p99=1498us 
+2026-11-18T05:38:53Z r14-j16-brotli VALID ins_u=1229.8k cyc_tot=1222.0k busy=54.0% rate=4000.8/4000 p99=3710us 
+2026-11-18T05:39:32Z r15-j4-brotli VALID ins_u=534.5k cyc_tot=810.5k busy=46.9% rate=5200.9/5200 p99=2106us 
+2026-11-18T05:40:11Z r15-j4-gzip VALID ins_u=584.2k cyc_tot=793.2k busy=46.0% rate=5201.0/5200 p99=1285us 
+2026-11-18T05:40:49Z r15-j4-comp-off VALID ins_u=168.5k cyc_tot=525.0k busy=31.2% rate=5201.0/5200 p99=625us 
+2026-11-18T05:41:28Z r15-j4-zstd VALID ins_u=402.4k cyc_tot=815.8k busy=47.2% rate=5201.1/5200 p99=1311us 
+2026-11-18T05:42:06Z r15-j16-brotli VALID ins_u=1229.8k cyc_tot=1215.2k busy=53.7% rate=4000.8/4000 p99=2982us 
+2026-11-18T05:42:45Z r15-j16-gzip VALID ins_u=1644.9k cyc_tot=1312.1k busy=57.9% rate=4000.8/4000 p99=3379us 
+2026-11-18T05:43:23Z r15-j16-comp-off VALID ins_u=171.6k cyc_tot=568.3k busy=26.1% rate=4000.8/4000 p99=622us 
+2026-11-18T05:44:02Z r15-j16-zstd VALID ins_u=742.4k cyc_tot=1025.7k busy=45.5% rate=4000.8/4000 p99=2054us 
+2026-11-18T05:44:41Z r16-j4-zstd VALID ins_u=402.5k cyc_tot=804.8k busy=46.6% rate=5201.0/5200 p99=2105us 
+2026-11-18T05:45:19Z r16-j4-comp-off VALID ins_u=168.6k cyc_tot=542.4k busy=32.2% rate=5201.1/5200 p99=640us 
+2026-11-18T05:45:58Z r16-j4-gzip VALID ins_u=584.1k cyc_tot=793.3k busy=46.0% rate=5201.0/5200 p99=1615us 
+2026-11-18T05:46:36Z r16-j4-brotli VALID ins_u=534.5k cyc_tot=807.3k busy=46.7% rate=5201.1/5200 p99=1404us 
+2026-11-18T05:47:15Z r16-j16-zstd VALID ins_u=762.8k cyc_tot=1021.1k busy=45.4% rate=4000.8/4000 p99=2097us 
+2026-11-18T05:47:53Z r16-j16-comp-off VALID ins_u=171.6k cyc_tot=568.2k busy=26.2% rate=4000.8/4000 p99=621us 
+2026-11-18T05:48:32Z r16-j16-gzip VALID ins_u=1645.0k cyc_tot=1319.1k busy=58.3% rate=4000.8/4000 p99=2685us 
+2026-11-18T05:49:10Z r16-j16-brotli VALID ins_u=1229.6k cyc_tot=1217.7k busy=53.8% rate=4000.9/4000 p99=2705us 
+2026-11-18T05:49:10Z after 16 rounds: widest cycles_total half-width against its target 0.76% (j4 zstd vs comp-off) <= target 1.50%
+2026-11-18T05:49:11Z origin container 311ebaa2b3f5 stopped
+2026-11-18T05:49:13Z done: ~/epl/runs/features-2026-11-18/14-compression/summary.md
+~/epl/runs/features-2026-11-18/14-compression/summary.md
+2026-11-18T05:49:14Z end 14-compression rc=0
+2026-11-18T05:49:14Z start lc-j16 (18726s left before the stop)
+2026-11-18T05:49:18Z run features-lc-j16: abba order, rounds 12..12 in blocks of 12 (adaptive False), arms ['comp-off', 'comp-off-A2'], shapes ['j16-a', 'j16-b', 'j16-c']
+2026-11-18T05:49:19Z origin container 72c291626aca (epl-origin-1302582) started
+2026-11-18T05:49:58Z r01-j16-a-comp-off VALID ins_u=171.4k cyc_tot=540.2k busy=31.9% rate=5201.1/5200 p99=652us 
+2026-11-18T05:50:36Z r01-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=544.9k busy=32.2% rate=5201.0/5200 p99=659us 
+2026-11-18T05:51:15Z r01-j16-b-comp-off VALID ins_u=171.0k cyc_tot=504.5k busy=43.1% rate=7601.5/7600 p99=705us 
+2026-11-18T05:51:53Z r01-j16-b-comp-off-A2 VALID ins_u=171.2k cyc_tot=504.3k busy=43.1% rate=7601.5/7600 p99=656us 
+2026-11-18T05:52:31Z r01-j16-c-comp-off VALID ins_u=170.6k cyc_tot=481.0k busy=60.1% rate=11202.2/11200 p99=982us 
+2026-11-18T05:53:10Z r01-j16-c-comp-off-A2 VALID ins_u=170.5k cyc_tot=477.1k busy=59.6% rate=11202.1/11200 p99=1088us 
+2026-11-18T05:53:48Z r02-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=543.6k busy=32.2% rate=5201.0/5200 p99=634us 
+2026-11-18T05:54:27Z r02-j16-a-comp-off VALID ins_u=171.4k cyc_tot=539.3k busy=31.9% rate=5201.1/5200 p99=633us 
+2026-11-18T05:55:05Z r02-j16-b-comp-off-A2 VALID ins_u=171.2k cyc_tot=499.2k busy=42.7% rate=7601.5/7600 p99=660us 
+2026-11-18T05:55:43Z r02-j16-b-comp-off VALID ins_u=171.1k cyc_tot=506.8k busy=43.3% rate=7601.5/7600 p99=780us 
+2026-11-18T05:56:22Z r02-j16-c-comp-off-A2 VALID ins_u=170.6k cyc_tot=474.3k busy=59.2% rate=11202.3/11200 p99=842us 
+2026-11-18T05:57:00Z r02-j16-c-comp-off VALID ins_u=170.5k cyc_tot=476.1k busy=59.5% rate=11202.3/11200 p99=927us 
+2026-11-18T05:57:39Z r03-j16-a-comp-off VALID ins_u=171.4k cyc_tot=550.6k busy=32.5% rate=5201.1/5200 p99=645us 
+2026-11-18T05:58:17Z r03-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=541.0k busy=32.1% rate=5201.0/5200 p99=617us 
+2026-11-18T05:58:55Z r03-j16-b-comp-off VALID ins_u=171.1k cyc_tot=505.9k busy=43.3% rate=7601.5/7600 p99=704us 
+2026-11-18T05:59:34Z r03-j16-b-comp-off-A2 VALID ins_u=171.2k cyc_tot=510.9k busy=43.7% rate=7601.5/7600 p99=659us 
+2026-11-18T06:00:12Z r03-j16-c-comp-off VALID ins_u=170.7k cyc_tot=475.9k busy=59.6% rate=11202.2/11200 p99=922us 
+2026-11-18T06:00:50Z r03-j16-c-comp-off-A2 VALID ins_u=170.4k cyc_tot=482.4k busy=60.2% rate=11202.2/11200 p99=1181us 
+2026-11-18T06:01:29Z r04-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=541.0k busy=32.0% rate=5201.0/5200 p99=650us 
+2026-11-18T06:02:07Z r04-j16-a-comp-off VALID ins_u=171.3k cyc_tot=547.5k busy=32.3% rate=5201.1/5200 p99=703us 
+2026-11-18T06:02:46Z r04-j16-b-comp-off-A2 VALID ins_u=171.2k cyc_tot=505.1k busy=43.2% rate=7601.5/7600 p99=685us 
+2026-11-18T06:03:24Z r04-j16-b-comp-off VALID ins_u=171.2k cyc_tot=504.7k busy=43.2% rate=7601.6/7600 p99=663us 
+2026-11-18T06:04:02Z r04-j16-c-comp-off-A2 VALID ins_u=170.4k cyc_tot=473.7k busy=59.2% rate=11202.3/11200 p99=1170us 
+2026-11-18T06:04:41Z r04-j16-c-comp-off VALID ins_u=170.4k cyc_tot=475.8k busy=59.4% rate=11202.3/11200 p99=1371us 
+2026-11-18T06:05:19Z r05-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=541.9k busy=32.1% rate=5201.0/5200 p99=653us 
+2026-11-18T06:05:58Z r05-j16-a-comp-off VALID ins_u=171.5k cyc_tot=547.6k busy=32.5% rate=5201.0/5200 p99=653us 
+2026-11-18T06:06:36Z r05-j16-b-comp-off-A2 VALID ins_u=171.3k cyc_tot=511.6k busy=43.7% rate=7601.5/7600 p99=687us 
+2026-11-18T06:07:14Z r05-j16-b-comp-off VALID ins_u=171.1k cyc_tot=511.3k busy=43.6% rate=7601.6/7600 p99=905us 
+2026-11-18T06:07:53Z r05-j16-c-comp-off-A2 VALID ins_u=170.5k cyc_tot=479.1k busy=59.9% rate=11202.3/11200 p99=967us 
+2026-11-18T06:08:31Z r05-j16-c-comp-off VALID ins_u=170.6k cyc_tot=474.7k busy=59.3% rate=11202.1/11200 p99=914us 
+2026-11-18T06:09:09Z r06-j16-a-comp-off VALID ins_u=171.4k cyc_tot=543.7k busy=32.2% rate=5201.1/5200 p99=631us 
+2026-11-18T06:09:48Z r06-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=546.6k busy=32.4% rate=5201.1/5200 p99=643us 
+2026-11-18T06:10:26Z r06-j16-b-comp-off VALID ins_u=171.2k cyc_tot=513.0k busy=43.8% rate=7601.7/7600 p99=678us 
+2026-11-18T06:11:05Z r06-j16-b-comp-off-A2 VALID ins_u=171.1k cyc_tot=501.9k busy=42.9% rate=7601.6/7600 p99=687us 
+2026-11-18T06:11:43Z r06-j16-c-comp-off VALID ins_u=170.6k cyc_tot=481.2k busy=60.2% rate=11202.3/11200 p99=890us 
+2026-11-18T06:12:21Z r06-j16-c-comp-off-A2 VALID ins_u=170.4k cyc_tot=476.8k busy=59.6% rate=11202.2/11200 p99=1112us 
+2026-11-18T06:13:00Z r07-j16-a-comp-off VALID ins_u=171.5k cyc_tot=541.9k busy=32.1% rate=5201.0/5200 p99=630us 
+2026-11-18T06:13:38Z r07-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=544.0k busy=32.2% rate=5201.1/5200 p99=667us 
+2026-11-18T06:14:17Z r07-j16-b-comp-off VALID ins_u=171.2k cyc_tot=504.3k busy=43.1% rate=7601.5/7600 p99=694us 
+2026-11-18T06:14:55Z r07-j16-b-comp-off-A2 VALID ins_u=171.2k cyc_tot=508.5k busy=43.5% rate=7601.5/7600 p99=667us 
+2026-11-18T06:15:33Z r07-j16-c-comp-off VALID ins_u=170.6k cyc_tot=478.1k busy=59.8% rate=11202.2/11200 p99=1025us 
+2026-11-18T06:16:12Z r07-j16-c-comp-off-A2 VALID ins_u=170.5k cyc_tot=477.3k busy=59.6% rate=11202.2/11200 p99=1081us 
+2026-11-18T06:16:13Z not idle yet: load1=8.15 busy=0.0% procs=0 hot={}
+2026-11-18T06:16:56Z r08-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=536.6k busy=31.8% rate=5201.0/5200 p99=647us 
+2026-11-18T06:17:35Z r08-j16-a-comp-off VALID ins_u=171.4k cyc_tot=545.5k busy=32.3% rate=5201.1/5200 p99=643us 
+2026-11-18T06:18:13Z r08-j16-b-comp-off-A2 VALID ins_u=171.1k cyc_tot=502.6k busy=43.0% rate=7601.5/7600 p99=650us 
+2026-11-18T06:18:51Z r08-j16-b-comp-off VALID ins_u=171.2k cyc_tot=510.3k busy=43.6% rate=7601.6/7600 p99=747us 
+2026-11-18T06:19:30Z r08-j16-c-comp-off-A2 VALID ins_u=170.7k cyc_tot=476.2k busy=59.6% rate=11202.3/11200 p99=784us 
+2026-11-18T06:20:08Z r08-j16-c-comp-off VALID ins_u=170.7k cyc_tot=474.4k busy=59.3% rate=11202.2/11200 p99=822us 
+2026-11-18T06:20:47Z r09-j16-a-comp-off VALID ins_u=171.3k cyc_tot=538.0k busy=31.8% rate=5201.0/5200 p99=657us 
+2026-11-18T06:21:25Z r09-j16-a-comp-off-A2 VALID ins_u=171.5k cyc_tot=540.2k busy=32.1% rate=5201.1/5200 p99=631us 
+2026-11-18T06:22:03Z r09-j16-b-comp-off VALID ins_u=171.2k cyc_tot=508.9k busy=43.5% rate=7601.5/7600 p99=657us 
+2026-11-18T06:22:42Z r09-j16-b-comp-off-A2 VALID ins_u=171.1k cyc_tot=507.2k busy=43.4% rate=7601.6/7600 p99=691us 
+2026-11-18T06:23:20Z r09-j16-c-comp-off VALID ins_u=170.6k cyc_tot=477.8k busy=59.7% rate=11202.4/11200 p99=1029us 
+2026-11-18T06:23:58Z r09-j16-c-comp-off-A2 VALID ins_u=170.6k cyc_tot=479.8k busy=60.0% rate=11202.4/11200 p99=857us 
+2026-11-18T06:24:37Z r10-j16-a-comp-off-A2 VALID ins_u=171.4k cyc_tot=540.0k busy=32.0% rate=5201.0/5200 p99=646us 
+2026-11-18T06:25:15Z r10-j16-a-comp-off VALID ins_u=171.4k cyc_tot=544.4k busy=32.3% rate=5201.1/5200 p99=642us 
+2026-11-18T06:25:53Z r10-j16-b-comp-off-A2 VALID ins_u=171.1k cyc_tot=507.2k busy=43.4% rate=7601.5/7600 p99=701us 
+2026-11-18T06:26:32Z r10-j16-b-comp-off VALID ins_u=171.1k cyc_tot=514.4k busy=44.0% rate=7601.4/7600 p99=690us 
+2026-11-18T06:27:10Z r10-j16-c-comp-off-A2 VALID ins_u=170.5k cyc_tot=476.3k busy=59.5% rate=11202.1/11200 p99=970us 
+2026-11-18T06:27:48Z r10-j16-c-comp-off VALID ins_u=170.4k cyc_tot=473.1k busy=59.1% rate=11202.5/11200 p99=1282us 
+2026-11-18T06:28:27Z r11-j16-a-comp-off-A2 VALID ins_u=171.2k cyc_tot=538.8k busy=31.8% rate=5201.1/5200 p99=643us 
+2026-11-18T06:29:05Z r11-j16-a-comp-off VALID ins_u=171.4k cyc_tot=542.6k busy=32.1% rate=5201.1/5200 p99=658us 
+2026-11-18T06:29:44Z r11-j16-b-comp-off-A2 VALID ins_u=171.3k cyc_tot=504.8k busy=43.1% rate=7601.6/7600 p99=677us 
+2026-11-18T06:30:22Z r11-j16-b-comp-off VALID ins_u=171.2k cyc_tot=501.2k busy=42.9% rate=7601.4/7600 p99=627us 
+2026-11-18T06:31:00Z r11-j16-c-comp-off-A2 VALID ins_u=170.6k cyc_tot=475.8k busy=59.5% rate=11202.2/11200 p99=917us 
+2026-11-18T06:31:39Z r11-j16-c-comp-off VALID ins_u=170.7k cyc_tot=478.0k busy=59.8% rate=11202.2/11200 p99=815us 
+2026-11-18T06:32:17Z r12-j16-a-comp-off VALID ins_u=171.3k cyc_tot=544.1k busy=32.2% rate=5201.1/5200 p99=655us 
+2026-11-18T06:32:56Z r12-j16-a-comp-off-A2 VALID ins_u=171.3k cyc_tot=539.7k busy=31.9% rate=5201.1/5200 p99=637us 
+2026-11-18T06:33:34Z r12-j16-b-comp-off VALID ins_u=171.2k cyc_tot=503.8k busy=43.1% rate=7601.5/7600 p99=685us 
+2026-11-18T06:34:12Z r12-j16-b-comp-off-A2 VALID ins_u=171.0k cyc_tot=504.7k busy=43.1% rate=7601.6/7600 p99=681us 
+2026-11-18T06:34:51Z r12-j16-c-comp-off VALID ins_u=170.6k cyc_tot=478.5k busy=59.9% rate=11202.3/11200 p99=956us 
+2026-11-18T06:35:29Z r12-j16-c-comp-off-A2 VALID ins_u=170.5k cyc_tot=470.5k busy=58.7% rate=11202.3/11200 p99=1063us 
+2026-11-18T06:35:29Z after 12 rounds: widest cycles_total half-width against its target 0.67% (j16-b comp-off-A2 vs comp-off) <= target 1.50%
+2026-11-18T06:35:29Z origin container 72c291626aca stopped
+2026-11-18T06:35:31Z done: ~/epl/runs/features-2026-11-18/lc-j16/summary.md
+~/epl/runs/features-2026-11-18/lc-j16/summary.md
+2026-11-18T06:35:31Z end lc-j16 rc=0
+2026-11-18T06:35:31Z start 14b (worst case 2464s, 15949s left)
+2026-11-18T06:35:36Z run features-compressor-idle: abba order, rounds 16..32 in blocks of 4 (adaptive True), arms ['comp-off', 'gzip'], shapes ['s-ae']
+2026-11-18T06:35:36Z origin container a8f89dc72627 (epl-origin-1309847) started
+2026-11-18T06:36:15Z r01-s-ae-comp-off VALID ins_u=168.9k cyc_tot=531.2k busy=31.5% rate=5201.1/5200 p99=624us 
+2026-11-18T06:36:54Z r01-s-ae-gzip VALID ins_u=182.4k cyc_tot=554.6k busy=32.8% rate=5201.1/5200 p99=666us 
+2026-11-18T06:37:32Z r02-s-ae-gzip VALID ins_u=182.5k cyc_tot=556.1k busy=32.9% rate=5201.0/5200 p99=652us 
+2026-11-18T06:38:11Z r02-s-ae-comp-off VALID ins_u=168.8k cyc_tot=528.2k busy=31.4% rate=5201.0/5200 p99=641us 
+2026-11-18T06:38:49Z r03-s-ae-comp-off VALID ins_u=168.9k cyc_tot=524.7k busy=31.1% rate=5201.1/5200 p99=639us 
+2026-11-18T06:39:28Z r03-s-ae-gzip VALID ins_u=182.4k cyc_tot=550.7k busy=32.6% rate=5201.0/5200 p99=647us 
+2026-11-18T06:40:06Z r04-s-ae-gzip VALID ins_u=182.6k cyc_tot=551.2k busy=32.7% rate=5201.1/5200 p99=652us 
+2026-11-18T06:40:45Z r04-s-ae-comp-off VALID ins_u=168.9k cyc_tot=523.9k busy=31.1% rate=5201.1/5200 p99=643us 
+2026-11-18T06:41:23Z r05-s-ae-gzip VALID ins_u=182.5k cyc_tot=555.0k busy=32.8% rate=5201.1/5200 p99=645us 
+2026-11-18T06:42:02Z r05-s-ae-comp-off VALID ins_u=168.9k cyc_tot=525.1k busy=31.2% rate=5201.0/5200 p99=622us 
+2026-11-18T06:42:40Z r06-s-ae-comp-off VALID ins_u=168.8k cyc_tot=521.3k busy=30.8% rate=5201.0/5200 p99=643us 
+2026-11-18T06:43:19Z r06-s-ae-gzip VALID ins_u=182.5k cyc_tot=558.3k busy=33.0% rate=5201.1/5200 p99=658us 
+2026-11-18T06:43:57Z r07-s-ae-comp-off VALID ins_u=168.8k cyc_tot=526.7k busy=31.2% rate=5201.0/5200 p99=643us 
+2026-11-18T06:44:36Z r07-s-ae-gzip VALID ins_u=182.5k cyc_tot=557.8k busy=32.9% rate=5201.1/5200 p99=661us 
+2026-11-18T06:45:14Z r08-s-ae-gzip VALID ins_u=182.4k cyc_tot=559.3k busy=33.0% rate=5201.1/5200 p99=681us 
+2026-11-18T06:45:53Z r08-s-ae-comp-off VALID ins_u=168.8k cyc_tot=528.4k busy=31.3% rate=5201.1/5200 p99=620us 
+2026-11-18T06:46:31Z r09-s-ae-comp-off VALID ins_u=169.0k cyc_tot=536.2k busy=31.9% rate=5201.0/5200 p99=625us 
+2026-11-18T06:47:10Z r09-s-ae-gzip VALID ins_u=182.4k cyc_tot=550.5k busy=32.5% rate=5201.1/5200 p99=675us 
+2026-11-18T06:47:48Z r10-s-ae-gzip VALID ins_u=182.5k cyc_tot=554.2k busy=32.7% rate=5201.0/5200 p99=732us 
+2026-11-18T06:48:27Z r10-s-ae-comp-off VALID ins_u=169.0k cyc_tot=529.5k busy=31.6% rate=5201.1/5200 p99=644us 
+2026-11-18T06:49:05Z r11-s-ae-gzip VALID ins_u=182.5k cyc_tot=550.5k busy=32.6% rate=5201.0/5200 p99=652us 
+2026-11-18T06:49:44Z r11-s-ae-comp-off VALID ins_u=168.9k cyc_tot=524.4k busy=31.2% rate=5201.1/5200 p99=628us 
+2026-11-18T06:50:22Z r12-s-ae-comp-off VALID ins_u=168.7k cyc_tot=527.0k busy=31.1% rate=5201.0/5200 p99=627us 
+2026-11-18T06:51:01Z r12-s-ae-gzip VALID ins_u=182.5k cyc_tot=561.1k busy=33.2% rate=5201.0/5200 p99=668us 
+2026-11-18T06:51:39Z r13-s-ae-comp-off VALID ins_u=168.9k cyc_tot=529.3k busy=31.5% rate=5201.0/5200 p99=602us 
+2026-11-18T06:52:18Z r13-s-ae-gzip VALID ins_u=182.6k cyc_tot=562.6k busy=33.3% rate=5201.0/5200 p99=657us 
+2026-11-18T06:52:56Z r14-s-ae-gzip VALID ins_u=182.5k cyc_tot=551.8k busy=32.5% rate=5201.1/5200 p99=736us 
+2026-11-18T06:53:34Z r14-s-ae-comp-off VALID ins_u=168.9k cyc_tot=530.0k busy=31.5% rate=5201.1/5200 p99=628us 
+2026-11-18T06:54:13Z r15-s-ae-gzip VALID ins_u=182.6k cyc_tot=557.6k busy=33.0% rate=5201.0/5200 p99=672us 
+2026-11-18T06:54:51Z r15-s-ae-comp-off VALID ins_u=168.8k cyc_tot=535.5k busy=31.8% rate=5201.1/5200 p99=605us 
+2026-11-18T06:55:30Z r16-s-ae-comp-off VALID ins_u=168.8k cyc_tot=523.5k busy=31.0% rate=5201.1/5200 p99=618us 
+2026-11-18T06:56:08Z r16-s-ae-gzip VALID ins_u=182.5k cyc_tot=556.8k busy=32.9% rate=5201.0/5200 p99=651us 
+2026-11-18T06:56:08Z after 16 rounds: widest cycles_total half-width against its target 0.56% (s-ae gzip vs comp-off) <= target 0.80%
+2026-11-18T06:56:09Z origin container a8f89dc72627 stopped
+2026-11-18T06:56:10Z done: ~/epl/runs/features-2026-11-18/14b/summary.md
+~/epl/runs/features-2026-11-18/14b/summary.md
+2026-11-18T06:56:10Z end 14b rc=0
+2026-11-18T06:56:10Z start lc-sfh (worst case 1848s, 14710s left)
+2026-11-18T06:56:15Z run features-lc-sfh: abba order, rounds 12..12 in blocks of 12 (adaptive False), arms ['base', 'base-A2'], shapes ['s-9600', 'fh-13600']
+2026-11-18T06:56:15Z origin container 089f26afa305 (epl-origin-1313117) started
+2026-11-18T06:56:54Z r01-s-9600-base VALID ins_u=163.4k cyc_tot=471.6k busy=50.8% rate=9601.9/9600 p99=847us 
+2026-11-18T06:57:33Z r01-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=466.0k busy=50.2% rate=9601.9/9600 p99=716us 
+2026-11-18T06:58:11Z r01-fh-13600-base VALID ins_u=164.6k cyc_tot=265.0k busy=40.6% rate=13602.6/13600 p99=396us 
+2026-11-18T06:58:49Z r01-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=266.2k busy=40.7% rate=13602.7/13600 p99=420us 
+2026-11-18T06:59:28Z r02-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=476.3k busy=51.2% rate=9602.0/9600 p99=988us 
+2026-11-18T07:00:06Z r02-s-9600-base VALID ins_u=163.5k cyc_tot=472.7k busy=51.0% rate=9601.9/9600 p99=699us 
+2026-11-18T07:00:44Z r02-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=265.9k busy=40.8% rate=13602.6/13600 p99=387us 
+2026-11-18T07:01:22Z r02-fh-13600-base VALID ins_u=164.6k cyc_tot=264.9k busy=40.6% rate=13602.6/13600 p99=408us 
+2026-11-18T07:02:01Z r03-s-9600-base VALID ins_u=163.4k cyc_tot=473.5k busy=51.0% rate=9601.8/9600 p99=781us 
+2026-11-18T07:02:39Z r03-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=481.7k busy=51.9% rate=9601.9/9600 p99=815us 
+2026-11-18T07:03:17Z r03-fh-13600-base VALID ins_u=164.5k cyc_tot=263.5k busy=40.3% rate=13602.7/13600 p99=419us 
+2026-11-18T07:03:56Z r03-fh-13600-base-A2 VALID ins_u=164.5k cyc_tot=263.8k busy=40.4% rate=13602.6/13600 p99=420us 
+2026-11-18T07:04:34Z r04-s-9600-base-A2 VALID ins_u=163.3k cyc_tot=471.4k busy=50.6% rate=9601.8/9600 p99=1477us 
+2026-11-18T07:05:12Z r04-s-9600-base VALID ins_u=163.5k cyc_tot=468.2k busy=50.4% rate=9601.9/9600 p99=682us 
+2026-11-18T07:05:51Z r04-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=264.3k busy=40.5% rate=13602.6/13600 p99=421us 
+2026-11-18T07:06:29Z r04-fh-13600-base VALID ins_u=164.6k cyc_tot=264.5k busy=40.5% rate=13602.7/13600 p99=418us 
+2026-11-18T07:07:07Z r05-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=483.0k busy=52.0% rate=9601.8/9600 p99=752us 
+2026-11-18T07:07:46Z r05-s-9600-base VALID ins_u=163.4k cyc_tot=473.4k busy=51.0% rate=9602.0/9600 p99=730us 
+2026-11-18T07:08:24Z r05-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=266.4k busy=40.8% rate=13602.6/13600 p99=406us 
+2026-11-18T07:09:02Z r05-fh-13600-base VALID ins_u=164.5k cyc_tot=268.6k busy=41.1% rate=13602.7/13600 p99=444us 
+2026-11-18T07:09:41Z r06-s-9600-base VALID ins_u=163.4k cyc_tot=473.3k busy=51.0% rate=9601.9/9600 p99=1000us 
+2026-11-18T07:10:19Z r06-s-9600-base-A2 VALID ins_u=163.5k cyc_tot=473.0k busy=50.9% rate=9601.8/9600 p99=696us 
+2026-11-18T07:10:57Z r06-fh-13600-base VALID ins_u=164.6k cyc_tot=269.7k busy=41.3% rate=13602.6/13600 p99=415us 
+2026-11-18T07:11:35Z r06-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=264.2k busy=40.5% rate=13602.6/13600 p99=404us 
+2026-11-18T07:12:14Z r07-s-9600-base VALID ins_u=163.2k cyc_tot=465.6k busy=50.0% rate=9601.9/9600 p99=1638us 
+2026-11-18T07:12:52Z r07-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=472.4k busy=50.9% rate=9602.0/9600 p99=806us 
+2026-11-18T07:13:31Z r07-fh-13600-base VALID ins_u=164.5k cyc_tot=264.9k busy=40.6% rate=13602.7/13600 p99=437us 
+2026-11-18T07:14:09Z r07-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=264.4k busy=40.6% rate=13602.7/13600 p99=391us 
+2026-11-18T07:14:47Z r08-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=479.7k busy=51.6% rate=9602.0/9600 p99=874us 
+2026-11-18T07:15:25Z r08-s-9600-base VALID ins_u=163.4k cyc_tot=473.0k busy=51.0% rate=9601.9/9600 p99=693us 
+2026-11-18T07:16:04Z r08-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=264.2k busy=40.5% rate=13602.6/13600 p99=436us 
+2026-11-18T07:16:42Z r08-fh-13600-base VALID ins_u=164.6k cyc_tot=265.8k busy=40.8% rate=13602.6/13600 p99=396us 
+2026-11-18T07:17:20Z r09-s-9600-base VALID ins_u=163.3k cyc_tot=469.6k busy=50.5% rate=9601.9/9600 p99=702us 
+2026-11-18T07:17:59Z r09-s-9600-base-A2 VALID ins_u=163.5k cyc_tot=468.7k busy=50.4% rate=9601.9/9600 p99=1507us 
+2026-11-18T07:18:37Z r09-fh-13600-base VALID ins_u=164.5k cyc_tot=268.3k busy=41.0% rate=13602.7/13600 p99=428us 
+2026-11-18T07:19:15Z r09-fh-13600-base-A2 VALID ins_u=164.5k cyc_tot=266.4k busy=40.8% rate=13602.7/13600 p99=419us 
+2026-11-18T07:19:54Z r10-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=468.1k busy=50.4% rate=9601.9/9600 p99=951us 
+2026-11-18T07:20:32Z r10-s-9600-base VALID ins_u=163.4k cyc_tot=470.3k busy=50.6% rate=9602.0/9600 p99=918us 
+2026-11-18T07:21:11Z r10-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=267.3k busy=41.0% rate=13602.7/13600 p99=422us 
+2026-11-18T07:21:49Z r10-fh-13600-base VALID ins_u=164.6k cyc_tot=264.5k busy=40.5% rate=13602.7/13600 p99=401us 
+2026-11-18T07:22:27Z r11-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=472.2k busy=50.9% rate=9601.9/9600 p99=754us 
+2026-11-18T07:23:05Z r11-s-9600-base VALID ins_u=163.5k cyc_tot=469.7k busy=50.6% rate=9601.9/9600 p99=748us 
+2026-11-18T07:23:44Z r11-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=264.0k busy=40.4% rate=13602.6/13600 p99=408us 
+2026-11-18T07:24:22Z r11-fh-13600-base VALID ins_u=164.6k cyc_tot=264.4k busy=40.5% rate=13602.7/13600 p99=414us 
+2026-11-18T07:25:00Z r12-s-9600-base VALID ins_u=163.5k cyc_tot=476.4k busy=51.3% rate=9602.0/9600 p99=701us 
+2026-11-18T07:25:39Z r12-s-9600-base-A2 VALID ins_u=163.4k cyc_tot=473.7k busy=50.9% rate=9601.9/9600 p99=716us 
+2026-11-18T07:26:17Z r12-fh-13600-base VALID ins_u=164.6k cyc_tot=263.3k busy=40.3% rate=13602.7/13600 p99=430us 
+2026-11-18T07:26:55Z r12-fh-13600-base-A2 VALID ins_u=164.6k cyc_tot=268.2k busy=41.1% rate=13602.8/13600 p99=398us 
+2026-11-18T07:26:55Z after 12 rounds: widest cycles_total half-width against its target 0.64% (s-9600 base-A2 vs base) <= target 1.50%
+2026-11-18T07:26:56Z origin container 089f26afa305 stopped
+2026-11-18T07:26:57Z done: ~/epl/runs/features-2026-11-18/lc-sfh/summary.md
+~/epl/runs/features-2026-11-18/lc-sfh/summary.md
+2026-11-18T07:26:57Z end lc-sfh rc=0
+2026-11-18T07:26:57Z queue done; tables: python3 ~/epl/harness-week5-s2/examples/settings-matrix/features_table2.py ~/epl/runs/features-2026-11-18 > ~/epl/runs/features-2026-11-18/tables.md

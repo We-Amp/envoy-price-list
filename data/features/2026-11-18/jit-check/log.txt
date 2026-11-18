@@ -1,0 +1,13 @@
+2026-11-17T23:54:47Z run features-jit-check: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['lua-header', 'wasm-header'], shapes ['s-wu5', 's-wu30']
+2026-11-17T23:54:47Z origin container 00ba769858d4 (epl-origin-1235221) started
+2026-11-17T23:55:26Z r01-s-wu5-lua-header VALID ins_u=195.4k cyc_tot=578.2k busy=33.9% rate=5201.1/5200 p99=803us 
+2026-11-17T23:56:04Z r01-s-wu5-wasm-header VALID ins_u=203.1k cyc_tot=612.8k busy=35.9% rate=5201.2/5200 p99=849us 
+2026-11-17T23:57:08Z r01-s-wu30-lua-header VALID ins_u=195.2k cyc_tot=591.4k busy=34.7% rate=5201.0/5200 p99=885us 
+2026-11-17T23:58:12Z r01-s-wu30-wasm-header VALID ins_u=202.9k cyc_tot=607.0k busy=35.5% rate=5201.2/5200 p99=873us 
+2026-11-17T23:58:50Z r02-s-wu5-wasm-header VALID ins_u=203.1k cyc_tot=611.7k busy=35.9% rate=5201.2/5200 p99=822us 
+2026-11-17T23:59:28Z r02-s-wu5-lua-header VALID ins_u=195.4k cyc_tot=584.0k busy=34.4% rate=5201.1/5200 p99=761us 
+2026-11-18T00:00:32Z r02-s-wu30-wasm-header VALID ins_u=203.2k cyc_tot=606.3k busy=35.6% rate=5201.2/5200 p99=769us 
+2026-11-18T00:01:36Z r02-s-wu30-lua-header VALID ins_u=195.2k cyc_tot=581.2k busy=34.1% rate=5201.0/5200 p99=751us 
+2026-11-18T00:01:36Z after 2 rounds: s-wu5 wasm-header vs lua-header: not enough pairs
+2026-11-18T00:01:36Z origin container 00ba769858d4 stopped
+2026-11-18T00:01:37Z done: ~/epl/runs/features-2026-11-18/jit-check/summary.md

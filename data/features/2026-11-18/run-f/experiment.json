@@ -1,0 +1,535 @@
+{
+ "aa": {
+  "max_half_width_pct": {
+   "cycles_total": 1.0,
+   "instructions_u": 0.5
+  },
+  "metrics": [
+   "instructions_u",
+   "cycles_total"
+  ]
+ },
+ "abort_after_invalid": 6,
+ "adaptive": true,
+ "alpha": 0.05,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "absent": true,
+     "label": "no compressor stats",
+     "stat": "http.ingress_http.compressor.*"
+    },
+    {
+     "absent": true,
+     "label": "no Lua stats",
+     "stat": "http.ingress_http.lua.*"
+    },
+    {
+     "absent": true,
+     "label": "no Wasm stats",
+     "stat": "wasm.*"
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 2118.0,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 2118.0,
+      "frozen_min": 2118.0,
+      "offset": 0
+     },
+     "shape": "fh",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 4354.020881192,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 4354.08354119498,
+      "frozen_min": 4353.958224994003,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent upstream per request = filter-off +0",
+     "per_request": 157.99999996364102,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 158.0015158056315,
+      "frozen_min": 157.9984840489326,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    }
+   ],
+   "name": "filter-off",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.lua.errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 5,
+     "label": "Lua VMs",
+     "scope": "leg",
+     "stat": "lua.lua_vm_count",
+     "tol_abs": 0
+    },
+    {
+     "label": "two script executions per request completed over the leg (request and response)",
+     "per_request": 2.0,
+     "scope": "leg",
+     "stat": "http.ingress_http.lua.executions",
+     "tol": 0.002
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 2118.0,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 2118.0,
+      "frozen_min": 2118.0,
+      "offset": 0
+     },
+     "shape": "fh",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 4354.020881192,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 4354.08354119498,
+      "frozen_min": 4353.958224994003,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent upstream per request = filter-off +0",
+     "per_request": 157.99999996364102,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 158.0015158056315,
+      "frozen_min": 157.9984840489326,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    }
+   ],
+   "name": "lua-empty",
+   "settings": {
+    "lua": {
+     "inline": "function envoy_on_request(request_handle)\nend\n\nfunction envoy_on_response(response_handle)\nend\n"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.lua.errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 5,
+     "label": "Lua VMs",
+     "scope": "leg",
+     "stat": "lua.lua_vm_count",
+     "tol_abs": 0
+    },
+    {
+     "label": "two script executions per request completed over the leg (request and response)",
+     "per_request": 2.0,
+     "scope": "leg",
+     "stat": "http.ingress_http.lua.executions",
+     "tol": 0.002
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +17",
+     "per_request": 2135.0,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 2118.0,
+      "frozen_min": 2118.0,
+      "offset": 17
+     },
+     "shape": "fh",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +17",
+     "per_request": 4371.020881192,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 4354.08354119498,
+      "frozen_min": 4353.958224994003,
+      "offset": 17
+     },
+     "shape": "s",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent upstream per request = filter-off +17",
+     "per_request": 174.99999996364102,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 158.0015158056315,
+      "frozen_min": 157.9984840489326,
+      "offset": 17
+     },
+     "shape": "s",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    }
+   ],
+   "name": "lua-header",
+   "settings": {
+    "lua": {
+     "inline": "function envoy_on_request(request_handle)\n  local path = request_handle:headers():get(\":path\")\n  request_handle:headers():add(\"x-epl-filter\", \"1\")\nend\n\nfunction envoy_on_response(response_handle)\n  response_handle:headers():add(\"x-epl-filter\", \"1\")\nend\n"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "equals": 6,
+     "label": "Wasm VMs active",
+     "scope": "leg",
+     "stat": "wasm.envoy.wasm.runtime.v8.active",
+     "tol_abs": 0
+    },
+    {
+     "equals": 7,
+     "label": "Wasm VMs created",
+     "scope": "leg",
+     "stat": "wasm.envoy.wasm.runtime.v8.created",
+     "tol_abs": 0
+    },
+    {
+     "equals": 6,
+     "scope": "leg",
+     "stat": "wasm.wasm_vm_count",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "wasm.epl.vm_reload_failure",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "wasm.remote_load_fetch_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 2118.0,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 2118.0,
+      "frozen_min": 2118.0,
+      "offset": 0
+     },
+     "shape": "fh",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +0",
+     "per_request": 4354.020881192,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 4354.08354119498,
+      "frozen_min": 4353.958224994003,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent upstream per request = filter-off +0",
+     "per_request": 157.99999996364102,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 158.0015158056315,
+      "frozen_min": 157.9984840489326,
+      "offset": 0
+     },
+     "shape": "s",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    }
+   ],
+   "name": "wasm-empty",
+   "settings": {
+    "wasm": {
+     "file": "examples/settings-matrix/features2/wasm/out/epl_wasm_empty.wasm",
+     "runtime": "envoy.wasm.runtime.v8",
+     "sha256": "eba9d2c6dde08178974f302b1a71eb6f0a92712e11372892ede686e2f8f62eea"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "equals": 6,
+     "label": "Wasm VMs active",
+     "scope": "leg",
+     "stat": "wasm.envoy.wasm.runtime.v8.active",
+     "tol_abs": 0
+    },
+    {
+     "equals": 7,
+     "label": "Wasm VMs created",
+     "scope": "leg",
+     "stat": "wasm.envoy.wasm.runtime.v8.created",
+     "tol_abs": 0
+    },
+    {
+     "equals": 6,
+     "scope": "leg",
+     "stat": "wasm.wasm_vm_count",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "wasm.epl.vm_reload_failure",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "wasm.remote_load_fetch_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +17",
+     "per_request": 2135.0,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 2118.0,
+      "frozen_min": 2118.0,
+      "offset": 17
+     },
+     "shape": "fh",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent downstream per request = filter-off +17",
+     "per_request": 4371.020881192,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 4354.08354119498,
+      "frozen_min": 4353.958224994003,
+      "offset": 17
+     },
+     "shape": "s",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    },
+    {
+     "label": "bytes sent upstream per request = filter-off +17",
+     "per_request": 174.99999996364102,
+     "ref": {
+      "arm": "filter-off",
+      "frozen_from_legs": 4,
+      "frozen_max": 158.0015158056315,
+      "frozen_min": 157.9984840489326,
+      "offset": 17
+     },
+     "shape": "s",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol_abs": 3
+    }
+   ],
+   "name": "wasm-header",
+   "settings": {
+    "wasm": {
+     "file": "examples/settings-matrix/features2/wasm/out/epl_wasm_header.wasm",
+     "runtime": "envoy.wasm.runtime.v8",
+     "sha256": "822149f5052d3a72ee60d218f2389683c6c4b81b37b575186b47daa31f4f86e0"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "filter-off",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "collector": {
+  "image": null,
+  "metrics_port": null,
+  "port": 4317
+ },
+ "comparisons": "base",
+ "confirmatory": [
+  [
+   "lua-header",
+   "filter-off"
+  ],
+  [
+   "wasm-header",
+   "filter-off"
+  ]
+ ],
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "floor_arm": "base-A2",
+ "floor_from": "~/epl/runs/features-2026-11-18/aa-2/results.json",
+ "hop2": {
+  "admin_port": 9931,
+  "listener_port": 10120
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_cpu_busy_pct": 5.0,
+  "max_load1": 8.0,
+  "poll_s": 5,
+  "procs": [
+   "(^|/)envoy[^/ ]*( |$)",
+   "(^|/)nighthawk_client( |$)",
+   "(^|/)h2load( |$)",
+   "(^|/)wrk2?( |$)",
+   "(^|/)fortio( |$)"
+  ],
+  "sample_s": 1.0,
+  "timeout_s": 600
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "conn_probe": true,
+  "lead_in_s": 2,
+  "perf": [
+   "/usr/lib/linux-tools/6.8.0-149-generic/perf"
+  ],
+  "window_s": 20
+ },
+ "min_pairs": 6,
+ "name": "features-run-f",
+ "order": "auto",
+ "order_seed": 22,
+ "origin": {
+  "authz_grpc_port": null,
+  "authz_port": null,
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "record_hostname": false,
+ "rerun_invalid": 1,
+ "rounds": 20,
+ "rounds_block": 10,
+ "rounds_max": 30,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200,
+   "stop_target_half_width_pct": 0.8
+  },
+  {
+   "body_bytes": 128,
+   "kind": "direct_headers",
+   "name": "fh",
+   "path": "/fh",
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000,
+   "stop_target_half_width_pct": 1.5
+  }
+ ],
+ "stop": {
+  "rows": "confirmatory",
+  "target_half_width_pct": 1.5
+ },
+ "validity": {
+  "max_non2xx": 0,
+  "max_overflow": 0,
+  "min_client_headroom": 0.25,
+  "rate_tolerance": 0.01
+ },
+ "workdir": "~/epl/runs/features-2026-11-18"
+}

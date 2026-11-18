@@ -1,0 +1,37 @@
+2026-11-18T06:35:36Z run features-compressor-idle: abba order, rounds 16..32 in blocks of 4 (adaptive True), arms ['comp-off', 'gzip'], shapes ['s-ae']
+2026-11-18T06:35:36Z origin container a8f89dc72627 (epl-origin-1309847) started
+2026-11-18T06:36:15Z r01-s-ae-comp-off VALID ins_u=168.9k cyc_tot=531.2k busy=31.5% rate=5201.1/5200 p99=624us 
+2026-11-18T06:36:54Z r01-s-ae-gzip VALID ins_u=182.4k cyc_tot=554.6k busy=32.8% rate=5201.1/5200 p99=666us 
+2026-11-18T06:37:32Z r02-s-ae-gzip VALID ins_u=182.5k cyc_tot=556.1k busy=32.9% rate=5201.0/5200 p99=652us 
+2026-11-18T06:38:11Z r02-s-ae-comp-off VALID ins_u=168.8k cyc_tot=528.2k busy=31.4% rate=5201.0/5200 p99=641us 
+2026-11-18T06:38:49Z r03-s-ae-comp-off VALID ins_u=168.9k cyc_tot=524.7k busy=31.1% rate=5201.1/5200 p99=639us 
+2026-11-18T06:39:28Z r03-s-ae-gzip VALID ins_u=182.4k cyc_tot=550.7k busy=32.6% rate=5201.0/5200 p99=647us 
+2026-11-18T06:40:06Z r04-s-ae-gzip VALID ins_u=182.6k cyc_tot=551.2k busy=32.7% rate=5201.1/5200 p99=652us 
+2026-11-18T06:40:45Z r04-s-ae-comp-off VALID ins_u=168.9k cyc_tot=523.9k busy=31.1% rate=5201.1/5200 p99=643us 
+2026-11-18T06:41:23Z r05-s-ae-gzip VALID ins_u=182.5k cyc_tot=555.0k busy=32.8% rate=5201.1/5200 p99=645us 
+2026-11-18T06:42:02Z r05-s-ae-comp-off VALID ins_u=168.9k cyc_tot=525.1k busy=31.2% rate=5201.0/5200 p99=622us 
+2026-11-18T06:42:40Z r06-s-ae-comp-off VALID ins_u=168.8k cyc_tot=521.3k busy=30.8% rate=5201.0/5200 p99=643us 
+2026-11-18T06:43:19Z r06-s-ae-gzip VALID ins_u=182.5k cyc_tot=558.3k busy=33.0% rate=5201.1/5200 p99=658us 
+2026-11-18T06:43:57Z r07-s-ae-comp-off VALID ins_u=168.8k cyc_tot=526.7k busy=31.2% rate=5201.0/5200 p99=643us 
+2026-11-18T06:44:36Z r07-s-ae-gzip VALID ins_u=182.5k cyc_tot=557.8k busy=32.9% rate=5201.1/5200 p99=661us 
+2026-11-18T06:45:14Z r08-s-ae-gzip VALID ins_u=182.4k cyc_tot=559.3k busy=33.0% rate=5201.1/5200 p99=681us 
+2026-11-18T06:45:53Z r08-s-ae-comp-off VALID ins_u=168.8k cyc_tot=528.4k busy=31.3% rate=5201.1/5200 p99=620us 
+2026-11-18T06:46:31Z r09-s-ae-comp-off VALID ins_u=169.0k cyc_tot=536.2k busy=31.9% rate=5201.0/5200 p99=625us 
+2026-11-18T06:47:10Z r09-s-ae-gzip VALID ins_u=182.4k cyc_tot=550.5k busy=32.5% rate=5201.1/5200 p99=675us 
+2026-11-18T06:47:48Z r10-s-ae-gzip VALID ins_u=182.5k cyc_tot=554.2k busy=32.7% rate=5201.0/5200 p99=732us 
+2026-11-18T06:48:27Z r10-s-ae-comp-off VALID ins_u=169.0k cyc_tot=529.5k busy=31.6% rate=5201.1/5200 p99=644us 
+2026-11-18T06:49:05Z r11-s-ae-gzip VALID ins_u=182.5k cyc_tot=550.5k busy=32.6% rate=5201.0/5200 p99=652us 
+2026-11-18T06:49:44Z r11-s-ae-comp-off VALID ins_u=168.9k cyc_tot=524.4k busy=31.2% rate=5201.1/5200 p99=628us 
+2026-11-18T06:50:22Z r12-s-ae-comp-off VALID ins_u=168.7k cyc_tot=527.0k busy=31.1% rate=5201.0/5200 p99=627us 
+2026-11-18T06:51:01Z r12-s-ae-gzip VALID ins_u=182.5k cyc_tot=561.1k busy=33.2% rate=5201.0/5200 p99=668us 
+2026-11-18T06:51:39Z r13-s-ae-comp-off VALID ins_u=168.9k cyc_tot=529.3k busy=31.5% rate=5201.0/5200 p99=602us 
+2026-11-18T06:52:18Z r13-s-ae-gzip VALID ins_u=182.6k cyc_tot=562.6k busy=33.3% rate=5201.0/5200 p99=657us 
+2026-11-18T06:52:56Z r14-s-ae-gzip VALID ins_u=182.5k cyc_tot=551.8k busy=32.5% rate=5201.1/5200 p99=736us 
+2026-11-18T06:53:34Z r14-s-ae-comp-off VALID ins_u=168.9k cyc_tot=530.0k busy=31.5% rate=5201.1/5200 p99=628us 
+2026-11-18T06:54:13Z r15-s-ae-gzip VALID ins_u=182.6k cyc_tot=557.6k busy=33.0% rate=5201.0/5200 p99=672us 
+2026-11-18T06:54:51Z r15-s-ae-comp-off VALID ins_u=168.8k cyc_tot=535.5k busy=31.8% rate=5201.1/5200 p99=605us 
+2026-11-18T06:55:30Z r16-s-ae-comp-off VALID ins_u=168.8k cyc_tot=523.5k busy=31.0% rate=5201.1/5200 p99=618us 
+2026-11-18T06:56:08Z r16-s-ae-gzip VALID ins_u=182.5k cyc_tot=556.8k busy=32.9% rate=5201.0/5200 p99=651us 
+2026-11-18T06:56:08Z after 16 rounds: widest cycles_total half-width against its target 0.56% (s-ae gzip vs comp-off) <= target 0.80%
+2026-11-18T06:56:09Z origin container a8f89dc72627 stopped
+2026-11-18T06:56:10Z done: ~/epl/runs/features-2026-11-18/14b/summary.md

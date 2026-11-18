@@ -118,6 +118,18 @@ proxy and origin logs, the generated test certificates and the static files the 
 probe that was aborted, and an earlier run of the worker-thread measurement on a different, virtualised
 machine whose A/B the bare-metal run replaced.
 
+## Feature rows (17 and 18 November 2026)
+
+Two sessions of setting rows, each in one directory with its own `README.md` (harness commit, machine, what is
+in it): `features/2026-11-17/` (access log, tracing, external authorization, retries, idle timers, per-CPU
+memory caches) and `features/2026-11-18/` (compression, Lua and Wasm filters, load curves). The protocol is
+described in the harness repository's `README.md` and `RELEASE-RECORD.md`; the configs are in
+`examples/settings-matrix/features/` and `features2/`. Each has `tables.md`. As in the earlier sets, the raw
+Nighthawk output, the proxy and client logs, the socket listings and the smoke runs are left out.
+
+Edits made for publication, in addition to those below: the run label is replaced by `features-2026-11-17` and
+`features-2026-11-18` in run names and paths, and `host_id` is `bench-host`.
+
 ## File formats
 
 A harness run directory holds:

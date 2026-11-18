@@ -1,0 +1,134 @@
+[
+ {
+  "rps": 5200,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.321815625,
+  "client_headroom": 0.7515391649815442,
+  "rate": 5201.0136962517945,
+  "ins_u_k": 171.27859031442028,
+  "cyc_total_k": 544.917332344743,
+  "p99_us": 616.4789999999999,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 20119671,
+   "cluster.origin.upstream_rq_total": 104246,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 1734148845,
+   "http.ingress_http.downstream_rq_2xx": 104246,
+   "http.ingress_http.downstream_rq_completed": 104246,
+   "http.ingress_http.downstream_rq_total": 104246,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 399.63100000000003,
+  "worker_max_share": 0.2515,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0113,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 5.7145,
+    "busy_of_set": 0.01782,
+    "cpus_used": 0.2852,
+    "cpu_us_per_request": 54.817
+   }
+  },
+  "evidence_failed": []
+ },
+ {
+  "rps": 7600,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.4364627499999999,
+  "client_headroom": 0.7350223887866852,
+  "rate": 7601.514033168407,
+  "ins_u_k": 171.08132569058017,
+  "cyc_total_k": 510.83807049573477,
+  "p99_us": 675.1030000000001,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 29399883,
+   "cluster.origin.upstream_rq_total": 152329,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 2534009550,
+   "http.ingress_http.downstream_rq_2xx": 152330,
+   "http.ingress_http.downstream_rq_completed": 152330,
+   "http.ingress_http.downstream_rq_total": 152329,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 387.295,
+  "worker_max_share": 0.2506,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0101,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 8.0945,
+    "busy_of_set": 0.02525,
+    "cpus_used": 0.404,
+    "cpu_us_per_request": 53.138
+   }
+  },
+  "evidence_failed": []
+ },
+ {
+  "rps": 10400,
+  "valid": true,
+  "reasons": [],
+  "sut_busy": 0.562583625,
+  "client_headroom": 0.7265580267199074,
+  "rate": 10401.972174792192,
+  "ins_u_k": 170.66909001181463,
+  "cyc_total_k": 483.9560185374722,
+  "p99_us": 865.343,
+  "stats": {
+   "cluster.origin.upstream_cx_tx_bytes_total": 40233745,
+   "cluster.origin.upstream_rq_total": 208466,
+   "http.ingress_http.downstream_cx_tx_bytes_total": 3467815275,
+   "http.ingress_http.downstream_rq_2xx": 208464,
+   "http.ingress_http.downstream_rq_completed": 208464,
+   "http.ingress_http.downstream_rq_total": 208466,
+   "listener.admin.downstream_cx_total": 1,
+   "listener.admin.main_thread.downstream_cx_total": 1
+  },
+  "hop2_busy": null,
+  "pending_total": 16,
+  "access_log_lines": null,
+  "p50_us": 408.031,
+  "worker_max_share": 0.252,
+  "hop2_worker_max_share": null,
+  "hop2_worker_max_busy": null,
+  "sut_foreign_cpus": 0.0034,
+  "side_services": {
+   "origin": {
+    "want": "32-39,72-79",
+    "cpuset": "32-39,72-79",
+    "cpuset_ok": true,
+    "pids": 9,
+    "pids_ok": true,
+    "bad_pids": [],
+    "cpu_s": 9.1653,
+    "busy_of_set": 0.02859,
+    "cpus_used": 0.4575,
+    "cpu_us_per_request": 43.966
+   }
+  },
+  "evidence_failed": []
+ }
+]

@@ -391,6 +391,23 @@ The tables are in `data/release-record/2026-11-16/tables-a.md`, `tables-c.md` an
 Harness changes for this session: `confirmatory` rows and `stop.rows`, `measure.perf_events` and
 `measure.perf_event_groups`, and `shapes[].lead_in_s` (see "Config").
 
+### Feature rows (17 and 18 November 2026)
+
+Two further sessions on the same machine measured the cost of more settings: the access log (text and JSON,
+also with 16 workers), tracing, external authorization, retries, idle timers and per-CPU memory caches on 17
+November; and compression (gzip, brotli, zstd), Lua and Wasm filters and load-curve runs on 18 November. Both
+sessions state their rows, validity gates and stop rules in the config, check per-arm evidence offline
+(`epl evidence-check`) and write their tables with Holm adjustment over the named rows. The method is the one
+described in this README; the fixed-protocol rules are those of [RELEASE-RECORD.md](RELEASE-RECORD.md).
+
+| Session | Configs | Data |
+|---|---|---|
+| 17 November: access log, tracing, ext-authz, run S with its A/A | `examples/settings-matrix/features/` (written by `features.py`, driven by `run-session-1.sh`) | `data/features/2026-11-17/` |
+| 18 November: compression, Lua and Wasm, load curves, A/A | `examples/settings-matrix/features2/` (written by `features2.py`, driven by `run-session-2.sh`) | `data/features/2026-11-18/` |
+
+The tables are `tables.md` in each data directory (`features_table.py`, `features_table2.py`). The Wasm filters
+and the Lua scripts are under `examples/settings-matrix/features2/`.
+
 ## License
 
 Copyright 2026 We-Amp B.V.

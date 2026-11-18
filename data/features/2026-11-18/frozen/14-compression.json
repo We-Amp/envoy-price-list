@@ -1,0 +1,327 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/features-2026-11-18",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,minor-faults"
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8
+ },
+ "rounds": 16,
+ "rounds_block": 8,
+ "rounds_max": 24,
+ "stop": {
+  "target_half_width_pct": 1.5,
+  "rows": "confirmatory"
+ },
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "order_seed": 22,
+ "name": "features-compression",
+ "base_arm": "comp-off",
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "comp-off",
+   "evidence": [
+    {
+     "stat": "http.ingress_http.compressor.*",
+     "absent": true,
+     "label": "no compressor stats"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "per": "field:responses_raw",
+     "min": 4096,
+     "shape": [
+      "j4",
+      "s-ae"
+     ],
+     "label": "bytes sent downstream per request >= the 4096-byte body (the origin did not compress)"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "per": "field:responses_raw",
+     "min": 16384,
+     "shape": [
+      "j16",
+      "j16-a",
+      "j16-b",
+      "j16-c"
+     ],
+     "label": "bytes sent downstream per request >= the 16384-byte body (the origin did not compress)"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "gzip",
+   "settings": {
+    "compressor": {
+     "library": "gzip"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes",
+     "per_request": 4096,
+     "tol": 0.005,
+     "shape": "j4"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.total_uncompressed_bytes",
+     "per_request": 16384,
+     "tol": 0.005,
+     "shape": "j16"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 4266.002515174191,
+      "frozen_max": 4266.093375184485
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j16",
+     "per_request": 4266.047945179338
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.gzip.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 1363.9869183258527,
+      "frozen_max": 1364.0
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j4",
+     "per_request": 1363.9934591629262
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "brotli",
+   "settings": {
+    "compressor": {
+     "library": "brotli"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.compressed",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.not_compressed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_uncompressed_bytes",
+     "per_request": 4096,
+     "tol": 0.005,
+     "shape": "j4"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_uncompressed_bytes",
+     "per_request": 16384,
+     "tol": 0.005,
+     "shape": "j16"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 4250.0,
+      "frozen_max": 4250.088346567995
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j16",
+     "per_request": 4250.044173283997
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 1351.012957616796,
+      "frozen_max": 1351.0129599785118
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j4",
+     "per_request": 1351.012958797654
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "zstd",
+   "settings": {
+    "compressor": {
+     "library": "zstd"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.compressed",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.not_compressed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_uncompressed_bytes",
+     "per_request": 4096,
+     "tol": 0.005,
+     "shape": "j4"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_uncompressed_bytes",
+     "per_request": 16384,
+     "tol": 0.005,
+     "shape": "j16"
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 4291.0,
+      "frozen_max": 4291.0
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j16",
+     "per_request": 4291.0
+    },
+    {
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_compressed_bytes",
+     "ref": {
+      "arm": "self",
+      "frozen_from_legs": 2,
+      "frozen_min": 1365.9868958769018,
+      "frozen_max": 1366.0262047268263
+     },
+     "tol": 0.02,
+     "label": "compressed bytes per request within 2% of the smoke mean",
+     "shape": "j4",
+     "per_request": 1366.006550301864
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "j4",
+   "path": "/j4",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200,
+   "body_file": "examples/settings-matrix/features2/bodies/j4.json",
+   "body_sha256": "735af85a6e9bf7eeb942549ba35b0e9372471446da1ffa01a6e67253b81d7e86",
+   "content_type": "application/json",
+   "client_extra_args": [
+    "--request-header",
+    "accept-encoding:gzip, br, zstd"
+   ]
+  },
+  {
+   "name": "j16",
+   "path": "/j16",
+   "kind": "proxied",
+   "body_bytes": 16384,
+   "rps": 4000,
+   "body_file": "examples/settings-matrix/features2/bodies/j16.json",
+   "body_sha256": "89f9f6f45471092984b0fe0d4bf59d7bcdeb1953522d2ac14408da085da2c1ff",
+   "content_type": "application/json",
+   "client_extra_args": [
+    "--request-header",
+    "accept-encoding:gzip, br, zstd"
+   ]
+  }
+ ],
+ "confirmatory": [
+  [
+   "gzip",
+   "comp-off"
+  ],
+  [
+   "brotli",
+   "comp-off"
+  ],
+  [
+   "zstd",
+   "comp-off"
+  ]
+ ],
+ "floor_from": "~/epl/runs/features-2026-11-18/aa-2/results.json",
+ "floor_arm": "base-A2"
+}

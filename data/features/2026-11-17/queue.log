@@ -1,0 +1,1595 @@
+2026-11-17T10:52:08Z smoke start pid 1105103 harness 0.x bb8aa8144e69 week5
+2026-11-17T10:52:08Z calibrate s-w16 log-off at 19200,20800,22400
+origin container ea35332ddf51 (epl-origin-1105117) started
+{"rps": 19200, "valid": true, "reasons": [], "sut_busy": 0.30389203124999997, "client_headroom": 0.6858516724514955, "rate": 19213.062388797054, "ins_u_k": 162.8155983933105, "cyc_total_k": 559.469878503997, "p99_us": 686.0469999999999, "stats": {"cluster.origin.upstream_cx_total": 2, "cluster.origin.upstream_cx_tx_bytes_total": 60878190, "cluster.origin.upstream_rq_total": 385304, "http.ingress_http.downstream_cx_tx_bytes_total": 1677617970, "http.ingress_http.downstream_rq_2xx": 385303, "http.ingress_http.downstream_rq_completed": 385303, "http.ingress_http.downstream_rq_total": 385304, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 397.551, "worker_max_share": 0.0673, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0212, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 16.9801, "busy_of_set": 0.05296, "cpus_used": 0.8474, "cpu_us_per_request": 44.07}}, "evidence_failed": []}
+{"rps": 20800, "valid": true, "reasons": [], "sut_busy": 0.32614721874999997, "client_headroom": 0.6778230240243702, "rate": 20810.438253762073, "ins_u_k": 162.83671207344213, "cyc_total_k": 554.3403450844929, "p99_us": 655.967, "stats": {"cluster.origin.upstream_cx_total": 2, "cluster.origin.upstream_cx_tx_bytes_total": 65928818, "cluster.origin.upstream_rq_total": 417270, "http.ingress_http.downstream_cx_tx_bytes_total": 1816793580, "http.ingress_http.downstream_rq_2xx": 417272, "http.ingress_http.downstream_rq_completed": 417272, "http.ingress_http.downstream_rq_total": 417271, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 396.159, "worker_max_share": 0.0653, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0181, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 17.4008, "busy_of_set": 0.05427, "cpus_used": 0.8684, "cpu_us_per_request": 41.701}}, "evidence_failed": []}
+{"rps": 22400, "valid": true, "reasons": [], "sut_busy": 0.3483438125, "client_headroom": 0.6759981659770626, "rate": 22411.705323726612, "ins_u_k": 162.72312214408475, "cyc_total_k": 550.6275882935812, "p99_us": 650.9110000000001, "stats": {"cluster.origin.upstream_cx_total": 1, "cluster.origin.upstream_cx_tx_bytes_total": 71039170, "cluster.origin.upstream_rq_total": 449614, "http.ingress_http.downstream_cx_tx_bytes_total": 1957619356, "http.ingress_http.downstream_rq_2xx": 449615, "http.ingress_http.downstream_rq_completed": 449615, "http.ingress_http.downstream_rq_total": 449615, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": null, "p50_us": 397.375, "worker_max_share": 0.0643, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0215, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 17.3712, "busy_of_set": 0.05415, "cpus_used": 0.8665, "cpu_us_per_request": 38.636}}, "evidence_failed": []}
+origin container ea35332ddf51 stopped
+2026-11-17T10:54:04Z end calibrate log-off rc=0
+2026-11-17T10:54:04Z calibrate s-w16 log-json at 19200,20800,22400
+origin container ef4e4f3467f1 (epl-origin-1105689) started
+{"rps": 19200, "valid": true, "reasons": [], "sut_busy": 0.317867875, "client_headroom": 0.6948772493122009, "rate": 19210.019845386025, "ins_u_k": 172.61714455211515, "cyc_total_k": 586.5401267873382, "p99_us": 703.839, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 60878348, "cluster.origin.upstream_rq_total": 385304, "filesystem.flushed_by_timer": 2, "filesystem.write_buffered": 385304, "filesystem.write_completed": 37895, "filesystem.write_total_buffered": 3660, "http.ingress_http.downstream_cx_tx_bytes_total": 1677617970, "http.ingress_http.downstream_rq_2xx": 385305, "http.ingress_http.downstream_rq_completed": 385305, "http.ingress_http.downstream_rq_total": 385303, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": 556800, "p50_us": 414.399, "worker_max_share": 0.0637, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0219, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 18.1039, "busy_of_set": 0.05645, "cpus_used": 0.9032, "cpu_us_per_request": 46.986}}, "evidence_failed": []}
+not idle yet: load1=8.16 busy=0.0% procs=0 hot={}
+not idle yet: load1=7.50 busy=0.7% procs=0 hot={'51': 42.0}
+{"rps": 20800, "valid": true, "reasons": [], "sut_busy": 0.3336725625, "client_headroom": 0.6888410440660121, "rate": 20810.65005634273, "ins_u_k": 172.51761812004366, "cyc_total_k": 568.6656144478826, "p99_us": 670.7189999999999, "stats": {"cluster.origin.upstream_cx_total": 1, "cluster.origin.upstream_cx_tx_bytes_total": 65939878, "cluster.origin.upstream_rq_total": 417338, "filesystem.flushed_by_timer": 2, "filesystem.write_buffered": 417340, "filesystem.write_completed": 41064, "filesystem.write_total_buffered": -16836, "http.ingress_http.downstream_cx_tx_bytes_total": 1817094006, "http.ingress_http.downstream_rq_2xx": 417338, "http.ingress_http.downstream_rq_completed": 417338, "http.ingress_http.downstream_rq_total": 417340, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": 603200, "p50_us": 411.247, "worker_max_share": 0.0658, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.008, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 18.1894, "busy_of_set": 0.05672, "cpus_used": 0.9076, "cpu_us_per_request": 43.584}}, "evidence_failed": []}
+not idle yet: load1=8.44 busy=0.1% procs=0 hot={}
+{"rps": 22400, "valid": true, "reasons": [], "sut_busy": 0.35772468749999997, "client_headroom": 0.6690802037212094, "rate": 22411.543202981098, "ins_u_k": 172.4057110326986, "cyc_total_k": 566.6418084771059, "p99_us": 752.095, "stats": {"cluster.origin.upstream_cx_tx_bytes_total": 71051810, "cluster.origin.upstream_rq_total": 449694, "filesystem.flushed_by_timer": 2, "filesystem.write_buffered": 449694, "filesystem.write_completed": 44207, "filesystem.write_total_buffered": 4392, "http.ingress_http.downstream_cx_tx_bytes_total": 1957985092, "http.ingress_http.downstream_rq_2xx": 449694, "http.ingress_http.downstream_rq_completed": 449694, "http.ingress_http.downstream_rq_total": 449695, "listener.admin.downstream_cx_total": 1, "listener.admin.main_thread.downstream_cx_total": 1}, "hop2_busy": null, "pending_total": 16, "access_log_lines": 649600, "p50_us": 416.207, "worker_max_share": 0.0642, "hop2_worker_max_share": null, "hop2_worker_max_busy": null, "sut_foreign_cpus": 0.0225, "side_services": {"origin": {"want": "32-39,72-79", "cpuset": "32-39,72-79", "cpuset_ok": true, "pids": 9, "pids_ok": true, "bad_pids": [], "cpu_s": 17.9778, "busy_of_set": 0.05604, "cpus_used": 0.8967, "cpu_us_per_request": 39.978}}, "evidence_failed": []}
+origin container ef4e4f3467f1 stopped
+2026-11-17T10:56:20Z end calibrate log-json rc=0
+2026-11-17T10:56:20Z start smoke-s1
+2026-11-17T10:56:25Z run features-smoke-s1: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['retry-on', 'idle-off'], shapes ['s', 'fh']
+2026-11-17T10:56:25Z origin container 575a8aa25bb8 (epl-origin-1106353) started
+2026-11-17T10:57:05Z r01-s-retry-on VALID ins_u=165.9k cyc_tot=534.6k busy=31.8% rate=5201.1/5200 p99=636us 
+2026-11-17T10:57:43Z r01-s-idle-off VALID ins_u=156.9k cyc_tot=519.4k busy=30.8% rate=5201.0/5200 p99=612us 
+2026-11-17T10:58:21Z r01-fh-retry-on VALID ins_u=164.7k cyc_tot=268.8k busy=24.4% rate=8001.6/8000 p99=369us 
+2026-11-17T10:59:00Z r01-fh-idle-off VALID ins_u=159.0k cyc_tot=270.9k busy=24.7% rate=8001.6/8000 p99=357us 
+2026-11-17T10:59:38Z r02-s-idle-off VALID ins_u=156.9k cyc_tot=512.4k busy=30.6% rate=5201.1/5200 p99=623us 
+2026-11-17T11:00:17Z r02-s-retry-on VALID ins_u=165.8k cyc_tot=531.2k busy=31.5% rate=5201.1/5200 p99=639us 
+2026-11-17T11:00:55Z r02-fh-idle-off VALID ins_u=159.0k cyc_tot=264.3k busy=24.2% rate=8001.6/8000 p99=355us 
+2026-11-17T11:01:33Z r02-fh-retry-on VALID ins_u=164.8k cyc_tot=271.2k busy=24.7% rate=8001.6/8000 p99=360us 
+2026-11-17T11:01:33Z after 2 rounds: s idle-off vs retry-on: not enough pairs
+2026-11-17T11:01:34Z origin container 575a8aa25bb8 stopped
+2026-11-17T11:01:35Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-s1/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-s1/summary.md
+2026-11-17T11:01:35Z end smoke-s1 rc=0
+2026-11-17T11:01:35Z start smoke-s2
+2026-11-17T11:01:40Z run features-smoke-s2: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['percpu-on', 'base'], shapes ['s', 'fh']
+2026-11-17T11:01:40Z origin container bf75cf3436f4 (epl-origin-1107356) started
+2026-11-17T11:02:19Z r01-s-percpu-on VALID ins_u=147.1k cyc_tot=520.3k busy=30.8% rate=5201.1/5200 p99=626us 
+2026-11-17T11:02:58Z r01-s-base VALID ins_u=163.7k cyc_tot=537.2k busy=31.7% rate=5201.0/5200 p99=624us 
+2026-11-17T11:03:36Z r01-fh-percpu-on VALID ins_u=133.0k cyc_tot=285.2k busy=25.9% rate=8001.6/8000 p99=373us 
+2026-11-17T11:04:15Z r01-fh-base VALID ins_u=164.8k cyc_tot=278.0k busy=25.2% rate=8001.6/8000 p99=367us 
+2026-11-17T11:04:53Z r02-s-base VALID ins_u=163.8k cyc_tot=523.2k busy=31.0% rate=5201.0/5200 p99=618us 
+2026-11-17T11:05:31Z r02-s-percpu-on VALID ins_u=147.2k cyc_tot=525.1k busy=31.4% rate=5201.0/5200 p99=608us 
+2026-11-17T11:06:10Z r02-fh-base VALID ins_u=164.8k cyc_tot=280.4k busy=25.5% rate=8001.6/8000 p99=361us 
+2026-11-17T11:06:48Z r02-fh-percpu-on VALID ins_u=133.0k cyc_tot=285.8k busy=25.9% rate=8001.6/8000 p99=372us 
+2026-11-17T11:06:48Z after 2 rounds: s base vs percpu-on: not enough pairs
+2026-11-17T11:06:48Z origin container bf75cf3436f4 stopped
+2026-11-17T11:06:50Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-s2/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-s2/summary.md
+2026-11-17T11:06:50Z end smoke-s2 rc=0
+2026-11-17T11:06:50Z start smoke-18
+2026-11-17T11:06:55Z run features-smoke-18: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['log-text', 'log-json'], shapes ['s', 'fh']
+2026-11-17T11:06:55Z origin container 35252d33cbec (epl-origin-1108474) started
+2026-11-17T11:07:34Z r01-s-log-text VALID ins_u=170.4k cyc_tot=547.5k busy=32.3% rate=5201.0/5200 p99=668us 
+2026-11-17T11:08:13Z r01-s-log-json VALID ins_u=173.6k cyc_tot=551.6k busy=32.6% rate=5201.1/5200 p99=654us 
+2026-11-17T11:08:51Z r01-fh-log-text VALID ins_u=171.2k cyc_tot=297.3k busy=26.9% rate=8001.7/8000 p99=384us 
+2026-11-17T11:09:30Z r01-fh-log-json VALID ins_u=173.8k cyc_tot=295.4k busy=26.7% rate=8001.6/8000 p99=385us 
+2026-11-17T11:10:08Z r02-s-log-json VALID ins_u=173.6k cyc_tot=550.2k busy=32.5% rate=5201.0/5200 p99=674us 
+2026-11-17T11:10:47Z r02-s-log-text VALID ins_u=170.5k cyc_tot=545.9k busy=32.3% rate=5201.1/5200 p99=654us 
+2026-11-17T11:11:25Z r02-fh-log-json VALID ins_u=173.8k cyc_tot=295.3k busy=26.7% rate=8001.6/8000 p99=378us 
+2026-11-17T11:12:04Z r02-fh-log-text VALID ins_u=171.2k cyc_tot=304.2k busy=27.5% rate=8001.5/8000 p99=386us 
+2026-11-17T11:12:04Z after 2 rounds: s log-json vs log-text: not enough pairs
+2026-11-17T11:12:04Z origin container 35252d33cbec stopped
+2026-11-17T11:12:05Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-18/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-18/summary.md
+2026-11-17T11:12:05Z end smoke-18 rc=0
+2026-11-17T11:12:05Z start smoke-17a
+2026-11-17T11:12:10Z run features-smoke-17a: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['trace-1', 'trace-100'], shapes ['s', 'fh']
+2026-11-17T11:12:10Z origin container 7e6ab17775b2 (epl-origin-1110031) started
+2026-11-17T11:12:11Z collector container cce115733518 (epl-collector-1110031) started
+2026-11-17T11:12:50Z r01-s-trace-1 VALID ins_u=186.5k cyc_tot=557.3k busy=32.8% rate=5201.1/5200 p99=695us 
+2026-11-17T11:13:28Z r01-s-trace-100 VALID ins_u=315.2k cyc_tot=702.1k busy=40.9% rate=5201.1/5200 p99=1081us 
+2026-11-17T11:14:07Z r01-fh-trace-1 VALID ins_u=180.9k cyc_tot=309.6k busy=28.0% rate=8001.6/8000 p99=399us 
+2026-11-17T11:14:45Z r01-fh-trace-100 VALID ins_u=297.1k cyc_tot=440.3k busy=39.3% rate=8001.7/8000 p99=610us 
+2026-11-17T11:15:24Z r02-s-trace-100 VALID ins_u=315.3k cyc_tot=707.0k busy=41.3% rate=5201.1/5200 p99=1059us 
+2026-11-17T11:16:02Z r02-s-trace-1 VALID ins_u=186.6k cyc_tot=556.3k busy=32.8% rate=5201.1/5200 p99=751us 
+2026-11-17T11:16:41Z r02-fh-trace-100 VALID ins_u=296.9k cyc_tot=442.7k busy=39.5% rate=8001.7/8000 p99=765us 
+2026-11-17T11:17:19Z r02-fh-trace-1 VALID ins_u=180.9k cyc_tot=311.0k busy=28.0% rate=8001.6/8000 p99=400us 
+2026-11-17T11:17:19Z after 2 rounds: s trace-100 vs trace-1: not enough pairs
+2026-11-17T11:17:19Z collector container cce115733518 stopped
+2026-11-17T11:17:20Z origin container 7e6ab17775b2 stopped
+2026-11-17T11:17:21Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-17a/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-17a/summary.md
+2026-11-17T11:17:21Z end smoke-17a rc=0
+2026-11-17T11:17:21Z start smoke-17b
+2026-11-17T11:17:26Z run features-smoke-17b: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['trace-10', 'trace-off'], shapes ['s', 'fh']
+2026-11-17T11:17:26Z origin container 8f903b80b6c1 (epl-origin-1111733) started
+2026-11-17T11:17:27Z collector container 005e7061b510 (epl-collector-1111733) started
+2026-11-17T11:18:06Z r01-s-trace-10 VALID ins_u=198.3k cyc_tot=583.4k busy=34.3% rate=5201.1/5200 p99=757us 
+2026-11-17T11:18:44Z r01-s-trace-off VALID ins_u=163.9k cyc_tot=530.2k busy=31.6% rate=5201.1/5200 p99=614us 
+2026-11-17T11:19:23Z r01-fh-trace-10 VALID ins_u=191.5k cyc_tot=330.4k busy=29.8% rate=8001.7/8000 p99=478us 
+2026-11-17T11:20:01Z r01-fh-trace-off VALID ins_u=164.8k cyc_tot=277.7k busy=25.3% rate=8001.7/8000 p99=360us 
+2026-11-17T11:20:40Z r02-s-trace-off VALID ins_u=163.9k cyc_tot=524.7k busy=31.2% rate=5201.0/5200 p99=640us 
+2026-11-17T11:21:18Z r02-s-trace-10 VALID ins_u=198.4k cyc_tot=577.1k busy=34.0% rate=5201.1/5200 p99=755us 
+2026-11-17T11:21:56Z r02-fh-trace-off VALID ins_u=164.8k cyc_tot=284.7k busy=25.9% rate=8001.7/8000 p99=367us 
+2026-11-17T11:22:35Z r02-fh-trace-10 VALID ins_u=191.3k cyc_tot=323.7k busy=29.1% rate=8001.6/8000 p99=496us 
+2026-11-17T11:22:35Z after 2 rounds: s trace-off vs trace-10: not enough pairs
+2026-11-17T11:22:35Z collector container 005e7061b510 stopped
+2026-11-17T11:22:35Z origin container 8f903b80b6c1 stopped
+2026-11-17T11:22:36Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-17b/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-17b/summary.md
+2026-11-17T11:22:36Z end smoke-17b rc=0
+2026-11-17T11:22:36Z start smoke-13
+2026-11-17T11:22:41Z run features-smoke-13: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['authz-http', 'authz-grpc'], shapes ['s', 'fh6']
+2026-11-17T11:22:42Z origin container 3268c8ff715d (epl-origin-1113436) started
+2026-11-17T11:23:21Z r01-s-authz-http VALID ins_u=286.6k cyc_tot=808.0k busy=46.9% rate=5201.0/5200 p99=2232us 
+2026-11-17T11:24:00Z r01-s-authz-grpc VALID ins_u=338.5k cyc_tot=953.0k busy=55.0% rate=5201.1/5200 p99=3099us 
+2026-11-17T11:24:38Z r01-fh6-authz-http VALID ins_u=286.5k cyc_tot=604.6k busy=40.6% rate=6001.2/6000 p99=1050us 
+2026-11-17T11:25:17Z r01-fh6-authz-grpc VALID ins_u=338.5k cyc_tot=723.0k busy=48.1% rate=6001.5/6000 p99=1824us 
+2026-11-17T11:25:56Z r02-s-authz-grpc VALID ins_u=337.9k cyc_tot=945.2k busy=54.6% rate=5201.2/5200 p99=2923us 
+2026-11-17T11:26:34Z r02-s-authz-http VALID ins_u=286.7k cyc_tot=807.3k busy=46.9% rate=5201.0/5200 p99=2170us 
+2026-11-17T11:27:13Z r02-fh6-authz-grpc VALID ins_u=338.5k cyc_tot=734.9k busy=49.0% rate=6001.2/6000 p99=1203us 
+2026-11-17T11:27:51Z r02-fh6-authz-http VALID ins_u=286.7k cyc_tot=611.0k busy=41.1% rate=6001.3/6000 p99=840us 
+2026-11-17T11:27:51Z after 2 rounds: s authz-grpc vs authz-http: not enough pairs
+2026-11-17T11:27:52Z origin container 3268c8ff715d stopped
+2026-11-17T11:27:53Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-13/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-13/summary.md
+2026-11-17T11:27:53Z end smoke-13 rc=0
+2026-11-17T11:27:53Z start smoke-18w
+2026-11-17T11:27:58Z run features-smoke-18w: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['log-text', 'log-json'], shapes ['s-w16']
+2026-11-17T11:27:58Z origin container 8f2f6e31a1f2 (epl-origin-1114930) started
+2026-11-17T11:28:37Z r01-s-w16-log-text VALID ins_u=169.5k cyc_tot=574.3k busy=33.7% rate=20810.7/20800 p99=681us 
+2026-11-17T11:29:16Z r01-s-w16-log-json VALID ins_u=172.6k cyc_tot=576.1k busy=33.8% rate=20810.7/20800 p99=715us 
+2026-11-17T11:29:17Z not idle yet: load1=9.15 busy=0.0% procs=0 hot={}
+2026-11-17T11:30:01Z r02-s-w16-log-json VALID ins_u=172.5k cyc_tot=574.2k busy=33.6% rate=20810.7/20800 p99=772us 
+2026-11-17T11:30:02Z not idle yet: load1=8.86 busy=0.1% procs=0 hot={}
+2026-11-17T11:30:45Z r02-s-w16-log-text VALID ins_u=169.5k cyc_tot=579.8k busy=34.1% rate=20810.7/20800 p99=685us 
+2026-11-17T11:30:45Z after 2 rounds: s-w16 log-json vs log-text: not enough pairs
+2026-11-17T11:30:45Z origin container 8f2f6e31a1f2 stopped
+2026-11-17T11:30:47Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-18w/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-18w/summary.md
+2026-11-17T11:30:47Z end smoke-18w rc=0
+2026-11-17T11:30:47Z start smoke-ref1
+2026-11-17T11:30:52Z run features-smoke-ref1: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['log-off', 'base-A2'], shapes ['s', 'fh']
+2026-11-17T11:30:52Z origin container 1ee24206e7df (epl-origin-1115937) started
+2026-11-17T11:31:31Z r01-s-log-off VALID ins_u=163.9k cyc_tot=526.0k busy=31.2% rate=5201.1/5200 p99=627us 
+2026-11-17T11:32:10Z r01-s-base-A2 VALID ins_u=163.9k cyc_tot=528.8k busy=31.4% rate=5201.0/5200 p99=624us 
+2026-11-17T11:32:48Z r01-fh-log-off VALID ins_u=164.8k cyc_tot=280.6k busy=25.5% rate=8001.5/8000 p99=367us 
+2026-11-17T11:33:26Z r01-fh-base-A2 VALID ins_u=164.7k cyc_tot=281.4k busy=25.6% rate=8001.6/8000 p99=381us 
+2026-11-17T11:34:05Z r02-s-base-A2 VALID ins_u=163.8k cyc_tot=519.3k busy=30.8% rate=5201.0/5200 p99=635us 
+2026-11-17T11:34:43Z r02-s-log-off VALID ins_u=163.8k cyc_tot=529.7k busy=31.5% rate=5201.0/5200 p99=626us 
+2026-11-17T11:35:22Z r02-fh-base-A2 VALID ins_u=164.7k cyc_tot=284.6k busy=25.8% rate=8001.6/8000 p99=371us 
+2026-11-17T11:36:00Z r02-fh-log-off VALID ins_u=164.7k cyc_tot=283.4k busy=25.7% rate=8001.5/8000 p99=373us 
+2026-11-17T11:36:00Z after 2 rounds: s base-A2 vs log-off: not enough pairs
+2026-11-17T11:36:00Z origin container 1ee24206e7df stopped
+2026-11-17T11:36:02Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-ref1/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-ref1/summary.md
+2026-11-17T11:36:02Z end smoke-ref1 rc=0
+2026-11-17T11:36:02Z start smoke-ref2
+2026-11-17T11:36:07Z run features-smoke-ref2: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['authz-off', 'authz-off-A2'], shapes ['s', 'fh6']
+2026-11-17T11:36:07Z origin container 802abc184953 (epl-origin-1117387) started
+2026-11-17T11:36:46Z r01-s-authz-off VALID ins_u=163.8k cyc_tot=525.6k busy=31.2% rate=5201.1/5200 p99=645us 
+2026-11-17T11:37:24Z r01-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=523.1k busy=31.1% rate=5201.0/5200 p99=629us 
+2026-11-17T11:38:03Z r01-fh6-authz-off VALID ins_u=164.8k cyc_tot=295.3k busy=20.6% rate=6001.1/6000 p99=411us 
+2026-11-17T11:38:41Z r01-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=300.4k busy=20.9% rate=6001.2/6000 p99=411us 
+2026-11-17T11:39:20Z r02-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=526.9k busy=31.3% rate=5201.0/5200 p99=635us 
+2026-11-17T11:39:58Z r02-s-authz-off VALID ins_u=163.8k cyc_tot=524.8k busy=31.1% rate=5201.0/5200 p99=621us 
+2026-11-17T11:40:36Z r02-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=295.6k busy=20.6% rate=6001.2/6000 p99=402us 
+2026-11-17T11:41:15Z r02-fh6-authz-off VALID ins_u=164.8k cyc_tot=300.4k busy=20.9% rate=6001.2/6000 p99=411us 
+2026-11-17T11:41:15Z after 2 rounds: s authz-off-A2 vs authz-off: not enough pairs
+2026-11-17T11:41:15Z origin container 802abc184953 stopped
+2026-11-17T11:41:16Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-ref2/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-ref2/summary.md
+2026-11-17T11:41:16Z end smoke-ref2 rc=0
+2026-11-17T11:41:16Z start smoke-ref3
+2026-11-17T11:41:21Z run features-smoke-ref3: abba order, rounds 2..2 in blocks of 2 (adaptive False), arms ['log-off-A2', 'log-off'], shapes ['s-w16']
+2026-11-17T11:41:21Z origin container 83e50092e614 (epl-origin-1118894) started
+2026-11-17T11:42:00Z r01-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=557.0k busy=32.8% rate=20810.9/20800 p99=640us 
+2026-11-17T11:42:39Z r01-s-w16-log-off VALID ins_u=162.8k cyc_tot=556.3k busy=32.7% rate=20810.7/20800 p99=655us 
+2026-11-17T11:42:40Z not idle yet: load1=8.65 busy=0.0% procs=0 hot={}
+2026-11-17T11:43:23Z r02-s-w16-log-off VALID ins_u=162.8k cyc_tot=548.4k busy=32.2% rate=20811.1/20800 p99=685us 
+2026-11-17T11:43:25Z not idle yet: load1=8.24 busy=0.0% procs=0 hot={}
+2026-11-17T11:44:08Z r02-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=554.7k busy=32.6% rate=20810.6/20800 p99=741us 
+2026-11-17T11:44:08Z after 2 rounds: s-w16 log-off vs log-off-A2: not enough pairs
+2026-11-17T11:44:08Z origin container 83e50092e614 stopped
+2026-11-17T11:44:09Z done: ~/epl/runs/features-2026-11-17/smoke/smoke-ref3/summary.md
+~/epl/runs/features-2026-11-17/smoke/smoke-ref3/summary.md
+2026-11-17T11:44:09Z end smoke-ref3 rc=0
+2026-11-17T11:44:09Z evidence-check run-s against the smoke legs
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-base-A2                
+PASS r01-fh-base-A2               
+PASS r02-s-base-A2                
+PASS r02-fh-base-A2               
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+PASS r01-s-retry-on               
+PASS r01-fh-retry-on              
+PASS r02-s-retry-on               
+PASS r02-fh-retry-on              
+PASS r01-s-idle-off               
+PASS r01-fh-idle-off              
+PASS r02-s-idle-off               
+PASS r02-fh-idle-off              
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+PASS r01-s-base                   
+PASS r01-fh-base                  
+PASS r02-s-base                   
+PASS r02-fh-base                  
+PASS r01-s-percpu-on              
+PASS r01-fh-percpu-on             
+PASS r02-s-percpu-on              
+PASS r02-fh-percpu-on             
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:10Z evidence-check 18-access-log against the smoke legs
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+PASS r01-s-log-text               
+PASS r01-fh-log-text              
+PASS r02-s-log-text               
+PASS r02-fh-log-text              
+PASS r01-s-log-json               
+PASS r01-fh-log-json              
+PASS r02-s-log-json               
+PASS r02-fh-log-json              
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+PASS r01-s-w16-log-text           
+PASS r02-s-w16-log-text           
+PASS r01-s-w16-log-json           
+PASS r02-s-w16-log-json           
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-log-off                
+PASS r01-fh-log-off               
+PASS r02-s-log-off                
+PASS r02-fh-log-off               
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+PASS r01-s-w16-log-off            
+PASS r02-s-w16-log-off            
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:10Z evidence-check 17-tracing against the smoke legs
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+PASS r01-s-trace-1                
+PASS r01-fh-trace-1               
+PASS r02-s-trace-1                
+PASS r02-fh-trace-1               
+PASS r01-s-trace-100              
+PASS r01-fh-trace-100             
+PASS r02-s-trace-100              
+PASS r02-fh-trace-100             
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+PASS r01-s-trace-off              
+PASS r01-fh-trace-off             
+PASS r02-s-trace-off              
+PASS r02-fh-trace-off             
+PASS r01-s-trace-10               
+PASS r01-fh-trace-10              
+PASS r02-s-trace-10               
+PASS r02-fh-trace-10              
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:10Z evidence-check 13-ext-authz against the smoke legs
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+PASS r01-s-authz-http             
+PASS r01-fh6-authz-http           
+PASS r02-s-authz-http             
+PASS r02-fh6-authz-http           
+PASS r01-s-authz-grpc             
+PASS r01-fh6-authz-grpc           
+PASS r02-s-authz-grpc             
+PASS r02-fh6-authz-grpc           
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+PASS r01-s-authz-off              
+PASS r01-fh6-authz-off            
+PASS r02-s-authz-off              
+PASS r02-fh6-authz-off            
+PASS r01-s-authz-off-A2           
+PASS r01-fh6-authz-off-A2         
+PASS r02-s-authz-off-A2           
+PASS r02-fh6-authz-off-A2         
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:10Z evidence-check 18w-access-log-w16 against the smoke legs
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+PASS r01-s-log-text               
+PASS r01-fh-log-text              
+PASS r02-s-log-text               
+PASS r02-fh-log-text              
+PASS r01-s-log-json               
+PASS r01-fh-log-json              
+PASS r02-s-log-json               
+PASS r02-fh-log-json              
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+PASS r01-s-w16-log-text           
+PASS r02-s-w16-log-text           
+PASS r01-s-w16-log-json           
+PASS r02-s-w16-log-json           
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-log-off                
+PASS r01-fh-log-off               
+PASS r02-s-log-off                
+PASS r02-fh-log-off               
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+PASS r01-s-w16-log-off            
+PASS r02-s-w16-log-off            
+PASS r01-s-w16-log-off-A2         
+PASS r02-s-w16-log-off-A2         
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+seconds per leg (smoke, 62 gaps): 38.7
+run-s                   300 legs at the cap  worst case  3.22 h
+18-access-log           180 legs at the cap  worst case  1.93 h
+17-tracing              128 legs at the cap  worst case  1.38 h
+13-ext-authz            128 legs at the cap  worst case  1.38 h
+18w-access-log-w16      128 legs at the cap  worst case  1.38 h  (optional)
+mandatory worst case 7.91 h (ask the lead above 9.50 h); with 18w-access-log-w16 9.28 h; stop at 10 h
+2026-11-17T11:44:10Z smoke done rc=0
+2026-11-17T11:44:57Z queue start pid 1120124 harness 0.x bb8aa8144e69 week5 args: --set client.binary=~/nighthawk-dogfood/bazel-bin/nighthawk_client
+2026-11-17T11:44:57Z evidence-check run-s against the smoke legs
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-base-A2                
+PASS r01-fh-base-A2               
+PASS r02-s-base-A2                
+PASS r02-fh-base-A2               
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm base: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm percpu-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+PASS r01-s-retry-on               
+PASS r01-fh-retry-on              
+PASS r02-s-retry-on               
+PASS r02-fh-retry-on              
+PASS r01-s-idle-off               
+PASS r01-fh-idle-off              
+PASS r02-s-idle-off               
+PASS r02-fh-idle-off              
+note: arm retry-on: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm idle-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm base-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+PASS r01-s-base                   
+PASS r01-fh-base                  
+PASS r02-s-base                   
+PASS r02-fh-base                  
+PASS r01-s-percpu-on              
+PASS r01-fh-percpu-on             
+PASS r02-s-percpu-on              
+PASS r02-fh-percpu-on             
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:58Z evidence-check 18-access-log against the smoke legs
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+PASS r01-s-log-text               
+PASS r01-fh-log-text              
+PASS r02-s-log-text               
+PASS r02-fh-log-text              
+PASS r01-s-log-json               
+PASS r01-fh-log-json              
+PASS r02-s-log-json               
+PASS r02-fh-log-json              
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+PASS r01-s-w16-log-text           
+PASS r02-s-w16-log-text           
+PASS r01-s-w16-log-json           
+PASS r02-s-w16-log-json           
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-log-off                
+PASS r01-fh-log-off               
+PASS r02-s-log-off                
+PASS r02-fh-log-off               
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+PASS r01-s-w16-log-off            
+PASS r02-s-w16-log-off            
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:58Z evidence-check 17-tracing against the smoke legs
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+PASS r01-s-trace-1                
+PASS r01-fh-trace-1               
+PASS r02-s-trace-1                
+PASS r02-fh-trace-1               
+PASS r01-s-trace-100              
+PASS r01-fh-trace-100             
+PASS r02-s-trace-100              
+PASS r02-fh-trace-100             
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+PASS r01-s-trace-off              
+PASS r01-fh-trace-off             
+PASS r02-s-trace-off              
+PASS r02-fh-trace-off             
+PASS r01-s-trace-10               
+PASS r01-fh-trace-10              
+PASS r02-s-trace-10               
+PASS r02-fh-trace-10              
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm trace-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-1: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-10: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm trace-100: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:58Z evidence-check 13-ext-authz against the smoke legs
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+PASS r01-s-authz-http             
+PASS r01-fh6-authz-http           
+PASS r02-s-authz-http             
+PASS r02-fh6-authz-http           
+PASS r01-s-authz-grpc             
+PASS r01-fh6-authz-grpc           
+PASS r02-s-authz-grpc             
+PASS r02-fh6-authz-grpc           
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+PASS r01-s-authz-off              
+PASS r01-fh6-authz-off            
+PASS r02-s-authz-off              
+PASS r02-fh6-authz-off            
+PASS r01-s-authz-off-A2           
+PASS r01-fh6-authz-off-A2         
+PASS r02-s-authz-off-A2           
+PASS r02-fh6-authz-off-A2         
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm authz-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-http: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-grpc: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm authz-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+2026-11-17T11:44:58Z evidence-check 18w-access-log-w16 against the smoke legs
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-13
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17a
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-17b
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18
+PASS r01-s-log-text               
+PASS r01-fh-log-text              
+PASS r02-s-log-text               
+PASS r02-fh-log-text              
+PASS r01-s-log-json               
+PASS r01-fh-log-json              
+PASS r02-s-log-json               
+PASS r02-fh-log-json              
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-18w
+PASS r01-s-w16-log-text           
+PASS r02-s-w16-log-text           
+PASS r01-s-w16-log-json           
+PASS r02-s-w16-log-json           
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref1
+PASS r01-s-log-off                
+PASS r01-fh-log-off               
+PASS r02-s-log-off                
+PASS r02-fh-log-off               
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-ref3
+PASS r01-s-w16-log-off            
+PASS r02-s-w16-log-off            
+PASS r01-s-w16-log-off-A2         
+PASS r02-s-w16-log-off-A2         
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s1
+note: arm log-off: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-text: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-json: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+note: arm log-off-A2: no legs in ~/epl/runs/features-2026-11-17/smoke/smoke-s2
+evidence-check: PASS (0 failing legs, 0 arms without a leg)
+seconds per leg (smoke, 62 gaps): 38.7
+run-s                   300 legs at the cap  worst case  3.22 h
+18-access-log           180 legs at the cap  worst case  1.93 h
+17-tracing              128 legs at the cap  worst case  1.38 h
+13-ext-authz            128 legs at the cap  worst case  1.38 h
+18w-access-log-w16      128 legs at the cap  worst case  1.38 h  (optional)
+mandatory worst case 7.91 h (ask the lead above 9.50 h); with 18w-access-log-w16 9.28 h; stop at 10 h
+2026-11-17T11:44:58Z start run-s (36000s left before the stop)
+2026-11-17T11:45:05Z run features-run-s: rotate order, rounds 20..30 in blocks of 10 (adaptive True), arms ['base', 'retry-on', 'idle-off', 'percpu-on', 'base-A2'], shapes ['s', 'fh']
+2026-11-17T11:45:06Z origin container 5295550826cd (epl-origin-1120163) started
+2026-11-17T11:45:45Z r01-s-base VALID ins_u=163.9k cyc_tot=521.2k busy=30.9% rate=5201.0/5200 p99=630us 
+2026-11-17T11:46:23Z r01-s-retry-on VALID ins_u=165.8k cyc_tot=533.3k busy=31.6% rate=5201.1/5200 p99=657us 
+2026-11-17T11:47:02Z r01-s-idle-off VALID ins_u=156.9k cyc_tot=516.2k busy=30.7% rate=5201.0/5200 p99=621us 
+2026-11-17T11:47:40Z r01-s-percpu-on VALID ins_u=147.2k cyc_tot=521.9k busy=31.0% rate=5201.0/5200 p99=632us 
+2026-11-17T11:48:19Z r01-s-base-A2 VALID ins_u=163.9k cyc_tot=531.5k busy=31.5% rate=5201.0/5200 p99=638us 
+2026-11-17T11:48:57Z r01-fh-base VALID ins_u=164.7k cyc_tot=283.5k busy=25.7% rate=8001.6/8000 p99=374us 
+2026-11-17T11:49:36Z r01-fh-retry-on VALID ins_u=164.7k cyc_tot=278.7k busy=25.3% rate=8001.5/8000 p99=373us 
+2026-11-17T11:50:14Z r01-fh-idle-off VALID ins_u=159.0k cyc_tot=268.9k busy=24.5% rate=8001.5/8000 p99=356us 
+2026-11-17T11:50:52Z r01-fh-percpu-on VALID ins_u=132.7k cyc_tot=279.2k busy=25.4% rate=8001.7/8000 p99=374us 
+2026-11-17T11:51:31Z r01-fh-base-A2 VALID ins_u=164.8k cyc_tot=278.8k busy=25.4% rate=8001.6/8000 p99=365us 
+2026-11-17T11:52:09Z r02-s-base-A2 VALID ins_u=163.9k cyc_tot=529.3k busy=31.4% rate=5201.0/5200 p99=632us 
+2026-11-17T11:52:48Z r02-s-percpu-on VALID ins_u=147.2k cyc_tot=524.2k busy=31.1% rate=5201.0/5200 p99=642us 
+2026-11-17T11:53:26Z r02-s-idle-off VALID ins_u=156.8k cyc_tot=514.2k busy=30.5% rate=5201.0/5200 p99=637us 
+2026-11-17T11:54:05Z r02-s-retry-on VALID ins_u=165.9k cyc_tot=538.3k busy=31.9% rate=5201.1/5200 p99=628us 
+2026-11-17T11:54:43Z r02-s-base VALID ins_u=163.9k cyc_tot=530.4k busy=31.5% rate=5201.0/5200 p99=655us 
+2026-11-17T11:55:22Z r02-fh-base-A2 VALID ins_u=164.7k cyc_tot=277.9k busy=25.3% rate=8001.6/8000 p99=373us 
+2026-11-17T11:56:00Z r02-fh-percpu-on VALID ins_u=133.4k cyc_tot=274.7k busy=24.9% rate=8001.6/8000 p99=370us 
+2026-11-17T11:56:38Z r02-fh-idle-off VALID ins_u=159.0k cyc_tot=264.3k busy=24.1% rate=8001.7/8000 p99=360us 
+2026-11-17T11:57:17Z r02-fh-retry-on VALID ins_u=164.8k cyc_tot=274.7k busy=25.0% rate=8001.6/8000 p99=370us 
+2026-11-17T11:57:55Z r02-fh-base VALID ins_u=164.8k cyc_tot=273.0k busy=24.8% rate=8001.7/8000 p99=371us 
+2026-11-17T11:58:33Z r03-s-retry-on VALID ins_u=165.9k cyc_tot=539.3k busy=32.0% rate=5201.0/5200 p99=653us 
+2026-11-17T11:59:12Z r03-s-idle-off VALID ins_u=157.0k cyc_tot=516.7k busy=30.8% rate=5201.0/5200 p99=603us 
+2026-11-17T11:59:50Z r03-s-percpu-on VALID ins_u=147.1k cyc_tot=525.4k busy=31.1% rate=5201.0/5200 p99=614us 
+2026-11-17T12:00:29Z r03-s-base-A2 VALID ins_u=164.0k cyc_tot=530.7k busy=31.7% rate=5201.0/5200 p99=633us 
+2026-11-17T12:01:07Z r03-s-base VALID ins_u=163.8k cyc_tot=525.7k busy=31.2% rate=5201.1/5200 p99=625us 
+2026-11-17T12:01:46Z r03-fh-retry-on VALID ins_u=164.7k cyc_tot=281.5k busy=25.6% rate=8001.6/8000 p99=374us 
+2026-11-17T12:02:24Z r03-fh-idle-off VALID ins_u=159.0k cyc_tot=275.3k busy=25.1% rate=8001.6/8000 p99=361us 
+2026-11-17T12:03:03Z r03-fh-percpu-on VALID ins_u=133.3k cyc_tot=284.3k busy=25.8% rate=8001.6/8000 p99=377us 
+2026-11-17T12:03:41Z r03-fh-base-A2 VALID ins_u=164.8k cyc_tot=277.3k busy=25.2% rate=8001.5/8000 p99=371us 
+2026-11-17T12:04:19Z r03-fh-base VALID ins_u=164.7k cyc_tot=280.7k busy=25.5% rate=8001.5/8000 p99=368us 
+2026-11-17T12:04:58Z r04-s-base VALID ins_u=163.9k cyc_tot=526.1k busy=31.2% rate=5201.1/5200 p99=610us 
+2026-11-17T12:05:36Z r04-s-base-A2 VALID ins_u=163.8k cyc_tot=523.2k busy=31.1% rate=5201.0/5200 p99=624us 
+2026-11-17T12:06:15Z r04-s-percpu-on VALID ins_u=147.1k cyc_tot=520.0k busy=30.8% rate=5201.1/5200 p99=614us 
+2026-11-17T12:06:53Z r04-s-idle-off VALID ins_u=156.9k cyc_tot=516.6k busy=30.7% rate=5201.1/5200 p99=626us 
+2026-11-17T12:07:32Z r04-s-retry-on VALID ins_u=165.8k cyc_tot=533.0k busy=31.6% rate=5201.0/5200 p99=639us 
+2026-11-17T12:08:10Z r04-fh-base VALID ins_u=164.8k cyc_tot=274.7k busy=25.0% rate=8001.6/8000 p99=359us 
+2026-11-17T12:08:49Z r04-fh-base-A2 VALID ins_u=164.7k cyc_tot=282.2k busy=25.6% rate=8001.6/8000 p99=372us 
+2026-11-17T12:09:27Z r04-fh-percpu-on VALID ins_u=133.3k cyc_tot=284.9k busy=25.8% rate=8001.6/8000 p99=376us 
+2026-11-17T12:10:05Z r04-fh-idle-off VALID ins_u=159.0k cyc_tot=257.0k busy=23.4% rate=8001.6/8000 p99=360us 
+2026-11-17T12:10:44Z r04-fh-retry-on VALID ins_u=164.8k cyc_tot=275.8k busy=25.1% rate=8001.6/8000 p99=366us 
+2026-11-17T12:11:22Z r05-s-retry-on VALID ins_u=165.7k cyc_tot=535.6k busy=31.7% rate=5201.1/5200 p99=637us 
+2026-11-17T12:12:01Z r05-s-base VALID ins_u=163.9k cyc_tot=523.9k busy=31.2% rate=5201.0/5200 p99=618us 
+2026-11-17T12:12:39Z r05-s-base-A2 VALID ins_u=163.9k cyc_tot=526.6k busy=31.3% rate=5201.0/5200 p99=642us 
+2026-11-17T12:13:18Z r05-s-percpu-on VALID ins_u=147.2k cyc_tot=523.4k busy=31.1% rate=5201.0/5200 p99=648us 
+2026-11-17T12:13:56Z r05-s-idle-off VALID ins_u=156.9k cyc_tot=515.0k busy=30.8% rate=5201.0/5200 p99=608us 
+2026-11-17T12:14:34Z r05-fh-retry-on VALID ins_u=164.7k cyc_tot=282.5k busy=25.7% rate=8001.6/8000 p99=378us 
+2026-11-17T12:15:13Z r05-fh-base VALID ins_u=164.8k cyc_tot=280.7k busy=25.5% rate=8001.6/8000 p99=365us 
+2026-11-17T12:15:51Z r05-fh-base-A2 VALID ins_u=164.8k cyc_tot=279.7k busy=25.4% rate=8001.6/8000 p99=368us 
+2026-11-17T12:16:30Z r05-fh-percpu-on VALID ins_u=133.2k cyc_tot=286.1k busy=26.0% rate=8001.6/8000 p99=372us 
+2026-11-17T12:17:08Z r05-fh-idle-off VALID ins_u=159.0k cyc_tot=272.7k busy=24.8% rate=8001.6/8000 p99=354us 
+2026-11-17T12:17:47Z r06-s-idle-off VALID ins_u=156.8k cyc_tot=513.4k busy=30.5% rate=5201.0/5200 p99=592us 
+2026-11-17T12:18:25Z r06-s-percpu-on VALID ins_u=146.8k cyc_tot=517.5k busy=30.7% rate=5201.1/5200 p99=576us 
+2026-11-17T12:19:03Z r06-s-base-A2 VALID ins_u=163.9k cyc_tot=525.5k busy=31.2% rate=5201.0/5200 p99=617us 
+2026-11-17T12:19:42Z r06-s-base VALID ins_u=163.9k cyc_tot=528.9k busy=31.5% rate=5201.1/5200 p99=618us 
+2026-11-17T12:20:20Z r06-s-retry-on VALID ins_u=166.0k cyc_tot=536.8k busy=31.8% rate=5201.0/5200 p99=654us 
+2026-11-17T12:20:59Z r06-fh-idle-off VALID ins_u=159.0k cyc_tot=272.7k busy=24.9% rate=8001.6/8000 p99=368us 
+2026-11-17T12:21:37Z r06-fh-percpu-on VALID ins_u=133.0k cyc_tot=279.4k busy=25.4% rate=8001.6/8000 p99=366us 
+2026-11-17T12:22:16Z r06-fh-base-A2 VALID ins_u=164.8k cyc_tot=276.5k busy=25.2% rate=8001.6/8000 p99=368us 
+2026-11-17T12:22:54Z r06-fh-base VALID ins_u=164.8k cyc_tot=276.9k busy=25.2% rate=8001.6/8000 p99=367us 
+2026-11-17T12:23:32Z r06-fh-retry-on VALID ins_u=164.7k cyc_tot=269.2k busy=24.5% rate=8001.6/8000 p99=376us 
+2026-11-17T12:24:11Z r07-s-idle-off VALID ins_u=156.8k cyc_tot=518.7k busy=30.8% rate=5201.0/5200 p99=616us 
+2026-11-17T12:24:49Z r07-s-retry-on VALID ins_u=165.8k cyc_tot=542.1k busy=32.1% rate=5201.0/5200 p99=634us 
+2026-11-17T12:25:28Z r07-s-base VALID ins_u=163.8k cyc_tot=524.5k busy=31.2% rate=5201.1/5200 p99=641us 
+2026-11-17T12:26:06Z r07-s-base-A2 VALID ins_u=163.9k cyc_tot=528.4k busy=31.5% rate=5201.1/5200 p99=623us 
+2026-11-17T12:26:45Z r07-s-percpu-on VALID ins_u=147.0k cyc_tot=521.0k busy=30.8% rate=5201.1/5200 p99=639us 
+2026-11-17T12:27:23Z r07-fh-idle-off VALID ins_u=159.0k cyc_tot=267.1k busy=24.4% rate=8001.6/8000 p99=357us 
+2026-11-17T12:28:02Z r07-fh-retry-on VALID ins_u=164.8k cyc_tot=282.2k busy=25.7% rate=8001.6/8000 p99=373us 
+2026-11-17T12:28:40Z r07-fh-base VALID ins_u=164.8k cyc_tot=272.4k busy=24.8% rate=8001.6/8000 p99=364us 
+2026-11-17T12:29:18Z r07-fh-base-A2 VALID ins_u=164.8k cyc_tot=283.9k busy=25.8% rate=8001.7/8000 p99=369us 
+2026-11-17T12:29:57Z r07-fh-percpu-on VALID ins_u=133.2k cyc_tot=281.2k busy=25.5% rate=8001.6/8000 p99=371us 
+2026-11-17T12:30:35Z r08-s-percpu-on VALID ins_u=147.2k cyc_tot=520.1k busy=30.8% rate=5201.0/5200 p99=659us 
+2026-11-17T12:31:14Z r08-s-base-A2 VALID ins_u=163.9k cyc_tot=528.4k busy=31.4% rate=5201.0/5200 p99=637us 
+2026-11-17T12:31:52Z r08-s-base VALID ins_u=163.9k cyc_tot=523.0k busy=31.2% rate=5201.1/5200 p99=626us 
+2026-11-17T12:32:31Z r08-s-retry-on VALID ins_u=165.8k cyc_tot=535.0k busy=31.7% rate=5201.0/5200 p99=652us 
+2026-11-17T12:33:09Z r08-s-idle-off VALID ins_u=156.8k cyc_tot=515.7k busy=30.6% rate=5201.1/5200 p99=635us 
+2026-11-17T12:33:48Z r08-fh-percpu-on VALID ins_u=133.3k cyc_tot=276.2k busy=25.1% rate=8001.6/8000 p99=369us 
+2026-11-17T12:34:26Z r08-fh-base-A2 VALID ins_u=164.8k cyc_tot=275.8k busy=25.1% rate=8001.6/8000 p99=367us 
+2026-11-17T12:35:04Z r08-fh-base VALID ins_u=164.8k cyc_tot=281.0k busy=25.6% rate=8001.6/8000 p99=371us 
+2026-11-17T12:35:43Z r08-fh-retry-on VALID ins_u=164.7k cyc_tot=286.9k busy=26.0% rate=8001.5/8000 p99=371us 
+2026-11-17T12:36:21Z r08-fh-idle-off VALID ins_u=159.0k cyc_tot=275.7k busy=25.1% rate=8001.5/8000 p99=361us 
+2026-11-17T12:37:00Z r09-s-percpu-on VALID ins_u=147.3k cyc_tot=524.4k busy=31.1% rate=5201.0/5200 p99=634us 
+2026-11-17T12:37:38Z r09-s-idle-off VALID ins_u=156.7k cyc_tot=507.4k busy=30.1% rate=5201.0/5200 p99=616us 
+2026-11-17T12:38:17Z r09-s-retry-on VALID ins_u=165.8k cyc_tot=528.5k busy=31.3% rate=5201.1/5200 p99=624us 
+2026-11-17T12:38:55Z r09-s-base VALID ins_u=163.8k cyc_tot=520.5k busy=30.8% rate=5201.1/5200 p99=625us 
+2026-11-17T12:39:33Z r09-s-base-A2 VALID ins_u=163.9k cyc_tot=526.3k busy=31.2% rate=5201.0/5200 p99=613us 
+2026-11-17T12:40:12Z r09-fh-percpu-on VALID ins_u=133.5k cyc_tot=283.7k busy=25.8% rate=8001.6/8000 p99=373us 
+2026-11-17T12:40:50Z r09-fh-idle-off VALID ins_u=159.0k cyc_tot=260.8k busy=23.8% rate=8001.6/8000 p99=354us 
+2026-11-17T12:41:29Z r09-fh-retry-on VALID ins_u=164.8k cyc_tot=271.2k busy=24.7% rate=8001.6/8000 p99=367us 
+2026-11-17T12:42:07Z r09-fh-base VALID ins_u=164.8k cyc_tot=280.9k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-17T12:42:45Z r09-fh-base-A2 VALID ins_u=164.8k cyc_tot=276.9k busy=25.2% rate=8001.6/8000 p99=369us 
+2026-11-17T12:43:24Z r10-s-base-A2 VALID ins_u=163.9k cyc_tot=529.5k busy=31.5% rate=5201.1/5200 p99=628us 
+2026-11-17T12:44:02Z r10-s-base VALID ins_u=163.9k cyc_tot=532.3k busy=31.6% rate=5201.0/5200 p99=631us 
+2026-11-17T12:44:41Z r10-s-retry-on VALID ins_u=165.8k cyc_tot=534.9k busy=31.6% rate=5201.1/5200 p99=666us 
+2026-11-17T12:45:19Z r10-s-idle-off VALID ins_u=156.9k cyc_tot=515.8k busy=30.7% rate=5201.0/5200 p99=619us 
+2026-11-17T12:45:58Z r10-s-percpu-on VALID ins_u=147.0k cyc_tot=521.1k busy=31.0% rate=5201.1/5200 p99=629us 
+2026-11-17T12:46:36Z r10-fh-base-A2 VALID ins_u=164.8k cyc_tot=275.8k busy=25.1% rate=8001.6/8000 p99=368us 
+2026-11-17T12:47:14Z r10-fh-base VALID ins_u=164.7k cyc_tot=281.9k busy=25.6% rate=8001.7/8000 p99=365us 
+2026-11-17T12:47:53Z r10-fh-retry-on VALID ins_u=164.7k cyc_tot=280.7k busy=25.5% rate=8001.6/8000 p99=369us 
+2026-11-17T12:48:31Z r10-fh-idle-off VALID ins_u=159.0k cyc_tot=270.5k busy=24.7% rate=8001.6/8000 p99=363us 
+2026-11-17T12:49:10Z r10-fh-percpu-on VALID ins_u=133.3k cyc_tot=286.4k busy=26.0% rate=8001.5/8000 p99=370us 
+2026-11-17T12:49:48Z r11-s-base VALID ins_u=163.8k cyc_tot=524.7k busy=31.1% rate=5201.0/5200 p99=635us 
+2026-11-17T12:50:27Z r11-s-retry-on VALID ins_u=166.0k cyc_tot=537.1k busy=31.9% rate=5201.0/5200 p99=634us 
+2026-11-17T12:51:05Z r11-s-idle-off VALID ins_u=156.8k cyc_tot=518.4k busy=30.8% rate=5201.1/5200 p99=590us 
+2026-11-17T12:51:44Z r11-s-percpu-on VALID ins_u=146.9k cyc_tot=520.0k busy=30.8% rate=5201.1/5200 p99=600us 
+2026-11-17T12:52:22Z r11-s-base-A2 VALID ins_u=163.8k cyc_tot=522.4k busy=31.0% rate=5201.1/5200 p99=612us 
+2026-11-17T12:53:00Z r11-fh-base VALID ins_u=164.8k cyc_tot=284.4k busy=25.9% rate=8001.7/8000 p99=371us 
+2026-11-17T12:53:39Z r11-fh-retry-on VALID ins_u=164.7k cyc_tot=283.0k busy=25.7% rate=8001.6/8000 p99=372us 
+2026-11-17T12:54:17Z r11-fh-idle-off VALID ins_u=159.0k cyc_tot=271.0k busy=24.7% rate=8001.6/8000 p99=362us 
+2026-11-17T12:54:56Z r11-fh-percpu-on VALID ins_u=133.1k cyc_tot=277.6k busy=25.2% rate=8001.6/8000 p99=373us 
+2026-11-17T12:55:34Z r11-fh-base-A2 VALID ins_u=164.8k cyc_tot=281.1k busy=25.5% rate=8001.6/8000 p99=371us 
+2026-11-17T12:56:13Z r12-s-base-A2 VALID ins_u=163.8k cyc_tot=528.2k busy=31.3% rate=5201.0/5200 p99=669us 
+2026-11-17T12:56:51Z r12-s-percpu-on VALID ins_u=146.9k cyc_tot=520.0k busy=30.7% rate=5201.1/5200 p99=556us 
+2026-11-17T12:57:29Z r12-s-idle-off VALID ins_u=156.8k cyc_tot=522.1k busy=30.9% rate=5201.0/5200 p99=619us 
+2026-11-17T12:58:08Z r12-s-retry-on VALID ins_u=165.8k cyc_tot=532.0k busy=31.4% rate=5201.0/5200 p99=671us 
+2026-11-17T12:58:47Z r12-s-base VALID ins_u=163.8k cyc_tot=525.5k busy=31.1% rate=5201.1/5200 p99=620us 
+2026-11-17T12:59:25Z r12-fh-base-A2 VALID ins_u=164.7k cyc_tot=282.8k busy=25.6% rate=8001.5/8000 p99=377us 
+2026-11-17T13:00:03Z r12-fh-percpu-on VALID ins_u=133.2k cyc_tot=277.3k busy=25.2% rate=8001.6/8000 p99=368us 
+2026-11-17T13:00:42Z r12-fh-idle-off VALID ins_u=159.0k cyc_tot=260.1k busy=23.7% rate=8001.6/8000 p99=352us 
+2026-11-17T13:01:20Z r12-fh-retry-on VALID ins_u=164.8k cyc_tot=282.2k busy=25.7% rate=8001.6/8000 p99=368us 
+2026-11-17T13:01:58Z r12-fh-base VALID ins_u=164.8k cyc_tot=276.6k busy=25.2% rate=8001.6/8000 p99=365us 
+2026-11-17T13:02:37Z r13-s-retry-on VALID ins_u=165.8k cyc_tot=530.7k busy=31.5% rate=5201.0/5200 p99=608us 
+2026-11-17T13:03:15Z r13-s-idle-off VALID ins_u=156.8k cyc_tot=509.9k busy=30.3% rate=5201.0/5200 p99=608us 
+2026-11-17T13:03:54Z r13-s-percpu-on VALID ins_u=147.1k cyc_tot=521.0k busy=31.0% rate=5201.0/5200 p99=612us 
+2026-11-17T13:04:32Z r13-s-base-A2 VALID ins_u=163.9k cyc_tot=520.6k busy=30.9% rate=5201.1/5200 p99=628us 
+2026-11-17T13:05:11Z r13-s-base VALID ins_u=163.9k cyc_tot=527.8k busy=31.3% rate=5201.0/5200 p99=629us 
+2026-11-17T13:05:49Z r13-fh-retry-on VALID ins_u=164.7k cyc_tot=279.6k busy=25.4% rate=8001.6/8000 p99=369us 
+2026-11-17T13:06:27Z r13-fh-idle-off VALID ins_u=159.0k cyc_tot=269.8k busy=24.6% rate=8001.6/8000 p99=360us 
+2026-11-17T13:07:06Z r13-fh-percpu-on VALID ins_u=133.2k cyc_tot=282.3k busy=25.7% rate=8001.7/8000 p99=372us 
+2026-11-17T13:07:44Z r13-fh-base-A2 VALID ins_u=164.7k cyc_tot=278.4k busy=25.2% rate=8001.6/8000 p99=375us 
+2026-11-17T13:08:23Z r13-fh-base VALID ins_u=164.7k cyc_tot=284.8k busy=25.9% rate=8001.6/8000 p99=367us 
+2026-11-17T13:09:01Z r14-s-base VALID ins_u=163.9k cyc_tot=524.6k busy=31.3% rate=5201.1/5200 p99=624us 
+2026-11-17T13:09:39Z r14-s-base-A2 VALID ins_u=163.9k cyc_tot=522.3k busy=31.0% rate=5201.0/5200 p99=644us 
+2026-11-17T13:10:18Z r14-s-percpu-on VALID ins_u=147.2k cyc_tot=515.8k busy=30.5% rate=5201.1/5200 p99=615us 
+2026-11-17T13:10:56Z r14-s-idle-off VALID ins_u=156.9k cyc_tot=513.6k busy=30.5% rate=5201.1/5200 p99=611us 
+2026-11-17T13:11:35Z r14-s-retry-on VALID ins_u=165.8k cyc_tot=534.1k busy=31.6% rate=5201.1/5200 p99=662us 
+2026-11-17T13:12:13Z r14-fh-base VALID ins_u=164.8k cyc_tot=281.6k busy=25.6% rate=8001.7/8000 p99=373us 
+2026-11-17T13:12:52Z r14-fh-base-A2 VALID ins_u=164.8k cyc_tot=281.8k busy=25.6% rate=8001.6/8000 p99=376us 
+2026-11-17T13:13:30Z r14-fh-percpu-on VALID ins_u=133.5k cyc_tot=282.1k busy=25.6% rate=8001.6/8000 p99=372us 
+2026-11-17T13:14:09Z r14-fh-idle-off VALID ins_u=159.0k cyc_tot=274.4k busy=25.0% rate=8001.6/8000 p99=364us 
+2026-11-17T13:14:47Z r14-fh-retry-on VALID ins_u=164.7k cyc_tot=280.5k busy=25.5% rate=8001.6/8000 p99=371us 
+2026-11-17T13:15:25Z r15-s-retry-on VALID ins_u=165.9k cyc_tot=529.2k busy=31.4% rate=5201.0/5200 p99=625us 
+2026-11-17T13:16:04Z r15-s-base VALID ins_u=163.9k cyc_tot=526.3k busy=31.4% rate=5201.0/5200 p99=622us 
+2026-11-17T13:16:42Z r15-s-base-A2 VALID ins_u=163.8k cyc_tot=523.6k busy=31.1% rate=5201.0/5200 p99=629us 
+2026-11-17T13:17:21Z r15-s-percpu-on VALID ins_u=147.1k cyc_tot=531.2k busy=31.5% rate=5201.1/5200 p99=634us 
+2026-11-17T13:17:59Z r15-s-idle-off VALID ins_u=157.0k cyc_tot=515.2k busy=30.7% rate=5201.0/5200 p99=621us 
+2026-11-17T13:18:38Z r15-fh-retry-on VALID ins_u=164.7k cyc_tot=289.6k busy=26.3% rate=8001.6/8000 p99=373us 
+2026-11-17T13:19:16Z r15-fh-base VALID ins_u=164.7k cyc_tot=284.8k busy=25.9% rate=8001.6/8000 p99=376us 
+2026-11-17T13:19:54Z r15-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.9k busy=25.6% rate=8001.6/8000 p99=365us 
+2026-11-17T13:20:33Z r15-fh-percpu-on VALID ins_u=132.8k cyc_tot=276.5k busy=25.1% rate=8001.6/8000 p99=366us 
+2026-11-17T13:21:11Z r15-fh-idle-off VALID ins_u=159.0k cyc_tot=262.9k busy=23.9% rate=8001.6/8000 p99=365us 
+2026-11-17T13:21:50Z r16-s-idle-off VALID ins_u=156.7k cyc_tot=517.5k busy=30.7% rate=5201.0/5200 p99=598us 
+2026-11-17T13:22:28Z r16-s-percpu-on VALID ins_u=147.2k cyc_tot=526.0k busy=31.3% rate=5201.0/5200 p99=631us 
+2026-11-17T13:23:07Z r16-s-base-A2 VALID ins_u=163.7k cyc_tot=529.1k busy=31.4% rate=5201.0/5200 p99=592us 
+2026-11-17T13:23:45Z r16-s-base VALID ins_u=163.8k cyc_tot=527.5k busy=31.3% rate=5201.1/5200 p99=622us 
+2026-11-17T13:24:24Z r16-s-retry-on VALID ins_u=165.9k cyc_tot=532.9k busy=31.7% rate=5201.1/5200 p99=622us 
+2026-11-17T13:25:02Z r16-fh-idle-off VALID ins_u=159.0k cyc_tot=275.9k busy=25.2% rate=8001.6/8000 p99=354us 
+2026-11-17T13:25:41Z r16-fh-percpu-on VALID ins_u=133.0k cyc_tot=289.1k busy=26.2% rate=8001.6/8000 p99=373us 
+2026-11-17T13:26:19Z r16-fh-base-A2 VALID ins_u=164.7k cyc_tot=286.0k busy=26.0% rate=8001.6/8000 p99=378us 
+2026-11-17T13:26:57Z r16-fh-base VALID ins_u=164.8k cyc_tot=273.7k busy=24.9% rate=8001.6/8000 p99=364us 
+2026-11-17T13:27:36Z r16-fh-retry-on VALID ins_u=164.7k cyc_tot=281.9k busy=25.7% rate=8001.6/8000 p99=372us 
+2026-11-17T13:28:14Z r17-s-idle-off VALID ins_u=156.8k cyc_tot=510.1k busy=30.3% rate=5201.1/5200 p99=640us 
+2026-11-17T13:28:53Z r17-s-retry-on VALID ins_u=165.8k cyc_tot=527.3k busy=31.2% rate=5201.0/5200 p99=634us 
+2026-11-17T13:29:31Z r17-s-base VALID ins_u=163.8k cyc_tot=524.8k busy=31.1% rate=5201.0/5200 p99=625us 
+2026-11-17T13:30:10Z r17-s-base-A2 VALID ins_u=163.9k cyc_tot=524.9k busy=31.2% rate=5201.0/5200 p99=637us 
+2026-11-17T13:30:48Z r17-s-percpu-on VALID ins_u=147.1k cyc_tot=526.1k busy=31.2% rate=5201.1/5200 p99=640us 
+2026-11-17T13:31:27Z r17-fh-idle-off VALID ins_u=159.0k cyc_tot=273.7k busy=25.0% rate=8001.6/8000 p99=362us 
+2026-11-17T13:32:05Z r17-fh-retry-on VALID ins_u=164.8k cyc_tot=283.8k busy=25.8% rate=8001.6/8000 p99=371us 
+2026-11-17T13:32:43Z r17-fh-base VALID ins_u=164.7k cyc_tot=290.9k busy=26.4% rate=8001.6/8000 p99=370us 
+2026-11-17T13:33:22Z r17-fh-base-A2 VALID ins_u=164.7k cyc_tot=280.3k busy=25.5% rate=8001.5/8000 p99=371us 
+2026-11-17T13:34:00Z r17-fh-percpu-on VALID ins_u=133.1k cyc_tot=283.1k busy=25.7% rate=8001.6/8000 p99=373us 
+2026-11-17T13:34:39Z r18-s-percpu-on VALID ins_u=147.3k cyc_tot=523.7k busy=31.2% rate=5201.1/5200 p99=613us 
+2026-11-17T13:35:17Z r18-s-base-A2 VALID ins_u=163.8k cyc_tot=527.1k busy=31.2% rate=5201.0/5200 p99=611us 
+2026-11-17T13:35:56Z r18-s-base VALID ins_u=163.8k cyc_tot=524.8k busy=31.2% rate=5201.1/5200 p99=623us 
+2026-11-17T13:36:34Z r18-s-retry-on VALID ins_u=165.7k cyc_tot=532.8k busy=31.5% rate=5201.0/5200 p99=627us 
+2026-11-17T13:37:13Z r18-s-idle-off VALID ins_u=156.8k cyc_tot=522.7k busy=31.0% rate=5201.1/5200 p99=621us 
+2026-11-17T13:37:51Z r18-fh-percpu-on VALID ins_u=132.7k cyc_tot=279.9k busy=25.4% rate=8001.6/8000 p99=371us 
+2026-11-17T13:38:29Z r18-fh-base-A2 VALID ins_u=164.8k cyc_tot=280.5k busy=25.5% rate=8001.5/8000 p99=376us 
+2026-11-17T13:39:08Z r18-fh-base VALID ins_u=164.8k cyc_tot=280.0k busy=25.4% rate=8001.6/8000 p99=370us 
+2026-11-17T13:39:46Z r18-fh-retry-on VALID ins_u=164.7k cyc_tot=280.4k busy=25.5% rate=8001.6/8000 p99=368us 
+2026-11-17T13:40:24Z r18-fh-idle-off VALID ins_u=159.0k cyc_tot=272.4k busy=24.7% rate=8001.6/8000 p99=375us 
+2026-11-17T13:41:03Z r19-s-base-A2 VALID ins_u=164.0k cyc_tot=530.6k busy=31.5% rate=5201.0/5200 p99=622us 
+2026-11-17T13:41:41Z r19-s-base VALID ins_u=163.9k cyc_tot=527.6k busy=31.4% rate=5201.0/5200 p99=613us 
+2026-11-17T13:42:20Z r19-s-retry-on VALID ins_u=166.0k cyc_tot=536.5k busy=31.8% rate=5201.1/5200 p99=640us 
+2026-11-17T13:42:58Z r19-s-idle-off VALID ins_u=156.8k cyc_tot=505.5k busy=30.0% rate=5201.0/5200 p99=602us 
+2026-11-17T13:43:37Z r19-s-percpu-on VALID ins_u=147.0k cyc_tot=528.6k busy=31.4% rate=5201.0/5200 p99=627us 
+2026-11-17T13:44:15Z r19-fh-base-A2 VALID ins_u=164.7k cyc_tot=281.9k busy=25.6% rate=8001.6/8000 p99=370us 
+2026-11-17T13:44:53Z r19-fh-base VALID ins_u=164.8k cyc_tot=282.3k busy=25.7% rate=8001.6/8000 p99=368us 
+2026-11-17T13:45:32Z r19-fh-retry-on VALID ins_u=164.7k cyc_tot=277.1k busy=25.2% rate=8001.7/8000 p99=364us 
+2026-11-17T13:46:10Z r19-fh-idle-off VALID ins_u=159.0k cyc_tot=269.7k busy=24.6% rate=8001.6/8000 p99=367us 
+2026-11-17T13:46:49Z r19-fh-percpu-on VALID ins_u=133.0k cyc_tot=284.6k busy=25.9% rate=8001.6/8000 p99=370us 
+2026-11-17T13:47:27Z r20-s-percpu-on VALID ins_u=147.0k cyc_tot=528.9k busy=31.4% rate=5201.0/5200 p99=633us 
+2026-11-17T13:48:06Z r20-s-idle-off VALID ins_u=156.8k cyc_tot=519.5k busy=30.8% rate=5201.0/5200 p99=633us 
+2026-11-17T13:48:44Z r20-s-retry-on VALID ins_u=165.9k cyc_tot=532.2k busy=31.6% rate=5201.1/5200 p99=646us 
+2026-11-17T13:49:23Z r20-s-base VALID ins_u=163.8k cyc_tot=526.3k busy=31.3% rate=5201.1/5200 p99=609us 
+2026-11-17T13:50:01Z r20-s-base-A2 VALID ins_u=163.8k cyc_tot=525.4k busy=31.1% rate=5201.1/5200 p99=643us 
+2026-11-17T13:50:40Z r20-fh-percpu-on VALID ins_u=132.7k cyc_tot=286.6k busy=26.0% rate=8001.6/8000 p99=372us 
+2026-11-17T13:51:18Z r20-fh-idle-off VALID ins_u=159.0k cyc_tot=273.8k busy=24.9% rate=8001.5/8000 p99=362us 
+2026-11-17T13:51:56Z r20-fh-retry-on VALID ins_u=164.7k cyc_tot=281.7k busy=25.6% rate=8001.7/8000 p99=381us 
+2026-11-17T13:52:35Z r20-fh-base VALID ins_u=164.7k cyc_tot=284.2k busy=25.8% rate=8001.6/8000 p99=375us 
+2026-11-17T13:53:13Z r20-fh-base-A2 VALID ins_u=164.8k cyc_tot=286.8k busy=26.0% rate=8001.6/8000 p99=371us 
+2026-11-17T13:53:13Z after 20 rounds: widest cycles_total half-width against its target 1.01% (fh percpu-on vs base) > target 0.80%
+2026-11-17T13:53:52Z r21-s-base VALID ins_u=163.9k cyc_tot=525.2k busy=31.3% rate=5201.0/5200 p99=625us 
+2026-11-17T13:54:30Z r21-s-retry-on VALID ins_u=165.8k cyc_tot=534.5k busy=31.6% rate=5201.0/5200 p99=633us 
+2026-11-17T13:55:09Z r21-s-idle-off VALID ins_u=156.8k cyc_tot=513.6k busy=30.5% rate=5201.1/5200 p99=603us 
+2026-11-17T13:55:47Z r21-s-percpu-on VALID ins_u=147.0k cyc_tot=522.0k busy=31.0% rate=5201.1/5200 p99=630us 
+2026-11-17T13:56:26Z r21-s-base-A2 VALID ins_u=163.9k cyc_tot=519.3k busy=30.9% rate=5201.1/5200 p99=621us 
+2026-11-17T13:57:04Z r21-fh-base VALID ins_u=164.8k cyc_tot=279.5k busy=25.4% rate=8001.5/8000 p99=369us 
+2026-11-17T13:57:42Z r21-fh-retry-on VALID ins_u=164.8k cyc_tot=289.3k busy=26.3% rate=8001.7/8000 p99=365us 
+2026-11-17T13:58:21Z r21-fh-idle-off VALID ins_u=159.0k cyc_tot=269.7k busy=24.6% rate=8001.6/8000 p99=350us 
+2026-11-17T13:58:59Z r21-fh-percpu-on VALID ins_u=133.0k cyc_tot=282.4k busy=25.6% rate=8001.6/8000 p99=373us 
+2026-11-17T13:59:38Z r21-fh-base-A2 VALID ins_u=164.7k cyc_tot=281.1k busy=25.5% rate=8001.6/8000 p99=372us 
+2026-11-17T14:00:16Z r22-s-base-A2 VALID ins_u=163.6k cyc_tot=527.6k busy=31.2% rate=5201.0/5200 p99=642us 
+2026-11-17T14:00:55Z r22-s-percpu-on VALID ins_u=147.1k cyc_tot=519.6k busy=30.9% rate=5201.1/5200 p99=609us 
+2026-11-17T14:01:33Z r22-s-idle-off VALID ins_u=156.8k cyc_tot=511.9k busy=30.4% rate=5201.0/5200 p99=610us 
+2026-11-17T14:02:11Z r22-s-retry-on VALID ins_u=165.9k cyc_tot=533.5k busy=31.6% rate=5201.1/5200 p99=655us 
+2026-11-17T14:02:50Z r22-s-base VALID ins_u=163.8k cyc_tot=524.5k busy=31.2% rate=5201.0/5200 p99=625us 
+2026-11-17T14:03:28Z r22-fh-base-A2 VALID ins_u=164.8k cyc_tot=277.3k busy=25.2% rate=8001.6/8000 p99=361us 
+2026-11-17T14:04:07Z r22-fh-percpu-on VALID ins_u=133.5k cyc_tot=286.5k busy=26.0% rate=8001.6/8000 p99=369us 
+2026-11-17T14:04:45Z r22-fh-idle-off VALID ins_u=159.0k cyc_tot=271.9k busy=24.8% rate=8001.7/8000 p99=360us 
+2026-11-17T14:05:24Z r22-fh-retry-on VALID ins_u=164.7k cyc_tot=281.5k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-17T14:06:02Z r22-fh-base VALID ins_u=164.7k cyc_tot=282.6k busy=25.7% rate=8001.6/8000 p99=372us 
+2026-11-17T14:06:41Z r23-s-base VALID ins_u=163.9k cyc_tot=524.1k busy=31.2% rate=5201.0/5200 p99=610us 
+2026-11-17T14:07:19Z r23-s-base-A2 VALID ins_u=163.8k cyc_tot=530.5k busy=31.5% rate=5201.0/5200 p99=610us 
+2026-11-17T14:07:58Z r23-s-percpu-on VALID ins_u=147.2k cyc_tot=528.9k busy=31.4% rate=5201.0/5200 p99=631us 
+2026-11-17T14:08:36Z r23-s-idle-off VALID ins_u=156.8k cyc_tot=516.6k busy=30.7% rate=5201.0/5200 p99=613us 
+2026-11-17T14:09:15Z r23-s-retry-on VALID ins_u=165.8k cyc_tot=532.3k busy=31.5% rate=5201.0/5200 p99=656us 
+2026-11-17T14:09:53Z r23-fh-base VALID ins_u=164.8k cyc_tot=277.1k busy=25.2% rate=8001.6/8000 p99=371us 
+2026-11-17T14:10:31Z r23-fh-base-A2 VALID ins_u=164.8k cyc_tot=276.4k busy=25.1% rate=8001.5/8000 p99=363us 
+2026-11-17T14:11:10Z r23-fh-percpu-on VALID ins_u=132.9k cyc_tot=286.6k busy=26.0% rate=8001.6/8000 p99=374us 
+2026-11-17T14:11:48Z r23-fh-idle-off VALID ins_u=159.0k cyc_tot=275.2k busy=25.1% rate=8001.6/8000 p99=367us 
+2026-11-17T14:12:27Z r23-fh-retry-on VALID ins_u=164.8k cyc_tot=270.7k busy=24.7% rate=8001.6/8000 p99=364us 
+2026-11-17T14:13:05Z r24-s-retry-on VALID ins_u=165.9k cyc_tot=528.9k busy=31.4% rate=5201.1/5200 p99=638us 
+2026-11-17T14:13:44Z r24-s-idle-off VALID ins_u=156.8k cyc_tot=511.5k busy=30.5% rate=5201.0/5200 p99=604us 
+2026-11-17T14:14:22Z r24-s-percpu-on VALID ins_u=147.3k cyc_tot=526.7k busy=31.3% rate=5201.1/5200 p99=627us 
+2026-11-17T14:15:00Z r24-s-base-A2 VALID ins_u=163.9k cyc_tot=524.1k busy=31.2% rate=5201.1/5200 p99=623us 
+2026-11-17T14:15:39Z r24-s-base VALID ins_u=163.8k cyc_tot=527.7k busy=31.3% rate=5201.1/5200 p99=645us 
+2026-11-17T14:16:17Z r24-fh-retry-on VALID ins_u=164.7k cyc_tot=281.4k busy=25.6% rate=8001.6/8000 p99=372us 
+2026-11-17T14:16:56Z r24-fh-idle-off VALID ins_u=159.0k cyc_tot=270.4k busy=24.7% rate=8001.6/8000 p99=355us 
+2026-11-17T14:17:34Z r24-fh-percpu-on VALID ins_u=132.7k cyc_tot=285.0k busy=25.9% rate=8001.6/8000 p99=370us 
+2026-11-17T14:18:12Z r24-fh-base-A2 VALID ins_u=164.7k cyc_tot=283.6k busy=25.8% rate=8001.5/8000 p99=375us 
+2026-11-17T14:18:51Z r24-fh-base VALID ins_u=164.8k cyc_tot=283.0k busy=25.7% rate=8001.6/8000 p99=366us 
+2026-11-17T14:19:29Z r25-s-retry-on VALID ins_u=166.0k cyc_tot=526.6k busy=31.3% rate=5201.0/5200 p99=616us 
+2026-11-17T14:20:08Z r25-s-base VALID ins_u=163.9k cyc_tot=533.0k busy=31.6% rate=5201.0/5200 p99=658us 
+2026-11-17T14:20:46Z r25-s-base-A2 VALID ins_u=163.8k cyc_tot=530.3k busy=31.4% rate=5201.0/5200 p99=610us 
+2026-11-17T14:21:25Z r25-s-percpu-on VALID ins_u=147.3k cyc_tot=529.8k busy=31.5% rate=5201.0/5200 p99=627us 
+2026-11-17T14:22:03Z r25-s-idle-off VALID ins_u=156.9k cyc_tot=513.3k busy=30.6% rate=5201.1/5200 p99=614us 
+2026-11-17T14:22:41Z r25-fh-retry-on VALID ins_u=164.7k cyc_tot=280.4k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-17T14:23:20Z r25-fh-base VALID ins_u=164.7k cyc_tot=284.8k busy=25.9% rate=8001.6/8000 p99=372us 
+2026-11-17T14:23:58Z r25-fh-base-A2 VALID ins_u=164.8k cyc_tot=279.5k busy=25.4% rate=8001.6/8000 p99=366us 
+2026-11-17T14:24:37Z r25-fh-percpu-on VALID ins_u=133.0k cyc_tot=287.4k busy=26.1% rate=8001.6/8000 p99=372us 
+2026-11-17T14:25:15Z r25-fh-idle-off VALID ins_u=159.0k cyc_tot=270.9k busy=24.7% rate=8001.6/8000 p99=362us 
+2026-11-17T14:25:53Z r26-s-idle-off VALID ins_u=156.8k cyc_tot=511.6k busy=30.5% rate=5201.1/5200 p99=610us 
+2026-11-17T14:26:32Z r26-s-percpu-on VALID ins_u=147.1k cyc_tot=515.1k busy=30.6% rate=5201.1/5200 p99=621us 
+2026-11-17T14:27:10Z r26-s-base-A2 VALID ins_u=163.9k cyc_tot=533.0k busy=31.7% rate=5201.1/5200 p99=632us 
+2026-11-17T14:27:49Z r26-s-base VALID ins_u=163.9k cyc_tot=526.3k busy=31.2% rate=5201.0/5200 p99=610us 
+2026-11-17T14:28:27Z r26-s-retry-on VALID ins_u=165.9k cyc_tot=530.0k busy=31.5% rate=5201.0/5200 p99=646us 
+2026-11-17T14:29:06Z r26-fh-idle-off VALID ins_u=159.0k cyc_tot=273.8k busy=25.0% rate=8001.6/8000 p99=364us 
+2026-11-17T14:29:44Z r26-fh-percpu-on VALID ins_u=133.2k cyc_tot=283.8k busy=25.8% rate=8001.6/8000 p99=372us 
+2026-11-17T14:30:22Z r26-fh-base-A2 VALID ins_u=164.8k cyc_tot=283.3k busy=25.7% rate=8001.6/8000 p99=368us 
+2026-11-17T14:31:01Z r26-fh-base VALID ins_u=164.8k cyc_tot=281.1k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-17T14:31:39Z r26-fh-retry-on VALID ins_u=164.7k cyc_tot=280.7k busy=25.5% rate=8001.6/8000 p99=373us 
+2026-11-17T14:32:18Z r27-s-percpu-on VALID ins_u=147.3k cyc_tot=521.3k busy=31.0% rate=5201.1/5200 p99=623us 
+2026-11-17T14:32:56Z r27-s-base-A2 VALID ins_u=163.9k cyc_tot=529.9k busy=31.4% rate=5201.0/5200 p99=632us 
+2026-11-17T14:33:35Z r27-s-base VALID ins_u=163.9k cyc_tot=522.6k busy=31.1% rate=5201.0/5200 p99=614us 
+2026-11-17T14:34:13Z r27-s-retry-on VALID ins_u=165.8k cyc_tot=533.1k busy=31.6% rate=5201.1/5200 p99=651us 
+2026-11-17T14:34:52Z r27-s-idle-off VALID ins_u=156.8k cyc_tot=513.5k busy=30.5% rate=5201.1/5200 p99=593us 
+2026-11-17T14:35:30Z r27-fh-percpu-on VALID ins_u=133.0k cyc_tot=282.7k busy=25.7% rate=8001.6/8000 p99=370us 
+2026-11-17T14:36:08Z r27-fh-base-A2 VALID ins_u=164.8k cyc_tot=282.0k busy=25.6% rate=8001.6/8000 p99=371us 
+2026-11-17T14:36:47Z r27-fh-base VALID ins_u=164.8k cyc_tot=281.1k busy=25.6% rate=8001.6/8000 p99=369us 
+2026-11-17T14:37:25Z r27-fh-retry-on VALID ins_u=164.8k cyc_tot=279.7k busy=25.5% rate=8001.7/8000 p99=362us 
+2026-11-17T14:38:04Z r27-fh-idle-off VALID ins_u=159.0k cyc_tot=276.1k busy=25.2% rate=8001.6/8000 p99=364us 
+2026-11-17T14:38:42Z r28-s-idle-off VALID ins_u=156.7k cyc_tot=517.5k busy=30.7% rate=5201.0/5200 p99=640us 
+2026-11-17T14:39:21Z r28-s-retry-on VALID ins_u=165.9k cyc_tot=532.2k busy=31.6% rate=5201.1/5200 p99=624us 
+2026-11-17T14:39:59Z r28-s-base VALID ins_u=163.9k cyc_tot=529.1k busy=31.4% rate=5201.1/5200 p99=626us 
+2026-11-17T14:40:38Z r28-s-base-A2 VALID ins_u=163.8k cyc_tot=534.6k busy=31.7% rate=5201.1/5200 p99=625us 
+2026-11-17T14:41:16Z r28-s-percpu-on VALID ins_u=147.2k cyc_tot=527.4k busy=31.4% rate=5201.0/5200 p99=618us 
+2026-11-17T14:41:54Z r28-fh-idle-off VALID ins_u=159.0k cyc_tot=270.8k busy=24.7% rate=8001.6/8000 p99=360us 
+2026-11-17T14:42:33Z r28-fh-retry-on VALID ins_u=164.7k cyc_tot=284.2k busy=25.8% rate=8001.6/8000 p99=374us 
+2026-11-17T14:43:11Z r28-fh-base VALID ins_u=164.8k cyc_tot=284.0k busy=25.8% rate=8001.6/8000 p99=365us 
+2026-11-17T14:43:50Z r28-fh-base-A2 VALID ins_u=164.8k cyc_tot=284.2k busy=25.8% rate=8001.6/8000 p99=370us 
+2026-11-17T14:44:28Z r28-fh-percpu-on VALID ins_u=133.0k cyc_tot=279.3k busy=25.4% rate=8001.6/8000 p99=370us 
+2026-11-17T14:45:07Z r29-s-percpu-on VALID ins_u=147.3k cyc_tot=527.8k busy=31.5% rate=5201.0/5200 p99=616us 
+2026-11-17T14:45:45Z r29-s-idle-off VALID ins_u=156.9k cyc_tot=513.4k busy=30.5% rate=5201.1/5200 p99=615us 
+2026-11-17T14:46:23Z r29-s-retry-on VALID ins_u=165.9k cyc_tot=537.0k busy=31.8% rate=5201.0/5200 p99=624us 
+2026-11-17T14:47:02Z r29-s-base VALID ins_u=164.0k cyc_tot=534.0k busy=31.8% rate=5201.0/5200 p99=609us 
+2026-11-17T14:47:40Z r29-s-base-A2 VALID ins_u=163.9k cyc_tot=526.5k busy=31.4% rate=5201.0/5200 p99=643us 
+2026-11-17T14:48:19Z r29-fh-percpu-on VALID ins_u=133.1k cyc_tot=284.8k busy=25.9% rate=8001.7/8000 p99=368us 
+2026-11-17T14:48:57Z r29-fh-idle-off VALID ins_u=159.0k cyc_tot=271.5k busy=24.7% rate=8001.7/8000 p99=362us 
+2026-11-17T14:49:36Z r29-fh-retry-on VALID ins_u=164.8k cyc_tot=279.8k busy=25.5% rate=8001.6/8000 p99=370us 
+2026-11-17T14:50:14Z r29-fh-base VALID ins_u=164.8k cyc_tot=278.4k busy=25.3% rate=8001.6/8000 p99=366us 
+2026-11-17T14:50:52Z r29-fh-base-A2 VALID ins_u=164.7k cyc_tot=282.3k busy=25.6% rate=8001.6/8000 p99=377us 
+2026-11-17T14:51:31Z r30-s-base-A2 VALID ins_u=163.8k cyc_tot=525.5k busy=31.2% rate=5201.0/5200 p99=620us 
+2026-11-17T14:52:09Z r30-s-base VALID ins_u=163.8k cyc_tot=529.1k busy=31.3% rate=5201.1/5200 p99=629us 
+2026-11-17T14:52:48Z r30-s-retry-on VALID ins_u=165.9k cyc_tot=534.1k busy=31.7% rate=5201.0/5200 p99=641us 
+2026-11-17T14:53:26Z r30-s-idle-off VALID ins_u=156.8k cyc_tot=513.8k busy=30.5% rate=5201.0/5200 p99=611us 
+2026-11-17T14:54:05Z r30-s-percpu-on VALID ins_u=147.3k cyc_tot=528.0k busy=31.5% rate=5201.0/5200 p99=611us 
+2026-11-17T14:54:43Z r30-fh-base-A2 VALID ins_u=164.7k cyc_tot=284.3k busy=25.8% rate=8001.6/8000 p99=374us 
+2026-11-17T14:55:21Z r30-fh-base VALID ins_u=164.8k cyc_tot=283.2k busy=25.7% rate=8001.6/8000 p99=368us 
+2026-11-17T14:56:00Z r30-fh-retry-on VALID ins_u=164.8k cyc_tot=278.8k busy=25.3% rate=8001.6/8000 p99=371us 
+2026-11-17T14:56:38Z r30-fh-idle-off VALID ins_u=159.0k cyc_tot=269.4k busy=24.5% rate=8001.6/8000 p99=355us 
+2026-11-17T14:57:17Z r30-fh-percpu-on VALID ins_u=133.5k cyc_tot=285.4k busy=25.9% rate=8001.6/8000 p99=369us 
+2026-11-17T14:57:17Z after 30 rounds: widest cycles_total half-width against its target 0.71% (fh percpu-on vs base) <= target 0.80%
+2026-11-17T14:57:17Z origin container 5295550826cd stopped
+2026-11-17T14:57:21Z done: ~/epl/runs/features-2026-11-17/run-s/summary.md
+~/epl/runs/features-2026-11-17/run-s/summary.md
+2026-11-17T14:57:21Z end run-s rc=0
+2026-11-17T14:57:21Z run S floor: rounds 30, stop: widest cycles_total half-width against its target 0.71% (fh percpu-on vs base) <= target 0.80%
+2026-11-17T14:57:21Z start 18-access-log (24457s left before the stop)
+2026-11-17T14:57:27Z run features-access-log: rotate order, rounds 18..30 in blocks of 6 (adaptive True), arms ['log-off', 'log-text', 'log-json'], shapes ['s', 'fh']
+2026-11-17T14:57:28Z origin container 74b5b1bc1df5 (epl-origin-1150666) started
+2026-11-17T14:58:07Z r01-s-log-off VALID ins_u=164.0k cyc_tot=525.8k busy=31.3% rate=5201.2/5200 p99=633us 
+2026-11-17T14:58:45Z r01-s-log-text VALID ins_u=170.5k cyc_tot=543.1k busy=32.1% rate=5201.1/5200 p99=653us 
+2026-11-17T14:59:24Z r01-s-log-json VALID ins_u=173.7k cyc_tot=552.2k busy=32.7% rate=5201.1/5200 p99=657us 
+2026-11-17T15:00:02Z r01-fh-log-off VALID ins_u=164.7k cyc_tot=278.9k busy=25.3% rate=8001.7/8000 p99=370us 
+2026-11-17T15:00:41Z r01-fh-log-text VALID ins_u=171.2k cyc_tot=292.0k busy=26.4% rate=8001.6/8000 p99=388us 
+2026-11-17T15:01:19Z r01-fh-log-json VALID ins_u=173.8k cyc_tot=295.3k busy=26.7% rate=8001.7/8000 p99=388us 
+2026-11-17T15:01:58Z r02-s-log-json VALID ins_u=173.6k cyc_tot=546.5k busy=32.3% rate=5201.1/5200 p99=666us 
+2026-11-17T15:02:36Z r02-s-log-text VALID ins_u=170.6k cyc_tot=550.1k busy=32.6% rate=5201.1/5200 p99=629us 
+2026-11-17T15:03:15Z r02-s-log-off VALID ins_u=163.9k cyc_tot=523.6k busy=31.1% rate=5201.1/5200 p99=610us 
+2026-11-17T15:03:53Z r02-fh-log-json VALID ins_u=173.8k cyc_tot=295.1k busy=26.7% rate=8001.7/8000 p99=391us 
+2026-11-17T15:04:32Z r02-fh-log-text VALID ins_u=171.2k cyc_tot=291.9k busy=26.4% rate=8001.7/8000 p99=384us 
+2026-11-17T15:05:11Z r02-fh-log-off VALID ins_u=164.7k cyc_tot=282.2k busy=25.7% rate=8001.7/8000 p99=372us 
+2026-11-17T15:05:49Z r03-s-log-text VALID ins_u=170.5k cyc_tot=545.7k busy=32.2% rate=5201.1/5200 p99=657us 
+2026-11-17T15:06:28Z r03-s-log-json VALID ins_u=173.6k cyc_tot=551.4k busy=32.7% rate=5201.1/5200 p99=636us 
+2026-11-17T15:07:06Z r03-s-log-off VALID ins_u=163.9k cyc_tot=531.5k busy=31.7% rate=5201.1/5200 p99=612us 
+2026-11-17T15:07:44Z r03-fh-log-text VALID ins_u=171.2k cyc_tot=294.7k busy=26.7% rate=8001.8/8000 p99=380us 
+2026-11-17T15:08:23Z r03-fh-log-json VALID ins_u=173.8k cyc_tot=299.4k busy=27.1% rate=8001.7/8000 p99=388us 
+2026-11-17T15:09:01Z r03-fh-log-off VALID ins_u=164.7k cyc_tot=280.7k busy=25.5% rate=8001.7/8000 p99=371us 
+2026-11-17T15:09:40Z r04-s-log-off VALID ins_u=163.8k cyc_tot=529.6k busy=31.5% rate=5201.1/5200 p99=627us 
+2026-11-17T15:10:18Z r04-s-log-json VALID ins_u=173.6k cyc_tot=546.9k busy=32.3% rate=5201.1/5200 p99=654us 
+2026-11-17T15:10:57Z r04-s-log-text VALID ins_u=170.5k cyc_tot=548.9k busy=32.4% rate=5201.1/5200 p99=697us 
+2026-11-17T15:11:35Z r04-fh-log-off VALID ins_u=164.7k cyc_tot=283.2k busy=25.7% rate=8001.7/8000 p99=371us 
+2026-11-17T15:12:14Z r04-fh-log-json VALID ins_u=173.8k cyc_tot=305.7k busy=27.6% rate=8001.7/8000 p99=382us 
+2026-11-17T15:12:15Z not idle yet: load1=5.12 busy=1.3% procs=1 hot={}
+2026-11-17T15:12:21Z not idle yet: load1=4.79 busy=1.3% procs=1 hot={}
+2026-11-17T15:12:28Z not idle yet: load1=4.57 busy=1.3% procs=1 hot={}
+2026-11-17T15:12:34Z not idle yet: load1=4.28 busy=1.3% procs=1 hot={}
+2026-11-17T15:13:17Z r04-fh-log-text VALID ins_u=171.2k cyc_tot=301.6k busy=27.3% rate=8001.7/8000 p99=389us 
+2026-11-17T15:13:56Z r05-s-log-text VALID ins_u=170.6k cyc_tot=546.1k busy=32.4% rate=5201.2/5200 p99=634us 
+2026-11-17T15:14:34Z r05-s-log-off VALID ins_u=163.8k cyc_tot=527.6k busy=31.3% rate=5201.1/5200 p99=627us 
+2026-11-17T15:15:13Z r05-s-log-json VALID ins_u=173.6k cyc_tot=550.1k busy=32.5% rate=5201.1/5200 p99=657us 
+2026-11-17T15:15:51Z r05-fh-log-text VALID ins_u=171.2k cyc_tot=294.4k busy=26.6% rate=8001.7/8000 p99=380us 
+2026-11-17T15:16:30Z r05-fh-log-off VALID ins_u=164.8k cyc_tot=281.6k busy=25.6% rate=8001.7/8000 p99=372us 
+2026-11-17T15:17:08Z r05-fh-log-json VALID ins_u=173.8k cyc_tot=303.9k busy=27.5% rate=8001.7/8000 p99=392us 
+2026-11-17T15:17:47Z r06-s-log-json VALID ins_u=173.6k cyc_tot=550.9k busy=32.5% rate=5201.1/5200 p99=652us 
+2026-11-17T15:18:25Z r06-s-log-off VALID ins_u=163.8k cyc_tot=524.5k busy=31.0% rate=5201.1/5200 p99=630us 
+2026-11-17T15:19:04Z r06-s-log-text VALID ins_u=170.5k cyc_tot=543.3k busy=32.1% rate=5201.0/5200 p99=635us 
+2026-11-17T15:19:42Z r06-fh-log-json VALID ins_u=173.8k cyc_tot=298.8k busy=27.0% rate=8001.7/8000 p99=392us 
+2026-11-17T15:20:21Z r06-fh-log-off VALID ins_u=164.8k cyc_tot=271.8k busy=24.7% rate=8001.7/8000 p99=369us 
+2026-11-17T15:20:59Z r06-fh-log-text VALID ins_u=171.2k cyc_tot=297.3k busy=26.9% rate=8001.7/8000 p99=379us 
+2026-11-17T15:21:38Z r07-s-log-json VALID ins_u=173.6k cyc_tot=556.1k busy=32.8% rate=5201.1/5200 p99=652us 
+2026-11-17T15:22:16Z r07-s-log-text VALID ins_u=170.5k cyc_tot=540.7k busy=32.0% rate=5201.1/5200 p99=654us 
+2026-11-17T15:22:55Z r07-s-log-off VALID ins_u=163.8k cyc_tot=524.0k busy=31.1% rate=5201.0/5200 p99=617us 
+2026-11-17T15:23:33Z r07-fh-log-json VALID ins_u=173.8k cyc_tot=295.9k busy=26.7% rate=8001.7/8000 p99=386us 
+2026-11-17T15:23:34Z not idle yet: load1=6.16 busy=1.3% procs=1 hot={}
+2026-11-17T15:23:41Z not idle yet: load1=5.37 busy=1.3% procs=1 hot={}
+2026-11-17T15:24:24Z r07-fh-log-text VALID ins_u=171.2k cyc_tot=292.7k busy=26.5% rate=8001.7/8000 p99=383us 
+2026-11-17T15:25:03Z r07-fh-log-off VALID ins_u=164.7k cyc_tot=282.9k busy=25.7% rate=8001.7/8000 p99=370us 
+2026-11-17T15:25:41Z r08-s-log-off VALID ins_u=163.9k cyc_tot=526.8k busy=31.3% rate=5201.1/5200 p99=626us 
+2026-11-17T15:26:20Z r08-s-log-text VALID ins_u=170.6k cyc_tot=547.3k busy=32.4% rate=5201.1/5200 p99=637us 
+2026-11-17T15:26:58Z r08-s-log-json VALID ins_u=173.5k cyc_tot=549.2k busy=32.4% rate=5201.1/5200 p99=729us 
+2026-11-17T15:27:37Z r08-fh-log-off VALID ins_u=164.8k cyc_tot=273.1k busy=24.9% rate=8001.7/8000 p99=358us 
+2026-11-17T15:28:15Z r08-fh-log-text VALID ins_u=171.2k cyc_tot=297.0k busy=26.9% rate=8001.7/8000 p99=393us 
+2026-11-17T15:28:54Z r08-fh-log-json VALID ins_u=173.8k cyc_tot=301.3k busy=27.2% rate=8001.7/8000 p99=392us 
+2026-11-17T15:29:32Z r09-s-log-off VALID ins_u=163.9k cyc_tot=524.3k busy=31.1% rate=5201.1/5200 p99=642us 
+2026-11-17T15:30:11Z r09-s-log-json VALID ins_u=173.6k cyc_tot=546.7k busy=32.3% rate=5201.1/5200 p99=686us 
+2026-11-17T15:30:49Z r09-s-log-text VALID ins_u=170.3k cyc_tot=542.0k busy=32.0% rate=5201.1/5200 p99=623us 
+2026-11-17T15:31:28Z r09-fh-log-off VALID ins_u=164.8k cyc_tot=279.6k busy=25.4% rate=8001.7/8000 p99=369us 
+2026-11-17T15:32:06Z r09-fh-log-json VALID ins_u=173.8k cyc_tot=303.2k busy=27.4% rate=8001.7/8000 p99=382us 
+2026-11-17T15:32:45Z r09-fh-log-text VALID ins_u=171.2k cyc_tot=293.1k busy=26.5% rate=8001.7/8000 p99=374us 
+2026-11-17T15:33:23Z r10-s-log-text VALID ins_u=170.5k cyc_tot=544.0k busy=32.2% rate=5201.1/5200 p99=646us 
+2026-11-17T15:34:02Z r10-s-log-json VALID ins_u=173.7k cyc_tot=548.6k busy=32.4% rate=5201.1/5200 p99=663us 
+2026-11-17T15:34:40Z r10-s-log-off VALID ins_u=163.9k cyc_tot=528.7k busy=31.5% rate=5201.1/5200 p99=618us 
+2026-11-17T15:35:18Z r10-fh-log-text VALID ins_u=171.2k cyc_tot=301.8k busy=27.3% rate=8001.7/8000 p99=385us 
+2026-11-17T15:35:57Z r10-fh-log-json VALID ins_u=173.8k cyc_tot=303.1k busy=27.4% rate=8001.7/8000 p99=394us 
+2026-11-17T15:36:36Z r10-fh-log-off VALID ins_u=164.7k cyc_tot=287.8k busy=26.1% rate=8001.7/8000 p99=379us 
+2026-11-17T15:37:14Z r11-s-log-json VALID ins_u=173.7k cyc_tot=555.3k busy=32.9% rate=5201.1/5200 p99=686us 
+2026-11-17T15:37:53Z r11-s-log-off VALID ins_u=163.8k cyc_tot=529.6k busy=31.4% rate=5201.1/5200 p99=631us 
+2026-11-17T15:38:31Z r11-s-log-text VALID ins_u=170.5k cyc_tot=543.5k busy=32.2% rate=5201.0/5200 p99=667us 
+2026-11-17T15:39:10Z r11-fh-log-json VALID ins_u=173.8k cyc_tot=301.0k busy=27.2% rate=8001.6/8000 p99=397us 
+2026-11-17T15:39:48Z r11-fh-log-off VALID ins_u=164.7k cyc_tot=284.2k busy=25.8% rate=8001.6/8000 p99=367us 
+2026-11-17T15:40:27Z r11-fh-log-text VALID ins_u=171.2k cyc_tot=297.4k busy=26.9% rate=8001.7/8000 p99=387us 
+2026-11-17T15:41:05Z r12-s-log-text VALID ins_u=170.5k cyc_tot=548.2k busy=32.4% rate=5201.1/5200 p99=647us 
+2026-11-17T15:41:44Z r12-s-log-off VALID ins_u=163.8k cyc_tot=524.5k busy=31.1% rate=5201.0/5200 p99=610us 
+2026-11-17T15:42:22Z r12-s-log-json VALID ins_u=173.6k cyc_tot=551.2k busy=32.5% rate=5201.1/5200 p99=675us 
+2026-11-17T15:43:01Z r12-fh-log-text VALID ins_u=171.2k cyc_tot=297.7k busy=27.0% rate=8001.8/8000 p99=388us 
+2026-11-17T15:43:39Z r12-fh-log-off VALID ins_u=164.8k cyc_tot=276.0k busy=25.1% rate=8001.7/8000 p99=366us 
+2026-11-17T15:44:18Z r12-fh-log-json VALID ins_u=173.8k cyc_tot=299.5k busy=27.1% rate=8001.7/8000 p99=393us 
+2026-11-17T15:44:56Z r13-s-log-off VALID ins_u=163.8k cyc_tot=528.5k busy=31.4% rate=5201.1/5200 p99=626us 
+2026-11-17T15:45:35Z r13-s-log-text VALID ins_u=170.5k cyc_tot=549.0k busy=32.5% rate=5201.1/5200 p99=643us 
+2026-11-17T15:46:13Z r13-s-log-json VALID ins_u=173.6k cyc_tot=550.8k busy=32.5% rate=5201.1/5200 p99=672us 
+2026-11-17T15:46:52Z r13-fh-log-off VALID ins_u=164.8k cyc_tot=277.7k busy=25.3% rate=8001.7/8000 p99=365us 
+2026-11-17T15:47:30Z r13-fh-log-text VALID ins_u=171.2k cyc_tot=297.3k busy=26.9% rate=8001.8/8000 p99=377us 
+2026-11-17T15:48:09Z r13-fh-log-json VALID ins_u=173.8k cyc_tot=296.8k busy=26.9% rate=8001.7/8000 p99=386us 
+2026-11-17T15:48:47Z r14-s-log-json VALID ins_u=173.6k cyc_tot=553.7k busy=32.7% rate=5201.0/5200 p99=703us 
+2026-11-17T15:49:26Z r14-s-log-text VALID ins_u=170.5k cyc_tot=548.5k busy=32.5% rate=5201.1/5200 p99=663us 
+2026-11-17T15:50:04Z r14-s-log-off VALID ins_u=164.0k cyc_tot=529.7k busy=31.4% rate=5201.0/5200 p99=640us 
+2026-11-17T15:50:43Z r14-fh-log-json VALID ins_u=173.8k cyc_tot=298.8k busy=27.1% rate=8001.7/8000 p99=383us 
+2026-11-17T15:51:21Z r14-fh-log-text VALID ins_u=171.2k cyc_tot=294.9k busy=26.7% rate=8001.7/8000 p99=389us 
+2026-11-17T15:52:00Z r14-fh-log-off VALID ins_u=164.7k cyc_tot=275.3k busy=25.0% rate=8001.7/8000 p99=369us 
+2026-11-17T15:52:38Z r15-s-log-off VALID ins_u=163.9k cyc_tot=521.4k busy=31.0% rate=5201.1/5200 p99=631us 
+2026-11-17T15:53:17Z r15-s-log-json VALID ins_u=173.5k cyc_tot=551.8k busy=32.5% rate=5201.1/5200 p99=689us 
+2026-11-17T15:53:55Z r15-s-log-text VALID ins_u=170.6k cyc_tot=545.2k busy=32.3% rate=5201.1/5200 p99=649us 
+2026-11-17T15:54:34Z r15-fh-log-off VALID ins_u=164.7k cyc_tot=282.2k busy=25.6% rate=8001.7/8000 p99=366us 
+2026-11-17T15:55:12Z r15-fh-log-json VALID ins_u=173.8k cyc_tot=303.2k busy=27.4% rate=8001.7/8000 p99=397us 
+2026-11-17T15:55:51Z r15-fh-log-text VALID ins_u=171.2k cyc_tot=288.5k busy=26.2% rate=8001.7/8000 p99=372us 
+2026-11-17T15:56:29Z r16-s-log-text VALID ins_u=170.3k cyc_tot=543.2k busy=32.0% rate=5201.1/5200 p99=664us 
+2026-11-17T15:57:08Z r16-s-log-json VALID ins_u=173.6k cyc_tot=547.7k busy=32.4% rate=5201.2/5200 p99=653us 
+2026-11-17T15:57:46Z r16-s-log-off VALID ins_u=163.9k cyc_tot=522.4k busy=31.0% rate=5201.1/5200 p99=624us 
+2026-11-17T15:58:25Z r16-fh-log-text VALID ins_u=171.2k cyc_tot=288.2k busy=26.1% rate=8001.7/8000 p99=382us 
+2026-11-17T15:59:03Z r16-fh-log-json VALID ins_u=173.8k cyc_tot=303.3k busy=27.5% rate=8001.7/8000 p99=399us 
+2026-11-17T15:59:42Z r16-fh-log-off VALID ins_u=164.7k cyc_tot=283.2k busy=25.7% rate=8001.6/8000 p99=375us 
+2026-11-17T16:00:20Z r17-s-log-text VALID ins_u=170.5k cyc_tot=540.3k busy=32.0% rate=5201.1/5200 p99=636us 
+2026-11-17T16:00:59Z r17-s-log-off VALID ins_u=163.9k cyc_tot=523.7k busy=31.2% rate=5201.1/5200 p99=618us 
+2026-11-17T16:01:37Z r17-s-log-json VALID ins_u=173.6k cyc_tot=547.4k busy=32.4% rate=5201.1/5200 p99=646us 
+2026-11-17T16:02:16Z r17-fh-log-text VALID ins_u=171.2k cyc_tot=301.6k busy=27.3% rate=8001.6/8000 p99=386us 
+2026-11-17T16:02:54Z r17-fh-log-off VALID ins_u=164.8k cyc_tot=279.9k busy=25.5% rate=8001.6/8000 p99=362us 
+2026-11-17T16:03:33Z r17-fh-log-json VALID ins_u=173.8k cyc_tot=299.0k busy=27.1% rate=8001.7/8000 p99=386us 
+2026-11-17T16:04:11Z r18-s-log-json VALID ins_u=173.5k cyc_tot=552.9k busy=32.6% rate=5201.1/5200 p99=660us 
+2026-11-17T16:04:50Z r18-s-log-off VALID ins_u=163.8k cyc_tot=526.2k busy=31.2% rate=5201.1/5200 p99=609us 
+2026-11-17T16:05:28Z r18-s-log-text VALID ins_u=170.5k cyc_tot=552.0k busy=32.7% rate=5201.0/5200 p99=627us 
+2026-11-17T16:06:07Z r18-fh-log-json VALID ins_u=173.8k cyc_tot=295.8k busy=26.7% rate=8001.7/8000 p99=389us 
+2026-11-17T16:06:45Z r18-fh-log-off VALID ins_u=164.7k cyc_tot=283.1k busy=25.7% rate=8001.7/8000 p99=371us 
+2026-11-17T16:07:24Z r18-fh-log-text VALID ins_u=171.2k cyc_tot=301.7k busy=27.3% rate=8001.7/8000 p99=385us 
+2026-11-17T16:07:24Z after 18 rounds: widest cycles_total half-width against its target 1.02% (fh log-text vs log-off) <= target 1.50%
+2026-11-17T16:07:24Z origin container 74b5b1bc1df5 stopped
+2026-11-17T16:07:26Z done: ~/epl/runs/features-2026-11-17/18-access-log/summary.md
+~/epl/runs/features-2026-11-17/18-access-log/summary.md
+2026-11-17T16:07:26Z end 18-access-log rc=0
+2026-11-17T16:07:26Z start 17-tracing (20252s left before the stop)
+2026-11-17T16:07:33Z run features-tracing: rotate order, rounds 16..16 in blocks of 16 (adaptive False), arms ['trace-off', 'trace-1', 'trace-10', 'trace-100'], shapes ['s', 'fh']
+2026-11-17T16:07:33Z origin container 1146792754e8 (epl-origin-1162138) started
+2026-11-17T16:07:34Z collector container f68f2984c221 (epl-collector-1162138) started
+2026-11-17T16:08:13Z r01-s-trace-off VALID ins_u=163.9k cyc_tot=531.1k busy=31.5% rate=5201.1/5200 p99=624us 
+2026-11-17T16:08:51Z r01-s-trace-1 VALID ins_u=186.5k cyc_tot=556.8k busy=32.8% rate=5201.1/5200 p99=699us 
+2026-11-17T16:09:30Z r01-s-trace-10 VALID ins_u=198.1k cyc_tot=573.5k busy=33.8% rate=5201.1/5200 p99=800us 
+2026-11-17T16:10:08Z r01-s-trace-100 VALID ins_u=315.2k cyc_tot=699.9k busy=40.8% rate=5201.1/5200 p99=1036us 
+2026-11-17T16:10:47Z r01-fh-trace-off VALID ins_u=164.7k cyc_tot=286.4k busy=26.0% rate=8001.7/8000 p99=369us 
+2026-11-17T16:11:25Z r01-fh-trace-1 VALID ins_u=180.9k cyc_tot=306.9k busy=27.7% rate=8001.7/8000 p99=399us 
+2026-11-17T16:12:03Z r01-fh-trace-10 VALID ins_u=191.5k cyc_tot=324.7k busy=29.3% rate=8001.6/8000 p99=465us 
+2026-11-17T16:12:42Z r01-fh-trace-100 VALID ins_u=297.1k cyc_tot=445.1k busy=39.8% rate=8001.6/8000 p99=661us 
+2026-11-17T16:13:20Z r02-s-trace-100 VALID ins_u=315.3k cyc_tot=707.6k busy=41.3% rate=5201.1/5200 p99=964us 
+2026-11-17T16:13:59Z r02-s-trace-10 VALID ins_u=198.3k cyc_tot=574.8k busy=33.9% rate=5201.0/5200 p99=783us 
+2026-11-17T16:14:37Z r02-s-trace-1 VALID ins_u=186.6k cyc_tot=566.4k busy=33.4% rate=5201.1/5200 p99=691us 
+2026-11-17T16:15:16Z r02-s-trace-off VALID ins_u=163.7k cyc_tot=525.0k busy=31.1% rate=5201.0/5200 p99=632us 
+2026-11-17T16:15:54Z r02-fh-trace-100 VALID ins_u=296.9k cyc_tot=441.1k busy=39.3% rate=8001.6/8000 p99=763us 
+2026-11-17T16:16:33Z r02-fh-trace-10 VALID ins_u=191.4k cyc_tot=323.3k busy=29.1% rate=8001.6/8000 p99=473us 
+2026-11-17T16:17:11Z r02-fh-trace-1 VALID ins_u=180.9k cyc_tot=307.6k busy=27.8% rate=8001.6/8000 p99=401us 
+2026-11-17T16:17:49Z r02-fh-trace-off VALID ins_u=164.7k cyc_tot=280.6k busy=25.5% rate=8001.6/8000 p99=372us 
+2026-11-17T16:18:28Z r03-s-trace-1 VALID ins_u=186.5k cyc_tot=563.2k busy=33.2% rate=5201.1/5200 p99=724us 
+2026-11-17T16:19:06Z r03-s-trace-10 VALID ins_u=198.4k cyc_tot=570.0k busy=33.5% rate=5201.0/5200 p99=780us 
+2026-11-17T16:19:45Z r03-s-trace-100 VALID ins_u=315.1k cyc_tot=697.8k busy=40.6% rate=5201.1/5200 p99=1397us 
+2026-11-17T16:20:23Z r03-s-trace-off VALID ins_u=164.0k cyc_tot=520.6k busy=30.9% rate=5201.0/5200 p99=615us 
+2026-11-17T16:21:02Z r03-fh-trace-1 VALID ins_u=180.9k cyc_tot=309.6k busy=27.9% rate=8001.6/8000 p99=410us 
+2026-11-17T16:21:40Z r03-fh-trace-10 VALID ins_u=191.5k cyc_tot=322.6k busy=29.0% rate=8001.6/8000 p99=475us 
+2026-11-17T16:22:19Z r03-fh-trace-100 VALID ins_u=297.1k cyc_tot=441.6k busy=39.5% rate=8001.6/8000 p99=606us 
+2026-11-17T16:22:57Z r03-fh-trace-off VALID ins_u=164.8k cyc_tot=271.5k busy=24.7% rate=8001.6/8000 p99=361us 
+2026-11-17T16:23:35Z r04-s-trace-off VALID ins_u=163.9k cyc_tot=525.8k busy=31.3% rate=5201.0/5200 p99=631us 
+2026-11-17T16:24:14Z r04-s-trace-100 VALID ins_u=315.1k cyc_tot=706.4k busy=41.2% rate=5201.0/5200 p99=1107us 
+2026-11-17T16:24:52Z r04-s-trace-10 VALID ins_u=198.3k cyc_tot=572.0k busy=33.6% rate=5201.1/5200 p99=794us 
+2026-11-17T16:25:31Z r04-s-trace-1 VALID ins_u=186.6k cyc_tot=564.5k busy=33.3% rate=5201.1/5200 p99=678us 
+2026-11-17T16:26:09Z r04-fh-trace-off VALID ins_u=164.7k cyc_tot=284.1k busy=25.8% rate=8001.6/8000 p99=372us 
+2026-11-17T16:26:48Z r04-fh-trace-100 VALID ins_u=297.0k cyc_tot=439.6k busy=39.3% rate=8001.6/8000 p99=683us 
+2026-11-17T16:27:26Z r04-fh-trace-10 VALID ins_u=191.5k cyc_tot=327.4k busy=29.5% rate=8001.7/8000 p99=482us 
+2026-11-17T16:28:05Z r04-fh-trace-1 VALID ins_u=180.9k cyc_tot=314.8k busy=28.4% rate=8001.6/8000 p99=398us 
+2026-11-17T16:28:43Z r05-s-trace-1 VALID ins_u=186.8k cyc_tot=565.4k busy=33.4% rate=5201.0/5200 p99=677us 
+2026-11-17T16:29:21Z r05-s-trace-off VALID ins_u=163.8k cyc_tot=524.6k busy=31.1% rate=5201.0/5200 p99=613us 
+2026-11-17T16:30:00Z r05-s-trace-100 VALID ins_u=315.3k cyc_tot=704.2k busy=41.1% rate=5201.1/5200 p99=1144us 
+2026-11-17T16:30:38Z r05-s-trace-10 VALID ins_u=198.5k cyc_tot=573.2k busy=33.7% rate=5201.1/5200 p99=811us 
+2026-11-17T16:31:17Z r05-fh-trace-1 VALID ins_u=180.8k cyc_tot=302.7k busy=27.3% rate=8001.6/8000 p99=400us 
+2026-11-17T16:31:55Z r05-fh-trace-off VALID ins_u=164.7k cyc_tot=287.9k busy=26.1% rate=8001.6/8000 p99=372us 
+2026-11-17T16:32:34Z r05-fh-trace-100 VALID ins_u=296.8k cyc_tot=435.6k busy=38.8% rate=8001.6/8000 p99=792us 
+2026-11-17T16:33:12Z r05-fh-trace-10 VALID ins_u=191.5k cyc_tot=324.0k busy=29.2% rate=8001.6/8000 p99=473us 
+2026-11-17T16:33:51Z r06-s-trace-10 VALID ins_u=198.6k cyc_tot=576.2k busy=33.9% rate=5201.1/5200 p99=781us 
+2026-11-17T16:34:29Z r06-s-trace-100 VALID ins_u=315.2k cyc_tot=700.7k busy=40.9% rate=5201.1/5200 p99=978us 
+2026-11-17T16:35:08Z r06-s-trace-off VALID ins_u=163.9k cyc_tot=523.1k busy=31.0% rate=5201.0/5200 p99=651us 
+2026-11-17T16:35:46Z r06-s-trace-1 VALID ins_u=186.5k cyc_tot=562.3k busy=33.1% rate=5201.1/5200 p99=792us 
+2026-11-17T16:36:25Z r06-fh-trace-10 VALID ins_u=191.5k cyc_tot=321.3k busy=29.0% rate=8001.7/8000 p99=475us 
+2026-11-17T16:37:03Z r06-fh-trace-100 VALID ins_u=296.9k cyc_tot=442.9k busy=39.5% rate=8001.6/8000 p99=1177us 
+2026-11-17T16:37:42Z r06-fh-trace-off VALID ins_u=164.8k cyc_tot=281.4k busy=25.5% rate=8001.6/8000 p99=373us 
+2026-11-17T16:38:20Z r06-fh-trace-1 VALID ins_u=180.9k cyc_tot=310.1k busy=28.0% rate=8001.7/8000 p99=402us 
+2026-11-17T16:38:59Z r07-s-trace-10 VALID ins_u=198.3k cyc_tot=584.2k busy=34.4% rate=5201.1/5200 p99=778us 
+2026-11-17T16:39:37Z r07-s-trace-1 VALID ins_u=186.5k cyc_tot=560.3k busy=33.0% rate=5201.0/5200 p99=684us 
+2026-11-17T16:40:16Z r07-s-trace-off VALID ins_u=163.9k cyc_tot=517.7k busy=30.8% rate=5201.1/5200 p99=611us 
+2026-11-17T16:40:54Z r07-s-trace-100 VALID ins_u=315.1k cyc_tot=704.2k busy=41.0% rate=5201.0/5200 p99=1329us 
+2026-11-17T16:41:33Z r07-fh-trace-10 VALID ins_u=191.6k cyc_tot=324.6k busy=29.2% rate=8001.6/8000 p99=480us 
+2026-11-17T16:42:11Z r07-fh-trace-1 VALID ins_u=180.9k cyc_tot=310.7k busy=28.1% rate=8001.6/8000 p99=393us 
+2026-11-17T16:42:49Z r07-fh-trace-off VALID ins_u=164.7k cyc_tot=282.3k busy=25.6% rate=8001.6/8000 p99=373us 
+2026-11-17T16:43:28Z r07-fh-trace-100 VALID ins_u=296.9k cyc_tot=442.2k busy=39.5% rate=8001.6/8000 p99=711us 
+2026-11-17T16:44:06Z r08-s-trace-100 VALID ins_u=315.2k cyc_tot=694.9k busy=40.5% rate=5201.1/5200 p99=1138us 
+2026-11-17T16:44:45Z r08-s-trace-off VALID ins_u=163.8k cyc_tot=523.5k busy=31.1% rate=5201.1/5200 p99=623us 
+2026-11-17T16:45:23Z r08-s-trace-1 VALID ins_u=186.6k cyc_tot=567.5k busy=33.5% rate=5201.1/5200 p99=676us 
+2026-11-17T16:46:02Z r08-s-trace-10 VALID ins_u=198.4k cyc_tot=576.8k busy=33.9% rate=5201.1/5200 p99=803us 
+2026-11-17T16:46:41Z r08-fh-trace-100 VALID ins_u=296.7k cyc_tot=436.7k busy=38.9% rate=8001.7/8000 p99=942us 
+2026-11-17T16:47:19Z r08-fh-trace-off VALID ins_u=164.7k cyc_tot=275.6k busy=25.0% rate=8001.6/8000 p99=372us 
+2026-11-17T16:47:57Z r08-fh-trace-1 VALID ins_u=180.9k cyc_tot=312.2k busy=28.2% rate=8001.6/8000 p99=398us 
+2026-11-17T16:48:36Z r08-fh-trace-10 VALID ins_u=191.4k cyc_tot=322.0k busy=29.0% rate=8001.7/8000 p99=469us 
+2026-11-17T16:49:14Z r09-s-trace-100 VALID ins_u=315.2k cyc_tot=703.5k busy=41.0% rate=5201.1/5200 p99=1335us 
+2026-11-17T16:49:53Z r09-s-trace-10 VALID ins_u=198.3k cyc_tot=569.2k busy=33.4% rate=5201.0/5200 p99=891us 
+2026-11-17T16:50:31Z r09-s-trace-1 VALID ins_u=186.6k cyc_tot=566.8k busy=33.4% rate=5201.0/5200 p99=727us 
+2026-11-17T16:51:10Z r09-s-trace-off VALID ins_u=163.7k cyc_tot=522.5k busy=30.9% rate=5201.1/5200 p99=619us 
+2026-11-17T16:51:48Z r09-fh-trace-100 VALID ins_u=297.0k cyc_tot=441.2k busy=39.4% rate=8001.6/8000 p99=658us 
+2026-11-17T16:52:27Z r09-fh-trace-10 VALID ins_u=191.6k cyc_tot=321.8k busy=29.0% rate=8001.7/8000 p99=488us 
+2026-11-17T16:53:05Z r09-fh-trace-1 VALID ins_u=180.9k cyc_tot=307.7k busy=27.8% rate=8001.6/8000 p99=399us 
+2026-11-17T16:53:43Z r09-fh-trace-off VALID ins_u=164.8k cyc_tot=281.2k busy=25.6% rate=8001.6/8000 p99=363us 
+2026-11-17T16:54:22Z r10-s-trace-off VALID ins_u=163.8k cyc_tot=530.7k busy=31.4% rate=5201.1/5200 p99=648us 
+2026-11-17T16:55:00Z r10-s-trace-1 VALID ins_u=186.5k cyc_tot=556.8k busy=32.8% rate=5201.1/5200 p99=718us 
+2026-11-17T16:55:39Z r10-s-trace-10 VALID ins_u=198.3k cyc_tot=581.9k busy=34.2% rate=5201.1/5200 p99=799us 
+2026-11-17T16:56:17Z r10-s-trace-100 VALID ins_u=315.3k cyc_tot=716.2k busy=41.8% rate=5201.1/5200 p99=990us 
+2026-11-17T16:56:56Z r10-fh-trace-off VALID ins_u=164.7k cyc_tot=278.7k busy=25.4% rate=8001.7/8000 p99=373us 
+2026-11-17T16:57:34Z r10-fh-trace-1 VALID ins_u=180.9k cyc_tot=310.1k busy=28.0% rate=8001.6/8000 p99=399us 
+2026-11-17T16:58:13Z r10-fh-trace-10 VALID ins_u=191.3k cyc_tot=323.0k busy=29.1% rate=8001.6/8000 p99=488us 
+2026-11-17T16:58:51Z r10-fh-trace-100 VALID ins_u=296.8k cyc_tot=436.6k busy=38.9% rate=8001.6/8000 p99=846us 
+2026-11-17T16:59:30Z r11-s-trace-1 VALID ins_u=186.5k cyc_tot=567.1k busy=33.4% rate=5201.0/5200 p99=702us 
+2026-11-17T17:00:08Z r11-s-trace-10 VALID ins_u=198.3k cyc_tot=576.9k busy=34.0% rate=5201.1/5200 p99=744us 
+2026-11-17T17:00:47Z r11-s-trace-100 VALID ins_u=315.2k cyc_tot=696.7k busy=40.6% rate=5201.1/5200 p99=988us 
+2026-11-17T17:01:25Z r11-s-trace-off VALID ins_u=163.8k cyc_tot=538.8k busy=31.9% rate=5201.1/5200 p99=616us 
+2026-11-17T17:02:03Z r11-fh-trace-1 VALID ins_u=180.9k cyc_tot=313.1k busy=28.3% rate=8001.6/8000 p99=401us 
+2026-11-17T17:02:42Z r11-fh-trace-10 VALID ins_u=191.5k cyc_tot=324.7k busy=29.3% rate=8001.6/8000 p99=501us 
+2026-11-17T17:03:20Z r11-fh-trace-100 VALID ins_u=297.2k cyc_tot=440.9k busy=39.4% rate=8001.6/8000 p99=614us 
+2026-11-17T17:03:59Z r11-fh-trace-off VALID ins_u=164.7k cyc_tot=281.7k busy=25.6% rate=8001.6/8000 p99=372us 
+2026-11-17T17:04:37Z r12-s-trace-off VALID ins_u=163.8k cyc_tot=526.0k busy=31.2% rate=5201.1/5200 p99=629us 
+2026-11-17T17:05:15Z r12-s-trace-100 VALID ins_u=315.3k cyc_tot=702.0k busy=41.0% rate=5201.1/5200 p99=908us 
+2026-11-17T17:05:54Z r12-s-trace-10 VALID ins_u=198.1k cyc_tot=578.3k busy=34.1% rate=5201.2/5200 p99=760us 
+2026-11-17T17:06:32Z r12-s-trace-1 VALID ins_u=186.6k cyc_tot=569.1k busy=33.6% rate=5201.1/5200 p99=764us 
+2026-11-17T17:07:11Z r12-fh-trace-off VALID ins_u=164.7k cyc_tot=282.1k busy=25.6% rate=8001.6/8000 p99=372us 
+2026-11-17T17:07:49Z r12-fh-trace-100 VALID ins_u=297.0k cyc_tot=441.4k busy=39.4% rate=8001.6/8000 p99=757us 
+2026-11-17T17:08:28Z r12-fh-trace-10 VALID ins_u=191.5k cyc_tot=324.9k busy=29.2% rate=8001.6/8000 p99=516us 
+2026-11-17T17:09:06Z r12-fh-trace-1 VALID ins_u=180.9k cyc_tot=309.8k busy=27.9% rate=8001.7/8000 p99=398us 
+2026-11-17T17:09:45Z r13-s-trace-10 VALID ins_u=198.4k cyc_tot=576.5k busy=34.0% rate=5201.1/5200 p99=747us 
+2026-11-17T17:10:23Z r13-s-trace-100 VALID ins_u=315.3k cyc_tot=703.4k busy=41.1% rate=5201.2/5200 p99=1059us 
+2026-11-17T17:11:02Z r13-s-trace-off VALID ins_u=163.9k cyc_tot=523.6k busy=31.1% rate=5201.0/5200 p99=619us 
+2026-11-17T17:11:40Z r13-s-trace-1 VALID ins_u=186.6k cyc_tot=562.4k busy=33.2% rate=5201.1/5200 p99=682us 
+2026-11-17T17:12:19Z r13-fh-trace-10 VALID ins_u=191.5k cyc_tot=326.5k busy=29.4% rate=8001.7/8000 p99=473us 
+2026-11-17T17:12:57Z r13-fh-trace-100 VALID ins_u=297.1k cyc_tot=448.0k busy=40.0% rate=8001.6/8000 p99=645us 
+2026-11-17T17:13:36Z r13-fh-trace-off VALID ins_u=164.7k cyc_tot=280.2k busy=25.5% rate=8001.6/8000 p99=368us 
+2026-11-17T17:14:14Z r13-fh-trace-1 VALID ins_u=180.9k cyc_tot=296.9k busy=26.8% rate=8001.6/8000 p99=396us 
+2026-11-17T17:14:52Z r14-s-trace-1 VALID ins_u=186.6k cyc_tot=569.5k busy=33.6% rate=5201.1/5200 p99=726us 
+2026-11-17T17:15:31Z r14-s-trace-off VALID ins_u=163.9k cyc_tot=527.2k busy=31.3% rate=5201.1/5200 p99=623us 
+2026-11-17T17:16:09Z r14-s-trace-100 VALID ins_u=315.3k cyc_tot=703.3k busy=41.1% rate=5201.1/5200 p99=941us 
+2026-11-17T17:16:48Z r14-s-trace-10 VALID ins_u=198.6k cyc_tot=582.4k busy=34.3% rate=5201.1/5200 p99=793us 
+2026-11-17T17:17:26Z r14-fh-trace-1 VALID ins_u=180.9k cyc_tot=307.1k busy=27.7% rate=8001.6/8000 p99=401us 
+2026-11-17T17:18:05Z r14-fh-trace-off VALID ins_u=164.7k cyc_tot=279.6k busy=25.4% rate=8001.5/8000 p99=371us 
+2026-11-17T17:18:44Z r14-fh-trace-100 VALID ins_u=297.1k cyc_tot=444.5k busy=39.7% rate=8001.6/8000 p99=593us 
+2026-11-17T17:19:22Z r14-fh-trace-10 VALID ins_u=191.4k cyc_tot=328.7k busy=29.6% rate=8001.7/8000 p99=505us 
+2026-11-17T17:20:00Z r15-s-trace-10 VALID ins_u=198.1k cyc_tot=570.8k busy=33.6% rate=5201.0/5200 p99=795us 
+2026-11-17T17:20:39Z r15-s-trace-1 VALID ins_u=186.5k cyc_tot=553.7k busy=32.6% rate=5201.1/5200 p99=713us 
+2026-11-17T17:21:17Z r15-s-trace-off VALID ins_u=164.0k cyc_tot=527.4k busy=31.4% rate=5201.1/5200 p99=636us 
+2026-11-17T17:21:56Z r15-s-trace-100 VALID ins_u=315.2k cyc_tot=697.7k busy=40.7% rate=5201.0/5200 p99=1036us 
+2026-11-17T17:22:34Z r15-fh-trace-10 VALID ins_u=191.5k cyc_tot=325.6k busy=29.3% rate=8001.6/8000 p99=498us 
+2026-11-17T17:23:13Z r15-fh-trace-1 VALID ins_u=180.9k cyc_tot=307.1k busy=27.7% rate=8001.6/8000 p99=394us 
+2026-11-17T17:23:51Z r15-fh-trace-off VALID ins_u=164.8k cyc_tot=280.1k busy=25.4% rate=8001.6/8000 p99=370us 
+2026-11-17T17:24:30Z r15-fh-trace-100 VALID ins_u=297.0k cyc_tot=438.1k busy=39.1% rate=8001.7/8000 p99=892us 
+2026-11-17T17:25:08Z r16-s-trace-100 VALID ins_u=315.3k cyc_tot=700.5k busy=40.9% rate=5201.0/5200 p99=980us 
+2026-11-17T17:25:47Z r16-s-trace-off VALID ins_u=163.9k cyc_tot=522.2k busy=31.1% rate=5201.0/5200 p99=623us 
+2026-11-17T17:26:25Z r16-s-trace-1 VALID ins_u=186.6k cyc_tot=564.5k busy=33.3% rate=5201.0/5200 p99=742us 
+2026-11-17T17:27:04Z r16-s-trace-10 VALID ins_u=198.4k cyc_tot=578.5k busy=34.1% rate=5201.1/5200 p99=804us 
+2026-11-17T17:27:42Z r16-fh-trace-100 VALID ins_u=297.1k cyc_tot=443.3k busy=39.6% rate=8001.7/8000 p99=660us 
+2026-11-17T17:28:21Z r16-fh-trace-off VALID ins_u=164.7k cyc_tot=277.9k busy=25.3% rate=8001.6/8000 p99=372us 
+2026-11-17T17:28:59Z r16-fh-trace-1 VALID ins_u=180.9k cyc_tot=310.0k busy=28.0% rate=8001.7/8000 p99=397us 
+2026-11-17T17:29:37Z r16-fh-trace-10 VALID ins_u=191.4k cyc_tot=327.3k busy=29.5% rate=8001.6/8000 p99=498us 
+2026-11-17T17:29:37Z after 16 rounds: widest cycles_total half-width against its target 1.14% (fh trace-1 vs trace-off) <= target 1.50%
+2026-11-17T17:29:38Z collector container f68f2984c221 stopped
+2026-11-17T17:29:38Z origin container 1146792754e8 stopped
+2026-11-17T17:29:41Z done: ~/epl/runs/features-2026-11-17/17-tracing/summary.md
+~/epl/runs/features-2026-11-17/17-tracing/summary.md
+2026-11-17T17:29:41Z end 17-tracing rc=0
+2026-11-17T17:29:41Z start 13-ext-authz (15317s left before the stop)
+2026-11-17T17:29:47Z run features-ext-authz: rotate order, rounds 16..16 in blocks of 16 (adaptive False), arms ['authz-off', 'authz-http', 'authz-grpc', 'authz-off-A2'], shapes ['s', 'fh6']
+2026-11-17T17:29:47Z origin container 0023d67acd43 (epl-origin-1174943) started
+2026-11-17T17:30:26Z r01-s-authz-off VALID ins_u=163.9k cyc_tot=532.0k busy=31.7% rate=5201.0/5200 p99=624us 
+2026-11-17T17:31:05Z r01-s-authz-http VALID ins_u=286.7k cyc_tot=809.1k busy=47.1% rate=5201.1/5200 p99=1423us 
+2026-11-17T17:31:44Z r01-s-authz-grpc VALID ins_u=339.5k cyc_tot=961.6k busy=55.6% rate=5201.1/5200 p99=2342us 
+2026-11-17T17:32:22Z r01-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=524.0k busy=31.2% rate=5201.1/5200 p99=626us 
+2026-11-17T17:33:01Z r01-fh6-authz-off VALID ins_u=164.8k cyc_tot=301.0k busy=20.9% rate=6001.2/6000 p99=408us 
+2026-11-17T17:33:39Z r01-fh6-authz-http VALID ins_u=286.6k cyc_tot=605.4k busy=40.7% rate=6001.4/6000 p99=941us 
+2026-11-17T17:34:18Z r01-fh6-authz-grpc VALID ins_u=340.2k cyc_tot=740.9k busy=49.4% rate=6001.2/6000 p99=1265us 
+2026-11-17T17:34:56Z r01-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=300.2k busy=20.9% rate=6001.2/6000 p99=409us 
+2026-11-17T17:35:34Z r02-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=521.4k busy=30.9% rate=5201.0/5200 p99=618us 
+2026-11-17T17:36:13Z r02-s-authz-grpc VALID ins_u=337.9k cyc_tot=944.3k busy=54.5% rate=5201.0/5200 p99=2589us 
+2026-11-17T17:36:52Z r02-s-authz-http VALID ins_u=286.8k cyc_tot=826.4k busy=48.1% rate=5201.1/5200 p99=1650us 
+2026-11-17T17:37:30Z r02-s-authz-off VALID ins_u=163.8k cyc_tot=524.0k busy=31.1% rate=5201.0/5200 p99=603us 
+2026-11-17T17:38:08Z r02-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=304.9k busy=21.2% rate=6001.2/6000 p99=411us 
+2026-11-17T17:38:47Z r02-fh6-authz-grpc VALID ins_u=340.1k cyc_tot=743.1k busy=49.5% rate=6001.2/6000 p99=1350us 
+2026-11-17T17:39:26Z r02-fh6-authz-http VALID ins_u=286.6k cyc_tot=607.6k busy=40.9% rate=6001.3/6000 p99=1270us 
+2026-11-17T17:40:04Z r02-fh6-authz-off VALID ins_u=164.8k cyc_tot=302.4k busy=21.0% rate=6001.2/6000 p99=410us 
+2026-11-17T17:40:43Z r03-s-authz-http VALID ins_u=286.7k cyc_tot=815.4k busy=47.4% rate=5200.8/5200 p99=1971us 
+2026-11-17T17:41:21Z r03-s-authz-grpc VALID ins_u=339.3k cyc_tot=947.4k busy=54.7% rate=5201.0/5200 p99=2692us 
+2026-11-17T17:42:00Z r03-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=529.7k busy=31.4% rate=5201.0/5200 p99=647us 
+2026-11-17T17:42:38Z r03-s-authz-off VALID ins_u=163.8k cyc_tot=524.9k busy=31.2% rate=5201.0/5200 p99=620us 
+2026-11-17T17:43:17Z r03-fh6-authz-http VALID ins_u=286.3k cyc_tot=603.7k busy=40.5% rate=6001.2/6000 p99=1762us 
+2026-11-17T17:43:55Z r03-fh6-authz-grpc VALID ins_u=340.6k cyc_tot=746.9k busy=49.8% rate=6001.3/6000 p99=1261us 
+2026-11-17T17:44:33Z r03-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=304.3k busy=21.2% rate=6001.2/6000 p99=403us 
+2026-11-17T17:45:12Z r03-fh6-authz-off VALID ins_u=164.8k cyc_tot=296.9k busy=20.7% rate=6001.2/6000 p99=417us 
+2026-11-17T17:45:50Z r04-s-authz-off VALID ins_u=163.9k cyc_tot=519.7k busy=31.0% rate=5201.0/5200 p99=627us 
+2026-11-17T17:46:29Z r04-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=524.9k busy=31.2% rate=5201.0/5200 p99=608us 
+2026-11-17T17:47:07Z r04-s-authz-grpc VALID ins_u=338.1k cyc_tot=954.8k busy=55.0% rate=5200.9/5200 p99=2518us 
+2026-11-17T17:47:46Z r04-s-authz-http VALID ins_u=286.7k cyc_tot=811.7k busy=47.2% rate=5201.0/5200 p99=1854us 
+2026-11-17T17:48:24Z r04-fh6-authz-off VALID ins_u=164.8k cyc_tot=293.4k busy=20.5% rate=6001.2/6000 p99=411us 
+2026-11-17T17:49:03Z r04-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=299.7k busy=20.9% rate=6001.2/6000 p99=419us 
+2026-11-17T17:49:41Z r04-fh6-authz-grpc VALID ins_u=338.4k cyc_tot=737.6k busy=49.2% rate=6001.2/6000 p99=1562us 
+2026-11-17T17:50:20Z r04-fh6-authz-http VALID ins_u=286.5k cyc_tot=600.3k busy=40.4% rate=6001.3/6000 p99=1021us 
+2026-11-17T17:50:58Z r05-s-authz-http VALID ins_u=286.8k cyc_tot=811.8k busy=47.2% rate=5200.9/5200 p99=1600us 
+2026-11-17T17:51:37Z r05-s-authz-off VALID ins_u=163.8k cyc_tot=524.8k busy=31.1% rate=5201.0/5200 p99=633us 
+2026-11-17T17:52:15Z r05-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=522.4k busy=31.1% rate=5201.0/5200 p99=621us 
+2026-11-17T17:52:54Z r05-s-authz-grpc VALID ins_u=339.1k cyc_tot=944.9k busy=54.6% rate=5201.2/5200 p99=2441us 
+2026-11-17T17:53:32Z r05-fh6-authz-http VALID ins_u=286.6k cyc_tot=610.6k busy=41.1% rate=6001.3/6000 p99=964us 
+2026-11-17T17:54:11Z r05-fh6-authz-off VALID ins_u=164.8k cyc_tot=301.7k busy=21.0% rate=6001.2/6000 p99=410us 
+2026-11-17T17:54:49Z r05-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=302.3k busy=21.0% rate=6001.2/6000 p99=413us 
+2026-11-17T17:55:27Z r05-fh6-authz-grpc VALID ins_u=339.5k cyc_tot=741.0k busy=49.4% rate=6001.2/6000 p99=1235us 
+2026-11-17T17:56:06Z r06-s-authz-grpc VALID ins_u=338.5k cyc_tot=947.5k busy=54.7% rate=5201.1/5200 p99=2478us 
+2026-11-17T17:56:44Z r06-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=532.9k busy=31.7% rate=5201.0/5200 p99=630us 
+2026-11-17T17:57:23Z r06-s-authz-off VALID ins_u=163.9k cyc_tot=525.8k busy=31.2% rate=5201.0/5200 p99=618us 
+2026-11-17T17:58:02Z r06-s-authz-http VALID ins_u=286.7k cyc_tot=811.3k busy=47.2% rate=5201.1/5200 p99=1646us 
+2026-11-17T17:58:40Z r06-fh6-authz-grpc VALID ins_u=338.3k cyc_tot=728.1k busy=48.5% rate=6001.3/6000 p99=1462us 
+2026-11-17T17:59:18Z r06-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=292.0k busy=20.4% rate=6001.2/6000 p99=412us 
+2026-11-17T17:59:57Z r06-fh6-authz-off VALID ins_u=164.8k cyc_tot=302.3k busy=21.0% rate=6001.2/6000 p99=406us 
+2026-11-17T18:00:35Z r06-fh6-authz-http VALID ins_u=286.5k cyc_tot=608.3k busy=40.9% rate=6001.2/6000 p99=982us 
+2026-11-17T18:01:14Z r07-s-authz-grpc VALID ins_u=339.3k cyc_tot=956.9k busy=55.3% rate=5201.3/5200 p99=2578us 
+2026-11-17T18:01:53Z r07-s-authz-http VALID ins_u=286.6k cyc_tot=818.3k busy=47.5% rate=5201.0/5200 p99=1942us 
+2026-11-17T18:02:31Z r07-s-authz-off VALID ins_u=163.8k cyc_tot=520.2k busy=30.8% rate=5201.1/5200 p99=659us 
+2026-11-17T18:03:10Z r07-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=524.9k busy=31.1% rate=5201.0/5200 p99=633us 
+2026-11-17T18:03:48Z r07-fh6-authz-grpc VALID ins_u=339.8k cyc_tot=742.2k busy=49.4% rate=6001.3/6000 p99=1212us 
+2026-11-17T18:04:27Z r07-fh6-authz-http VALID ins_u=286.6k cyc_tot=609.5k busy=41.0% rate=6001.2/6000 p99=1064us 
+2026-11-17T18:05:05Z r07-fh6-authz-off VALID ins_u=164.8k cyc_tot=300.2k busy=20.9% rate=6001.2/6000 p99=409us 
+2026-11-17T18:05:43Z r07-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=295.3k busy=20.7% rate=6001.2/6000 p99=411us 
+2026-11-17T18:06:22Z r08-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=521.9k busy=31.0% rate=5201.0/5200 p99=641us 
+2026-11-17T18:07:00Z r08-s-authz-off VALID ins_u=163.9k cyc_tot=535.9k busy=31.9% rate=5201.0/5200 p99=624us 
+2026-11-17T18:07:39Z r08-s-authz-http VALID ins_u=286.8k cyc_tot=809.2k busy=47.1% rate=5201.1/5200 p99=1480us 
+2026-11-17T18:08:17Z r08-s-authz-grpc VALID ins_u=340.2k cyc_tot=960.1k busy=55.6% rate=5201.0/5200 p99=2247us 
+2026-11-17T18:08:56Z r08-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=296.2k busy=20.6% rate=6001.2/6000 p99=411us 
+2026-11-17T18:09:34Z r08-fh6-authz-off VALID ins_u=164.8k cyc_tot=295.6k busy=20.6% rate=6001.2/6000 p99=406us 
+2026-11-17T18:10:13Z r08-fh6-authz-http VALID ins_u=286.6k cyc_tot=616.1k busy=41.4% rate=6001.2/6000 p99=1248us 
+2026-11-17T18:10:51Z r08-fh6-authz-grpc VALID ins_u=338.9k cyc_tot=726.7k busy=48.4% rate=6001.2/6000 p99=1723us 
+2026-11-17T18:11:30Z r09-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=530.1k busy=31.4% rate=5201.0/5200 p99=627us 
+2026-11-17T18:12:08Z r09-s-authz-grpc VALID ins_u=338.8k cyc_tot=940.3k busy=54.3% rate=5201.2/5200 p99=2093us 
+2026-11-17T18:12:47Z r09-s-authz-http VALID ins_u=286.9k cyc_tot=823.6k busy=48.0% rate=5201.1/5200 p99=1369us 
+2026-11-17T18:13:25Z r09-s-authz-off VALID ins_u=163.9k cyc_tot=526.0k busy=31.2% rate=5201.0/5200 p99=624us 
+2026-11-17T18:14:04Z r09-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=297.0k busy=20.7% rate=6001.2/6000 p99=409us 
+2026-11-17T18:14:42Z r09-fh6-authz-grpc VALID ins_u=339.8k cyc_tot=739.9k busy=49.3% rate=6001.2/6000 p99=2139us 
+2026-11-17T18:15:21Z r09-fh6-authz-http VALID ins_u=286.6k cyc_tot=606.1k busy=40.7% rate=6001.3/6000 p99=1120us 
+2026-11-17T18:15:59Z r09-fh6-authz-off VALID ins_u=164.8k cyc_tot=303.4k busy=21.1% rate=6001.1/6000 p99=412us 
+2026-11-17T18:16:38Z r10-s-authz-off VALID ins_u=163.9k cyc_tot=530.4k busy=31.5% rate=5201.0/5200 p99=626us 
+2026-11-17T18:17:16Z r10-s-authz-http VALID ins_u=286.8k cyc_tot=806.8k busy=46.9% rate=5201.0/5200 p99=1618us 
+2026-11-17T18:17:55Z r10-s-authz-grpc VALID ins_u=339.2k cyc_tot=959.1k busy=55.4% rate=5201.1/5200 p99=2621us 
+2026-11-17T18:18:33Z r10-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=526.6k busy=31.3% rate=5201.1/5200 p99=615us 
+2026-11-17T18:19:12Z r10-fh6-authz-off VALID ins_u=164.8k cyc_tot=302.0k busy=21.0% rate=6001.2/6000 p99=409us 
+2026-11-17T18:19:50Z r10-fh6-authz-http VALID ins_u=286.5k cyc_tot=611.4k busy=41.1% rate=6001.3/6000 p99=1136us 
+2026-11-17T18:20:29Z r10-fh6-authz-grpc VALID ins_u=340.4k cyc_tot=746.7k busy=49.8% rate=6001.2/6000 p99=1218us 
+2026-11-17T18:21:07Z r10-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=296.6k busy=20.8% rate=6001.2/6000 p99=420us 
+2026-11-17T18:21:46Z r11-s-authz-http VALID ins_u=286.6k cyc_tot=813.1k busy=47.3% rate=5200.9/5200 p99=1883us 
+2026-11-17T18:22:25Z r11-s-authz-grpc VALID ins_u=338.6k cyc_tot=945.1k busy=54.6% rate=5201.2/5200 p99=2624us 
+2026-11-17T18:23:03Z r11-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=526.3k busy=31.2% rate=5201.0/5200 p99=615us 
+2026-11-17T18:23:41Z r11-s-authz-off VALID ins_u=163.9k cyc_tot=536.2k busy=31.9% rate=5201.1/5200 p99=622us 
+2026-11-17T18:24:20Z r11-fh6-authz-http VALID ins_u=286.6k cyc_tot=606.3k busy=40.8% rate=6001.3/6000 p99=999us 
+2026-11-17T18:24:59Z r11-fh6-authz-grpc VALID ins_u=340.0k cyc_tot=736.7k busy=49.1% rate=6001.2/6000 p99=1733us 
+2026-11-17T18:25:37Z r11-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=301.4k busy=21.0% rate=6001.2/6000 p99=412us 
+2026-11-17T18:26:15Z r11-fh6-authz-off VALID ins_u=164.8k cyc_tot=298.8k busy=20.8% rate=6001.2/6000 p99=406us 
+2026-11-17T18:26:54Z r12-s-authz-off VALID ins_u=163.9k cyc_tot=528.6k busy=31.5% rate=5201.1/5200 p99=606us 
+2026-11-17T18:27:32Z r12-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=525.6k busy=31.2% rate=5201.1/5200 p99=628us 
+2026-11-17T18:28:11Z r12-s-authz-grpc VALID ins_u=338.4k cyc_tot=941.3k busy=54.3% rate=5201.0/5200 p99=2807us 
+2026-11-17T18:28:49Z r12-s-authz-http VALID ins_u=286.9k cyc_tot=814.7k busy=47.4% rate=5201.0/5200 p99=1520us 
+2026-11-17T18:29:28Z r12-fh6-authz-off VALID ins_u=164.8k cyc_tot=296.9k busy=20.7% rate=6001.2/6000 p99=409us 
+2026-11-17T18:30:06Z r12-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=297.6k busy=20.7% rate=6001.2/6000 p99=408us 
+2026-11-17T18:30:45Z r12-fh6-authz-grpc VALID ins_u=338.2k cyc_tot=723.9k busy=48.1% rate=6001.3/6000 p99=1964us 
+2026-11-17T18:31:23Z r12-fh6-authz-http VALID ins_u=286.5k cyc_tot=600.0k busy=40.3% rate=6001.3/6000 p99=964us 
+2026-11-17T18:32:02Z r13-s-authz-grpc VALID ins_u=337.5k cyc_tot=943.2k busy=54.4% rate=5200.9/5200 p99=2553us 
+2026-11-17T18:32:40Z r13-s-authz-off-A2 VALID ins_u=163.8k cyc_tot=524.0k busy=31.1% rate=5201.0/5200 p99=603us 
+2026-11-17T18:33:19Z r13-s-authz-off VALID ins_u=163.8k cyc_tot=523.5k busy=31.1% rate=5201.0/5200 p99=630us 
+2026-11-17T18:33:57Z r13-s-authz-http VALID ins_u=286.6k cyc_tot=799.6k busy=46.5% rate=5200.8/5200 p99=2710us 
+2026-11-17T18:34:36Z r13-fh6-authz-grpc VALID ins_u=338.5k cyc_tot=723.2k busy=48.1% rate=6001.2/6000 p99=2507us 
+2026-11-17T18:35:14Z r13-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=302.0k busy=21.0% rate=6001.2/6000 p99=420us 
+2026-11-17T18:35:53Z r13-fh6-authz-off VALID ins_u=164.8k cyc_tot=301.2k busy=20.9% rate=6001.2/6000 p99=412us 
+2026-11-17T18:36:31Z r13-fh6-authz-http VALID ins_u=286.6k cyc_tot=607.9k busy=40.9% rate=6001.2/6000 p99=875us 
+2026-11-17T18:37:10Z r14-s-authz-http VALID ins_u=286.5k cyc_tot=803.8k busy=46.7% rate=5201.1/5200 p99=2273us 
+2026-11-17T18:37:48Z r14-s-authz-off VALID ins_u=164.0k cyc_tot=533.4k busy=31.8% rate=5201.0/5200 p99=612us 
+2026-11-17T18:38:27Z r14-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=530.4k busy=31.5% rate=5201.0/5200 p99=617us 
+2026-11-17T18:39:05Z r14-s-authz-grpc VALID ins_u=337.9k cyc_tot=937.7k busy=54.1% rate=5201.2/5200 p99=3172us 
+2026-11-17T18:39:44Z r14-fh6-authz-http VALID ins_u=286.6k cyc_tot=606.8k busy=40.8% rate=6001.2/6000 p99=942us 
+2026-11-17T18:40:22Z r14-fh6-authz-off VALID ins_u=164.8k cyc_tot=292.8k busy=20.4% rate=6001.2/6000 p99=408us 
+2026-11-17T18:41:01Z r14-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=300.2k busy=21.0% rate=6001.2/6000 p99=423us 
+2026-11-17T18:41:39Z r14-fh6-authz-grpc VALID ins_u=338.3k cyc_tot=730.3k busy=48.7% rate=6001.3/6000 p99=1360us 
+2026-11-17T18:42:18Z r15-s-authz-grpc VALID ins_u=340.0k cyc_tot=959.3k busy=55.5% rate=5201.0/5200 p99=2615us 
+2026-11-17T18:42:56Z r15-s-authz-http VALID ins_u=286.8k cyc_tot=816.7k busy=47.5% rate=5201.1/5200 p99=1973us 
+2026-11-17T18:43:35Z r15-s-authz-off VALID ins_u=163.8k cyc_tot=524.3k busy=31.1% rate=5201.0/5200 p99=616us 
+2026-11-17T18:44:13Z r15-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=525.8k busy=31.1% rate=5201.1/5200 p99=622us 
+2026-11-17T18:44:52Z r15-fh6-authz-grpc VALID ins_u=339.0k cyc_tot=728.5k busy=48.5% rate=6001.3/6000 p99=1351us 
+2026-11-17T18:45:30Z r15-fh6-authz-http VALID ins_u=286.5k cyc_tot=602.2k busy=40.5% rate=6001.3/6000 p99=1241us 
+2026-11-17T18:46:09Z r15-fh6-authz-off VALID ins_u=164.8k cyc_tot=303.5k busy=21.1% rate=6001.2/6000 p99=405us 
+2026-11-17T18:46:47Z r15-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=300.6k busy=20.9% rate=6001.2/6000 p99=412us 
+2026-11-17T18:47:26Z r16-s-authz-off-A2 VALID ins_u=163.9k cyc_tot=528.8k busy=31.4% rate=5201.0/5200 p99=628us 
+2026-11-17T18:48:04Z r16-s-authz-off VALID ins_u=163.8k cyc_tot=531.2k busy=31.6% rate=5201.0/5200 p99=632us 
+2026-11-17T18:48:43Z r16-s-authz-http VALID ins_u=286.8k cyc_tot=819.3k busy=47.7% rate=5201.1/5200 p99=1423us 
+2026-11-17T18:49:22Z r16-s-authz-grpc VALID ins_u=338.5k cyc_tot=950.6k busy=54.9% rate=5201.1/5200 p99=3021us 
+2026-11-17T18:50:00Z r16-fh6-authz-off-A2 VALID ins_u=164.8k cyc_tot=298.4k busy=20.8% rate=6001.2/6000 p99=407us 
+2026-11-17T18:50:38Z r16-fh6-authz-off VALID ins_u=164.8k cyc_tot=301.7k busy=21.0% rate=6001.2/6000 p99=422us 
+2026-11-17T18:51:17Z r16-fh6-authz-http VALID ins_u=286.4k cyc_tot=598.5k busy=40.2% rate=6001.2/6000 p99=1571us 
+2026-11-17T18:51:55Z r16-fh6-authz-grpc VALID ins_u=339.9k cyc_tot=746.5k busy=49.7% rate=6001.3/6000 p99=2034us 
+2026-11-17T18:51:55Z after 16 rounds: widest cycles_total half-width against its target 0.90% (fh6 authz-off-A2 vs authz-off) <= target 1.50%
+2026-11-17T18:51:56Z origin container 0023d67acd43 stopped
+2026-11-17T18:51:59Z done: ~/epl/runs/features-2026-11-17/13-ext-authz/summary.md
+~/epl/runs/features-2026-11-17/13-ext-authz/summary.md
+2026-11-17T18:51:59Z end 13-ext-authz rc=0
+2026-11-17T18:51:59Z start 18w-access-log-w16 (worst case 4950s, 10379s left)
+2026-11-17T18:52:05Z run features-access-log-w16: rotate order, rounds 16..32 in blocks of 8 (adaptive True), arms ['log-off', 'log-text', 'log-json', 'log-off-A2'], shapes ['s-w16']
+2026-11-17T18:52:05Z origin container dfab7c7a9479 (epl-origin-1187671) started
+2026-11-17T18:52:44Z r01-s-w16-log-off VALID ins_u=162.7k cyc_tot=545.1k busy=32.0% rate=20810.8/20800 p99=685us 
+2026-11-17T18:53:23Z r01-s-w16-log-text VALID ins_u=169.5k cyc_tot=572.0k busy=33.6% rate=20810.8/20800 p99=684us 
+2026-11-17T18:53:24Z not idle yet: load1=8.68 busy=0.0% procs=0 hot={}
+2026-11-17T18:54:08Z r01-s-w16-log-json VALID ins_u=172.6k cyc_tot=573.2k busy=33.6% rate=20811.2/20800 p99=715us 
+2026-11-17T18:54:09Z not idle yet: load1=8.81 busy=0.1% procs=0 hot={}
+2026-11-17T18:54:15Z not idle yet: load1=8.11 busy=0.0% procs=0 hot={}
+2026-11-17T18:54:58Z r01-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=558.0k busy=32.8% rate=20810.8/20800 p99=667us 
+2026-11-17T18:55:00Z not idle yet: load1=9.33 busy=0.0% procs=0 hot={}
+2026-11-17T18:55:06Z not idle yet: load1=8.58 busy=0.0% procs=0 hot={}
+2026-11-17T18:55:49Z r02-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=554.9k busy=32.6% rate=20810.7/20800 p99=642us 
+2026-11-17T18:55:51Z not idle yet: load1=9.00 busy=0.0% procs=0 hot={}
+2026-11-17T18:55:57Z not idle yet: load1=8.27 busy=0.0% procs=0 hot={}
+2026-11-17T18:56:41Z r02-s-w16-log-json VALID ins_u=172.5k cyc_tot=570.2k busy=33.4% rate=20810.7/20800 p99=787us 
+2026-11-17T18:56:42Z not idle yet: load1=8.44 busy=0.1% procs=0 hot={}
+2026-11-17T18:57:25Z r02-s-w16-log-text VALID ins_u=169.4k cyc_tot=572.5k busy=33.6% rate=20810.5/20800 p99=811us 
+2026-11-17T18:57:26Z not idle yet: load1=8.59 busy=0.1% procs=0 hot={}
+2026-11-17T18:58:10Z r02-s-w16-log-off VALID ins_u=162.8k cyc_tot=549.0k busy=32.3% rate=20810.6/20800 p99=676us 
+2026-11-17T18:58:11Z not idle yet: load1=8.27 busy=0.0% procs=0 hot={}
+2026-11-17T18:58:54Z r03-s-w16-log-text VALID ins_u=169.4k cyc_tot=569.9k busy=33.5% rate=20810.7/20800 p99=684us 
+2026-11-17T18:58:56Z not idle yet: load1=8.58 busy=0.0% procs=0 hot={}
+2026-11-17T18:59:39Z r03-s-w16-log-json VALID ins_u=172.6k cyc_tot=580.2k busy=34.0% rate=20810.8/20800 p99=714us 
+2026-11-17T18:59:40Z not idle yet: load1=9.06 busy=0.1% procs=0 hot={}
+2026-11-17T18:59:47Z not idle yet: load1=8.33 busy=0.0% procs=0 hot={}
+2026-11-17T19:00:30Z r03-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=556.4k busy=32.7% rate=20810.7/20800 p99=650us 
+2026-11-17T19:00:31Z not idle yet: load1=8.55 busy=0.1% procs=0 hot={}
+2026-11-17T19:01:14Z r03-s-w16-log-off VALID ins_u=162.8k cyc_tot=555.5k busy=32.7% rate=20810.7/20800 p99=681us 
+2026-11-17T19:01:16Z not idle yet: load1=8.85 busy=0.0% procs=0 hot={}
+2026-11-17T19:01:22Z not idle yet: load1=8.14 busy=0.0% procs=0 hot={}
+2026-11-17T19:02:05Z r04-s-w16-log-off VALID ins_u=162.8k cyc_tot=551.4k busy=32.4% rate=20810.7/20800 p99=712us 
+2026-11-17T19:02:06Z not idle yet: load1=8.84 busy=0.0% procs=0 hot={}
+2026-11-17T19:02:50Z r04-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=551.4k busy=32.4% rate=20810.6/20800 p99=643us 
+2026-11-17T19:02:51Z not idle yet: load1=8.97 busy=0.0% procs=0 hot={}
+2026-11-17T19:02:57Z not idle yet: load1=8.25 busy=0.0% procs=0 hot={}
+2026-11-17T19:03:41Z r04-s-w16-log-json VALID ins_u=172.5k cyc_tot=575.7k busy=33.8% rate=20810.8/20800 p99=754us 
+2026-11-17T19:03:42Z not idle yet: load1=8.38 busy=0.1% procs=0 hot={}
+2026-11-17T19:04:25Z r04-s-w16-log-text VALID ins_u=169.5k cyc_tot=576.2k busy=33.9% rate=20810.7/20800 p99=697us 
+2026-11-17T19:04:27Z not idle yet: load1=8.86 busy=0.0% procs=0 hot={}
+2026-11-17T19:05:10Z r05-s-w16-log-text VALID ins_u=169.4k cyc_tot=578.0k busy=33.9% rate=20810.9/20800 p99=684us 
+2026-11-17T19:05:11Z not idle yet: load1=8.70 busy=0.0% procs=0 hot={}
+2026-11-17T19:05:55Z r05-s-w16-log-off VALID ins_u=162.9k cyc_tot=552.9k busy=32.5% rate=20810.4/20800 p99=641us 
+2026-11-17T19:05:56Z not idle yet: load1=9.06 busy=0.0% procs=0 hot={}
+2026-11-17T19:06:02Z not idle yet: load1=8.33 busy=0.0% procs=0 hot={}
+2026-11-17T19:06:46Z r05-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=545.5k busy=32.1% rate=20810.5/20800 p99=689us 
+2026-11-17T19:06:47Z not idle yet: load1=8.79 busy=0.0% procs=0 hot={}
+2026-11-17T19:07:30Z r05-s-w16-log-json VALID ins_u=172.5k cyc_tot=568.5k busy=33.3% rate=20810.5/20800 p99=680us 
+2026-11-17T19:07:32Z not idle yet: load1=8.72 busy=0.0% procs=0 hot={}
+2026-11-17T19:08:15Z r06-s-w16-log-json VALID ins_u=172.6k cyc_tot=571.0k busy=33.5% rate=20810.4/20800 p99=699us 
+2026-11-17T19:08:17Z not idle yet: load1=8.36 busy=0.1% procs=0 hot={}
+2026-11-17T19:09:00Z r06-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=552.1k busy=32.5% rate=20810.5/20800 p99=688us 
+2026-11-17T19:09:38Z r06-s-w16-log-off VALID ins_u=162.9k cyc_tot=554.8k busy=32.7% rate=20811.1/20800 p99=644us 
+2026-11-17T19:09:39Z not idle yet: load1=8.02 busy=0.1% procs=0 hot={}
+2026-11-17T19:10:23Z r06-s-w16-log-text VALID ins_u=169.5k cyc_tot=571.8k busy=33.6% rate=20810.6/20800 p99=630us 
+2026-11-17T19:10:24Z not idle yet: load1=8.96 busy=0.1% procs=0 hot={}
+2026-11-17T19:10:30Z not idle yet: load1=8.24 busy=0.8% procs=0 hot={'54': 35.4}
+2026-11-17T19:11:14Z r07-s-w16-log-json VALID ins_u=172.4k cyc_tot=570.4k busy=33.4% rate=20810.6/20800 p99=745us 
+2026-11-17T19:11:15Z not idle yet: load1=8.68 busy=0.0% procs=0 hot={}
+2026-11-17T19:11:58Z r07-s-w16-log-text VALID ins_u=169.4k cyc_tot=565.6k busy=33.2% rate=20810.9/20800 p99=648us 
+2026-11-17T19:12:37Z r07-s-w16-log-off VALID ins_u=162.7k cyc_tot=554.6k busy=32.6% rate=20810.7/20800 p99=688us 
+2026-11-17T19:12:38Z not idle yet: load1=8.22 busy=0.0% procs=0 hot={}
+2026-11-17T19:13:21Z r07-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=552.3k busy=32.5% rate=20810.8/20800 p99=630us 
+2026-11-17T19:13:22Z not idle yet: load1=8.14 busy=0.0% procs=0 hot={}
+2026-11-17T19:14:06Z r08-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=564.5k busy=33.2% rate=20810.6/20800 p99=654us 
+2026-11-17T19:14:07Z not idle yet: load1=8.17 busy=0.0% procs=0 hot={}
+2026-11-17T19:14:50Z r08-s-w16-log-off VALID ins_u=162.8k cyc_tot=552.4k busy=32.5% rate=20810.8/20800 p99=698us 
+2026-11-17T19:14:51Z not idle yet: load1=8.99 busy=0.1% procs=0 hot={}
+2026-11-17T19:14:58Z not idle yet: load1=8.35 busy=0.0% procs=0 hot={}
+2026-11-17T19:15:41Z r08-s-w16-log-text VALID ins_u=169.4k cyc_tot=579.5k busy=34.0% rate=20810.9/20800 p99=736us 
+2026-11-17T19:15:42Z not idle yet: load1=8.47 busy=0.0% procs=0 hot={}
+2026-11-17T19:16:26Z r08-s-w16-log-json VALID ins_u=172.6k cyc_tot=577.6k busy=33.9% rate=20810.8/20800 p99=681us 
+2026-11-17T19:16:27Z not idle yet: load1=8.50 busy=0.0% procs=0 hot={}
+2026-11-17T19:17:10Z r09-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=551.9k busy=32.4% rate=20810.3/20800 p99=653us 
+2026-11-17T19:17:12Z not idle yet: load1=8.60 busy=0.0% procs=0 hot={}
+2026-11-17T19:17:55Z r09-s-w16-log-json VALID ins_u=172.5k cyc_tot=571.1k busy=33.5% rate=20811.0/20800 p99=657us 
+2026-11-17T19:17:56Z not idle yet: load1=9.06 busy=0.0% procs=0 hot={}
+2026-11-17T19:18:03Z not idle yet: load1=8.33 busy=0.0% procs=0 hot={}
+2026-11-17T19:18:46Z r09-s-w16-log-text VALID ins_u=169.4k cyc_tot=573.7k busy=33.7% rate=20810.7/20800 p99=688us 
+2026-11-17T19:18:47Z not idle yet: load1=9.05 busy=0.0% procs=0 hot={}
+2026-11-17T19:19:30Z r09-s-w16-log-off VALID ins_u=162.8k cyc_tot=551.5k busy=32.4% rate=20810.5/20800 p99=655us 
+2026-11-17T19:19:32Z not idle yet: load1=9.18 busy=0.0% procs=0 hot={}
+2026-11-17T19:20:15Z r10-s-w16-log-off VALID ins_u=162.8k cyc_tot=554.5k busy=32.6% rate=20810.6/20800 p99=752us 
+2026-11-17T19:20:16Z not idle yet: load1=9.28 busy=0.0% procs=0 hot={}
+2026-11-17T19:20:22Z not idle yet: load1=8.53 busy=0.0% procs=0 hot={}
+2026-11-17T19:21:06Z r10-s-w16-log-text VALID ins_u=169.5k cyc_tot=571.6k busy=33.6% rate=20810.9/20800 p99=668us 
+2026-11-17T19:21:07Z not idle yet: load1=9.55 busy=0.0% procs=0 hot={}
+2026-11-17T19:21:14Z not idle yet: load1=8.08 busy=0.0% procs=0 hot={}
+2026-11-17T19:21:57Z r10-s-w16-log-json VALID ins_u=172.5k cyc_tot=575.2k busy=33.7% rate=20811.3/20800 p99=796us 
+2026-11-17T19:22:35Z r10-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=552.3k busy=32.5% rate=20810.8/20800 p99=697us 
+2026-11-17T19:22:37Z not idle yet: load1=9.19 busy=0.0% procs=0 hot={}
+2026-11-17T19:22:43Z not idle yet: load1=8.61 busy=0.0% procs=0 hot={}
+2026-11-17T19:23:26Z r11-s-w16-log-text VALID ins_u=169.5k cyc_tot=571.6k busy=33.5% rate=20810.7/20800 p99=672us 
+2026-11-17T19:23:27Z not idle yet: load1=9.12 busy=0.1% procs=0 hot={}
+2026-11-17T19:24:11Z r11-s-w16-log-json VALID ins_u=172.6k cyc_tot=575.5k busy=33.8% rate=20810.7/20800 p99=717us 
+2026-11-17T19:24:12Z not idle yet: load1=9.38 busy=0.1% procs=0 hot={}
+2026-11-17T19:24:56Z r11-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=550.8k busy=32.4% rate=20810.7/20800 p99=665us 
+2026-11-17T19:24:57Z not idle yet: load1=9.27 busy=0.0% procs=0 hot={}
+2026-11-17T19:25:40Z r11-s-w16-log-off VALID ins_u=162.8k cyc_tot=553.6k busy=32.5% rate=20810.8/20800 p99=669us 
+2026-11-17T19:25:41Z not idle yet: load1=8.40 busy=0.0% procs=0 hot={}
+2026-11-17T19:26:25Z r12-s-w16-log-off VALID ins_u=162.8k cyc_tot=558.5k busy=32.8% rate=20810.7/20800 p99=741us 
+2026-11-17T19:26:26Z not idle yet: load1=8.52 busy=0.0% procs=0 hot={}
+2026-11-17T19:27:09Z r12-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=552.6k busy=32.5% rate=20810.5/20800 p99=684us 
+2026-11-17T19:27:10Z not idle yet: load1=9.24 busy=0.1% procs=0 hot={}
+2026-11-17T19:27:17Z not idle yet: load1=8.50 busy=0.0% procs=0 hot={}
+2026-11-17T19:28:00Z r12-s-w16-log-json VALID ins_u=172.6k cyc_tot=578.5k busy=33.9% rate=20810.8/20800 p99=686us 
+2026-11-17T19:28:02Z not idle yet: load1=8.66 busy=0.0% procs=0 hot={}
+2026-11-17T19:28:45Z r12-s-w16-log-text VALID ins_u=169.3k cyc_tot=568.4k busy=33.3% rate=20810.7/20800 p99=700us 
+2026-11-17T19:28:46Z not idle yet: load1=8.87 busy=0.0% procs=0 hot={}
+2026-11-17T19:28:52Z not idle yet: load1=8.16 busy=0.0% procs=0 hot={}
+2026-11-17T19:29:36Z r13-s-w16-log-json VALID ins_u=172.6k cyc_tot=573.4k busy=33.6% rate=20810.9/20800 p99=735us 
+2026-11-17T19:29:37Z not idle yet: load1=8.98 busy=0.0% procs=0 hot={}
+2026-11-17T19:30:21Z r13-s-w16-log-off-A2 VALID ins_u=162.9k cyc_tot=565.1k busy=33.2% rate=20810.7/20800 p99=630us 
+2026-11-17T19:30:22Z not idle yet: load1=9.07 busy=0.1% procs=0 hot={}
+2026-11-17T19:31:05Z r13-s-w16-log-off VALID ins_u=162.9k cyc_tot=554.1k busy=32.6% rate=20810.7/20800 p99=660us 
+2026-11-17T19:31:43Z r13-s-w16-log-text VALID ins_u=169.4k cyc_tot=570.7k busy=33.5% rate=20810.7/20800 p99=724us 
+2026-11-17T19:31:45Z not idle yet: load1=8.33 busy=0.1% procs=0 hot={}
+2026-11-17T19:32:28Z r14-s-w16-log-text VALID ins_u=169.4k cyc_tot=568.3k busy=33.4% rate=20810.7/20800 p99=730us 
+2026-11-17T19:32:29Z not idle yet: load1=8.81 busy=0.0% procs=0 hot={}
+2026-11-17T19:32:36Z not idle yet: load1=8.10 busy=0.0% procs=0 hot={}
+2026-11-17T19:33:19Z r14-s-w16-log-off VALID ins_u=162.8k cyc_tot=548.2k busy=32.2% rate=20811.1/20800 p99=657us 
+2026-11-17T19:33:20Z not idle yet: load1=8.50 busy=0.0% procs=0 hot={}
+2026-11-17T19:34:03Z r14-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=556.2k busy=32.7% rate=20810.3/20800 p99=651us 
+2026-11-17T19:34:05Z not idle yet: load1=8.09 busy=0.0% procs=0 hot={}
+2026-11-17T19:34:48Z r14-s-w16-log-json VALID ins_u=172.6k cyc_tot=576.5k busy=33.8% rate=20810.4/20800 p99=723us 
+2026-11-17T19:34:50Z not idle yet: load1=8.00 busy=0.1% procs=0 hot={}
+2026-11-17T19:35:33Z r15-s-w16-log-json VALID ins_u=172.5k cyc_tot=572.1k busy=33.6% rate=20810.4/20800 p99=742us 
+2026-11-17T19:35:34Z not idle yet: load1=8.56 busy=0.0% procs=0 hot={}
+2026-11-17T19:36:18Z r15-s-w16-log-text VALID ins_u=169.5k cyc_tot=567.4k busy=33.3% rate=20810.9/20800 p99=671us 
+2026-11-17T19:36:19Z not idle yet: load1=8.85 busy=0.0% procs=0 hot={}
+2026-11-17T19:36:25Z not idle yet: load1=8.14 busy=0.0% procs=0 hot={}
+2026-11-17T19:37:09Z r15-s-w16-log-off VALID ins_u=162.8k cyc_tot=557.4k busy=32.8% rate=20810.3/20800 p99=713us 
+2026-11-17T19:37:10Z not idle yet: load1=8.40 busy=0.1% procs=0 hot={}
+2026-11-17T19:37:53Z r15-s-w16-log-off-A2 VALID ins_u=162.7k cyc_tot=557.7k busy=32.8% rate=20810.6/20800 p99=650us 
+2026-11-17T19:38:31Z r16-s-w16-log-off-A2 VALID ins_u=162.8k cyc_tot=552.9k busy=32.5% rate=20810.5/20800 p99=640us 
+2026-11-17T19:38:33Z not idle yet: load1=8.77 busy=0.1% procs=0 hot={}
+2026-11-17T19:39:16Z r16-s-w16-log-off VALID ins_u=162.8k cyc_tot=556.3k busy=32.7% rate=20810.4/20800 p99=666us 
+2026-11-17T19:39:17Z not idle yet: load1=8.51 busy=0.0% procs=0 hot={}
+2026-11-17T19:40:00Z r16-s-w16-log-text VALID ins_u=169.4k cyc_tot=566.2k busy=33.2% rate=20810.5/20800 p99=726us 
+2026-11-17T19:40:02Z not idle yet: load1=8.96 busy=0.0% procs=0 hot={}
+2026-11-17T19:40:45Z r16-s-w16-log-json VALID ins_u=172.5k cyc_tot=575.7k busy=33.7% rate=20810.7/20800 p99=778us 
+2026-11-17T19:40:45Z after 16 rounds: widest cycles_total half-width against its target 0.62% (s-w16 log-off-A2 vs log-off) <= target 1.00%
+2026-11-17T19:40:46Z origin container dfab7c7a9479 stopped
+2026-11-17T19:40:48Z done: ~/epl/runs/features-2026-11-17/18w-access-log-w16/summary.md
+~/epl/runs/features-2026-11-17/18w-access-log-w16/summary.md
+2026-11-17T19:40:48Z end 18w-access-log-w16 rc=0
+2026-11-17T19:40:48Z queue done; tables: python3 ~/epl/harness-week5/examples/settings-matrix/features_table.py ~/epl/runs/features-2026-11-17 > ~/epl/runs/features-2026-11-17/tables.md
