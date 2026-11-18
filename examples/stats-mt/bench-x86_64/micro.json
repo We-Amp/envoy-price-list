@@ -109,9 +109,9 @@
  },
  "root": "~/epl/bins/stats/r5",
  "arms": {
-  "fix": "8746c3c4bd",
-  "fix-relaxed": "26af763b9b",
-  "fix-relaxed-p1": "987c8093a9"
+  "fix": "31d69168d1",
+  "fix-relaxed": "7699549df0",
+  "fix-relaxed-p1": "2b30d6892f"
  },
  "expected_sha256": {
   "fix": {

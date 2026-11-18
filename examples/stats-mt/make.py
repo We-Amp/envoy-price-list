@@ -78,7 +78,7 @@ BASE_EVIDENCE = [{"stat": "reject_all", "scope": "config", "absent": True, "labe
 # Microbenchmark arms: the
 # benchmark overlay with the time-bounded windows on the fix stack; the base-stacked arms are
 # dropped. atomic_model contains no Envoy stat code, so it runs from one build (MODEL_ARM).
-MICRO_ARMS = {"fix": "8746c3c4bd", "fix-relaxed": "26af763b9b", "fix-relaxed-p1": "987c8093a9"}
+MICRO_ARMS = {"fix": "31d69168d1", "fix-relaxed": "7699549df0", "fix-relaxed-p1": "2b30d6892f"}
 MODEL_ARM = "fix"
 MICRO_PAIRS = [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]]
 MICRO_BINARIES = ["atomic_model_benchmark", "stat_update_benchmark", "histogram_record_benchmark",

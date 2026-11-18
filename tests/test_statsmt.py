@@ -254,7 +254,7 @@ def _bench_out(names, cfg, reps=None, bad=None, extra=None):
 class MicroConfigTest(unittest.TestCase):
     def test_narrowed_set(self):
         a = _micro("arm-vm")
-        self.assertEqual(a["arms"], {"fix": "8746c3c4bd", "fix-relaxed": "26af763b9b", "fix-relaxed-p1": "987c8093a9"})
+        self.assertEqual(a["arms"], {"fix": "31d69168d1", "fix-relaxed": "7699549df0", "fix-relaxed-p1": "2b30d6892f"})
         self.assertEqual(a["pairs"], [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]])
         by = {r["binary"]: r for r in a["runs"]}
         self.assertEqual(by["atomic_model_benchmark"]["arms"], ["fix"])
@@ -320,7 +320,7 @@ class MicroConfigTest(unittest.TestCase):
         open(p, "w").write("%s  stat_update_benchmark-fix-0000000000\n" % ("a" * 64))
         with self.assertRaises(SystemExit):
             MK.read_sha_list(p, MK.MICRO_ARMS)
-        open(p, "w").write("%s  stat_update_benchmark-fix-relaxed-p1-987c8093a9\n" % ("b" * 64))
+        open(p, "w").write("%s  stat_update_benchmark-fix-relaxed-p1-2b30d6892f\n" % ("b" * 64))
         self.assertEqual(MK.read_sha_list(p, MK.MICRO_ARMS), {"fix-relaxed-p1": {"stat_update_benchmark": "b" * 64}})
 
     def test_filters_match_registered_names(self):
