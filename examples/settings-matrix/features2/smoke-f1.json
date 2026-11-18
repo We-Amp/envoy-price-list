@@ -111,6 +111,20 @@
      "tol_abs": 0
     },
     {
+     "stat": "lua.lua_vm_count",
+     "scope": "leg",
+     "equals": 5,
+     "tol_abs": 0,
+     "label": "Lua VMs"
+    },
+    {
+     "stat": "http.ingress_http.lua.executions",
+     "scope": "leg",
+     "per_request": 2.0,
+     "tol": 0.002,
+     "label": "two script executions per request completed over the leg (request and response)"
+    },
+    {
      "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
      "ref": {
       "arm": "filter-off",

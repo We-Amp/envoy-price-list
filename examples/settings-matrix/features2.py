@@ -103,7 +103,8 @@ EV_COMP_OFF = [{"stat": "http.ingress_http.compressor.*", "absent": True, "label
 
 
 def comp_stat(lib, name):
-    return "http.ingress_http.compressor.epl.%s.%s" % (lib, name)
+    """The compressor's response-direction counter (names from the smoke's /stats)."""
+    return "http.ingress_http.compressor.epl.%s.response.%s" % (lib, name)
 
 
 def ev_comp(lib):
@@ -127,9 +128,22 @@ def bytes_ref(offset):
 
 
 EV_FILTER_OFF = NO_FILTERS + bytes_ref(0)
-LUA_OK = [zero("http.ingress_http.lua.errors")]
-WASM_OK = [{"stat": "wasm.envoy.wasm.runtime.v8.active", "scope": "leg", "min": 4,
-            "label": "Wasm VMs active (at least one per worker)"}]
+# From the smoke's /stats (v1.40.2, 4 workers): Lua keeps one VM per worker and one on the main
+# thread and counts one execution per callback (two per request: request and response);
+# Wasm (V8) has 6 active VMs and created 7 (one per worker, the main thread's, and the
+# configuration check), with no reload or fetch failure.
+LUA_VMS = 5
+WASM_VMS_ACTIVE, WASM_VMS_CREATED = 6, 7
+LUA_OK = [zero("http.ingress_http.lua.errors"),
+          {"stat": "lua.lua_vm_count", "scope": "leg", "equals": LUA_VMS, "tol_abs": 0, "label": "Lua VMs"},
+          {"stat": "http.ingress_http.lua.executions", "scope": "leg", "per_request": 2.0, "tol": 0.002,
+           "label": "two script executions per request completed over the leg (request and response)"}]
+WASM_OK = [{"stat": "wasm.envoy.wasm.runtime.v8.active", "scope": "leg", "equals": WASM_VMS_ACTIVE, "tol_abs": 0,
+            "label": "Wasm VMs active"},
+           {"stat": "wasm.envoy.wasm.runtime.v8.created", "scope": "leg", "equals": WASM_VMS_CREATED, "tol_abs": 0,
+            "label": "Wasm VMs created"},
+           {"stat": "wasm.wasm_vm_count", "scope": "leg", "equals": WASM_VMS_ACTIVE, "tol_abs": 0},
+           zero("wasm.epl.vm_reload_failure", "leg"), zero("wasm.remote_load_fetch_failures", "leg")]
 EV = {
     "base": EV_BASE, "base-A2": EV_BASE,
     "filter-off": EV_FILTER_OFF,

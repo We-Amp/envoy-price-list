@@ -101,12 +101,12 @@
    },
    "evidence": [
     {
-     "stat": "http.ingress_http.compressor.epl.gzip.not_compressed",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
      "per_request": 1.0,
      "tol": 0.002
     },
     {
-     "stat": "http.ingress_http.compressor.epl.gzip.compressed",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
      "scope": "window",
      "equals": 0,
      "tol_abs": 0

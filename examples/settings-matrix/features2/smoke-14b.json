@@ -64,30 +64,30 @@
    },
    "evidence": [
     {
-     "stat": "http.ingress_http.compressor.epl.brotli.compressed",
+     "stat": "http.ingress_http.compressor.epl.brotli.response.compressed",
      "per_request": 1.0,
      "tol": 0.002
     },
     {
-     "stat": "http.ingress_http.compressor.epl.brotli.not_compressed",
+     "stat": "http.ingress_http.compressor.epl.brotli.response.not_compressed",
      "scope": "window",
      "equals": 0,
      "tol_abs": 0
     },
     {
-     "stat": "http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_uncompressed_bytes",
      "per_request": 4096,
      "tol": 0.005,
      "shape": "j4"
     },
     {
-     "stat": "http.ingress_http.compressor.epl.brotli.total_uncompressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_uncompressed_bytes",
      "per_request": 16384,
      "tol": 0.005,
      "shape": "j16"
     },
     {
-     "stat": "http.ingress_http.compressor.epl.brotli.total_compressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.brotli.response.total_compressed_bytes",
      "ref": {
       "arm": "self"
      },
@@ -108,30 +108,30 @@
    },
    "evidence": [
     {
-     "stat": "http.ingress_http.compressor.epl.zstd.compressed",
+     "stat": "http.ingress_http.compressor.epl.zstd.response.compressed",
      "per_request": 1.0,
      "tol": 0.002
     },
     {
-     "stat": "http.ingress_http.compressor.epl.zstd.not_compressed",
+     "stat": "http.ingress_http.compressor.epl.zstd.response.not_compressed",
      "scope": "window",
      "equals": 0,
      "tol_abs": 0
     },
     {
-     "stat": "http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_uncompressed_bytes",
      "per_request": 4096,
      "tol": 0.005,
      "shape": "j4"
     },
     {
-     "stat": "http.ingress_http.compressor.epl.zstd.total_uncompressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_uncompressed_bytes",
      "per_request": 16384,
      "tol": 0.005,
      "shape": "j16"
     },
     {
-     "stat": "http.ingress_http.compressor.epl.zstd.total_compressed_bytes",
+     "stat": "http.ingress_http.compressor.epl.zstd.response.total_compressed_bytes",
      "ref": {
       "arm": "self"
      },

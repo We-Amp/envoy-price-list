@@ -69,6 +69,20 @@
      "tol_abs": 0
     },
     {
+     "stat": "lua.lua_vm_count",
+     "scope": "leg",
+     "equals": 5,
+     "tol_abs": 0,
+     "label": "Lua VMs"
+    },
+    {
+     "stat": "http.ingress_http.lua.executions",
+     "scope": "leg",
+     "per_request": 2.0,
+     "tol": 0.002,
+     "label": "two script executions per request completed over the leg (request and response)"
+    },
+    {
      "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
      "ref": {
       "arm": "filter-off",
@@ -105,8 +119,34 @@
     {
      "stat": "wasm.envoy.wasm.runtime.v8.active",
      "scope": "leg",
-     "min": 4,
-     "label": "Wasm VMs active (at least one per worker)"
+     "equals": 6,
+     "tol_abs": 0,
+     "label": "Wasm VMs active"
+    },
+    {
+     "stat": "wasm.envoy.wasm.runtime.v8.created",
+     "scope": "leg",
+     "equals": 7,
+     "tol_abs": 0,
+     "label": "Wasm VMs created"
+    },
+    {
+     "stat": "wasm.wasm_vm_count",
+     "scope": "leg",
+     "equals": 6,
+     "tol_abs": 0
+    },
+    {
+     "stat": "wasm.epl.vm_reload_failure",
+     "scope": "leg",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "wasm.remote_load_fetch_failures",
+     "scope": "leg",
+     "equals": 0,
+     "tol_abs": 0
     },
     {
      "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
