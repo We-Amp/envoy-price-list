@@ -229,7 +229,12 @@
    "worker_cpus": "0",
    "main_cpu": 12,
    "client_concurrency": 1,
-   "client_connections_per_worker": 16
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
   },
   {
    "name": "mt-4w",
@@ -241,7 +246,12 @@
    "worker_cpus": "0-3",
    "main_cpu": 12,
    "client_concurrency": 2,
-   "client_connections_per_worker": 32
+   "client_connections_per_worker": 32,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
   },
   {
    "name": "mt-12w",
@@ -253,7 +263,12 @@
    "worker_cpus": "0-11",
    "main_cpu": 12,
    "client_concurrency": 2,
-   "client_connections_per_worker": 96
+   "client_connections_per_worker": 96,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
   }
  ],
  "rounds": 1,

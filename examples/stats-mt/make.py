@@ -39,6 +39,12 @@ ORDER_SEED = 41
 RUNS = "~/epl/runs/stats-mt"
 DEFAULT_R_STAR = 1300  # placeholder until step 0: the 4 KB shape's per-worker rate on four workers
 DEFAULT_K = 16         # placeholder: client connections per Envoy worker
+# every rung's client ramps its rate over the first second (the 28-worker calibration overflowed
+# the client pool at start-up without it) and the window opens 3 s in, the same at every rung
+RAMP = json.dumps({"name": "nighthawk.linear-ramping-rate-limiter-plugin",
+                   "typed_config": {"@type": "type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig",
+                                    "ramp_time": "1s"}}, separators=(",", ":"))
+LEAD_IN_S = 3
 NOFILE = 65536         # soft fd limit of the harness's own Envoy and client (1,024 is too few at 28 workers)
 REJECT_EVIDENCE = [{"stat": "reject_all", "scope": "config", "equals": True, "label": "stats_matcher reject_all"},
                    {"stat": "http.ingress_http.downstream_rq_2xx", "scope": "leg", "absent": True,
@@ -85,7 +91,8 @@ def rung_shapes(box, r_star, k):
                              % (r["name"], n, r_star, n, k, conc))
         out.append({"name": "mt-" + r["name"], "path": "/s", "kind": "proxied", "body_bytes": 4096,
                     "rps": n * r_star, "workers": n, "worker_cpus": r["worker_cpus"], "main_cpu": box["main_cpu"],
-                    "client_concurrency": conc, "client_connections_per_worker": n * k // conc})
+                    "client_concurrency": conc, "client_connections_per_worker": n * k // conc,
+                    "client_extra_args": ["--rate-limiter-plugin-config", RAMP], "lead_in_s": LEAD_IN_S})
     return out
 
 
