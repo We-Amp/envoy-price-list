@@ -795,8 +795,14 @@
     {
      "stat": "collector_delta.fit.n_error",
      "scope": "field",
-     "max": 0,
-     "label": "points are that whole number of flushes of the used stats"
+     "max": 1,
+     "label": "the whole flushes the points hold within one of the flushes counted in the span (one in flight)"
+    },
+    {
+     "stat": "collector_delta.fit.residual",
+     "scope": "field",
+     "max": 0.01,
+     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"
     },
     {
      "stat": "collector_delta.settled",

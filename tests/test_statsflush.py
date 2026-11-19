@@ -47,7 +47,7 @@ class ConfigsTest(unittest.TestCase):
                     self.assertEqual(json.load(f), json.loads(json.dumps(c)), fn + ": rerun make.py")
 
     def test_validate_and_legs(self):
-        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 25, "s-1m": 25, "sw": 50, "x-1m": 16}
+        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 50, "s-1m": 49, "sw": 50, "x-1m": 16}
         for fn in sorted(os.listdir(X86)):
             if fn == "box.json":
                 continue
@@ -82,7 +82,14 @@ class ConfigsTest(unittest.TestCase):
         self.assertEqual(len(b["static_resources"]["clusters"]), 1001)
         s = experiment.load(os.path.join(X86, "s-1m.json"))
         sa = {x["name"]: x for x in s["arms"]}
-        self.assertEqual(sorted(sa), ["dogstatsd-buf", "nosink", "nosink-A2", "otlp", "statsd"])  # prom dropped
+        self.assertEqual(sorted(sa), ["dogstatsd-buf", "nosink", "nosink-20s", "nosink-5s", "nosink-A2", "otlp",
+                                      "statsd"])  # prom dropped; same-interval references at 1M (S2)
+        self.assertEqual(s["s_refs"], {"statsd": "nosink-5s", "dogstatsd-buf": "nosink-5s", "otlp": "nosink-20s"})
+        self.assertEqual((sa["nosink-20s"]["settings"]["stats_flush"], sa["nosink-20s"]["window_s"]),
+                         ({"interval_s": 20}, 60))
+        self.assertEqual((s["rounds"], experiment.load(os.path.join(X86, "s-100k.json"))["rounds"]), (7, 10))
+        ot_fit = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.fit.n_error"][0]
+        self.assertEqual(ot_fit["max"], 1)  # S3: one flush in flight at a non-atomic read
         self.assertEqual(sa["otlp"]["settings"]["stats_sink"]["kind"], "otlp")
         # at 1M by the saturation rule: dogstatsd-buf every 5 s, otlp every 20 s with a 60 s window
         self.assertEqual(sa["dogstatsd-buf"]["settings"]["stats_flush"], {"interval_s": 5})
@@ -576,3 +583,28 @@ class ObservationTest(unittest.TestCase):
         self.assertIn("flushes start one interval apart", text)
         txt = open(os.path.join(SF, "table.py")).read()
         self.assertIn("own builds (5e1439980a / 3c9cce2f2c)", txt)
+
+
+class RunSTableTest(unittest.TestCase):
+    def test_span_rows(self):
+        import random
+        rng = random.Random(4)
+        exp = experiment.load(os.path.join(X86, "s-1m.json"))
+        price = {"nosink": 280.0, "nosink-A2": 280.0, "nosink-5s": 300.0, "nosink-20s": 320.0, "statsd": 2400.0,
+                 "dogstatsd-buf": 900.0, "otlp": 12000.0}
+        legs = []
+        for r in range(1, 8):
+            for a, v in price.items():
+                legs.append({"leg_id": "r%02d-idle-1m-%s" % (r, a), "round": r, "shape": "idle-1m", "arm": a,
+                             "verdict": {"valid": True}, "flush_interval_s": 1,
+                             "span_flushes": {"n": 4, "partial": 0, "run_ms_per_flush": v * rng.gauss(1, 0.005)}})
+        res = {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 7, "incomplete": False}}
+        lines, js = TAB.run_s_tables({"s-1m": res})
+        rows = {r["arm"]: r for r in js["rows"]}
+        self.assertEqual(rows["statsd"]["ref"], "nosink-5s")
+        self.assertEqual(rows["otlp"]["ref"], "nosink-20s")
+        self.assertAlmostEqual(rows["statsd"]["effect_pct"], 100 * (2400 / 300 - 1), delta=5)
+        self.assertAlmostEqual(rows["otlp"]["price_ms_per_flush"]["mean"], 12000 - 320, delta=150)
+        self.assertIn("1m", js["aa"])
+        self.assertNotIn("flush-off", " ".join(lines))
+        self.assertTrue(any("Run S" in x for x in lines))

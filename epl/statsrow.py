@@ -173,10 +173,15 @@ def span_flushes(bursts, t0, t1):
     """Flushes wholly between two quiescent points t0 < t1 (monotonic s): the bursts that start
     at or after t0 and end at or before t1. A quiescent point lies between flushes, so a flush
     is either inside the span or outside it; `partial` counts bursts that cross an edge (a
-    quiescent point that was not one)."""
+    quiescent point that was not one). run_ms_per_flush: the main thread's run time of the
+    whole flushes over their number, the per-flush price of run S (no flush-off pairing)."""
     inside = [b for b in bursts if b["start_t"] >= t0 and b["end_t"] <= t1]
     partial = [b for b in bursts if (b["start_t"] < t0 < b["end_t"]) or (b["start_t"] < t1 < b["end_t"])]
-    return {"n": len(inside), "partial": len(partial)}
+    run_ms = sum(b["run_ns"] for b in inside) / 1e6
+    return {"n": len(inside), "partial": len(partial), "run_ms": round(run_ms, 3),
+            "run_ms_per_flush": round(run_ms / len(inside), 3) if inside else None,
+            "bursts": [{"start_t": round(b["start_t"] - t0, 3), "wall_s": round(b["wall_s"], 3),
+                        "run_ms": round(b["run_ns"] / 1e6, 3)} for b in inside]}
 
 
 def settled_scrape(collector, tries=20, step_s=0.25):

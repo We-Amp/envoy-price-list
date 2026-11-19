@@ -277,11 +277,15 @@ class SpanFlushTest(unittest.TestCase):
 
     def test_span_flushes(self):
         from epl import statsrow as sr
-        bursts = [{"start_t": 0.5, "end_t": 0.8}, {"start_t": 1.5, "end_t": 1.9}, {"start_t": 2.5, "end_t": 2.7},
-                  {"start_t": 3.9, "end_t": 4.2}]
-        self.assertEqual(sr.span_flushes(bursts, 1.0, 3.0), {"n": 2, "partial": 0})
-        self.assertEqual(sr.span_flushes(bursts, 1.0, 4.0), {"n": 2, "partial": 1})  # 4.0 is inside a flush
-        self.assertEqual(sr.span_flushes([], 0.0, 9.0), {"n": 0, "partial": 0})
+        bursts = [{"start_t": a, "end_t": b, "wall_s": b - a, "run_ns": int((b - a) * 1e9)}
+                  for a, b in ((0.5, 0.8), (1.5, 1.9), (2.5, 2.7), (3.9, 4.2))]
+        f = sr.span_flushes(bursts, 1.0, 3.0)
+        self.assertEqual((f["n"], f["partial"]), (2, 0))
+        self.assertAlmostEqual(f["run_ms_per_flush"], 300.0, places=3)  # (400 + 200) / 2
+        f = sr.span_flushes(bursts, 1.0, 4.0)
+        self.assertEqual((f["n"], f["partial"]), (2, 1))  # 4.0 is inside a flush
+        f = sr.span_flushes([], 0.0, 9.0)
+        self.assertEqual((f["n"], f["partial"], f["run_ms_per_flush"]), (0, 0, None))
 
     def test_settled_scrape(self):
         from epl import statsrow as sr

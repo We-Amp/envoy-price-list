@@ -1560,11 +1560,15 @@ class RealBackend:
                           if not k.startswith("_")}
                     sn = m["span_flushes"]["n"]
                     if sn and "accepted_metric_points" in cd:
-                        # T5: points over the whole flushes between the two quiescent points (the
-                        # collector read at both), and the fit against the used stats (one data
-                        # point per used counter, gauge and histogram)
-                        cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / sn
-                        cd["fit"] = statsrow.flush_fit(cd["accepted_metric_points"], m.get("used_total"), sn)
+                        # T5/S3: the collector reads are not atomic with the quiescent points (a
+                        # flush can start or finish exporting between a quiescent point and its
+                        # read), so the divisor is the whole number of flushes the points hold,
+                        # n = round(points / used stats), and n may differ from the flushes counted
+                        # in the span by at most one; a real loss leaves a residual and fails
+                        fitd = statsrow.flush_fit(cd["accepted_metric_points"], m.get("used_total"), sn)
+                        cd["fit"] = fitd
+                        if fitd.get("n"):
+                            cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / fitd["n"]
                     cd["settled"] = c1.get("_settled")
                     m["collector_delta"] = cd
         except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg

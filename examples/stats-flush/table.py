@@ -3,7 +3,7 @@
 
     python3 examples/stats-flush/table.py SESSION_DIR [--json OUT.json] > tables.md
 
-SESSION_DIR holds the runs (m-10k, m-100k, m-300k, m-1m, w, s-100k, s-1m, x-1m), rungs.json,
+SESSION_DIR holds the runs (m-10k, m-100k, m-300k, m-1m, w, s-100k, s-1m, sw, x-1m), rungs.json,
 cal/ and w-prediction.json. Valid legs of complete blocks only; incomplete runs carry no
 verdict and stay out of every Holm step.
 
@@ -22,8 +22,10 @@ verdict and stay out of every Holm step.
   against nosink at the four rungs (main-thread run time per second), statsd against
   flush-off in run W (total cycles per request: the per-request cost of the statsd sink on
   the workers).
-- Secondary (Holm): W's nosink row otherwise ("at most N%"), the A/A rows, dogstatsd-buf,
-  otlp and prom against nosink at both rungs.
+- Secondary (Holm): W's nosink row otherwise ("at most N%"), the A/A rows.
+- Run S (its own Holm family): statsd, dogstatsd-buf and otlp against nosink at the same interval,
+  per whole flush from each leg's quiescent span (no flush-off pairing), with the rung's own
+  nosink-A2 A/A; and under load (sw) cycles per request against nosink. prom is not in run S.
 - Exploratory: stalls, /ready latency, memory, worker-only cycles, run X, user and kernel
   split, used share, datagrams per flush and per request, flush counts per W leg by arm.
 """
@@ -136,6 +138,92 @@ def price_ratio_row(res, shape, arm, ref, label, family):
     return r
 
 
+def span_price_row(res, shape, arm, ref, label, family):
+    """Run S (S1): log ratio of two arms' main-thread run time per whole flush, each taken from
+    its own leg's quiescent span (span_flushes.run_ms_per_flush), paired by round. No flush-off
+    pairing; the reference is the nosink arm at the same interval."""
+    pa, pr = legs_by_round(res, arm), legs_by_round(res, ref)
+    va = {r: g(m, "span_flushes", "run_ms_per_flush") for r, m in pa.items()}
+    vr = {r: g(m, "span_flushes", "run_ms_per_flush") for r, m in pr.items()}
+    rounds = sorted(r for r in set(va) & set(vr) if va[r] and vr[r] and va[r] > 0 and vr[r] > 0)
+    p = stats.paired_log_ratio([vr[r] for r in rounds], [va[r] for r in rounds])
+    r = {"label": label, "shape": shape, "arm": arm, "ref": ref, "metric": "main ms per whole flush (span)",
+         "family": family, "n": p["n"], "incomplete": bool(res.get("metadata", {}).get("incomplete")),
+         "arm_ms_per_flush": mean([va[x] for x in rounds]), "ref_ms_per_flush": mean([vr[x] for x in rounds]),
+         "price_ms_per_flush": t_interval([va[x] - vr[x] for x in rounds])}
+    ia = {m.get("flush_interval_s") for m in pa.values()}
+    ir = {m.get("flush_interval_s") for m in pr.values()}
+    if ia != ir:
+        r["note"] = "intervals differ (%s against %s)" % (sorted(ia), sorted(ir))
+    if p.get("half_width_pct") is None:
+        r["missing"] = "fewer than 2 pairs"
+        return r
+    w = T.widened(p)
+    r.update(log_mean=p["log_mean_pct"], lo=p["log_lo_pct"], hi=p["log_hi_pct"], hw=p["half_width_pct"],
+             t_p=None if r["incomplete"] else p["t_p"], se=T.se_of(p), widened=w,
+             effect_pct=T.pct(p["log_mean_pct"]), lo_pct=T.pct(p["log_lo_pct"]), hi_pct=T.pct(p["log_hi_pct"]),
+             widened_lo_pct=T.pct(p["log_mean_pct"] - w), widened_hi_pct=T.pct(p["log_mean_pct"] + w))
+    return r
+
+
+def run_s_tables(runs):
+    """[lines], {json}: run S per flush (idle rungs) and under load (sw)."""
+    L, js = [], {"rows": [], "aa": {}}
+    rows = []
+    for rung in ("100k", "1m"):
+        res = runs.get("s-" + rung)
+        if not res:
+            continue
+        sh = "idle-" + rung
+        aa = span_price_row(res, sh, "nosink-A2", "nosink", "A/A (span, per flush)", "s-aa")
+        if not aa.get("missing"):
+            js["aa"][rung] = {"hw": aa["hw"], "reach": max(abs(aa["lo"]), abs(aa["hi"]))}
+        refs = res["experiment"].get("s_refs") or {}
+        for a in ("statsd", "dogstatsd-buf", "otlp"):
+            if a in refs:
+                rows.append(span_price_row(res, sh, a, refs[a], "%s per flush" % a, "s"))
+        rows.append(aa)
+    if runs.get("sw"):
+        for a in ("statsd", "dogstatsd-buf", "otlp"):
+            rows.append(ratio_row(runs["sw"], "s", a, "nosink", "cycles_total",
+                                  "%s, cycles per request under load" % a, "s"))
+        aa = ratio_row(runs["sw"], "s", "nosink-A2", "nosink", "cycles_total", "A/A, loaded", "s-aa")
+        if not aa.get("missing"):
+            js["aa"]["sw"] = {"hw": aa["hw"], "reach": max(abs(aa["lo"]), abs(aa["hi"]))}
+        rows.append(aa)
+    if not rows:
+        return L, js
+    fam = [r for r in rows if r["family"] == "s"]
+    k = FT.holm(fam)
+    for r in rows:
+        key = r["shape"].replace("idle-", "") if r["shape"].startswith("idle-") else "sw"
+        reach = js["aa"].get(key, {}).get("reach")
+        r["verdict"] = verdict(r, reach) if reach is not None or r.get("missing") else \
+            "no verdict: no A/A at this rung"
+        if r.get("note"):
+            r["verdict"] += "; " + r["note"]
+    L.append("## Run S: the sinks (Holm over %d rows; per-flush prices from each leg's quiescent span)\n" % k)
+    L.append("Each sink against nosink at its own interval (at 1M: statsd and dogstatsd-buf against nosink-5s, otlp "
+             "against nosink-20s); a finding must clear the larger of 1% and the rung's own A/A reach. Under load (sw): "
+             "total cycles per request against nosink at the default 5 s interval.\n")
+    L.append(HDR)
+    for r in rows:
+        L.append(fmt_ratio(r))
+    L.append("")
+    L.append("| Row | Shape | Arm ms per flush | Reference ms per flush | Price ms per flush [95% CI] |\n"
+             "|---|---|---|---|---|")
+    for r in rows:
+        if r.get("arm_ms_per_flush") is None:
+            continue
+        t = r["price_ms_per_flush"]
+        L.append("| %s | %s | %.1f | %.1f | %s |" % (
+            r["label"], r["shape"], r["arm_ms_per_flush"], r["ref_ms_per_flush"],
+            "-" if t.get("lo") is None else "%+.1f [%+.1f, %+.1f]" % (t["mean"], t["lo"], t["hi"])))
+    L.append("")
+    js["rows"] = rows
+    return L, js
+
+
 def share_of_core_pct(d_ms, interval_s):
     """Derived: the main thread's share of one core when a flush of d ms starts every interval
     (flush starts are one interval apart whatever the flush takes), capped at 100%."""
@@ -213,7 +301,7 @@ HDR = ("| Row | Shape | Arm vs ref | Effect [95% CI] | Widened | Holm p | Pairs 
 def tables(sess):
     L, js = [], {}
     runs = {n: load(os.path.join(sess, n)) for n in ("m-10k", "m-100k", "m-300k", "m-1m", "w", "s-100k", "s-1m",
-                                                     "x-1m")}
+                                                     "x-1m", "sw")}
     runs = {k: v for k, v in runs.items() if v}
     rungs = {}
     if os.path.exists(os.path.join(sess, "rungs.json")):
@@ -345,11 +433,6 @@ def tables(sess):
         sec.append(ratio_row(runs["w"], "s", "flush-off-A2", "flush-off", "cycles_total", "A/A, loaded", "secondary"))
     for rung, v in aa.items():
         sec.append(v["row"])
-    for rung in ("100k", "1m"):
-        res = runs.get("s-" + rung)
-        if res:
-            for a in ("dogstatsd-buf", "otlp", "prom"):
-                sec.append(ratio_row(res, "idle-" + rung, a, "nosink", "main_ms_per_s", a, "secondary"))
     for fam, rows in (("Confirmatory", conf), ("Secondary", sec)):
         k = FT.holm(rows)
         for r in rows:
@@ -367,6 +450,9 @@ def tables(sess):
             L.append(fmt_ratio(r))
         L.append("")
     js["confirmatory"], js["secondary"] = conf, sec
+    sl, sj = run_s_tables(runs)
+    L.extend(sl)
+    js["run_s"] = sj
 
     # observation, not a result: the plain statsd sink at 1 s at the top rung
     js["observations"] = []

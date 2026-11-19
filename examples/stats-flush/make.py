@@ -30,9 +30,11 @@ Rungs (K generated clusters, target N stats): 10k (100), 100k (1,000), 300k (3,0
                      interval, 8 rounds
   s-100k.json, s-1m.json   run S, the sinks: nosink, nosink-A2 (A/A), statsd (unbuffered),
                      dogstatsd-buf (dog_statsd, max_bytes_per_datagram 1432), otlp (envoy_grpc to
-                     the local null collector, its CPU gated as a side service); 5 rounds; at 1M
+                     the local null collector, its CPU gated as a side service); at 1M
                      statsd and dogstatsd-buf flush every 5 s, otlp every 20 s (60 s window), by
-                     the saturation rule (S_INTERVALS); smoke-s-<rung>.json one round each
+                     the saturation rule (S_INTERVALS); 10 rounds at 100k, 7 at 1M; each with a nosink at its own interval
+                     (nosink-5s, nosink-20s); per-flush prices from each leg's quiescent span;
+                     smoke-s-<rung>.json one round each
   sw.json            run S under load: run W's shape (1,000 clusters, 5,200 req/s, 5 s interval)
                      with the same five arms, worker cycles per request; 10 rounds; smoke-sw.json
   x-1m.json          run X, conditions: statsd, statsd-5s (30 s window), statsd-cold,
@@ -77,6 +79,13 @@ WINDOW_S = 20
 S_INTERVALS = {"1m": {"dogstatsd-buf": 5, "otlp": 20}}
 S_WINDOWS = {"1m": {"otlp": 60}}
 S_ARMS = ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"]
+# S2: at 1M every sink has a nosink reference at its own interval (statsd and dogstatsd-buf at 5 s,
+# otlp at 20 s); the per-flush price of each arm comes from its own quiescent span (S1)
+S_ARMS_1M = S_ARMS + ["nosink-5s", "nosink-20s"]
+S_REF = {"statsd": {"1m": "nosink-5s"}, "dogstatsd-buf": {"1m": "nosink-5s"}, "otlp": {"1m": "nosink-20s"}}
+# about 8 rounds on the unloaded S rungs; a Latin order balances only in whole squares,
+# so 10 (two squares of 5 arms) at 100k and 7 (one square of 7 arms) at 1M
+S_ROUNDS = {"100k": 10, "1m": 7}
 OTLP_MAX_POINTS = 10000  # data points per OTLP request: under the collector's 4 MiB message limit
 DOG_MAX_BYTES = 1432
 
@@ -156,8 +165,10 @@ EV_DOG = EV_QUIESCENT + [
 EV_OTLP = EV_QUIESCENT + [
     {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "per": "field:used_total",
      "per_request": 1.0, "tol": 0.01, "label": "metric points per whole flush = used stats, +/-1%"},
-    {"stat": "collector_delta.fit.n_error", "scope": "field", "max": 0,
-     "label": "points are that whole number of flushes of the used stats"},
+    {"stat": "collector_delta.fit.n_error", "scope": "field", "max": 1,
+     "label": "the whole flushes the points hold within one of the flushes counted in the span (one in flight)"},
+    {"stat": "collector_delta.fit.residual", "scope": "field", "max": 0.01,
+     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"},
     {"stat": "collector_delta.settled", "scope": "field", "equals": True,
      "label": "collector read settled at both quiescent points"},
     zero("collector_delta.refused_metric_points")]
@@ -227,6 +238,10 @@ def rung_arms(box, k, rung, cal, names):
                               ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible)),
         "nosink-A2": lambda: arm(box, "nosink-A2", stats_set(k, stats_flush={"interval_s": INTERVAL_S}),
                                  ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible)),
+        "nosink-5s": lambda: arm(box, "nosink-5s", stats_set(k, stats_flush={"interval_s": 5}),
+                                 ev_common(k, rung, cal) + ev_periodic(5, visible) + EV_QUIESCENT),
+        "nosink-20s": lambda: arm(box, "nosink-20s", stats_set(k, stats_flush={"interval_s": 20}),
+                                  ev_common(k, rung, cal) + ev_periodic(20, visible) + EV_QUIESCENT, window_s=60),
         "statsd": lambda: arm(box, "statsd", stats_set(k, stats_flush={"interval_s": sd_int},
                                                        stats_sink={"kind": "statsd"}),
                               ev_common(k, rung, cal) + ev_periodic(sd_int, visible) + EV_STATSD
@@ -323,10 +338,13 @@ def configs(box, cal=None):
         cfg("smoke-%s.json" % rung, "sf-smoke-" + rung, rung, k, allarms, [idle_shape(rung, cal)],
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
         # run S: the sinks at the two rungs, with the A/A; 5 rounds (one Latin square of 5 arms)
-        cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, S_ARMS, [idle_shape(rung, cal)],
+        sarms = S_ARMS_1M if rung == "1m" else S_ARMS
+        cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
-        cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, S_ARMS, [idle_shape(rung, cal)],
-            rounds=5, rounds_block=5, rounds_max=5, comparisons="base")
+        cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
+            rounds=S_ROUNDS[rung], rounds_block=S_ROUNDS[rung], rounds_max=S_ROUNDS[rung], comparisons="base",
+            s_refs={a: S_REF.get(a, {}).get(rung, "nosink") for a in sarms if a not in ("nosink", "nosink-A2")
+                    and not a.startswith("nosink-")})
     # 4 rounds (one Latin square) rather than 3, so every arm sits in every position once
     cfg("x-1m.json", "sf-x-1m", "1m", 10000, ["statsd", "statsd-5s", "statsd-cold", "nosink-cold"],
         [idle_shape("1m", cal)], rounds=4, rounds_block=4, rounds_max=4)
