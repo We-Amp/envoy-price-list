@@ -486,6 +486,19 @@ class PinTest(unittest.TestCase):
         self.assertTrue(r["ok"], r)
         self.assertEqual(calls, {501: {0}, 502: {1}, 503: {2}, 504: {3}})
 
+    def test_the_check_after_the_window_uses_the_same_rule_as_the_pin(self):
+        # smoke of 2026-11-19: the after-window check compared one-CPU workers with the whole set
+        fake_proc(self.root, 500, self.threads())
+        self.assertFalse(legmod.pin_check(500, 4, {0, 1, 2, 3}, 4)["ok"])
+        self.assertTrue(legmod.pin_check(500, 4, {0, 1, 2, 3}, 4, one_to_one=True)["ok"])
+        with open(os.path.join(HERE, "epl", "leg.py")) as f:
+            src = f.read()
+        body = src[src.index("    def run_leg("):src.index("    def _lat_before(")]
+        calls = [body[i:i + 220] for i in range(len(body)) if body.startswith("pin_check(", i) or body.startswith("pin_rung(", i)]
+        self.assertEqual(len(calls), 2)
+        for c in calls:
+            self.assertIn('one_to_one=rung.get("one_to_one", False)', c)
+
     def test_rung_of_and_validation(self):
         exp = experiment.load(os.path.join(GEN, "lat.json"))
         own, shared = exp["shapes"]

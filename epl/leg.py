@@ -1170,7 +1170,8 @@ class RealBackend:
                         m["stat_ops"] = stat_ops(sp0, admin_prometheus(ecfg["admin_port"], adm_t))
                     if rung["main_cpu"] is not None:
                         # where every thread ran last, after the window: still on its own set
-                        m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
+                        m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers,
+                                                        one_to_one=rung.get("one_to_one", False))
                     if mcfg.get("numastat"):
                         # after the window: where Envoy's memory sits, per node
                         m["numastat"] = numastat_totals(envoy.pid)
