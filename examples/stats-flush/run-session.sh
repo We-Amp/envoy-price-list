@@ -233,7 +233,12 @@ case "$mode" in
     rewrite
     guard_begin || exit 1
     trap on_term TERM INT
-    rm -rf "$R/smoke/smoke-s-1m"
+    # the first 1M smoke is the record of the OTLP loss: moved aside, never deleted
+    if [ -d "$R/smoke/smoke-s-1m" ]; then
+      aside="$R/smoke/smoke-s-1m.first"
+      [ -e "$aside" ] && aside="$R/smoke/smoke-s-1m.$(date -u +%Y%m%dT%H%M%SZ)"
+      mv "$R/smoke/smoke-s-1m" "$aside" && log "previous 1M smoke kept as $aside"
+    fi
     bg_wait $EPL run "$C/smoke-s-1m.json" --out "$R/smoke/smoke-s-1m" --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end smoke smoke-s-1m rc=$?"
     guard_end

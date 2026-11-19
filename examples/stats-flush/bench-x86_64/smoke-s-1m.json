@@ -719,8 +719,8 @@
     {
      "stat": "otlp_cluster.whole_error",
      "scope": "field",
-     "max": 0.2,
-     "label": "requests are whole flushes of ceil(used / 10,000) requests (within 0.2 of one)"
+     "max": 0,
+     "label": "requests are exactly whole flushes of ceil(used / 10,000) requests (the reads are served by the main thread, so no flush is split by one)"
     },
     {
      "stat": "otlp_cluster.estimate_error",

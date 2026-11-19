@@ -337,3 +337,12 @@ class OtlpEvidenceTest(unittest.TestCase):
                                "larger than max\n")
         self.assertEqual((s["lines"], s["error_lines"]), (2, 1))
         self.assertIn("larger than max", s["first_error"])
+
+
+class PreReadTimeTest(unittest.TestCase):
+    def test_one_t_pre(self):
+        # R1: the uptime check's time base is assigned once, before the pre-window read; the
+        # otlp_cluster span has its own start
+        src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "epl", "leg.py")).read()
+        self.assertEqual(src.count("t_pre = time.monotonic()"), 1)
+        self.assertIn("t_post - t_cl0", src)

@@ -1372,7 +1372,7 @@ class RealBackend:
             if pre["status"] != 200:
                 raise RuntimeError("pre-window /stats returned %s" % pre["status"])
             n0 = pre["numeric"]
-            t_pre = time.monotonic()
+            t_cl0 = time.monotonic()  # the start of the otlp_cluster span (after the pre-window read)
             m["pre_read"] = {k: pre[k] for k in ("total", "histograms", "text_readouts", "seconds", "bytes")}
             m["stats_total"] = pre["total"]
             m["active_clusters"] = n0.get("cluster_manager.active_clusters")
@@ -1450,7 +1450,7 @@ class RealBackend:
                 m["otlp_cluster"] = statsrow.otlp_cluster(
                     n0, n1, m.get("used_total"),
                     int((aenv.get("stats_sink") or {}).get("max_data_points_per_request") or 10000),
-                    t_post - t_pre, interval)
+                    t_post - t_cl0, interval)
             if getattr(self, "calibrate", False):
                 # calibration only: N and used N by kind (each read flushes under on_admin)
                 bk = {}

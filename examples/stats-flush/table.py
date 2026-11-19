@@ -187,11 +187,25 @@ def run_s_tables(runs):
         for a in ("statsd", "dogstatsd-buf", "otlp"):
             if a in refs:
                 src, lab = res, "%s per flush" % a
-                if a == "otlp" and rung == "1m" and runs.get("s-1m-otlp"):
+                rerun = a == "otlp" and rung == "1m" and runs.get("s-1m-otlp")
+                if rerun:
                     # the re-run with the collector's receive limit raised supersedes the first
-                    # 1M otlp row (which lost the histogram requests of every flush)
+                    # 1M otlp row (which lost the histogram requests of every flush); it is a
+                    # separate session with its own A/A (nosink-20s-A2 against nosink-20s)
                     src, lab = runs["s-1m-otlp"], "otlp per flush (re-run, receive limit raised)"
+                    aa20 = span_price_row(src, sh, "nosink-20s-A2", "nosink-20s", "A/A 20 s, re-run (span, per flush)",
+                                          "s-aa")
+                    if not aa20.get("missing"):
+                        js["aa"]["1m@20s-rerun"] = {"hw": aa20["hw"], "reach": max(abs(aa20["lo"]), abs(aa20["hi"]))}
                 row = span_price_row(src, sh, a, refs[a], lab, "s")
+                if rerun:
+                    row["aa_key"] = "1m@20s-rerun"
+                    row["note"] = ("the first 1M otlp row was discarded: the collector refused the histogram requests "
+                                   "of every flush (receive limit); re-run in a later session against its own nosink-20s "
+                                   "and A/A, receive limit 64 MiB")
+                    rows.append(row)
+                    rows.append(aa20)
+                    continue
                 # the A/A whose reach a row uses: the reference's interval; the 20 s reference has no
                 # copy of its own and uses the 5 s reach (stated in the row)
                 row["aa_key"] = rung if refs[a] == "nosink" else rung + "@5s"

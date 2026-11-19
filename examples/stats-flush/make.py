@@ -172,8 +172,9 @@ EV_OTLP = EV_QUIESCENT + [
      "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"},
     # independent of the collector's count: Envoy's export requests and stream resets
     zero("otlp_cluster.rx_reset"),
-    {"stat": "otlp_cluster.whole_error", "scope": "field", "max": 0.2,
-     "label": "requests are whole flushes of ceil(used / 10,000) requests (within 0.2 of one)"},
+    {"stat": "otlp_cluster.whole_error", "scope": "field", "max": 0,
+     "label": "requests are exactly whole flushes of ceil(used / 10,000) requests (the reads are served by the "
+              "main thread, so no flush is split by one)"},
     {"stat": "otlp_cluster.estimate_error", "scope": "field", "max": 1,
      "label": "that number of flushes as the span and the interval say, +/-1"},
     zero("collector_log.error_lines"),
@@ -253,6 +254,8 @@ def rung_arms(box, k, rung, cal, names):
                                  ev_common(k, rung, cal) + ev_periodic(5, visible) + EV_QUIESCENT),
         "nosink-5s-A2": lambda: arm(box, "nosink-5s-A2", stats_set(k, stats_flush={"interval_s": 5}),
                                     ev_common(k, rung, cal) + ev_periodic(5, visible) + EV_QUIESCENT),
+        "nosink-20s-A2": lambda: arm(box, "nosink-20s-A2", stats_set(k, stats_flush={"interval_s": 20}),
+                                     ev_common(k, rung, cal) + ev_periodic(20, visible) + EV_QUIESCENT, window_s=60),
         "nosink-20s": lambda: arm(box, "nosink-20s", stats_set(k, stats_flush={"interval_s": 20}),
                                   ev_common(k, rung, cal) + ev_periodic(20, visible) + EV_QUIESCENT, window_s=60),
         "statsd": lambda: arm(box, "statsd", stats_set(k, stats_flush={"interval_s": sd_int},
@@ -358,8 +361,11 @@ def configs(box, cal=None):
             # the re-run of the 1M otlp row with the collector's receive limit raised (the first
             # run lost the histogram requests of every flush): otlp and its 20 s reference, 8 rounds,
             # checked against the 1M smoke
-            cfg("s-1m-otlp.json", "sf-s-1m-otlp", rung, k, ["nosink-20s", "otlp"], [idle_shape(rung, cal)],
-                rounds=8, rounds_block=8, rounds_max=8, comparisons="base", s_refs={"otlp": "nosink-20s"})
+            # its own A/A (a separate session): nosink-20s-A2; 9 rounds, three Latin squares of 3 arms
+            # (the nearest whole squares to the 8 rounds of the first run)
+            cfg("s-1m-otlp.json", "sf-s-1m-otlp", rung, k, ["nosink-20s", "otlp", "nosink-20s-A2"],
+                [idle_shape(rung, cal)], rounds=9, rounds_block=9, rounds_max=9, comparisons="base",
+                s_refs={"otlp": "nosink-20s"})
         cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
             rounds=S_ROUNDS[rung], rounds_block=S_ROUNDS[rung], rounds_max=S_ROUNDS[rung], comparisons="base",
             s_refs={a: S_REF.get(a, {}).get(rung, "nosink") for a in sarms if a not in ("nosink", "nosink-A2")

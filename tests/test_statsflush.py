@@ -640,11 +640,15 @@ class RunSTableTest(unittest.TestCase):
 class OtlpRerunTest(unittest.TestCase):
     def test_config_script_table(self):
         c = experiment.load(os.path.join(X86, "s-1m-otlp.json"))
-        self.assertEqual([a["name"] for a in c["arms"]], ["nosink-20s", "otlp"])
-        self.assertEqual((c["rounds"], c["collector"]["max_recv_msg_size_mib"]), (8, 64))
+        self.assertEqual([a["name"] for a in c["arms"]], ["nosink-20s", "otlp", "nosink-20s-A2"])
+        self.assertEqual((c["rounds"], c["collector"]["max_recv_msg_size_mib"]), (9, 64))
+        we = [i for i in {a["name"]: a for a in c["arms"]}["otlp"]["evidence"] if i["stat"] == "otlp_cluster.whole_error"]
+        self.assertEqual(we[0]["max"], 0)  # N1: exact
         txt = open(os.path.join(SF, "run-session.sh")).read()
-        for m in ("s-otlp-smoke)", "s-otlp)", 'SRUNS="s-1m-otlp" s_check', "s-1m|s-1m-otlp) s=smoke-s-1m"):
+        for m in ("s-otlp-smoke)", "s-otlp)", 'SRUNS="s-1m-otlp" s_check', "s-1m|s-1m-otlp) s=smoke-s-1m",
+                  "smoke-s-1m.first"):
             self.assertIn(m, txt)
+        self.assertNotIn('rm -rf "$R/smoke/smoke-s-1m"', txt)
         exp1 = experiment.load(os.path.join(X86, "s-1m.json"))
 
         def res_of(exp, arms, otlp_ms):
@@ -657,8 +661,11 @@ class OtlpRerunTest(unittest.TestCase):
                                                                               "run_ms_per_flush": v + r}})
             return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 8, "incomplete": False}}
         old = res_of(exp1, [a["name"] for a in exp1["arms"]], 1271.0)
-        new = res_of(c, ["nosink-20s", "otlp"], 1500.0)
+        new = res_of(c, ["nosink-20s", "otlp", "nosink-20s-A2"], 1500.0)
         lines, js = TAB.run_s_tables({"s-1m": old, "s-1m-otlp": new})
         ot = [r for r in js["rows"] if r["arm"] == "otlp"][0]
         self.assertIn("re-run", ot["label"])
         self.assertAlmostEqual(ot["arm_ms_per_flush"], 1500.0 + 4.5)
+        self.assertEqual(ot["aa_key"], "1m@20s-rerun")
+        self.assertIn("1m@20s-rerun", js["aa"])
+        self.assertIn("discarded", ot["note"])
