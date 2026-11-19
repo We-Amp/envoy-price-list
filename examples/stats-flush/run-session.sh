@@ -18,7 +18,7 @@
 #                                          then s-check
 #   run-session.sh s-check                  freeze s-100k, s-1m and sw from their smokes and check every
 #                                          smoke leg (no override)
-#   run-session.sh s-queue [EPL_ARGS...]    s-check, then s-100k, s-1m and sw within S_STOP_S (default 2 h)
+#   run-session.sh s-queue [EPL_ARGS...]    s-check and the time estimate, then s-100k, s-1m and sw within S_STOP_S (default 3 h 30 min)
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
@@ -131,6 +131,9 @@ s_check() {
   done
   mkdir -p "$FROZEN"
   for run in $SRUNS; do
+    # every smoke leg must be valid, not only its evidence
+    $SESSION smoke-valid "$C/$(smoke_of "$run").json" "$R/smoke/$(smoke_of "$run")" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
     log "freeze and check $run against $(smoke_of "$run")"
     if ! $EPL evidence-check "$C/$run.json" "$R/smoke/$(smoke_of "$run")" --freeze "$FROZEN/$run.json" \
         >> "$R/queue.log" 2>&1; then
@@ -228,9 +231,11 @@ case "$mode" in
   s-queue)
     log "S queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
     s_check || { log "S queue not started (calibration or evidence; no override)"; exit 1; }
+    STOP_S=${S_STOP_S:-12600}
+    $SESSION s-budget "$C" "$R/smoke" "$STOP_S" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { log "S queue not started: expected time above the stop or unknown"; exit 1; }
     guard_begin || exit 1
     trap on_term TERM INT
-    STOP_S=${S_STOP_S:-7200}
     T0=$(date +%s)
     left() { echo $(( STOP_S - ($(date +%s) - T0) )); }
     for run in $SRUNS; do

@@ -81,6 +81,45 @@ def budget(cfg_dir, smoke_root, out=sys.stdout):
     return mand, exp
 
 
+S_RUNS = ["s-100k", "s-1m", "sw"]
+
+
+def s_budget(cfg_dir, smoke_root, stop_s, out=sys.stdout):
+    """Expected run time of run S from its smokes' seconds per leg, against the stop."""
+    tot = 0.0
+    for r in S_RUNS:
+        e = expected(r, cfg_dir, smoke_root)
+        out.write("%-8s expected %s\n" % (r, "-" if e is None else "%5.1f min" % (e / 60)))
+        if e is None:
+            out.write("no seconds per leg for %s: run the S smoke first\n" % r)
+            return None
+        tot += e
+    out.write("run S expected %.2f h; stop at %.2f h\n" % (tot / 3600, stop_s / 3600))
+    return tot
+
+
+def smoke_problems(cfg_path, smoke_dir):
+    """[problem]: a smoke leg missing or invalid (the latest attempt of each shape, arm, round)."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    from epl import experiment
+    exp = experiment.load(cfg_path)
+    latest = {}
+    for m in legs(os.path.join(smoke_dir, "legs.jsonl")):
+        if m.get("arm"):
+            latest[(m.get("shape"), m.get("arm"), m.get("round"))] = m
+    probs = []
+    for sh in exp["shapes"]:
+        for a in exp["arms"]:
+            got = [m for (s_, ar, r), m in latest.items() if s_ == sh["name"] and ar == a["name"]]
+            if not got:
+                probs.append("missing: %s %s" % (sh["name"], a["name"]))
+            for m in got:
+                v = m.get("verdict") or {}
+                if not v.get("valid"):
+                    probs.append("invalid: %s %s: %s" % (sh["name"], a["name"], "; ".join(v.get("reasons") or [])))
+    return probs
+
+
 def merge_rungs(out_path, cal_dirs):
     merged = {}
     if os.path.exists(out_path):
@@ -228,6 +267,17 @@ def main(argv):
     if cmd == "merge-smoke":
         print("%d legs in %s" % (merge_smoke(argv[1], argv[2], argv[3], argv[4]), argv[1]))
         return 0
+    if cmd == "smoke-valid":
+        probs = smoke_problems(argv[1], argv[2])
+        for p in probs:
+            print(p)
+        print("smoke %s: %s" % (argv[2], "all legs valid" if not probs else "NOT clean (%d problems)" % len(probs)))
+        return 1 if probs else 0
+    if cmd == "s-budget":
+        t = s_budget(argv[1], argv[2], float(argv[3]))
+        if t is None:
+            return 1
+        return 3 if t > float(argv[3]) else 0
     if cmd == "calibrated":
         bad = uncalibrated(argv[1])
         if bad:

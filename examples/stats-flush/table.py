@@ -175,14 +175,28 @@ def run_s_tables(runs):
         if not res:
             continue
         sh = "idle-" + rung
-        aa = span_price_row(res, sh, "nosink-A2", "nosink", "A/A (span, per flush)", "s-aa")
+        aa = span_price_row(res, sh, "nosink-A2", "nosink", "A/A 1 s (span, per flush)", "s-aa")
         if not aa.get("missing"):
             js["aa"][rung] = {"hw": aa["hw"], "reach": max(abs(aa["lo"]), abs(aa["hi"]))}
+        aa5 = None
+        if any(a["name"] == "nosink-5s-A2" for a in res["experiment"]["arms"]):
+            aa5 = span_price_row(res, sh, "nosink-5s-A2", "nosink-5s", "A/A 5 s (span, per flush)", "s-aa")
+            if not aa5.get("missing"):
+                js["aa"][rung + "@5s"] = {"hw": aa5["hw"], "reach": max(abs(aa5["lo"]), abs(aa5["hi"]))}
         refs = res["experiment"].get("s_refs") or {}
         for a in ("statsd", "dogstatsd-buf", "otlp"):
             if a in refs:
-                rows.append(span_price_row(res, sh, a, refs[a], "%s per flush" % a, "s"))
+                row = span_price_row(res, sh, a, refs[a], "%s per flush" % a, "s")
+                # the A/A whose reach a row uses: the reference's interval; the 20 s reference has no
+                # copy of its own and uses the 5 s reach (stated in the row)
+                row["aa_key"] = rung if refs[a] == "nosink" else rung + "@5s"
+                if refs[a] == "nosink-20s":
+                    row["note"] = (row.get("note", "") + "; " if row.get("note") else "") + \
+                        "A/A reach of the 5 s reference (no 20 s copy)"
+                rows.append(row)
         rows.append(aa)
+        if aa5 is not None:
+            rows.append(aa5)
     if runs.get("sw"):
         for a in ("statsd", "dogstatsd-buf", "otlp"):
             rows.append(ratio_row(runs["sw"], "s", a, "nosink", "cycles_total",
@@ -196,7 +210,7 @@ def run_s_tables(runs):
     fam = [r for r in rows if r["family"] == "s"]
     k = FT.holm(fam)
     for r in rows:
-        key = r["shape"].replace("idle-", "") if r["shape"].startswith("idle-") else "sw"
+        key = r.get("aa_key") or (r["shape"].replace("idle-", "") if r["shape"].startswith("idle-") else "sw")
         reach = js["aa"].get(key, {}).get("reach")
         r["verdict"] = verdict(r, reach) if reach is not None or r.get("missing") else \
             "no verdict: no A/A at this rung"
@@ -204,7 +218,8 @@ def run_s_tables(runs):
             r["verdict"] += "; " + r["note"]
     L.append("## Run S: the sinks (Holm over %d rows; per-flush prices from each leg's quiescent span)\n" % k)
     L.append("Each sink against nosink at its own interval (at 1M: statsd and dogstatsd-buf against nosink-5s, otlp "
-             "against nosink-20s); a finding must clear the larger of 1% and the rung's own A/A reach. Under load (sw): "
+             "against nosink-20s); a finding must clear the larger of 1% and the A/A reach at the reference's interval "
+             "(at 1M the 5 s copy nosink-5s-A2; the 20 s rows use that 5 s reach). Under load (sw): "
              "total cycles per request against nosink at the default 5 s interval.\n")
     L.append(HDR)
     for r in rows:

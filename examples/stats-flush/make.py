@@ -32,8 +32,8 @@ Rungs (K generated clusters, target N stats): 10k (100), 100k (1,000), 300k (3,0
                      dogstatsd-buf (dog_statsd, max_bytes_per_datagram 1432), otlp (envoy_grpc to
                      the local null collector, its CPU gated as a side service); at 1M
                      statsd and dogstatsd-buf flush every 5 s, otlp every 20 s (60 s window), by
-                     the saturation rule (S_INTERVALS); 10 rounds at 100k, 7 at 1M; each with a nosink at its own interval
-                     (nosink-5s, nosink-20s); per-flush prices from each leg's quiescent span;
+                     the saturation rule (S_INTERVALS); 10 rounds at 100k, 8 at 1M; each with a nosink at its own interval
+                     (nosink-5s with its A/A copy nosink-5s-A2, nosink-20s); per-flush prices from each leg's quiescent span;
                      smoke-s-<rung>.json one round each
   sw.json            run S under load: run W's shape (1,000 clusters, 5,200 req/s, 5 s interval)
                      with the same five arms, worker cycles per request; 10 rounds; smoke-sw.json
@@ -81,11 +81,12 @@ S_WINDOWS = {"1m": {"otlp": 60}}
 S_ARMS = ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"]
 # S2: at 1M every sink has a nosink reference at its own interval (statsd and dogstatsd-buf at 5 s,
 # otlp at 20 s); the per-flush price of each arm comes from its own quiescent span (S1)
-S_ARMS_1M = S_ARMS + ["nosink-5s", "nosink-20s"]
+# nosink-5s-A2 gives the 5 s comparisons their own A/A reach (the 20 s rows use it, stated)
+S_ARMS_1M = S_ARMS + ["nosink-5s", "nosink-5s-A2", "nosink-20s"]
 S_REF = {"statsd": {"1m": "nosink-5s"}, "dogstatsd-buf": {"1m": "nosink-5s"}, "otlp": {"1m": "nosink-20s"}}
 # about 8 rounds on the unloaded S rungs; a Latin order balances only in whole squares,
-# so 10 (two squares of 5 arms) at 100k and 7 (one square of 7 arms) at 1M
-S_ROUNDS = {"100k": 10, "1m": 7}
+# so 10 (two squares of 5 arms) at 100k and 8 (one square of 8 arms) at 1M
+S_ROUNDS = {"100k": 10, "1m": 8}
 OTLP_MAX_POINTS = 10000  # data points per OTLP request: under the collector's 4 MiB message limit
 DOG_MAX_BYTES = 1432
 
@@ -240,6 +241,8 @@ def rung_arms(box, k, rung, cal, names):
                                  ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible)),
         "nosink-5s": lambda: arm(box, "nosink-5s", stats_set(k, stats_flush={"interval_s": 5}),
                                  ev_common(k, rung, cal) + ev_periodic(5, visible) + EV_QUIESCENT),
+        "nosink-5s-A2": lambda: arm(box, "nosink-5s-A2", stats_set(k, stats_flush={"interval_s": 5}),
+                                    ev_common(k, rung, cal) + ev_periodic(5, visible) + EV_QUIESCENT),
         "nosink-20s": lambda: arm(box, "nosink-20s", stats_set(k, stats_flush={"interval_s": 20}),
                                   ev_common(k, rung, cal) + ev_periodic(20, visible) + EV_QUIESCENT, window_s=60),
         "statsd": lambda: arm(box, "statsd", stats_set(k, stats_flush={"interval_s": sd_int},
