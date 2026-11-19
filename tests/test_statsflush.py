@@ -47,7 +47,7 @@ class ConfigsTest(unittest.TestCase):
                     self.assertEqual(json.load(f), json.loads(json.dumps(c)), fn + ": rerun make.py")
 
     def test_validate_and_legs(self):
-        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 16, "s-1m": 16, "x-1m": 16}
+        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 25, "s-1m": 25, "sw": 50, "x-1m": 16}
         for fn in sorted(os.listdir(X86)):
             if fn == "box.json":
                 continue
@@ -82,8 +82,23 @@ class ConfigsTest(unittest.TestCase):
         self.assertEqual(len(b["static_resources"]["clusters"]), 1001)
         s = experiment.load(os.path.join(X86, "s-1m.json"))
         sa = {x["name"]: x for x in s["arms"]}
-        self.assertEqual(sa["prom"]["prom_scrape_s"], 5)
+        self.assertEqual(sorted(sa), ["dogstatsd-buf", "nosink", "nosink-A2", "otlp", "statsd"])  # prom dropped
         self.assertEqual(sa["otlp"]["settings"]["stats_sink"]["kind"], "otlp")
+        # at 1M by the saturation rule: dogstatsd-buf every 5 s, otlp every 20 s with a 60 s window
+        self.assertEqual(sa["dogstatsd-buf"]["settings"]["stats_flush"], {"interval_s": 5})
+        self.assertEqual(sa["dogstatsd-buf"]["settings"]["stats_sink"]["max_bytes_per_datagram"], 1432)
+        self.assertEqual((sa["otlp"]["settings"]["stats_flush"], sa["otlp"]["window_s"]), ({"interval_s": 20}, 60))
+        s100 = {x["name"]: x for x in experiment.load(os.path.join(X86, "s-100k.json"))["arms"]}
+        self.assertEqual(s100["otlp"]["settings"]["stats_flush"], {"interval_s": 1})
+        for name in ("dogstatsd-buf", "otlp"):
+            st = {i["stat"] for i in sa[name]["evidence"]}
+            self.assertTrue({"quiesce.before_ok", "quiesce.after_ok", "span_flushes.partial"} <= st, name)
+        ot = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.accepted_metric_points_per_flush"][0]
+        self.assertEqual((ot["per"], ot["tol"]), ("field:used_total", 0.01))
+        sw = experiment.load(os.path.join(X86, "sw.json"))
+        self.assertEqual([a["name"] for a in sw["arms"]], ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"])
+        self.assertEqual((sw["shapes"][0]["rps"], sw["rounds"], sw["primary_metric"]), (5200, 10, "cycles_total"))
+        self.assertTrue(experiment.needs_collector(sw))
         self.assertTrue(experiment.needs_collector(s))
         x = experiment.load(os.path.join(X86, "x-1m.json"))
         xa = {y["name"]: y for y in x["arms"]}
@@ -257,7 +272,9 @@ class SessionHelpersTest(unittest.TestCase):
         for s in ("smoke-m-10k", "smoke-100k", "smoke-m-300k", "smoke-1m", "smoke-w"):
             self.assertIn(s, txt)
         self.assertEqual(SESS.MANDATORY, ["m-10k", "m-100k", "m-1m", "w", "m-300k"])
-        self.assertEqual(SESS.OPTIONAL, ["s-100k", "s-1m", "x-1m"])
+        self.assertEqual(SESS.OPTIONAL, ["x-1m"])
+        for mode in ("s-smoke)", "s-check)", "s-queue)", 'SRUNS="s-100k s-1m sw"', "S_STOP_S:-7200"):
+            self.assertIn(mode, txt)
         r = subprocess.run(["bash", "-n", os.path.join(SF, "run-session.sh")], capture_output=True, timeout=30)
         self.assertEqual(r.returncode, 0)
 

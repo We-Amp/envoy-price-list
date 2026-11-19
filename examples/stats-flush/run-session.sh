@@ -13,6 +13,12 @@
 #   run-session.sh mfix [EPL_ARGS...]       run M-fix (two own builds, boxes with fix_binaries), after
 #                                          the queue: freeze and check against its own smoke, then
 #                                          mfix-10k, mfix-100k, mfix-1m within MFIX_STOP_S (default 80 min)
+#   run-session.sh s-smoke [EPL_ARGS...]    run S (the sinks; needs rungs.json from calibrate): one round
+#                                          at 100k, 1M and under load (smoke-s-100k, smoke-s-1m, smoke-sw),
+#                                          then s-check
+#   run-session.sh s-check                  freeze s-100k, s-1m and sw from their smokes and check every
+#                                          smoke leg (no override)
+#   run-session.sh s-queue [EPL_ARGS...]    s-check, then s-100k, s-1m and sw within S_STOP_S (default 2 h)
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
@@ -45,7 +51,9 @@ FROZEN=$R/frozen
 STOP_S=${STOP_S:-11700}
 RUNGS="10k 100k 300k 1m"
 MANDATORY="m-10k m-100k m-1m w m-300k"
-OPTIONAL=${QUEUE_OPTIONAL-s-100k s-1m x-1m}
+OPTIONAL=${QUEUE_OPTIONAL-x-1m}
+SRUNS="s-100k s-1m sw"
+SSMOKES="smoke-s-100k smoke-s-1m smoke-sw"
 MFIX="mfix-10k mfix-100k mfix-1m"
 SMOKES="smoke-m-10k smoke-100k smoke-m-300k smoke-1m smoke-w"
 mkdir -p "$R"
@@ -58,7 +66,8 @@ smoke_of() {  # the smoke a run is checked against; the 5 s statsd fallback has 
   local s
   case "$1" in
     m-10k) s=smoke-m-10k;; m-300k) s=smoke-m-300k;; w) s=smoke-w;;
-    m-100k|s-100k) s=smoke-100k;; m-1m|s-1m|x-1m) s=smoke-1m;;
+    m-100k) s=smoke-100k;; m-1m|x-1m) s=smoke-1m;;
+    s-100k) s=smoke-s-100k;; s-1m) s=smoke-s-1m;; sw) s=smoke-sw;;
     mfix-*) s=smoke-$1;;
   esac
   if [ -d "$R/smoke/$s.statsd5" ]; then echo "$s.statsd5"; else echo "$s"; fi
@@ -113,6 +122,23 @@ check() {
   [ "$brc" -eq 3 ] && log "mandatory part above 2 h 30 min: decide before the queue (FORCE=1 starts it)"
   [ "$brc" -ne 0 ] && [ "$brc" -ne 3 ] && bad=1
   return $(( bad ? 1 : (brc == 3 ? 3 : 0) ))
+}
+
+s_check() {
+  local bad=0 run
+  for run in $SRUNS; do
+    if grep -q '"uncalibrated": true' "$C/$run.json"; then log "$run uncalibrated"; bad=1; fi
+  done
+  mkdir -p "$FROZEN"
+  for run in $SRUNS; do
+    log "freeze and check $run against $(smoke_of "$run")"
+    if ! $EPL evidence-check "$C/$run.json" "$R/smoke/$(smoke_of "$run")" --freeze "$FROZEN/$run.json" \
+        >> "$R/queue.log" 2>&1; then
+      log "evidence-check $run FAILED (details in queue.log)"
+      bad=1
+    fi
+  done
+  return $bad
 }
 
 mode=${1:-}
@@ -177,6 +203,50 @@ case "$mode" in
   check)
     check
     exit $?
+    ;;
+  s-smoke)
+    log "S smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
+    [ -f "$R/rungs.json" ] || { log "no rungs.json: calibrate first"; exit 1; }
+    rewrite
+    guard_begin || exit 1
+    trap on_term TERM INT
+    for s in $SSMOKES; do
+      log "smoke $s"
+      rm -rf "$R/smoke/$s"
+      bg_wait $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
+      log "end smoke $s rc=$?"
+    done
+    guard_end
+    trap - TERM INT
+    s_check
+    log "S smoke done rc=$?"
+    ;;
+  s-check)
+    s_check
+    exit $?
+    ;;
+  s-queue)
+    log "S queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    s_check || { log "S queue not started (calibration or evidence; no override)"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    STOP_S=${S_STOP_S:-7200}
+    T0=$(date +%s)
+    left() { echo $(( STOP_S - ($(date +%s) - T0) )); }
+    for run in $SRUNS; do
+      L=$(left)
+      if [ "$L" -le 60 ]; then
+        log "skip $run: S stop reached"
+        continue
+      fi
+      log "start $run (${L}s left before the S stop)"
+      bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/$run.json" \
+        --out "$R/$run" --allow-short "$@" >> "$R/queue.log" 2>&1
+      rc=$?
+      [ "$rc" -eq 124 ] && log "$run stopped at the S stop (SIGTERM); partial results, incomplete"
+      log "end $run rc=$rc"
+    done
+    log "S queue done"
     ;;
   restore)
     guard_restore

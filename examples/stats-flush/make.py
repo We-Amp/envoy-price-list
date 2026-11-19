@@ -28,7 +28,13 @@ Rungs (K generated clusters, target N stats): 10k (100), 100k (1,000), 300k (3,0
   w.json             run W, workers under load at 100k: flush-off, nosink, statsd,
                      flush-off-A2 on the 4 KB proxied shape at 5,200 req/s, default 5 s
                      interval, 8 rounds
-  s-100k.json, s-1m.json   run S, other paths: nosink, dogstatsd-buf, otlp, prom; 4 rounds
+  s-100k.json, s-1m.json   run S, the sinks: nosink, nosink-A2 (A/A), statsd (unbuffered),
+                     dogstatsd-buf (dog_statsd, max_bytes_per_datagram 1432), otlp (envoy_grpc to
+                     the local null collector, its CPU gated as a side service); 5 rounds; at 1M
+                     statsd and dogstatsd-buf flush every 5 s, otlp every 20 s (60 s window), by
+                     the saturation rule (S_INTERVALS); smoke-s-<rung>.json one round each
+  sw.json            run S under load: run W's shape (1,000 clusters, 5,200 req/s, 5 s interval)
+                     with the same five arms, worker cycles per request; 10 rounds; smoke-sw.json
   x-1m.json          run X, conditions: statsd, statsd-5s (30 s window), statsd-cold,
                      nosink-cold; 4 rounds (one Latin square; the plan's 3 would not balance)
   mfix-<rung>.json   run M-fix (boxes with fix_binaries only): the run-M design at 10k, 100k
@@ -64,6 +70,13 @@ PROBE_10M = ("10m", 100000)  # a probe after the queue, never a priced row
 SINK_PORT = 8125
 INTERVAL_S = 1
 WINDOW_S = 20
+# run S at 1M: the smoke of 2026-11-17 ran dogstatsd-buf at 914 and otlp at 1,000 ms of main-thread
+# time per second at 1 s (saturated by the plan's 900 ms rule), and otlp took about 12 s per flush
+# (4.3 flushes of 1.55M points in a 51 s span); so at 1M dogstatsd-buf flushes every 5 s (as statsd
+# by the saturation rule) and otlp every 20 s with a 60 s window (3 flushes)
+S_INTERVALS = {"1m": {"dogstatsd-buf": 5, "otlp": 20}}
+S_WINDOWS = {"1m": {"otlp": 60}}
+S_ARMS = ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"]
 OTLP_MAX_POINTS = 10000  # data points per OTLP request: under the collector's 4 MiB message limit
 DOG_MAX_BYTES = 1432
 
@@ -128,12 +141,26 @@ EV_STATSD = [{"stat": "udp.sent_per_flush", "scope": "field", "per": "field:used
              {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
 TOP_RUNG_MAIN = {"stat": "main_over_busiest_other", "scope": "field", "min": 10,
                  "label": "the main thread is the busiest thread by a factor of 10 (idle statsd leg, top rung)"}
-EV_DOG = [{"stat": "udp.sent_per_flush", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
-           "label": "datagrams per flush as in the smoke, +/-1%"},
-          {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
-EV_OTLP = [{"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "ref": {"arm": "self"},
-            "tol": 0.01, "label": "metric points per flush as in the smoke, +/-1%"},
-           zero("collector_delta.refused_metric_points")]
+# T5: both quiescent points held, and the flushes between them counted whole (no burst crosses
+# a quiescent point); the per-flush figures divide by that count
+EV_QUIESCENT = [{"stat": "quiesce.before_ok", "scope": "field", "equals": True, "label": "quiescent point before"},
+                {"stat": "quiesce.after_ok", "scope": "field", "equals": True, "label": "quiescent point after"},
+                zero("span_flushes.partial"),
+                {"stat": "span_flushes.n", "scope": "field", "min": 2, "label": "at least two whole flushes"}]
+EV_DOG = EV_QUIESCENT + [
+    {"stat": "udp.sent_per_flush", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
+     "label": "datagrams per whole flush as in the smoke, +/-1%"},
+    {"stat": "udp.span_fit.n_error", "scope": "field", "max": 1,
+     "label": "whole flushes counted as the span and the measured period say, +/-1"},
+    {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
+EV_OTLP = EV_QUIESCENT + [
+    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "per": "field:used_total",
+     "per_request": 1.0, "tol": 0.01, "label": "metric points per whole flush = used stats, +/-1%"},
+    {"stat": "collector_delta.fit.n_error", "scope": "field", "max": 0,
+     "label": "points are that whole number of flushes of the used stats"},
+    {"stat": "collector_delta.settled", "scope": "field", "equals": True,
+     "label": "collector read settled at both quiescent points"},
+    zero("collector_delta.refused_metric_points")]
 EV_PROM = [{"stat": "prom.all_200", "scope": "field", "equals": True},
            {"stat": "prom.lines_p50", "scope": "field", "ref": {"arm": "self"}, "tol": 0.005},
            {"stat": "prom.count_error", "scope": "field", "max": 1}]
@@ -188,6 +215,9 @@ def rung_arms(box, k, rung, cal, names):
     c = (cal or {}).get(rung) or {}
     visible = rung != "10k"  # at 10k a flush is under the sampler's 20 ms resolution
     sd_int = c.get("statsd_interval_s", INTERVAL_S)
+    dog_int = S_INTERVALS.get(rung, {}).get("dogstatsd-buf", INTERVAL_S)
+    otlp_int = S_INTERVALS.get(rung, {}).get("otlp", INTERVAL_S)
+    otlp_win = S_WINDOWS.get(rung, {}).get("otlp")
     every = {
         "flush-off": lambda: arm(box, "flush-off", stats_set(k, stats_flush={"on_admin": True}),
                                  ev_common(k, rung, cal) + EV_FLUSH_OFF),
@@ -202,12 +232,13 @@ def rung_arms(box, k, rung, cal, names):
                               ev_common(k, rung, cal) + ev_periodic(sd_int, visible) + EV_STATSD
                               + ([TOP_RUNG_MAIN] if rung == RUNGS[-1][0] else [])),
         "dogstatsd-buf": lambda: arm(box, "dogstatsd-buf", stats_set(
-            k, stats_flush={"interval_s": INTERVAL_S},
+            k, stats_flush={"interval_s": dog_int},
             stats_sink={"kind": "dog_statsd", "max_bytes_per_datagram": DOG_MAX_BYTES}),
-            ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible) + EV_DOG),
-        "otlp": lambda: arm(box, "otlp", stats_set(k, stats_flush={"interval_s": INTERVAL_S}, stats_sink={
+            ev_common(k, rung, cal) + ev_periodic(dog_int, visible) + EV_DOG),
+        "otlp": lambda: arm(box, "otlp", stats_set(k, stats_flush={"interval_s": otlp_int}, stats_sink={
             "kind": "otlp", "max_data_points_per_request": OTLP_MAX_POINTS}),
-            ev_common(k, rung, cal, otlp=True) + ev_periodic(INTERVAL_S, visible) + EV_OTLP),
+            ev_common(k, rung, cal, otlp=True) + ev_periodic(otlp_int, visible) + EV_OTLP,
+            **({"window_s": otlp_win} if otlp_win else {})),
         "prom": lambda: arm(box, "prom", stats_set(k, stats_flush={"interval_s": INTERVAL_S}),
                             ev_common(k, rung, cal) + ev_periodic(INTERVAL_S, visible) + EV_PROM, prom_scrape_s=5),
         "statsd-5s": lambda: arm(box, "statsd-5s", stats_set(k, stats_flush={"interval_s": 5},
@@ -291,8 +322,11 @@ def configs(box, cal=None):
                    "statsd-cold", "nosink-cold"]
         cfg("smoke-%s.json" % rung, "sf-smoke-" + rung, rung, k, allarms, [idle_shape(rung, cal)],
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
-        cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, ["nosink", "dogstatsd-buf", "otlp", "prom"],
-            [idle_shape(rung, cal)], rounds=4, rounds_block=4, rounds_max=4)
+        # run S: the sinks at the two rungs, with the A/A; 5 rounds (one Latin square of 5 arms)
+        cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, S_ARMS, [idle_shape(rung, cal)],
+            rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
+        cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, S_ARMS, [idle_shape(rung, cal)],
+            rounds=5, rounds_block=5, rounds_max=5, comparisons="base")
     # 4 rounds (one Latin square) rather than 3, so every arm sits in every position once
     cfg("x-1m.json", "sf-x-1m", "1m", 10000, ["statsd", "statsd-5s", "statsd-cold", "nosink-cold"],
         [idle_shape("1m", cal)], rounds=4, rounds_block=4, rounds_max=4)
@@ -320,6 +354,30 @@ def configs(box, cal=None):
     # v2 timings, with the settle after the pre-window read inside the client's run
     w["client"]["duration_s"] = 28
     w["measure"].update(main_sampler=True, per_thread=True)
+    # run S under load (the worker-side cost of each sink): run W's shape and rung (1,000
+    # clusters, about 118k stats, 5,200 req/s, default 5 s interval) with every sink of run S;
+    # nosink is the reference, nosink-A2 the A/A; 10 rounds (two Latin squares of 5 arms)
+    w_dog = [{"stat": "udp.drop_share", "scope": "field", "max": 0.01},
+             {"stat": "udp.datagrams_per_request", "scope": "field", "ref": {"arm": "self"}, "tol": 0.1,
+              "label": "datagrams per request as in the smoke, +/-10%"}]
+    w_otlp = [zero("collector_delta.refused_metric_points"),
+              {"stat": "collector_delta.accepted_metric_points", "scope": "field", "min": 1,
+               "label": "the collector accepted points in the window"}]
+    swarms = [arm(box, "nosink", stats_set(1000), w_ev + w_on),
+              arm(box, "nosink-A2", stats_set(1000), w_ev + w_on),
+              arm(box, "statsd", stats_set(1000, stats_sink={"kind": "statsd"}), w_ev + w_on + w_statsd),
+              arm(box, "dogstatsd-buf", stats_set(1000, stats_sink={"kind": "dog_statsd",
+                                                                    "max_bytes_per_datagram": DOG_MAX_BYTES}),
+                  w_ev + w_on + w_dog),
+              arm(box, "otlp", stats_set(1000, stats_sink={"kind": "otlp", "max_data_points_per_request": OTLP_MAX_POINTS}),
+                  w_ev + w_on + w_otlp)]
+    for fn, name, kw in (("sw.json", "sf-sw", dict(rounds=10, rounds_block=10, rounds_max=10)),
+                         ("smoke-sw.json", "sf-smoke-sw", dict(rounds=1, rounds_block=1, rounds_max=1, smoke=True,
+                                                                evidence_mode="record"))):
+        x = cfg(fn, name, None, 1000, json.loads(json.dumps(swarms)), [dict(wsh)], primary_metric="cycles_total",
+                comparisons="base", **kw)
+        x["client"]["duration_s"] = 28
+        x["measure"].update(main_sampler=True, per_thread=True)
     # the 5 s fallback (decided from the smoke's drops): the rung's statsd arm is smoked again
     # at 5 s, and its check reads that leg instead of the 1 s one
     for rung, k in RUNGS:
