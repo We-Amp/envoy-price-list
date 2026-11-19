@@ -700,5 +700,38 @@ class CodegenCheckTest(unittest.TestCase):
         self.assertIn("no passing smoke", txt)
 
 
+RE = _mod("mt_micro_reeval", os.path.join(MT, "micro_reeval.py"))
+
+
+class MicroReevalTest(unittest.TestCase):
+    def test_post_hoc(self):
+        cfg = _micro("arm-vm")
+        for k in MK.MICRO_GATES:
+            cfg.pop(k)
+        cfg.update(RE.OLD_GATES, nonoverlap_batches=0)
+        cfg["runs"] = cfg["runs"][1:2]  # stat_update
+        rc = cfg["runs"][0]
+        d, out = tempfile.mkdtemp(), tempfile.mkdtemp()
+        json.dump({"arms": cfg["arms"], "pairs": cfg["pairs"], "config": "x"}, open(os.path.join(d, "meta.json"), "w"))
+        starved = {"min_thread_ops": 13824, "window_overlap": 0.95}  # 50 ms outside: old limit 7 ms, new 62.5 ms
+        json.dump(_bench_out(rc["expect"], cfg, extra=starved), open(os.path.join(d, "r01-0-stat_update-vm-fix.json.tmp"), "w"))
+        json.dump(_bench_out(rc["expect"], cfg), open(os.path.join(d, "r01-0-stat_update-vm-fix-relaxed.json"), "w"))
+        json.dump(_bench_out(rc["expect"], cfg, extra=starved),
+                  open(os.path.join(d, "r01-0-stat_update-vm-fix-relaxed-p1.json.tmp"), "w"))
+        open(os.path.join(d, "runs.jsonl"), "w").write(json.dumps({"tag": "r01-0-stat_update-vm-fix-relaxed-p1",
+                                                                   "problems": ["steal 3.00% above 2.0%"]}) + "\n")
+        cp = os.path.join(d, "cfg.json")
+        json.dump(cfg, open(cp, "w"))
+        r = subprocess.run([sys.executable, os.path.join(MT, "micro_reeval.py"), out, "--data", "set", d, cp],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        rep = json.load(open(os.path.join(out, "reeval.json")))
+        sm = rep["sets"]["set"]["summary"]
+        self.assertEqual((sm["processes"], sm["accepted_before"], sm["accepted_after"]), (3, 1, 2))  # steal stays out
+        self.assertIn("POST-HOC", open(os.path.join(out, "reeval.md")).read())
+        self.assertIn("POST-HOC", open(os.path.join(out, "set", "micro.md")).read())
+        self.assertEqual(sorted(os.listdir(os.path.join(out, "set")))[:2], ["meta.json", "micro.md"])
+
+
 if __name__ == "__main__":
     unittest.main()
