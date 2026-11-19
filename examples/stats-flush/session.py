@@ -132,7 +132,7 @@ def smoke_problems(cfg_path, smoke_dir):
 
 # ---------------------------------------------------------------- run L (flush latency)
 
-LAT_BUDGET_S = 62 * 60   # the 60 s window stays; the stop is 75 min, so a re-run round fits
+LAT_BUDGET_S = 70 * 60   # the 60 s window stays; the stop is 85 min, so a re-run round fits
 LAT_BUSY = (0.25, 0.45)
 LAT_FLUSH_WALL_MAX_S = 7.0
 LAT_MANIP_MIN = 10.0

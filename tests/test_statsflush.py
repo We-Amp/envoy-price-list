@@ -105,6 +105,7 @@ class ConfigsTest(unittest.TestCase):
         st = {i["stat"] for i in sa["otlp"]["evidence"]}
         self.assertNotIn("collector_delta.fit.basis", st)
         self.assertTrue({"otlp_cluster.rx_reset", "otlp_cluster.whole_error", "otlp_cluster.estimate_error",
+                         "otlp_cluster.http2_stats_present",
                          "collector_log.error_lines"} <= st)
         self.assertEqual(s["collector"]["max_recv_msg_size_mib"], 64)
         sw = experiment.load(os.path.join(X86, "sw.json"))

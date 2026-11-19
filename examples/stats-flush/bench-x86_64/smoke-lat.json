@@ -1202,6 +1202,12 @@
      "label": "quiescent point after the client (the sink's queue empty)"
     },
     {
+     "stat": "otlp_cluster.http2_stats_present",
+     "scope": "field",
+     "equals": true,
+     "label": "the collector cluster's HTTP/2 codec stats exist in the post-client read"
+    },
+    {
      "stat": "otlp_cluster.rx_reset",
      "scope": "field",
      "equals": 0,

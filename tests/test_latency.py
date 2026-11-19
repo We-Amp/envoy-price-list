@@ -1051,6 +1051,17 @@ class GateTest(unittest.TestCase):
         f = self.bad("metric points per whole flush", self.otlp_leg(rq=8 * 37, points=8 * 310146, reset=40), ev)
         self.assertIn("field:otlp_cluster.rx_reset", f)
         self.bad("exactly whole flushes", self.otlp_leg(rq=8 * 37 - 1, points=8 * 360147), ev)
+        # the codec stats appeared after the pre-client read (the 1M smoke of run S): rx_reset counts as 0
+        c = "cluster.otel_collector."
+        n0 = {c + "upstream_rq_total": 100}
+        n1 = {c + "upstream_rq_total": 100 + 8 * 37, c + "http2.streams_active": 0}
+        m = self.otlp_leg(rq=8 * 37, points=8 * 360147)
+        m["otlp_cluster"] = statsrow.otlp_cluster(n0, n1, 360147, 10000, 85.0, 10.0)
+        self.assertEqual(failed(m, ev), set())
+        # no http2 stat of the cluster at all in the post-client read: a renamed stat cannot pass as 0 resets
+        n1.pop(c + "http2.streams_active")
+        m["otlp_cluster"] = statsrow.otlp_cluster(n0, n1, 360147, 10000, 85.0, 10.0)
+        self.assertEqual(failed(m, ev), {"the collector cluster's HTTP/2 codec stats exist in the post-client read"})
         self.bad("as the span and the interval say", self.otlp_leg(rq=4 * 37, points=4 * 360147), ev)
         self.bad("within one of Envoy's request count", self.otlp_leg(rq=8 * 37, points=6 * 360147), ev)
         self.bad("residual under 1%", self.otlp_leg(rq=8 * 37, points=8 * 360147 - 10000), ev)
@@ -1752,16 +1763,16 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(len(SESS.smoke_problems(self.cfg, d)), 5)
 
     def test_budget(self):
-        # limit 62 min: legs 130 s apart pass, 148 s apart (61.7 min) pass, 150 s (62.5 min) do not
+        # limit 70 min: legs 130 s apart pass, 168 s apart (70.0 min) pass, 170 s (70.8 min) do not
         d = self.smoke()
         self.assertEqual(self.rules(d), [])
 
         def slower(c):
             for i, m in enumerate(c.values()):
                 m["started_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(1.8e9 + self.gap * i))
-        self.gap = 148
+        self.gap = 168
         self.assertEqual(self.rules(self.smoke(slower)), [])
-        self.gap = 150
+        self.gap = 170
         probs = self.rules(self.smoke(slower))
         self.assertEqual(len(probs), 1)
         self.assertTrue(probs[0].startswith("S-8"))
@@ -1833,7 +1844,7 @@ class SessionTest(unittest.TestCase):
         self.assertNotIn("rewrite", q)
         self.assertLess(q.index("lat-stamp-ok"), q.index("guard_begin"))
         self.assertLess(q.index("guard_begin"), q.index("$EPL run"))
-        self.assertIn("LAT_STOP_S:-4500", q)
+        self.assertIn("LAT_STOP_S:-5100", q)
         # Q1: the check first requires the smoke to be of these sources and configs; lat-smoke stamps
         # the directory before its run
         chk0 = sh[sh.index("lat_check() {"):sh.index("rewrite_lat() {")]
@@ -1956,6 +1967,7 @@ class LegMethodsTest(unittest.TestCase):
              "numeric": {"server.uptime": 115, "server.worker_0.watchdog_miss": 4,
                          "http.ingress_http.downstream_rq_2xx": 36000 + 330000 + 1600 + answered - (
                              1 if breakage == "count" else 0),
+                         c + "http2.streams_active": 0,
                          "http.ingress_http.downstream_rq_completed": 420000, "http.admin.downstream_rq_completed": 1700,
                          "http.ingress_http.downstream_cx_destroy": 1300, "http.admin.downstream_cx_destroy": 1690,
                          "cluster.origin.upstream_cx_total": 10600, "cluster.origin.upstream_cx_destroy": 10090,

@@ -800,6 +800,12 @@
      "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"
     },
     {
+     "stat": "otlp_cluster.http2_stats_present",
+     "scope": "field",
+     "equals": true,
+     "label": "the collector cluster's HTTP/2 codec stats exist in the post-window read"
+    },
+    {
      "stat": "otlp_cluster.rx_reset",
      "scope": "field",
      "equals": 0,

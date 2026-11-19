@@ -30,7 +30,7 @@
 #                                          smoke legs (nothing frozen), the unit tests on this Python,
 #                                          lat_table.py on the smoke, the smoke rules and the budget;
 #                                          a pass is recorded for this harness and config
-#   run-session.sh lat-queue [EPL_ARGS...]  lat (5 rounds) within LAT_STOP_S (default 75 min); refuses
+#   run-session.sh lat-queue [EPL_ARGS...]  lat (5 rounds) within LAT_STOP_S (default 85 min); refuses
 #                                          without a recorded lat-check of this harness and this lat.json
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
@@ -373,7 +373,7 @@ case "$mode" in
     [ "${PIPESTATUS[0]}" -eq 0 ] || { log "L queue not started: no passed lat-check of this harness and config (no override)"; exit 1; }
     guard_begin || exit 1
     trap on_term TERM INT
-    L=${LAT_STOP_S:-4500}
+    L=${LAT_STOP_S:-5100}
     log "start lat (${L}s stop)"
     bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/lat.json" \
       --out "$R/lat" --allow-short "$@" >> "$R/queue.log" 2>&1
