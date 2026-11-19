@@ -116,6 +116,58 @@
    "r_star": 1000,
    "k": 16,
    "note": "r* and connections per worker as run U on the bench box; the smoke's client headroom, rate and overlap gates decide 12w against the 8w fallback (same client and origin cores, CPUs 8-11 then idle)"
+  },
+  "micro_lse": {
+   "root": "~/arm/bins6",
+   "arms": {
+    "fix-lse": "964d72f7a6-lse",
+    "fix-llsc": "964d72f7a6-llsc"
+   },
+   "expect_atomics": {
+    "fix-lse": "lse",
+    "fix-llsc": "base"
+   },
+   "rows": [
+    "model",
+    "stat"
+   ],
+   "model_all_arms": true,
+   "smoke_arm": "fix-lse",
+   "pairs": [
+    [
+     "fix-llsc",
+     "fix-lse",
+     "all"
+    ]
+   ],
+   "placement": "vm",
+   "cpus": "0-15",
+   "threads": [
+    1,
+    4,
+    8,
+    12
+   ],
+   "histogram_workers": [
+    1,
+    12
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "rule of 2026-11-18: per thread max(5, 25/s x window), times the threads, on every box (5 per thread at the 0.2 s smoke, 25 per thread at 1 s)",
+   "note": "the same benchmark source (964d72f7a6, the fix arm with time-based batching) built twice: forced inline LSE and forced load/store-exclusive (no outline helpers); pins from boxes/sha256/arm-vm-lse.txt (the build record, <sha256>  <dir>/<target>); every benchmark's label must say atomics=lse (fix-lse) or atomics=base (fix-llsc)"
   }
  },
  "root": "~/arm/bins5",
@@ -124,6 +176,7 @@
   "fix-relaxed": "e74e595e3c",
   "fix-relaxed-p1": "f8bd66d7e7"
  },
+ "expect_atomics": null,
  "expected_sha256": {
   "fix": {
    "atomic_model_benchmark": "c70704f22adf1895cb96317dad6be5463dc434bec16d8f6d2eda03b26c7fe70d",

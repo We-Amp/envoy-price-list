@@ -733,5 +733,45 @@ class MicroReevalTest(unittest.TestCase):
         self.assertEqual(sorted(os.listdir(os.path.join(out, "set")))[:2], ["meta.json", "micro.md"])
 
 
+class MicroLseTest(unittest.TestCase):
+    def test_config(self):
+        c = _micro("arm-vm")
+        lse = json.load(open(os.path.join(MT, "arm-vm", "micro-lse.json")))
+        self.assertEqual(lse["arms"], {"fix-lse": "964d72f7a6-lse", "fix-llsc": "964d72f7a6-llsc"})
+        self.assertEqual(lse["root"], "~/arm/bins6")
+        self.assertEqual(lse["pairs"], [["fix-llsc", "fix-lse", "all"]])
+        self.assertEqual([(r["binary"], r["arms"], r["threads"]) for r in lse["runs"]],
+                         [("atomic_model_benchmark", ["fix-llsc", "fix-lse"], [1, 4, 8, 12]),
+                          ("stat_update_benchmark", ["fix-llsc", "fix-lse"], [1, 4, 8, 12])])
+        self.assertTrue(all(12 in r["threads"] for r in lse["smoke"]["runs"]))
+        self.assertFalse(lse["pinned"])  # placeholders until the r6 build record is in boxes/sha256
+        self.assertEqual(lse["nonoverlap_batches"], 3)
+        self.assertEqual(c["name"], "mt-micro-arm-vm")
+
+    def test_sha_list_dir_form(self):
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "l.txt")
+        open(p, "w").write("# r6\n%s  964d72f7a6-lse/stat_update_benchmark\n%s  964d72f7a6-llsc/atomic_model_benchmark\n"
+                           "%s  other/stat_update_benchmark\n" % ("a" * 64, "b" * 64, "c" * 64))
+        got = MK.read_sha_list(p, {"fix-lse": "964d72f7a6-lse", "fix-llsc": "964d72f7a6-llsc"})
+        self.assertEqual(got, {"fix-lse": {"stat_update_benchmark": "a" * 64},
+                               "fix-llsc": {"atomic_model_benchmark": "b" * 64}})
+
+    def test_label_gate_pooled_and_batch(self):
+        lse = dict(json.load(open(os.path.join(MT, "arm-vm", "micro-lse.json"))))
+        rc = lse["runs"][1]
+        out = _bench_out(rc["expect"], lse, extra={"label": "cpus=0-15 placement=vm clocksource=arch_sys_counter "
+                                                            "atomics=lse"})
+        self.assertEqual(MICRO.check_output(out, lse, rc, "fix-lse"), [])
+        probs = MICRO.check_output(out, lse, rc, "fix-llsc")
+        self.assertTrue(any("atomics label lse, expected base" in p for p in probs))
+        # the time-batched builds report pooled cycles themselves
+        self.assertEqual(MICRO.pooled_cycles({"cycles_per_op": 9000.0, "cycles_per_op_thread_mean": 14000.0,
+                                              "ns_per_op": 1.0, "ops_per_sec": 1.0}, 12), 9000.0)
+        # a halved batch: the slowest thread's batch time from min_batch_ops
+        self.assertAlmostEqual(MICRO.batch_s(lse, 10000, 8), 8 * 1.0 / 10000)
+        self.assertAlmostEqual(MICRO.batch_s(lse, 10000), 256 * 1.0 / 10000)
+
+
 if __name__ == "__main__":
     unittest.main()

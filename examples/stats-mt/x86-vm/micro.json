@@ -89,6 +89,7 @@
   "fix-relaxed": "e74e595e3c",
   "fix-relaxed-p1": "f8bd66d7e7"
  },
+ "expect_atomics": null,
  "expected_sha256": {
   "fix": {
    "atomic_model_benchmark": "64247742b7b695d1130c42f74306e48542a2009c303c3a98ee9f78ca4cea0adb",

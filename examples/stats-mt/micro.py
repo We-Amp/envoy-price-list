@@ -77,7 +77,7 @@ from epl import stats, sysprobe  # noqa: E402
 
 METRICS = ["cycles_per_op", "instructions_per_op", "ns_per_op", "ops_per_sec", "fairness", "min_thread_ops",
            "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample", "min_distance_bytes",
-           "pooled_cycles_per_op"]
+           "pooled_cycles_per_op", "min_batch_ops", "cycles_per_op_thread_mean", "clocksource_ok"]
 SMOKE = {"warmup_s": 0.05, "window_s": 0.2, "repetitions": 2}
 
 
@@ -85,19 +85,22 @@ def ops_floor(cfg):
     return max(int(cfg["min_thread_ops_abs"]), int(math.ceil(cfg["ops_floor_per_s"] * cfg["window_s"])))
 
 
-def batch_s(cfg, min_thread_ops):
-    """The slowest thread's time per clock-read batch: ops_per_batch over its rate in the window."""
+def batch_s(cfg, min_thread_ops, batch_ops=None):
+    """The slowest thread's time per clock-read batch: its batch size (the benchmark's
+    min_batch_ops where it halves the batch of slow threads, else ops_per_batch) over its rate
+    in the window."""
     if not min_thread_ops or float(min_thread_ops) <= 0:
         return 0.0
-    return float(cfg.get("ops_per_batch", 256)) * cfg["window_s"] / float(min_thread_ops)
+    ops = float(batch_ops) if batch_ops else float(cfg.get("ops_per_batch", 256))
+    return ops * cfg["window_s"] / float(min_thread_ops)
 
 
-def max_nonoverlap_s(cfg, min_thread_ops=None):
+def max_nonoverlap_s(cfg, min_thread_ops=None, batch_ops=None):
     """Time a repetition may spend outside the common window: 2 ms + 0.5% of the window + a few
     batches of the slowest thread (the second revision of the gates: a thread looks at the clock
     once per batch, so threads whose skew is within that granularity count as concurrent)."""
     return (cfg["max_nonoverlap_s"] + cfg["max_nonoverlap_share"] * cfg["window_s"]
-            + float(cfg.get("nonoverlap_batches", 0)) * batch_s(cfg, min_thread_ops))
+            + float(cfg.get("nonoverlap_batches", 0)) * batch_s(cfg, min_thread_ops, batch_ops))
 
 
 def invol_limit(cfg, threads=1):
@@ -250,15 +253,21 @@ def run_env(cfg, rc):
     return env
 
 
-def gate_problems(b, cfg, rc):
+def gate_problems(b, cfg, rc, arm=None):
     """[problem] of one repetition (an iteration entry) against the validity gates."""
     nm = norm_name(b.get("name"))
     if b.get("error_occurred"):
         return ["%s: %s" % (nm, b.get("error_message") or "error")]
     probs = []
+    want = (cfg.get("expect_atomics") or {}).get(arm) if arm else None
+    if want:
+        # the label the build reports (atomics=lse or base) must be the one the arm stands for
+        got = re.search(r"atomics=(\S+)", b.get("label") or "")
+        if not got or got.group(1) != want:
+            probs.append("%s: atomics label %s, expected %s" % (nm, got.group(1) if got else "missing", want))
     if rc.get("kind") == "window":
         ov = b.get("window_overlap")
-        lim_s = max_nonoverlap_s(cfg, b.get("min_thread_ops"))
+        lim_s = max_nonoverlap_s(cfg, b.get("min_thread_ops"), b.get("min_batch_ops"))
         if ov is None or (1.0 - float(ov)) * cfg["window_s"] > lim_s + 1e-12:
             probs.append("%s: window overlap %s: %s ms outside the common window, limit %.2f ms" % (
                 nm, ov, "?" if ov is None else "%.2f" % (1000 * (1.0 - float(ov)) * cfg["window_s"]), 1000 * lim_s))
@@ -282,7 +291,7 @@ def gate_problems(b, cfg, rc):
     return probs
 
 
-def check_output(d, cfg, rc):
+def check_output(d, cfg, rc, arm=None):
     """[problem] of one benchmark JSON output: every repetition passes the gates, and every
     expected benchmark has all its repetitions and a median."""
     probs = []
@@ -294,7 +303,7 @@ def check_output(d, cfg, rc):
             if b.get("aggregate_name") == "median" and not b.get("error_occurred"):
                 med.add(nm)
             continue
-        p = gate_problems(b, cfg, rc)
+        p = gate_problems(b, cfg, rc, arm)
         probs.extend(p)
         if not p:
             n_it[nm] = n_it.get(nm, 0) + 1
@@ -345,7 +354,7 @@ def one_process(cfg, rc, arm, root, dst, log):
     except (OSError, ValueError) as ex:
         probs.append("no JSON output: %s" % ex)
     if d is not None:
-        probs.extend(check_output(d, cfg, rc))
+        probs.extend(check_output(d, cfg, rc, arm))
         rec["max_invol_switches_seen"] = max_switches(d)
         sw = {}
         for b in d.get("benchmarks", []):
@@ -542,6 +551,10 @@ def pooled_cycles(m, threads):
     benchmark's cycles_per_op is the mean of the threads' own ratios, which starved threads
     dominate; with one clock rate for every busy thread, cycles_per_op / ns_per_op is that clock
     (GHz), and the pooled cost is threads x GHz x 1e9 / ops_per_sec."""
+    if m.get("cycles_per_op_thread_mean") is not None:
+        # the time-batched builds report the pooled figure themselves (total cycles over total
+        # operations) and the thread mean beside it
+        return m.get("cycles_per_op")
     c, ns, ops = m.get("cycles_per_op"), m.get("ns_per_op"), m.get("ops_per_sec")
     if not threads or not c or not ns or not ops:
         return None

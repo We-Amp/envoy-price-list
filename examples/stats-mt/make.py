@@ -164,6 +164,14 @@ def read_sha_list(path, arms):
             if not line or line.startswith("#"):
                 continue
             h, name = line.split()[:2]
+            if "/" in name:
+                # "<sha256>  <build directory>/<target>" (the build record's other form)
+                d, _, target = name.rpartition("/")
+                arm_name = next((a for a, c in arms.items() if c == d), None)
+                if arm_name is None or target not in MICRO_BINARIES or len(h) != 64:
+                    continue
+                out.setdefault(arm_name, {})[target] = h
+                continue
             target = next((b for b in MICRO_BINARIES if name.startswith(b + "-")), None)
             if target is None or len(h) != 64:
                 raise SystemExit("%s: not a benchmark line: %r" % (path, line))
@@ -176,12 +184,12 @@ def read_sha_list(path, arms):
     return out
 
 
-def micro_runs(placement, cpus, rows, threads, hist_workers, arms):
+def micro_runs(placement, cpus, rows, threads, hist_workers, arms, model_arms=None):
     runs = []
     th = "|".join(str(t) for t in threads)
     common = {"placement": placement, "cpus": cpus, "threads": threads}
     if "model" in rows:
-        runs.append(dict(common, binary="atomic_model_benchmark", kind="window", arms=[MODEL_ARM], row="1",
+        runs.append(dict(common, binary="atomic_model_benchmark", kind="window", arms=list(model_arms or [MODEL_ARM]), row="1",
                          filter="^bmModel(%s)(Shared|PerThreadSpaced)%s/manual_time/threads:(%s)$" % (
                              "|".join(MODEL_VARIANTS), TIME_PARTS, th),
                          expect=["bmModel%s%s/manual_time/threads:%d" % (v, l, n) for v in MODEL_VARIANTS
@@ -199,34 +207,39 @@ def micro_runs(placement, cpus, rows, threads, hist_workers, arms):
     return runs
 
 
-def micro_config(box, sha_list=None):
-    mc = box["micro"]
+def micro_config(box, sha_list=None, section="micro"):
+    mc = box[section]
     arms = dict(mc.get("arms") or MICRO_ARMS)
+    model_arms = sorted(arms) if mc.get("model_all_arms") else None
+    smoke_arm = mc.get("smoke_arm", MODEL_ARM)
     n = ncpus(mc["cpus"])
     for what, ts in (("threads", mc["threads"]), ("histogram_workers", mc["histogram_workers"]),
                      ("smoke threads", mc["smoke"]["threads"]),
                      ("smoke histogram_workers", mc["smoke"]["histogram_workers"])):
         if max(ts) > n:
             raise SystemExit("%s: %s up to %d on %d CPUs" % (box["name"], what, max(ts), n))
-    runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["threads"], mc["histogram_workers"], arms)
+    runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], mc["threads"], mc["histogram_workers"], arms,
+                      model_arms)
     # the smoke always includes the box's top count beside its own (1, 2, 4)
     smoke_threads = sorted(set(mc["smoke"]["threads"]) | {max(mc["threads"])})
     smoke_hist = sorted(set(mc["smoke"]["histogram_workers"]) | {max(mc["histogram_workers"])})
-    smoke_runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], smoke_threads, smoke_hist, arms)
+    smoke_runs = micro_runs(mc["placement"], mc["cpus"], mc["rows"], smoke_threads, smoke_hist, arms, model_arms)
     pinned = sha_list or {}
     used = sorted({(a, r["binary"]) for r in runs + smoke_runs for a in r["arms"]})
     expected = {}
     for a, b in used:
         # null is the placeholder: `check` and `run` refuse it; pins come from boxes/sha256/<box>.txt
         expected.setdefault(a, {})[b] = (pinned.get(a) or {}).get(b)
-    return dict({"name": "mt-micro-" + box["name"], "box": box, "root": mc["root"], "arms": arms,
+    pairs = mc.get("pairs") or [p for p in MICRO_PAIRS if p[0] in arms and p[1] in arms]
+    return dict({"name": "mt-%s-%s" % (section.replace("_", "-"), box["name"]), "box": box, "root": mc["root"],
+                 "arms": arms, "expect_atomics": mc.get("expect_atomics"),
                  "expected_sha256": expected, "pinned": all(v for x in expected.values() for v in x.values()),
                  "model_reference": "bmModelCurrent", "pmu": bool(mc.get("pmu", True)),
                  "max_invol_switches": mc.get("max_invol_switches"),
                  "invol_switches_per_s": mc.get("invol_switches_per_s"),
                  "invol_bound_record": mc.get("invol_bound_record"),
-                 "pairs": [p for p in MICRO_PAIRS if p[0] in arms and p[1] in arms], "runs": runs,
-                 "smoke": {"arm": MODEL_ARM, "runs": smoke_runs},
+                 "pairs": pairs, "runs": runs,
+                 "smoke": {"arm": smoke_arm, "runs": smoke_runs},
                  "rounds": 5, "repetitions": 5, "warmup_s": 0.2, "window_s": 1.0,
                  "order_seed": ORDER_SEED, "workdir": RUNS + "/micro",
                  "idle": {"max_load1": 4.0, "max_busy_pct": 2.0}, "steal_gate": box.get("steal_gate"),
@@ -308,6 +321,11 @@ def configs(box, rates=None):
     sl = os.path.join(HERE, "boxes", "sha256", box["name"] + ".txt")
     arms = (box.get("micro") or {}).get("arms") or MICRO_ARMS
     out["micro.json"] = micro_config(box, read_sha_list(sl, arms) if os.path.exists(sl) else None)
+    if box.get("micro_lse"):
+        # the LSE against LL/SC build of the same benchmark source
+        sl2 = os.path.join(HERE, "boxes", "sha256", box["name"] + "-lse.txt")
+        out["micro-lse.json"] = micro_config(box, read_sha_list(sl2, box["micro_lse"]["arms"])
+                                             if os.path.exists(sl2) else None, "micro_lse")
     if box.get("codegen"):
         out.update(codegen_configs(box))
     return out
