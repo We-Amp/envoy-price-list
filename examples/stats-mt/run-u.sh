@@ -12,6 +12,12 @@
 #                                     invalid, one round at 4w/8w; writes codegen.choice
 #   run-u.sh codegen [EPL_ARGS...]     the codegen run with the passing smoke's rungs (refuses
 #                                     without one; evidence checked against it)
+#   run-u.sh hi-calibrate [EPL_ARGS...] (boxes with a u_hi section) run U at high load, step 0: base
+#                                     at 14w-one and 28w over the box's calibrate_rates_per_worker;
+#                                     r* (the target worker busy, or the highest rate the client
+#                                     headroom allows at 28w) goes into RATES_JSON as "<box>-hi"
+#   run-u.sh hi-smoke [EPL_ARGS...]    one round of u-hi, then hi-check (calibration, evidence)
+#   run-u.sh hi-queue [EPL_ARGS...]    hi-check, then u-hi within HI_STOP_S (default 2 h 30 min)
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -47,6 +53,20 @@ check() {
   log "evidence-check u against smoke-u"
   if ! $EPL evidence-check "$C/u.json" "$R/smoke-u" >> "$R/queue.log" 2>&1; then
     log "evidence-check u FAILED (details in queue.log)"
+    bad=1
+  fi
+  return $bad
+}
+
+hi_check() {
+  local bad=0
+  if grep -q '"uncalibrated": true' "$C/u-hi.json"; then
+    log "u-hi.json is uncalibrated: set RATES_JSON (\"$BOX-hi\") from hi-calibrate"
+    bad=1
+  fi
+  log "evidence-check u-hi against smoke-u-hi"
+  if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi" >> "$R/queue.log" 2>&1; then
+    log "evidence-check u-hi FAILED (details in queue.log)"
     bad=1
   fi
   return $bad
@@ -99,6 +119,40 @@ case "$mode" in
       log "end $run rc=$?"
     done
     log "queue done; tables: python3 $S/u_table.py $R/u --hitm $R/u-hitm > $R/u.md"
+    ;;
+  hi-calibrate)
+    log "u-hi calibrate start box $BOX harness $(cat "$H/VERSION" 2>/dev/null)"
+    for sh in 14w-one 28w; do
+      n=$(python3 -c "import json;print([r for r in json.load(open('$S/boxes/$BOX.json'))['rungs'] if r['name']=='$sh'][0]['workers'])")
+      rps=$(python3 -c "import json;print(','.join(str(r*$n) for r in json.load(open('$S/boxes/$BOX.json'))['u_hi']['calibrate_rates_per_worker']))")
+      $EPL calibrate "$C/cal-u-hi.json" --arm base --shape "mt-$sh" --rps "$rps" --out "$R/cal-hi-$sh" "$@" \
+        >> "$R/queue.log" 2>&1
+      log "end u-hi calibrate $sh rc=$?"
+    done
+    log "pick r* (worker busy 60-70% at both rungs with client headroom >= 25% at 28w; else the highest rate the headroom allows) into RATES_JSON as \"$BOX-hi\""
+    ;;
+  hi-smoke)
+    rewrite
+    log "u-hi smoke start box $BOX"
+    rm -rf "$R/smoke-u-hi"
+    $EPL run "$C/smoke-u-hi.json" --out "$R/smoke-u-hi" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end u-hi smoke rc=$?"
+    hi_check
+    log "u-hi smoke done rc=$?"
+    ;;
+  hi-check)
+    rewrite
+    hi_check
+    exit $?
+    ;;
+  hi-queue)
+    rewrite
+    hi_check || { log "u-hi not started (calibration or evidence; no override)"; exit 1; }
+    L=${HI_STOP_S:-9000}
+    log "start u-hi (${L}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi" \
+      --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi > $R/u-hi.md"
     ;;
   codegen-smoke)
     # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker

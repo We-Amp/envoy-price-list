@@ -773,5 +773,26 @@ class MicroLseTest(unittest.TestCase):
         self.assertAlmostEqual(MICRO.batch_s(lse, 10000), 256 * 1.0 / 10000)
 
 
+class UHiTest(unittest.TestCase):
+    def test_configs(self):
+        u = json.load(open(os.path.join(MT, "bench-x86_64", "u-hi.json")))
+        self.assertEqual([s["name"] for s in u["shapes"]], ["mt-14w-one", "mt-14w-split", "mt-28w"])
+        self.assertEqual([a["name"] for a in u["arms"]], ["base", "stats-reject", "base-A2"])
+        self.assertTrue(u["uncalibrated"])
+        self.assertEqual((u["rounds"], u["k"]), (15, 16))
+        self.assertEqual([s["client_connections_per_worker"] * s["client_concurrency"] // s["workers"]
+                          for s in u["shapes"]], [16, 16, 16])
+        cal = json.load(open(os.path.join(MT, "bench-x86_64", "cal-u-hi.json")))
+        self.assertEqual([a["name"] for a in cal["arms"]], ["base", "stats-reject"])
+        c = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 2100, "k": 16}})
+        self.assertNotIn("uncalibrated", c["u-hi.json"])
+        self.assertEqual([s["rps"] for s in c["u-hi.json"]["shapes"]], [29400, 29400, 58800])
+        self.assertTrue(c["u.json"]["uncalibrated"])  # run U's own key is separate
+        self.assertFalse(os.path.exists(os.path.join(MT, "arm-vm", "u-hi.json")))
+        txt = open(os.path.join(MT, "run-u.sh")).read()
+        for m in ("hi-calibrate)", "hi-smoke)", "hi-queue)", "HI_STOP_S:-9000"):
+            self.assertIn(m, txt)
+
+
 if __name__ == "__main__":
     unittest.main()

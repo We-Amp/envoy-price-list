@@ -292,6 +292,37 @@ def codegen_configs(box):
     return out
 
 
+def u_hi_configs(box, rates, arms):
+    """Run U at high load (boxes with a `u_hi` section): run U's design (base, stats-reject,
+    base-A2; 16 connections per worker; the same per-worker rate at every rung; 15 fixed
+    rounds) on the top rungs only, at a per-worker rate calibrated to the target worker busy
+    share (RATES_JSON key "<box>-hi"; without it the configs carry a placeholder and are marked
+    uncalibrated). cal-u-hi.json is the calibration config (calibrate with --arm base)."""
+    hi = box["u_hi"]
+    rr = (rates or {}).get(box["name"] + "-hi") or {}
+    r_star, k = int(rr.get("r_star", hi["placeholder_r_star"])), int(rr.get("k", DEFAULT_K))
+    b = dict(box, rungs=[r for r in box["rungs"] if r["name"] in hi["rungs"]])
+    out = {}
+    u = base_cfg(b, "mt-u-hi-" + box["name"])
+    u["box"] = box
+    # 15 fixed rounds: the rung rotation (period 3) and the arm rotation (period 3) both balance
+    u.update(base_arm="base", arms=json.loads(json.dumps(arms)), shapes=rung_shapes(b, r_star, k), rounds=15,
+             rounds_block=15, rounds_max=15, adaptive=False, r_star=r_star, k=k, box_specific=True,
+             target_worker_busy=hi["target_busy"], session_record={"fix_envoy_static": FIX_ENVOY_STATIC})
+    if not rr:
+        u["uncalibrated"] = True
+    out["u-hi.json"] = u
+    sm = json.loads(json.dumps(u))
+    sm.update(name="mt-smoke-u-hi-" + box["name"], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
+              evidence_mode="record", adaptive=False)
+    sm.pop("uncalibrated", None)
+    out["smoke-u-hi.json"] = sm
+    cal = json.loads(json.dumps(sm))
+    cal.update(name="mt-cal-u-hi-" + box["name"], arms=[a for a in cal["arms"] if a["name"] != "base-A2"])
+    out["cal-u-hi.json"] = cal
+    return out
+
+
 def configs(box, rates=None):
     rr = (rates or {}).get(box["name"]) or {}
     r_star, k = int(rr.get("r_star", DEFAULT_R_STAR)), int(rr.get("k", DEFAULT_K))
@@ -318,6 +349,8 @@ def configs(box, rates=None):
                  primary_metric="cycles_total")
         h["measure"].update(perf_events=box["hitm_events"], per_thread=False)
         out["u-hitm.json"] = h
+    if box.get("u_hi"):
+        out.update(u_hi_configs(box, rates, arms))
     sl = os.path.join(HERE, "boxes", "sha256", box["name"] + ".txt")
     arms = (box.get("micro") or {}).get("arms") or MICRO_ARMS
     out["micro.json"] = micro_config(box, read_sha_list(sl, arms) if os.path.exists(sl) else None)

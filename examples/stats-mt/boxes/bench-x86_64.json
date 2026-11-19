@@ -105,5 +105,25 @@
   "invol_switches_per_s": 25,
   "invol_bound_record": "frozen from the bare-metal smokes of 2026-11-18 (fix build, atomic_model, 0.2 s windows, no CPU isolation): 18:43:40Z 0-4 per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4); 18:45:23Z at most 6 (4 threads). The counter is summed over the threads; rule: per thread max(5, 25/s x window), times the threads (5 per thread at 0.2 s, 25 per thread at 1 s)"
  },
- "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core."
+ "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core.",
+ "u_hi": {
+  "rungs": [
+   "14w-one",
+   "14w-split",
+   "28w"
+  ],
+  "target_busy": [
+   0.6,
+   0.7
+  ],
+  "placeholder_r_star": 2500,
+  "calibrate_rates_per_worker": [
+   1500,
+   1800,
+   2100,
+   2400,
+   2700
+  ],
+  "note": "run U at 1,000 per worker held the workers 25-28% busy; the client threads were 31% busy at 14 workers and 39% at 28 workers (14 client workers, 14 CPUs), so the 25% headroom gate bounds 28 workers near 1,900 per worker (about 50% worker busy) unless the client does better than linear; the calibration decides"
+ }
 }
