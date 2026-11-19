@@ -30,7 +30,7 @@
 #                                          smoke legs (nothing frozen), the unit tests on this Python,
 #                                          lat_table.py on the smoke, the smoke rules and the budget;
 #                                          a pass is recorded for this harness and config
-#   run-session.sh lat-queue [EPL_ARGS...]  lat (5 rounds) within LAT_STOP_S (default 65 min); refuses
+#   run-session.sh lat-queue [EPL_ARGS...]  lat (5 rounds) within LAT_STOP_S (default 75 min); refuses
 #                                          without a recorded lat-check of this harness and this lat.json
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
@@ -162,6 +162,10 @@ lat_check() {
   local sm=$R/smoke/smoke-lat
   rm -f "$R/lat-check.json"
   if grep -q '"uncalibrated": true' "$C/lat.json"; then log "lat uncalibrated"; bad=1; fi
+  # the smoke must be the one lat-smoke ran with these sources and this smoke-lat.json, and lat.json
+  # its queue config: a check by hand after a code, knob or config change cannot pass an older smoke
+  $SESSION lat-smoke-stamp-ok "$C/lat.json" "$C/smoke-lat.json" "$sm" 2>&1 | tee -a "$R/queue.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
   # every smoke leg valid under the queue's own gates
   $SESSION smoke-valid "$C/smoke-lat.json" "$sm" 2>&1 | tee -a "$R/queue.log"
   [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
@@ -346,6 +350,8 @@ case "$mode" in
       aside="$R/smoke/smoke-lat.$(date -u +%Y%m%dT%H%M%SZ)"
       mv "$R/smoke/smoke-lat" "$aside" && log "previous L smoke kept as $aside"
     fi
+    $SESSION lat-smoke-stamp "$C/smoke-lat.json" "$R/smoke/smoke-lat" >> "$R/queue.log" 2>&1 \
+      || { log "could not stamp the smoke directory"; exit 1; }
     log "smoke smoke-lat"
     bg_wait $EPL run "$C/smoke-lat.json" --out "$R/smoke/smoke-lat" --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end smoke smoke-lat rc=$?"
@@ -367,7 +373,7 @@ case "$mode" in
     [ "${PIPESTATUS[0]}" -eq 0 ] || { log "L queue not started: no passed lat-check of this harness and config (no override)"; exit 1; }
     guard_begin || exit 1
     trap on_term TERM INT
-    L=${LAT_STOP_S:-3900}
+    L=${LAT_STOP_S:-4500}
     log "start lat (${L}s stop)"
     bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/lat.json" \
       --out "$R/lat" --allow-short "$@" >> "$R/queue.log" 2>&1

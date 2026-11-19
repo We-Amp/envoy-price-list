@@ -620,14 +620,15 @@ def prime(port, names, in_flight=200, per_s=1000, timeout=10.0):
 
 # ---------------------------------------------------------------- the discard sink process
 
-def start_udpsink(own, cpus, port, rcvbuf, out_path, sample_every=1, wait_s=10.0):
-    """Start the drain-only UDP sink as this run's own pinned child; wait until it is bound."""
+def start_udpsink(own, cpus, port, rcvbuf, out_path, sample_every=1, wait_s=10.0, classes=False):
+    """Start the drain-only UDP sink as this run's own pinned child; wait until it is bound.
+    classes (run L only): per-datagram classing, flush marks and the drain at the stop."""
     script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "udpsink.py")
     for p in (out_path, out_path + ".ready"):
         if os.path.exists(p):
             os.remove(p)
     p = own.start(["taskset", "-c", cpus, sys.executable, script, "--port", str(port), "--rcvbuf", str(rcvbuf),
-                   "--out", out_path, "--sample-every", str(sample_every)],
+                   "--out", out_path, "--sample-every", str(sample_every)] + (["--classes"] if classes else []),
                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     end = time.monotonic() + wait_s
     while time.monotonic() < end:

@@ -85,7 +85,8 @@ def verdict(m, cfg=None):
     rate = m.get("sut_rate_2xx")
     if rate is None or not tgt:
         reasons.append("no achieved-rate measurement")
-    elif abs(rate / tgt - 1.0) > c["rate_tolerance"]:
+    # None: the rate is recorded only (run L gates the listener's request count itself, exactly)
+    elif c["rate_tolerance"] is not None and abs(rate / tgt - 1.0) > c["rate_tolerance"]:
         reasons.append("achieved rate %.1f misses target %d by %.2f%%"
                        % (rate, tgt, (rate / tgt - 1.0) * 100))
     ovf_d = {k: v for k, v in (m.get("client_overflow") or {}).items() if k not in (c["overflow_ignore"] or [])}

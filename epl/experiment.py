@@ -506,7 +506,8 @@ def validate(exp, allow_short=False, check_rounds=True):
             if len(sets.get(k, ())) != 1:
                 errs.append("measure.latency needs cpus.%s, one CPU" % k)
         need = ("data_conns", "data_hz", "data_stagger_ms", "admin_period_ms", "control_conns", "control_hz",
-                "per_worker", "map_requests", "map_margin", "map_max_opens", "gap_ms", "drain_s", "sample_s", "cpu0")
+                "per_worker", "map_requests", "map_margin", "map_max_opens", "gap_ms", "drain_s", "sample_s", "cpu0",
+                "read_allow_factor", "flush_allow_s")
         miss = [k for k in need if k not in lt]
         if miss:
             errs.append("measure.latency lacks %s" % miss)

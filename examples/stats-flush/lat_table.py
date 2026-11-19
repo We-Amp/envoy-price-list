@@ -45,6 +45,32 @@ def load(run_dir):
     return exp, legs
 
 
+def invalid_legs(run_dir):
+    """Every invalid leg the run recorded, superseded ones included, straight from legs.jsonl:
+    [{leg_id, cell, round, attempt, superseded, reasons}]. A leg that failed because a worker
+    stalled is re-run and leaves the result; it must stay visible beside it."""
+    raw, sup = [], set()
+    with open(os.path.join(run_dir, "legs.jsonl")) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            x = json.loads(line)
+            if "supersede" in x:
+                sup.update(x["supersede"])
+            elif x.get("leg_id"):
+                raw.append(x)
+    out = []
+    for m in raw:
+        v = m.get("verdict") or {}
+        if v.get("valid"):
+            continue
+        out.append({"leg_id": m["leg_id"], "cell": "%s/%s" % (m.get("shape"), m.get("arm")), "round": m.get("round"),
+                    "attempt": m.get("attempt", 0), "superseded": m["leg_id"] in sup or bool(m.get("superseded")),
+                    "reasons": v.get("reasons") or ["no verdict"]})
+    return out, len(raw)
+
+
 def leg_inputs(run_dir, m):
     probe = latency.load_probe(os.path.join(run_dir, "probe", m["leg_id"] + ".jsonl.gz"))
     ser = latency.load_series(os.path.join(run_dir, "main", m["leg_id"] + ".json.gz"))
@@ -157,7 +183,9 @@ def build(run_dir):
         if (m.get("verdict") or {}).get("valid") and not m.get("superseded"):
             valid[(m["round"], m["shape"], m["arm"])] = m
     rounds = sorted({r for r, _, _ in valid if all((r, s, a) in valid for s, a in cells)})
+    inv, n_raw = invalid_legs(run_dir)
     res = {"run_dir": run_dir, "cells": ["%s/%s" % c for c in cells], "rounds": rounds,
+           "invalid_legs": inv, "legs_run": n_raw,
            "legs_recorded": len(legs), "legs_invalid": sum(1 for m in legs if not (m.get("verdict") or {}).get("valid")),
            "complete": len(rounds) >= MIN_ROUNDS, "floors": FLOORS, "rows": [], "cells_detail": {}}
     an = {}
@@ -331,6 +359,19 @@ def markdown(res):
                 "%.3f" % d["t_p"] if d.get("t_p") is not None else "-",
                 "%.3f" % d["holm_p"] if d.get("holm_p") is not None else "-",
                 fmt(d["reach"], metric), d["sham_shifts"], fmt(d["floor"], metric), d["status"]))
+    o.append("\n## Invalid legs (every one the run recorded, re-run ones included)\n")
+    o.append("A gate that the effect under study can trip (a stalled worker: client rate, probe drain, flush count) "
+             "removes the leg and its round is run again; those legs are listed here, not hidden. Legs run: %d, "
+             "invalid: %d.\n" % (res["legs_run"], len(res["invalid_legs"])))
+    o.append("| Cell | Invalid legs | Leg | Re-run later | Reasons |")
+    o.append("|---|---|---|---|---|")
+    for c in res["cells"]:
+        mine = [x for x in res["invalid_legs"] if x["cell"] == c]
+        if not mine:
+            o.append("| %s | 0 | - | - | - |" % c)
+        for x in mine:
+            o.append("| %s | %d | %s | %s | %s |" % (c, len(mine), x["leg_id"], "yes" if x["superseded"] else "no",
+                                                    "; ".join(x["reasons"]).replace("|", "/")))
     o.append("\n## Per cell (descriptive; pooled over the complete rounds)\n")
     keys = [("flushes", "whole flushes"), ("flush_wall_s_mean", "flush wall s, mean"), ("flush_wall_s_max", "flush wall s, max"),
             ("in_n", "probes IN"), ("out_n", "probes OUT"), ("in_p50_us", "IN p50 us"), ("out_p50_us", "OUT p50 us"),

@@ -90,8 +90,12 @@
    "gap_ms": 1.0,
    "drain_s": 10.0,
    "sample_s": 0.005,
-   "read_allow_factor": 3.0,
    "ready_timeout_s": 60,
+   "read_allow_factor": 2.0,
+   "flush_allow_s": {
+    "nosink": 2.0,
+    "default": 7.0
+   },
    "guard_s": 0.02,
    "onset_s": 0.05,
    "post_s": 0.25,
@@ -135,7 +139,7 @@
  "primary_metric": "cycles_total",
  "comparisons": "base",
  "validity": {
-  "rate_tolerance": 0.005,
+  "rate_tolerance": null,
   "max_pending_total": null,
   "max_overflow": null,
   "max_worker_share_factor": null,
@@ -236,6 +240,13 @@
      "scope": "field",
      "equals": true,
      "label": "the client and the probe were still sending when the count read ended"
+    },
+    {
+     "stat": "lat_count.error",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "listener 2xx between the leg's two quiescent reads = Nighthawk 2xx + probe answered + map requests, exactly"
     },
     {
      "stat": "client_rate_2xx",
@@ -582,6 +593,13 @@
      "label": "the client and the probe were still sending when the count read ended"
     },
     {
+     "stat": "lat_count.error",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "listener 2xx between the leg's two quiescent reads = Nighthawk 2xx + probe answered + map requests, exactly"
+    },
+    {
      "stat": "client_rate_2xx",
      "scope": "field",
      "equals": 4400,
@@ -850,11 +868,10 @@
      "label": "uptime lines in the window = flush bursts, +/-1"
     },
     {
-     "stat": "lat.statsd.ms_per_request",
+     "stat": "lat.statsd.ms_error_share",
      "scope": "field",
-     "min": 2.95,
-     "max": 3.1,
-     "label": "timer lines per request (3 per-request histograms)"
+     "max": 0.01,
+     "label": "timer lines the receiver got = the leg's own counters say (3 per request, admin requests, connection opens and closes), +/-1%"
     }
    ],
    "shapes": [
@@ -959,6 +976,13 @@
      "scope": "field",
      "equals": true,
      "label": "the client and the probe were still sending when the count read ended"
+    },
+    {
+     "stat": "lat_count.error",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "listener 2xx between the leg's two quiescent reads = Nighthawk 2xx + probe answered + map requests, exactly"
     },
     {
      "stat": "client_rate_2xx",

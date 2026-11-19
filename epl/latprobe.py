@@ -222,12 +222,15 @@ def map_phase(a, req, events):
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         return s
 
+    sent = [0]   # requests the map phase put on the listener, all answered 200 (the count gate adds them)
+
     def measure(s):
         b = run_ns(pid, tids)
         for _ in range(a.map_requests):
             st, _n = blocking_request(s, req)
             if st != 200:
                 raise OSError("status %d in the map phase" % st)
+            sent[0] += 1
         time.sleep(0.003)  # the worker is back in its poll: its run time is accounted
         return b, run_ns(pid, tids)
 
@@ -237,7 +240,7 @@ def map_phase(a, req, events):
     except (OSError, ValueError) as ex:
         rec["error"] = "map phase: %s" % ex
         return [], rec
-    rec.update(ok=ok, opens=len(attempts), attempts=attempts,
+    rec.update(ok=ok, opens=len(attempts), attempts=attempts, requests=sent[0],
                min_margin=min([m for _, _, m in kept] or [0.0]),
                per_worker={str(t): sum(1 for _, o, _ in kept if o == t) for t in tids})
     if not ok:

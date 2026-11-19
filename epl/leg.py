@@ -680,6 +680,52 @@ def pin_rung(pid, main_cpu, worker_set, workers, wait_s=10.0, one_to_one=False):
     return r
 
 
+def lat_client_duration(base_s, lat, arm_name, count_read_s):
+    """Client duration of a run-L leg: the configured one plus, for each of the two count reads,
+    the longest flush it may have to wait for (`flush_allow_s`, per arm) and the read itself
+    (`read_allow_factor` x the time of one read on the idle Envoy)."""
+    fa = lat["flush_allow_s"]
+    allow = float(fa.get(arm_name, fa["default"]) if isinstance(fa, dict) else fa)
+    return int(base_s + math.ceil(2.0 * (allow + float(lat["read_allow_factor"]) * count_read_s)))
+
+
+def cluster_sum(numeric, suffix):
+    """Sum of cluster.<any>.<suffix> over every cluster of a stats read."""
+    return sum(v for k, v in numeric.items() if k.startswith("cluster.") and k.endswith("." + suffix))
+
+
+def lat_count(n0, n1, nh_2xx, probe_rows, map_requests):
+    """The listener's 2xx count between the leg's two quiescent reads against its three sources:
+    Nighthawk's 2xx, the probe's answered data requests and the map phase's requests. No time
+    base: the three must add up exactly. A missing part leaves `error` out (the gate fails)."""
+    k = "http.ingress_http.downstream_rq_2xx"
+    answered = sum(1 for r in probe_rows if r[0] == "d" and r[5] is not None and r[6] == 200)
+    out = {"listener_2xx": n1[k] - n0[k] if k in n0 and k in n1 else None, "nighthawk_2xx": nh_2xx,
+           "probe_answered": answered, "map_requests": map_requests}
+    if None not in out.values():
+        out["expected"] = nh_2xx + answered + map_requests
+        out["error"] = out["listener_2xx"] - out["expected"]
+    return out
+
+
+def timer_lines_expected(n):
+    """Timer (ms) lines the statsd sink must have sent by a stats read, from Envoy's own counters
+    of that read: three per proxied request (downstream, upstream and the cluster's external
+    request time), one per admin request, two per closed downstream connection (connection
+    manager and listener length), one per upstream connect and one per upstream close.
+    None when a counter is missing."""
+    need = ("http.ingress_http.downstream_rq_completed", "http.admin.downstream_rq_completed",
+            "http.ingress_http.downstream_cx_destroy", "http.admin.downstream_cx_destroy")
+    if any(k not in n for k in need):
+        return None
+    parts = {"requests": 3 * n[need[0]], "admin_requests": n[need[1]],
+             "downstream_closes": 2 * (n[need[2]] + n[need[3]]),
+             "upstream_connects": cluster_sum(n, "upstream_cx_total"),
+             "upstream_closes": cluster_sum(n, "upstream_cx_destroy")}
+    parts["total"] = sum(parts.values())
+    return parts
+
+
 def clock_pair():
     """(CLOCK_MONOTONIC, wall clock) read together, as the probe records its own."""
     a = time.monotonic_ns()
@@ -1001,9 +1047,11 @@ class RealBackend:
             # 5. measured run
             dur = ccfg["duration_s"]
             if lat:
-                # the two count reads walk every stat: the client runs longer by what they take
-                # (measured on this Envoy just now, with a margin), so the second ends under load
-                dur = int(dur + math.ceil(float(lat["read_allow_factor"]) * lx["count_read_s"]))
+                # the two count reads around the window are served by the main thread: each walks
+                # every stat (timed on this Envoy just now; slower beside the load and on a shared
+                # core, hence the factor) and each may first wait for a whole flush. The client runs
+                # longer by both, so the second read ends while it still sends.
+                dur = lat_client_duration(dur, lat, arm["name"], lx["count_read_s"])
                 m["lat_client_duration_s"] = dur
             nh_json = os.path.join(self.run_dir, "nighthawk", leg_id + ".json")
             ma = nighthawk.client_args(ccfg, shape["rps"], url, dur, True, cextra,
@@ -1160,9 +1208,9 @@ class RealBackend:
             # perf window (same for every arm, it only fixes absolute numbers).
             win = t2 - (t_q0 if settle else t0)
             if lat:
-                # both count reads walk every stat (seconds at 1M) and a counter is read somewhere
-                # inside its read: the count spans midpoint to midpoint (exact when the two reads
-                # take the same time, off by at most half their difference)
+                # a recorded figure only in run L (the gate is the exact request count, lat_count):
+                # each read may wait behind a flush and reads its counter somewhere inside, so this
+                # midpoint-to-midpoint span is off by up to half the difference of the two read times
                 win = (t_q1 + t_q1_end) / 2.0 - (t_q0 + lx["t_q0_end"]) / 2.0
             perf_s = float(mcfg["window_s"])
             resp_raw = _delta(q0, q1, "http.ingress_http.downstream_rq_2xx")
@@ -1260,6 +1308,7 @@ class RealBackend:
             if lat:
                 sent, want = nhp["counters"].get("upstream_rq_total"), shape["rps"] * float(dur)
                 m["lat_nh"] = {"open_loop": "--open-loop" in ma, "requests": sent, "expected": want,
+                               "responses_2xx": nhp["counters"].get("benchmark.http_2xx"),
                                "sent_ratio": sent / want if sent is not None and want else None,
                                "execution_s": nhp["execution_duration_s"]}
             m.update(
@@ -1587,6 +1636,9 @@ class RealBackend:
             if summary.get("error") or summary.get("exit") != 0:
                 raise RuntimeError("probe: %s (exit %s)" % (summary.get("error"), summary.get("exit")))
             probe = latency.load_probe(lx["log"])
+            m["lat_count"] = lat_count(lx["n0"], (lx.get("post") or {}).get("numeric") or {},
+                                       (m.get("lat_nh") or {}).get("responses_2xx"), probe["rows"],
+                                       (summary.get("map") or {}).get("requests"))
             cfg = dict(lat, workers=rung["workers"], interval_s=m["flush_interval_s"])
             rec = latency.leg_record(probe, summary, sampler.series, threads, pid, bursts, t0, t1, lx["clock"],
                                      sampler.missing, cfg)
@@ -1601,6 +1653,12 @@ class RealBackend:
                 ms = (sink.get("classes") or {}).get("ms")
                 sd["ms_lines"], sd["requests_completed"] = ms, done
                 sd["ms_per_request"] = ms / float(done) if ms is not None and done else None
+                # the expectation from this leg's own counters at its post-client read (what Envoy
+                # sends after that read, a few admin requests and the closes at its stop, is in the band)
+                exp_ms = timer_lines_expected((lx.get("post") or {}).get("numeric") or {})
+                sd["ms_expected"] = exp_ms
+                if exp_ms and exp_ms["total"] and ms is not None:
+                    sd["ms_error_share"] = abs(ms - exp_ms["total"]) / float(exp_ms["total"])
                 rec["statsd"] = sd
             if lx["port"] is not None:
                 # S-6: the receive queue against the buffer the kernel granted (quiescent points
@@ -1628,7 +1686,8 @@ class RealBackend:
         os.makedirs(d, exist_ok=True)
         out = os.path.join(d, leg_id + ".json")
         p = statsrow.start_udpsink(self.own, self.exp["cpus"]["origin"], int(sc["port"]), int(sc["rcvbuf"]), out,
-                                   int(sc.get("sample_every", 1)))
+                                   int(sc.get("sample_every", 1)),
+                                   classes=bool(self.exp["measure"].get("latency")))
         return p, out
 
     def _prime(self, m, arm, shape, aenv):

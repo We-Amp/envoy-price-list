@@ -533,7 +533,8 @@ def synth_summary(per_worker=4, margin=40.0, unchanged=True, pair_ns=0):
     conns = [{"conn": i, "tid": 501 + i // 4, "comm": "wrk:worker_%d" % (i // 4), "cpus": str(i // 4),
               "margin": margin, "local_port": 40000 + i} for i in range(16)]
     threads = {str(501 + i): {"comm": "wrk:worker_%d" % i, "cpus": str(i)} for i in range(4)}
-    return {"map": {"ok": True, "workers_found": 4, "opens": 16, "min_margin": margin, "connections": conns,
+    return {"map": {"ok": True, "workers_found": 4, "opens": 16, "requests": 1600, "min_margin": margin,
+                    "connections": conns,
                     "per_worker": {str(501 + i): per_worker for i in range(4)}, "threads": threads},
             "map_end": {"unchanged": unchanged},
             "clock_start": {"monotonic_ns": 5 * 10 ** 9, "time_ns": 10 ** 18 + 5 * 10 ** 9 + pair_ns},
@@ -629,6 +630,7 @@ def leg_of(x, cfg=None, **over):
     m = {"shape": "own", "arm": "nosink", "lat": record(x, cfg), "lat_senders_running": True,
          "client_rate_2xx": 4400.4, "lat_nh": {"open_loop": True, "sent_ratio": 1.0001},
          "quiesce": {"before_ok": True, "after_ok": True}, "uptime": {"error_s": 0.4},
+         "lat_count": {"error": 0},
          "dropped_stat_flushes_delta": 0}
     m.update(over)
     return m
@@ -964,22 +966,21 @@ class GateTest(unittest.TestCase):
         self.bad("rate x duration", leg_of(self.x, lat_nh={"open_loop": True, "sent_ratio": 0.99}))
         self.bad("quiescent point after", leg_of(self.x, quiesce={"before_ok": True, "after_ok": False}))
 
-    def test_listener_rate_target_is_client_plus_probe(self):
+    def test_listener_target_is_client_plus_probe_and_stall_outcomes_are_not_gates(self):
         cfg = MK.lat_configs(box(), None)["lat.json"]
         base = {"idle_ok": True, "preflight_ok": True, "pinning_ok": True, "target_rps": 5200, "perf_ok": True,
                 "responses": 300000, "client_headroom": 0.6, "sut_foreign_cpus": 0.0, "sut_sibling_cpus": 0.0,
                 "client_overflow": {"benchmark.pool_overflow": 12}, "client_pending_total": 900, "client_workers": 16,
                 "envoy_exit": 0}
         self.assertTrue(validity.verdict(dict(base, sut_rate_2xx=5199.0), cfg["validity"])["valid"])
-        v = validity.verdict(dict(base, sut_rate_2xx=5200 * 0.994), cfg["validity"])
-        self.assertTrue(any("misses target 5200" in r for r in v["reasons"]))
-        # the probe's 800 missing (a rate of the client alone) is far outside
-        self.assertFalse(validity.verdict(dict(base, sut_rate_2xx=4400.0), cfg["validity"])["valid"])
-        # the same leg under the default gates: the client's queue and overflow would have hidden it
+        # the same leg under the default gates: the client's queue and overflow would have made it invalid
         self.assertFalse(validity.verdict(dict(base, sut_rate_2xx=5199.0))["valid"])
         # pins before and after the window stay gated
         v = validity.verdict(dict(base, sut_rate_2xx=5199.0, rung_pin_after={"ok": False}), cfg["validity"])
         self.assertTrue(any("left their cores" in r for r in v["reasons"]))
+        # the listener's requests are gated by count (CountGateTest), on every leg of every arm
+        for a in cfg["arms"]:
+            self.assertIn("lat_count.error", [i["stat"] for i in a["evidence"]])
 
     # ---- the sinks
 
@@ -988,7 +989,7 @@ class GateTest(unittest.TestCase):
         if marks is None:
             marks = [[int((990 + 10 * i) * 1e9), 100.0 + 10 * i, 200000 * i, 110110 * i, 0, 310110 * i] for i in range(9)]
         sd = latency.statsd_flushes(marks, used, int(985 * 1e9), int(1075 * 1e9))
-        sd.update(marks_window_error=0, ms_per_request=3.02)
+        sd.update(marks_window_error=0, ms_per_request=3.06, ms_error_share=0.003)
         m = leg_of(self.x, arm="statsd", udp_leg={"rcvbuf_errors": 0, "socket_drops": 0},
                    udpsink={"drain_quiet": True, "classes": {"other": 0}})
         m["lat"] = dict(m["lat"], statsd=sd)
@@ -1008,7 +1009,7 @@ class GateTest(unittest.TestCase):
         self.bad("socket dropped nothing", self.statsd_leg(udp_leg__socket_drops=None), ev)
         self.bad("read its queue empty", self.statsd_leg(udpsink__drain_quiet=False), ev)
         self.bad("counter, gauge or timer", self.statsd_leg(udpsink__classes={"other": 4}), ev)
-        self.bad("timer lines per request", self.statsd_leg(lat__statsd__ms_per_request=2.4), ev)
+        self.bad("the leg's own counters say", self.statsd_leg(lat__statsd__ms_error_share=0.03), ev)
         self.bad("uptime lines in the window", self.statsd_leg(lat__statsd__marks_window_error=2), ev)
         # one flush 1% short at the receiver: against the admin count, and against the other flushes
         marks = [[int((990 + 10 * i) * 1e9), 0.0, 200000 * i, 110110 * i, 0, 0] for i in range(9)]
@@ -1138,7 +1139,7 @@ class CellsTest(unittest.TestCase):
             return ex, d
 
     def test_an_invalid_leg_reruns_its_whole_round(self):
-        res, d = self.run_sim({"r02-own-otlp": "rate"})
+        res, d = self.run_sim({"r02-own-otlp": "headroom"})
         try:
             legs = res["legs"]
             self.assertEqual(len(legs), 30)
@@ -1155,12 +1156,12 @@ class CellsTest(unittest.TestCase):
             shutil.rmtree(d)
 
     def test_three_invalid_rounds_in_a_row_abort(self):
-        res, d = self.run_sim({"r01-own-otlp": "rate", "r02-own-nosink": "headroom", "r03-shared-statsd": "rate"})
+        res, d = self.run_sim({"r01-own-otlp": "headroom", "r02-own-nosink": "headroom", "r03-shared-statsd": "non2xx"})
         shutil.rmtree(d)
         self.assertIsInstance(res, RuntimeError)
         self.assertIn("3 rounds in a row", str(res))
         # two in a row, then a clean one: no abort
-        res, d = self.run_sim({"r01-own-otlp": "rate", "r02-own-nosink": "headroom"})
+        res, d = self.run_sim({"r01-own-otlp": "headroom", "r02-own-nosink": "headroom"})
         shutil.rmtree(d)
         self.assertNotIsInstance(res, RuntimeError)
         self.assertEqual(len(res["legs"]), 35)
@@ -1243,7 +1244,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(lt["data_conns"] * lt["data_hz"], 800)
         self.assertEqual((lt["sample_s"], lt["admin_period_ms"], lt["control_conns"], lt["control_hz"]),
                          (0.005, 50, 2, 25))
-        self.assertEqual(q["validity"]["rate_tolerance"], 0.005)
+        self.assertIsNone(q["validity"]["rate_tolerance"])   # recorded; the count gate replaces it
         self.assertIsNone(q["validity"]["max_pending_total"])
         self.assertNotIn("stat_ops_probe", q["measure"])
         # the same binary and pins as run S
@@ -1289,7 +1290,7 @@ class SinkTest(unittest.TestCase):
         port = s.getsockname()[1]
         s.close()
         p = subprocess.Popen([sys.executable, os.path.join(HERE, "epl", "udpsink.py"), "--port", str(port),
-                              "--rcvbuf", "1048576", "--out", out, "--drain-s", "5"])
+                              "--rcvbuf", "1048576", "--out", out, "--drain-s", "5", "--classes"])
         try:
             end = time.time() + 10
             while not os.path.exists(out + ".ready") and time.time() < end:
@@ -1332,6 +1333,189 @@ class SinkTest(unittest.TestCase):
         self.assertEqual((sd["max_rel_error"], sd["spread"]), (0.0, 0.0))
         self.assertLess(st["marks"][0][0], st["marks"][2][0])
         self.assertLess(abs(st["marks"][2][0] - st["clock_end"]["monotonic_ns"]), 20 * 10 ** 9)
+
+
+class SinkFlagTest(unittest.TestCase):
+    """D1: without --classes (every run but L) the sink is the one of the earlier runs."""
+
+    def test_without_the_flag_no_classing_and_no_drain(self):
+        d = tempfile.mkdtemp()
+        out = os.path.join(d, "sink.json")
+        s = socket.socket()
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+        s.close()
+        p = subprocess.Popen([sys.executable, os.path.join(HERE, "epl", "udpsink.py"), "--port", str(port),
+                              "--rcvbuf", "1048576", "--out", out])
+        try:
+            end = time.time() + 10
+            while not os.path.exists(out + ".ready") and time.time() < end:
+                time.sleep(0.02)
+            u = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            for i in range(10):
+                u.sendto(b"envoy.a%d:1|c" % i, ("127.0.0.1", port))
+            u.sendto(b"envoy.server.uptime:7|g", ("127.0.0.1", port))
+            u.close()
+            time.sleep(0.2)
+            t = time.time()
+            p.send_signal(signal.SIGTERM)
+            self.assertEqual(p.wait(timeout=15), 0)
+            took = time.time() - t
+            with open(out) as f:
+                st = json.load(f)
+        finally:
+            if p.poll() is None:
+                p.kill()
+            shutil.rmtree(d)
+        # exactly the keys the sink wrote before run L, the uptime sample still taken
+        self.assertEqual(sorted(st), ["bytes", "datagrams", "newlines", "port", "rcvbuf_granted", "rcvbuf_requested",
+                                      "started", "stopped", "uptime_samples"])
+        self.assertEqual((st["datagrams"], len(st["uptime_samples"])), (11, 1))
+        self.assertLess(took, 5.0)
+
+    def test_only_run_l_sets_the_flag(self):
+        calls = []
+
+        class Own:
+            def start(self, args, **kw):
+                calls.append(args)
+                raise RuntimeError("stop here")
+        for classes in (False, True):
+            try:
+                statsrow.start_udpsink(Own(), "32", 8125, 1024, os.path.join(tempfile.gettempdir(), "x.json"),
+                                       classes=classes)
+            except RuntimeError:
+                pass
+        self.assertNotIn("--classes", calls[0])
+        self.assertIn("--classes", calls[1])
+        with open(os.path.join(HERE, "epl", "leg.py")) as f:
+            src = f.read()
+        self.assertIn('classes=bool(self.exp["measure"].get("latency"))', src)
+        self.assertEqual(src.count("start_udpsink("), 1)
+
+
+class CountGateTest(unittest.TestCase):
+    """B1: the listener's request count between the leg's two quiescent reads, with no time base."""
+
+    K = "http.ingress_http.downstream_rq_2xx"
+
+    def rows(self, n=60000, unanswered=0, non200=0):
+        r = [["d", i % 16, i // 16, i, i, i + 1, 200, 4300] for i in range(n)]
+        for x in r[:unanswered]:
+            x[5] = x[6] = None
+        for x in r[unanswered:unanswered + non200]:
+            x[6] = 503
+        return r + [["a", 0, 0, 1, 1, 2, 200, 9], ["c", 0, 0, 1, 1, 2, 200, 9]]
+
+    def count(self, listener=330000 + 60000 + 1600, nh=330000, mapped=1600, **kw):
+        # 36,000 requests (priming, warm-up) before the first read are in neither count
+        return legmod.lat_count({self.K: 36000}, {self.K: 36000 + listener} if listener is not None else {},
+                                nh, self.rows(**kw), mapped)
+
+    def item(self):
+        return [i for i in MK.ev_lat(60, 4400) if i["stat"] == "lat_count.error"]
+
+    def ok(self, c):
+        return evidence.evaluate({"shape": "own", "lat_count": c}, self.item())["ok"]
+
+    def test_exact_sum_passes(self):
+        c = self.count()
+        self.assertEqual((c["listener_2xx"], c["expected"], c["error"]), (391600, 391600, 0))
+        self.assertTrue(self.ok(c))
+
+    def test_one_request_off_fails_either_way(self):
+        for listener in (391599, 391601):
+            c = self.count(listener=listener)
+            self.assertEqual(abs(c["error"]), 1)
+            self.assertFalse(self.ok(c))
+
+    def test_the_probe_stream_missing_fails(self):
+        # a listener that saw only the client's requests (what a rate gate with a loose base could pass)
+        self.assertFalse(self.ok(self.count(listener=330000 + 1600)))
+        # requests Envoy answered that the probe never saw answered, and non-200 answers
+        self.assertFalse(self.ok(self.count(unanswered=3)))
+        self.assertFalse(self.ok(self.count(non200=2)))
+
+    def test_a_missing_part_fails_closed(self):
+        for kw in (dict(nh=None), dict(mapped=None), dict(listener=None)):
+            c = self.count(**kw)
+            self.assertNotIn("error", c)
+            self.assertFalse(self.ok(c))
+        self.assertFalse(evidence.evaluate({"shape": "own"}, self.item())["ok"])
+
+    def test_the_windowed_rate_is_recorded_not_gated(self):
+        cfg = MK.lat_configs(box(), None)["lat.json"]
+        self.assertIsNone(cfg["validity"]["rate_tolerance"])
+        base = {"idle_ok": True, "preflight_ok": True, "pinning_ok": True, "target_rps": 5200, "perf_ok": True,
+                "responses": 300000, "client_headroom": 0.6, "sut_foreign_cpus": 0.0, "sut_sibling_cpus": 0.0,
+                "client_overflow": {}, "envoy_exit": 0}
+        # a count read that waited 2.4 s behind a flush reads the rate 1.8% low: not a reason any more
+        self.assertTrue(validity.verdict(dict(base, sut_rate_2xx=5200 * 0.982), cfg["validity"])["valid"])
+        # with no rate at all the leg still fails, and other runs keep their tolerance
+        self.assertFalse(validity.verdict(dict(base, sut_rate_2xx=None), cfg["validity"])["valid"])
+        self.assertFalse(validity.verdict(dict(base, sut_rate_2xx=5200 * 0.982))["valid"])
+
+    def test_client_duration_holds_two_reads_that_each_wait_for_a_flush(self):
+        lat = MK.LAT_PROBE
+        base = 72
+        d_idle = 0.83
+        for arm, flush in (("statsd", 7.0), ("otlp", 7.0), ("nosink", 2.0)):
+            dur = legmod.lat_client_duration(base, lat, arm, d_idle)
+            # lead-in, first read (wait + twice its idle time), settle, window, second read the same
+            need = 2 + (flush + 2 * d_idle) + 5 + 0.3 + 60.1 + (flush + 2 * d_idle)
+            self.assertGreaterEqual(dur, need, arm)
+            self.assertLessEqual(dur, need + 6, arm)
+        self.assertEqual(legmod.lat_client_duration(72, lat, "statsd", 0.83), 72 + 18)
+        self.assertEqual(legmod.lat_client_duration(72, lat, "nosink", 0.83), 72 + 8)
+        with open(os.path.join(HERE, "epl", "leg.py")) as f:
+            src = f.read()
+        # lat_senders_running stays a gate, computed after the second count read
+        self.assertLess(src.index("t_q1_end = time.monotonic()"), src.index('m["lat_senders_running"] ='))
+        self.assertIn("lat_senders_running", [i["stat"] for i in MK.ev_lat(60, 4400)])
+
+    def test_map_requests_are_counted_by_the_probe(self):
+        with open(os.path.join(HERE, "epl", "latprobe.py")) as f:
+            src = f.read()
+        self.assertIn("requests=sent[0]", src)
+
+
+class TimerLinesTest(unittest.TestCase):
+    """Q2: the timer-line expectation from the leg's own counters."""
+
+    def numeric(self):
+        n = {"http.ingress_http.downstream_rq_completed": 424000, "http.admin.downstream_rq_completed": 1700,
+             "http.ingress_http.downstream_cx_destroy": 1300, "http.admin.downstream_cx_destroy": 1690,
+             "cluster.origin.upstream_cx_total": 600, "cluster.origin.upstream_cx_destroy": 90,
+             "cluster.origin.upstream_cx_destroy_local": 90}
+        for i in range(100):
+            n["cluster.gen%d.upstream_cx_total" % i] = 100
+            n["cluster.gen%d.upstream_cx_destroy" % i] = 100
+        return n
+
+    def test_expectation(self):
+        e = legmod.timer_lines_expected(self.numeric())
+        self.assertEqual(e, {"requests": 1272000, "admin_requests": 1700, "downstream_closes": 5980,
+                             "upstream_connects": 10600, "upstream_closes": 10090, "total": 1300370})
+        # about 3.07 per request, as counted by hand for 10,000 clusters: inside no fixed bound by luck
+        self.assertAlmostEqual(e["total"] / 424000.0, 3.067, delta=0.001)
+
+    def test_missing_counter_gives_no_expectation(self):
+        n = self.numeric()
+        n.pop("http.admin.downstream_rq_completed")
+        self.assertIsNone(legmod.timer_lines_expected(n))
+        self.assertIsNone(legmod.timer_lines_expected({}))
+
+    def test_gate(self):
+        it = [i for i in MK.EV_LAT_STATSD if i["stat"] == "lat.statsd.ms_error_share"]
+        self.assertEqual(len(it), 1)
+        self.assertFalse(any(i["stat"] == "lat.statsd.ms_per_request" for i in MK.EV_LAT_STATSD))
+
+        def ok(share):
+            sd = {} if share is None else {"ms_error_share": share}
+            return evidence.evaluate({"shape": "own", "lat": {"statsd": sd}}, it)["ok"]
+        self.assertTrue(ok(0.004))
+        self.assertFalse(ok(0.02))     # the receiver lost (or gained) 2% of the timer lines
+        self.assertFalse(ok(None))     # no expectation: fails closed
 
 
 # ---------------------------------------------------------------- the table and the session rules
@@ -1444,6 +1628,54 @@ class TableTest(unittest.TestCase):
         finally:
             shutil.rmtree(d)
 
+    def test_invalid_legs_stay_visible_with_their_reasons(self):
+        d = tempfile.mkdtemp()
+        try:
+            write_run(d, rounds=4)
+            p = os.path.join(d, "legs.jsonl")
+            with open(p) as f:
+                lines = f.read().splitlines()
+            # round 2 ran twice: its first shared/statsd leg failed on a gate a stalled worker trips
+            first = json.loads([x for x in lines if '"r02-shared-statsd"' in x][0])
+            old = dict(first, verdict={"valid": False, "reasons": [
+                "evidence: Nighthawk 2xx rate within 0.5% of its target: 4361.2, expected 4400 +/- 22"]})
+            ok_old = dict(json.loads([x for x in lines if '"r02-own-nosink"' in x][0]))
+            for m, lid in ((old, "r02-shared-statsd"), (ok_old, "r02-own-nosink")):
+                m["leg_id"] = lid
+            new = [json.loads(x) for x in lines]
+            for m in new:
+                if m["round"] == 2:
+                    m["leg_id"] += ".rr1"
+                    m["attempt"] = 1
+            # and one invalid leg that was never re-run
+            [m for m in new if m["leg_id"] == "r04-own-otlp"][0]["verdict"] = {"valid": False, "reasons": ["perf counters missing"]}
+            for m in new:
+                for sub in ("probe", "main"):
+                    ext = ".jsonl.gz" if sub == "probe" else ".json.gz"
+                    src = os.path.join(d, sub, m["leg_id"].replace(".rr1", "") + ext)
+                    dst = os.path.join(d, sub, m["leg_id"] + ext)
+                    if src != dst:
+                        os.rename(src, dst)
+            with open(p, "w") as f:
+                f.write("\n".join([json.dumps(old), json.dumps(ok_old),
+                                   json.dumps({"supersede": ["r02-shared-statsd", "r02-own-nosink"]})]
+                                  + [json.dumps(m) for m in new]) + "\n")
+            res = TAB.build(d)
+            inv = {x["leg_id"]: x for x in res["invalid_legs"]}
+            self.assertEqual(sorted(inv), ["r02-shared-statsd", "r04-own-otlp"])
+            self.assertTrue(inv["r02-shared-statsd"]["superseded"])
+            self.assertFalse(inv["r04-own-otlp"]["superseded"])
+            self.assertEqual(inv["r02-shared-statsd"]["cell"], "shared/statsd")
+            self.assertIn("Nighthawk 2xx rate", inv["r02-shared-statsd"]["reasons"][0])
+            self.assertEqual(res["legs_run"], 22)
+            self.assertEqual(res["rounds"], [1, 2, 3])     # round 4 has an invalid leg; round 2 counts by its re-run
+            md = TAB.markdown(res)
+            self.assertIn("| shared/statsd | 1 | r02-shared-statsd | yes | evidence: Nighthawk 2xx rate", md)
+            self.assertIn("| own/otlp | 1 | r04-own-otlp | no | perf counters missing |", md)
+            self.assertIn("| own/nosink | 0 | - | - | - |", md)
+        finally:
+            shutil.rmtree(d)
+
     def test_t_row_and_status(self):
         r = TAB.t_row([100.0, 110.0, 90.0, 105.0, 95.0])
         self.assertAlmostEqual(r["mean"], 100.0)
@@ -1520,13 +1752,16 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(len(SESS.smoke_problems(self.cfg, d)), 5)
 
     def test_budget(self):
-        # legs 130 s apart: 25 x 130 s = 54.2 min passes; 140 s apart does not
+        # limit 62 min: legs 130 s apart pass, 148 s apart (61.7 min) pass, 150 s (62.5 min) do not
         d = self.smoke()
         self.assertEqual(self.rules(d), [])
 
         def slower(c):
             for i, m in enumerate(c.values()):
-                m["started_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(1.8e9 + 140 * i))
+                m["started_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(1.8e9 + self.gap * i))
+        self.gap = 148
+        self.assertEqual(self.rules(self.smoke(slower)), [])
+        self.gap = 150
         probs = self.rules(self.smoke(slower))
         self.assertEqual(len(probs), 1)
         self.assertTrue(probs[0].startswith("S-8"))
@@ -1547,6 +1782,48 @@ class SessionTest(unittest.TestCase):
         json.dump(rec, open(st, "w"))
         self.assertEqual(SESS.main(["lat-stamp-ok", cfg, st]), 1)
 
+    def test_a_stale_or_hand_check_cannot_pass_an_older_smoke(self):
+        cdir = os.path.join(self.d, "cfg")
+        os.makedirs(cdir)
+        q, sm = os.path.join(cdir, "lat.json"), os.path.join(cdir, "smoke-lat.json")
+        for fn, c in MK.lat_configs(box(), None).items():
+            with open(os.path.join(cdir, fn), "w") as f:
+                json.dump(c, f, indent=1)
+        smoke = os.path.join(self.d, "smoke-lat")
+        # a smoke directory nobody stamped (not run by lat-smoke)
+        os.makedirs(smoke)
+        self.assertEqual(SESS.main(["lat-smoke-stamp-ok", q, sm, smoke]), 1)
+        self.assertEqual(SESS.main(["lat-smoke-stamp", sm, smoke]), 0)
+        self.assertEqual(SESS.smoke_stamp_problems(q, sm, smoke), [])
+        self.assertEqual(SESS.main(["lat-smoke-stamp-ok", q, sm, smoke]), 0)
+        # the knobs changed after the smoke (a 50 s window regenerated over a 60 s smoke, or the reverse)
+        for fn, c in MK.lat_configs(box(), None, {"window_s": 50}).items():
+            with open(os.path.join(cdir, fn), "w") as f:
+                json.dump(c, f, indent=1)
+        probs = SESS.smoke_stamp_problems(q, sm, smoke)
+        self.assertEqual(len(probs), 1)
+        self.assertIn("another smoke-lat.json", probs[0])
+        # only lat.json regenerated (another session's rewrite without the knobs): not this smoke's queue config
+        with open(sm, "w") as f:
+            json.dump(MK.lat_configs(box(), None)["smoke-lat.json"], f, indent=1)
+        probs = SESS.smoke_stamp_problems(q, sm, smoke)
+        self.assertEqual(len(probs), 1)
+        self.assertIn("not the queue config", probs[0])
+        with open(q, "w") as f:
+            json.dump(MK.lat_configs(box(), None)["lat.json"], f, indent=1)
+        self.assertEqual(SESS.smoke_stamp_problems(q, sm, smoke), [])
+        # the harness sources changed after the smoke
+        sp = os.path.join(smoke, SESS.SMOKE_STAMP)
+        with open(sp) as f:
+            st = json.load(f)
+        st["source_sha256"] = "0" * 64
+        with open(sp, "w") as f:
+            json.dump(st, f)
+        probs = SESS.smoke_stamp_problems(q, sm, smoke)
+        self.assertEqual(len(probs), 1)
+        self.assertIn("another harness source", probs[0])
+        self.assertEqual(SESS.main(["lat-smoke-stamp-ok", q, sm, smoke]), 1)
+
     def test_entry_points(self):
         sh = open(os.path.join(SF, "run-session.sh")).read()
         for mode in ("lat-smoke)", "lat-check)", "lat-queue)"):
@@ -1556,7 +1833,14 @@ class SessionTest(unittest.TestCase):
         self.assertNotIn("rewrite", q)
         self.assertLess(q.index("lat-stamp-ok"), q.index("guard_begin"))
         self.assertLess(q.index("guard_begin"), q.index("$EPL run"))
-        self.assertIn("LAT_STOP_S:-3900", q)
+        self.assertIn("LAT_STOP_S:-4500", q)
+        # Q1: the check first requires the smoke to be of these sources and configs; lat-smoke stamps
+        # the directory before its run
+        chk0 = sh[sh.index("lat_check() {"):sh.index("rewrite_lat() {")]
+        self.assertLess(chk0.index("lat-smoke-stamp-ok"), chk0.index("smoke-valid"))
+        sm = sh[sh.index("\n  lat-smoke)"):sh.index("\n  lat-check)")]
+        self.assertLess(sm.index("rewrite_lat"), sm.index("lat-smoke-stamp "))
+        self.assertLess(sm.index("lat-smoke-stamp "), sm.index("$EPL run"))
         chk = sh[sh.index("lat_check() {"):sh.index("rewrite_lat() {")]
         self.assertIn("evidence-check \"$C/lat.json\"", chk)
         self.assertNotIn("--freeze", chk)
@@ -1656,6 +1940,7 @@ class LegMethodsTest(unittest.TestCase):
         kind = (aenv.get("stats_sink") or {}).get("kind")
         k = 10000
         x = synth()
+        answered = sum(1 for r in x["probe"]["rows"] if r[0] == "d")
         used, hist = 360107, 50009
         if kind == "otlp":
             used, hist = 360147, 50012
@@ -1664,10 +1949,16 @@ class LegMethodsTest(unittest.TestCase):
             {"status": 200, "total": 1180396, "histograms": 50013, "text_readouts": 0, "seconds": 2.2, "bytes": 9,
              "numeric": {"cluster_manager.active_clusters": k + (2 if kind == "otlp" else 1), "server.uptime": 30,
                          "server.dropped_stat_flushes": 0, "server.worker_0.watchdog_miss": 1,
+                         "http.ingress_http.downstream_rq_2xx": 36000,
                          "server.main_thread.watchdog_miss": 2, c + "upstream_rq_total": 37 * 3,
                          c + "http2.rx_reset": 0}},
             {"status": 200, "total": used, "histograms": hist, "text_readouts": 0, "seconds": 0.8, "bytes": 9,
              "numeric": {"server.uptime": 115, "server.worker_0.watchdog_miss": 4,
+                         "http.ingress_http.downstream_rq_2xx": 36000 + 330000 + 1600 + answered - (
+                             1 if breakage == "count" else 0),
+                         "http.ingress_http.downstream_rq_completed": 420000, "http.admin.downstream_rq_completed": 1700,
+                         "http.ingress_http.downstream_cx_destroy": 1300, "http.admin.downstream_cx_destroy": 1690,
+                         "cluster.origin.upstream_cx_total": 10600, "cluster.origin.upstream_cx_destroy": 10090,
                          "server.main_thread.watchdog_miss": 2, c + "upstream_rq_total": 37 * 11}}]
         self.patch(statsrow, "stats_read", lambda port, timeout, usedonly=False: reads.pop(0))
         self.patch(statsrow, "quiesce", lambda pid, port=None, timeout_s=30.0: (True, 0.03))
@@ -1708,7 +1999,8 @@ class LegMethodsTest(unittest.TestCase):
         stub._collector_cfg = lambda: legmod.RealBackend._collector_cfg(stub)
         m = {"shape": shape_name, "arm": arm_name, "envoy_pid": 500, "nofile_soft": 60000, "envoy_log_emfile": 0,
              "prime": {"ok": k, "non200": 0, "errors": 0}, "gen_cx_connect_fail": 0, "gen_cx_overflow": 0,
-             "lat_senders_running": True, "client_rate_2xx": 4399.0, "lat_nh": {"open_loop": True, "sent_ratio": 1.0},
+             "lat_senders_running": True, "client_rate_2xx": 4399.0,
+             "lat_nh": {"open_loop": True, "sent_ratio": 1.0, "responses_2xx": 330000},
              "sut_stats_leg_end": {"http.ingress_http.downstream_rq_completed": 420000}, "sut_stats_leg_end_ok": True}
         sink = NS(pid=600) if kind == "statsd" else None
         lx = legmod.RealBackend._lat_before(stub, m, aenv, NS(pid=500), sink, "r01-x", lat, 42.0, shape, 4)
@@ -1744,7 +2036,8 @@ class LegMethodsTest(unittest.TestCase):
         if kind == "statsd":
             cg = used - hist
             m["udpsink"] = {"rcvbuf_granted": 536870912, "drain_quiet": True,
-                            "classes": {"c": 1, "g": 1, "ms": 1268400, "h": 0, "other": 0},
+                            "classes": {"c": 1, "g": 1, "h": 0, "other": 0, "ms": legmod.timer_lines_expected(
+                                lx["post"]["numeric"])["total"] + (40000 if breakage == "timer-lines" else 300)},
                             "marks": [[int((988 + 10 * i) * 1e9), 30.0 + 10 * i, (cg - 100000) * i, 100000 * i, 0, 0]
                                       for i in range(9)]}
         legmod.RealBackend._lat_finish(stub, m, aenv, shape, "r01-x", lat, lx, legmod.rung_of(exp, shape))
@@ -1766,6 +2059,7 @@ class LegMethodsTest(unittest.TestCase):
             self.assertEqual(m["watchdog_delta"]["server.worker_0.watchdog_miss"], 3)
             self.assertEqual(m["main_thread_delta"], {"server.main_thread.watchdog_miss": 0})
             self.assertEqual(m["lat"]["probe"]["data_in_window"], 48000)
+            self.assertEqual((m["lat_count"]["error"], m["lat_count"]["map_requests"]), (0, 1600))
             # the series of the leg is saved, and the table reads it back
             ser = latency.load_series(os.path.join(self.d, "main", "r01-x.json.gz"))
             self.assertEqual(sorted(ser["series"]), [500, 501, 502, 503, 504])
@@ -1776,7 +2070,8 @@ class LegMethodsTest(unittest.TestCase):
             if arm == "statsd":
                 sd = m["lat"]["statsd"]
                 self.assertEqual((sd["flushes"], sd["marks_window"]), (8, 6))
-                self.assertAlmostEqual(sd["ms_per_request"], 3.02, delta=0.001)
+                self.assertEqual(sd["ms_expected"]["total"], 3 * 420000 + 1700 + 2 * 2990 + 10600 + 10090)
+                self.assertLess(sd["ms_error_share"], 0.001)
                 self.assertAlmostEqual(m["lat"]["rx_queue"]["max_share"], (1 << 20) / 536870912.0)
             if arm == "otlp":
                 self.assertEqual(m["otlp_cluster"]["flushes"], 8.0)
@@ -1786,6 +2081,17 @@ class LegMethodsTest(unittest.TestCase):
     def test_failures_of_the_steps_fail_closed(self):
         m, ev, _ = self.run_arm("otlp", breakage="no-limit")
         self.assertTrue(any("64 MiB receive limit" in f for f in ev["failed"]), ev["failed"])
+        self.tearDown()
+        self.setUp()
+        m, ev, _ = self.run_arm("nosink", breakage="count")
+        self.assertEqual(m["lat_count"]["error"], -1)
+        self.assertEqual(len(ev["failed"]), 1)
+        self.assertIn("exactly", ev["failed"][0])
+        self.tearDown()
+        self.setUp()
+        m, ev, _ = self.run_arm("statsd", "shared", breakage="timer-lines")
+        self.assertEqual(len(ev["failed"]), 1)
+        self.assertIn("the leg's own counters say", ev["failed"][0])
         self.tearDown()
         self.setUp()
         m, ev, _ = self.run_arm("nosink", breakage="probe-killed")

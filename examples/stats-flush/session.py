@@ -18,6 +18,11 @@
                                                     NEW (the 5 s statsd fallback's own smoke)
     python3 session.py lat-rules CFG SMOKE_DIR      run L: the smoke rules S-3 to S-9 on the smoke's
                                                     legs and the budget from its seconds per leg
+    python3 session.py lat-smoke-stamp SMOKE_CFG SMOKE_DIR   lat-smoke, before its run: the hash of the
+                                                    harness sources and of smoke-lat.json, in the smoke dir
+    python3 session.py lat-smoke-stamp-ok CFG SMOKE_CFG SMOKE_DIR   exit 0 only when the smoke dir was
+                                                    written with these sources and this smoke-lat.json,
+                                                    and CFG differs from it only in name and rounds
     python3 session.py lat-stamp CFG STAMP          record a passed lat-check: harness version, a
                                                     hash of the harness sources and of CFG
     python3 session.py lat-stamp-ok CFG STAMP       exit 0 only when STAMP is of these sources and CFG
@@ -127,7 +132,7 @@ def smoke_problems(cfg_path, smoke_dir):
 
 # ---------------------------------------------------------------- run L (flush latency)
 
-LAT_BUDGET_S = 55 * 60
+LAT_BUDGET_S = 62 * 60   # the 60 s window stays; the stop is 75 min, so a re-run round fits
 LAT_BUSY = (0.25, 0.45)
 LAT_FLUSH_WALL_MAX_S = 7.0
 LAT_MANIP_MIN = 10.0
@@ -220,8 +225,8 @@ def lat_rules(cfg_path, smoke_dir, out=sys.stdout):
         out.write("S-8 %.0f s per leg x %d legs = %.1f min (limit %.0f min; a re-run round adds %.1f min)\n" % (
             spl, n, tot / 60, LAT_BUDGET_S / 60, spl * len(cells) / 60))
         if tot > LAT_BUDGET_S:
-            probs.append("S-8: expected %.1f min above %.0f min: apply the cut order (window 60 to 50 s, then drop "
-                         "own/otlp) with make.py --lat and smoke again" % (tot / 60, LAT_BUDGET_S / 60))
+            probs.append("S-8: expected %.1f min above %.0f min: over budget (cut order: window 60 to 50 s, then drop "
+                         "own/otlp, with make.py --lat and a new smoke)" % (tot / 60, LAT_BUDGET_S / 60))
     return probs
 
 
@@ -239,6 +244,44 @@ def source_sha256():
         with open(f, "rb") as fh:
             h.update(fh.read())
     return h.hexdigest()
+
+
+SMOKE_STAMP = "lat-smoke-stamp.json"
+SMOKE_DIFF = {"name", "rounds", "rounds_block", "rounds_max", "smoke"}
+
+
+def _sha(path):
+    import hashlib
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def smoke_stamp(smoke_cfg):
+    return {"source_sha256": source_sha256(), "smoke_config_sha256": _sha(smoke_cfg),
+            "smoke_config": os.path.basename(smoke_cfg)}
+
+
+def smoke_stamp_problems(queue_cfg, smoke_cfg, smoke_dir):
+    """[problem]: the smoke directory was not written by lat-smoke with the present harness
+    sources and the present smoke-lat.json, or lat.json is no longer that smoke's queue config
+    (the two may differ only in name, rounds and the smoke flag)."""
+    try:
+        with open(os.path.join(smoke_dir, SMOKE_STAMP)) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return ["no %s in %s: the smoke was not run by lat-smoke" % (SMOKE_STAMP, smoke_dir)]
+    now = smoke_stamp(smoke_cfg)
+    probs = ["the smoke was run with another %s (run lat-smoke again)" % what
+             for k, what in (("source_sha256", "harness source"), ("smoke_config_sha256", "smoke-lat.json"))
+             if st.get(k) != now[k]]
+    with open(queue_cfg) as f:
+        q = json.load(f)
+    with open(smoke_cfg) as f:
+        s = json.load(f)
+    diff = sorted(k for k in set(q) | set(s) if q.get(k) != s.get(k) and k not in SMOKE_DIFF)
+    if diff:
+        probs.append("lat.json is not the queue config of this smoke-lat.json (differs in %s)" % ", ".join(diff))
+    return probs
 
 
 def lat_stamp(cfg_path):
@@ -409,6 +452,19 @@ def main(argv):
         for p in probs:
             print("PROBLEM %s" % p)
         print("run L smoke rules: %s" % ("pass" if not probs else "NOT passed (%d problems)" % len(probs)))
+        return 1 if probs else 0
+    if cmd == "lat-smoke-stamp":
+        os.makedirs(argv[2], exist_ok=True)
+        st = smoke_stamp(argv[1])
+        with open(os.path.join(argv[2], SMOKE_STAMP), "w") as f:
+            json.dump(st, f, indent=1, sort_keys=True)
+        print(json.dumps(st, sort_keys=True))
+        return 0
+    if cmd == "lat-smoke-stamp-ok":
+        probs = smoke_stamp_problems(argv[1], argv[2], argv[3])
+        for p in probs:
+            print("PROBLEM %s" % p)
+        print("smoke of this harness and config: %s" % ("yes" if not probs else "NO"))
         return 1 if probs else 0
     if cmd == "lat-stamp":
         st = dict(lat_stamp(argv[1]), passed=True)

@@ -210,7 +210,11 @@ LAT_BOXES = {"bench-x86_64": {"sut": "0-4", "client": "20-29,60-69", "sampler": 
 LAT_PROBE = {"data_conns": 16, "data_hz": 50, "data_stagger_ms": 1.25, "per_worker": 4,
              "admin_period_ms": 50, "control_conns": 2, "control_hz": 25,
              "map_requests": 100, "map_margin": 5.0, "map_max_opens": 64, "gap_ms": 1.0, "drain_s": 10.0,
-             "sample_s": 0.005, "read_allow_factor": 3.0, "ready_timeout_s": 60,
+             "sample_s": 0.005, "ready_timeout_s": 60,
+             # the client's extra run time for the two count reads: each may wait for one whole flush
+             # (7 s is the longest rule S-4 allows; a no-sink flush is 0.3 s idle) and takes twice
+             # its idle time beside the load on a shared core
+             "read_allow_factor": 2.0, "flush_allow_s": {"nosink": 2.0, "default": 7.0},
              "guard_s": 0.02, "onset_s": 0.05, "post_s": 0.25, "edge_s": 0.5, "sham_step_s": 0.5,
              "admin_slow_ms": 20.0, "admin_widen_s": 0.06}
 
@@ -247,6 +251,8 @@ def ev_lat(window_s, nh_rps, workers=4):
     n = int(window_s // LAT_INTERVAL_S)
     return [
         true("lat_senders_running", "the client and the probe were still sending when the count read ended"),
+        exact("lat_count.error", 0, "listener 2xx between the leg's two quiescent reads = Nighthawk 2xx + probe "
+                                    "answered + map requests, exactly"),
         {"stat": "client_rate_2xx", "scope": "field", "equals": nh_rps, "tol": 0.005,
          "label": "Nighthawk 2xx rate within 0.5% of its target"},
         true("lat_nh.open_loop", "--open-loop in the client's arguments"),
@@ -300,7 +306,9 @@ EV_LAT_STATSD = [
           "counter and gauge lines of every flush within 0.5% of the admin count of used ones"),
     bound("lat.statsd.spread", None, 0.001, "the flushes of the leg equal within 0.1%"),
     bound("lat.statsd.marks_window_error", None, 1, "uptime lines in the window = flush bursts, +/-1"),
-    bound("lat.statsd.ms_per_request", 2.95, 3.10, "timer lines per request (3 per-request histograms)")]
+    bound("lat.statsd.ms_error_share", None, 0.01,
+          "timer lines the receiver got = the leg's own counters say (3 per request, admin requests, "
+          "connection opens and closes), +/-1%")]
 EV_LAT_OTLP = [
     zero("otlp_cluster.rx_reset"),
     bound("otlp_cluster.whole_error", None, 0, "export requests are exactly whole flushes of ceil(used / 10,000)"),
@@ -334,8 +342,9 @@ def lat_configs(box, cal, knobs=None):
         c["measure"].update(lead_in_s=lead, window_s=window, main_sampler=True, per_thread=True,
                             latency=dict(LAT_PROBE, cpu0=lb["shared_main_cpu"]))
         # a stalled worker is the treatment: the client's queue and pool counters and the worker
-        # shares are recorded, not gated; the listener's rate (client + probe) within 0.5%
-        c["validity"] = {"rate_tolerance": 0.005, "max_pending_total": None, "max_overflow": None,
+        # shares are recorded, not gated. The listener's windowed rate is recorded only (its count
+        # reads wait behind flushes); the gate is the exact request count (lat_count)
+        c["validity"] = {"rate_tolerance": None, "max_pending_total": None, "max_overflow": None,
                          "max_worker_share_factor": None, "min_worker_share_factor": None}
         sh = {"path": "/s", "kind": "proxied", "body_bytes": 4096, "rps": nh_rps, "workers": 4,
               "worker_cpus": lb["worker_cpus"], "worker_pin": "one_to_one",
