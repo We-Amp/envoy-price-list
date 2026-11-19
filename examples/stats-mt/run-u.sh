@@ -7,6 +7,9 @@
 #   run-u.sh smoke [EPL_ARGS...]       one round of base, stats-reject and base-A2 at every rung
 #   run-u.sh check                     the configs calibrated, the evidence checked against the smoke
 #   run-u.sh queue [EPL_ARGS...]       run U, then the HITM evidence legs (boxes that list hitm_events)
+#   run-u.sh codegen-smoke [EPL_ARGS...] (boxes with a codegen section) one round of the codegen run
+#   run-u.sh codegen [EPL_ARGS...]     the codegen run after its smoke (evidence checked against it);
+#                                     CG=-8w selects the fallback configs (top rung 8 workers)
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -94,6 +97,28 @@ case "$mode" in
       log "end $run rc=$?"
     done
     log "queue done; tables: python3 $S/u_table.py $R/u --hitm $R/u-hitm > $R/u.md"
+    ;;
+  codegen-smoke)
+    CG=${CG:-}
+    log "codegen smoke$CG start box $BOX"
+    $EPL run "$C/smoke-codegen$CG.json" --out "$R/smoke-codegen$CG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    rc=$?
+    log "end codegen smoke$CG rc=$rc"
+    exit $rc
+    ;;
+  codegen)
+    CG=${CG:-}
+    log "evidence-check codegen$CG against smoke-codegen$CG"
+    if ! $EPL evidence-check "$C/codegen$CG.json" "$R/smoke-codegen$CG" >> "$R/queue.log" 2>&1; then
+      log "evidence-check codegen$CG FAILED (details in queue.log); not started"
+      exit 1
+    fi
+    log "start codegen$CG (${STOP_S}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$STOP_S" $EPL run "$C/codegen$CG.json" \
+      --out "$R/codegen$CG" "$@" >> "$R/queue.log" 2>&1
+    rc=$?
+    log "end codegen$CG rc=$rc; table: python3 $S/codegen_table.py $R/codegen$CG > $R/codegen$CG.md"
+    exit $rc
     ;;
   micro-smoke)
     log "micro smoke start box $BOX"

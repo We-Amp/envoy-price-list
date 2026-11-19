@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import math
 import os
 import subprocess
 import sys
@@ -536,6 +537,77 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
         self.assertIn("Spacing", text)
         self.assertEqual(js["min_distance_bytes"]["bmCounterIncShared/manual_time/threads:4|vm|fix"], 513.0)
         self.assertEqual(js["fairness"]["bmCounterIncShared/manual_time/threads:4|vm|fix"], 0.5)
+
+
+CGT = _mod("mt_codegen_table", os.path.join(MT, "codegen_table.py"))
+
+
+class CodegenTest(unittest.TestCase):
+    def test_configs(self):
+        c = json.load(open(os.path.join(MT, "arm-vm", "codegen.json")))
+        self.assertEqual([a["name"] for a in c["arms"]],
+                         ["official", "official-reject", "dev", "dev-reject", "official-A2"])
+        by = {a["name"]: a for a in c["arms"]}
+        self.assertEqual(by["official"]["binaries"]["aarch64"]["source_sha256"][:12], "b9d6d1e06dd5")
+        self.assertEqual(by["dev"]["binaries"]["aarch64"]["source_sha256"][:12], "8c6afaf50a7a")
+        self.assertEqual(by["dev-reject"]["settings"], {"stats_reject_all": True})
+        self.assertEqual(by["dev-reject"]["binaries"], by["dev"]["binaries"])
+        self.assertTrue(any(e.get("absent") for e in by["dev-reject"]["evidence"]))
+        self.assertEqual([s["name"] for s in c["shapes"]], ["mt-4w", "mt-12w"])
+        self.assertEqual([s["rps"] for s in c["shapes"]], [4000, 12000])
+        self.assertEqual((c["rounds"], c["base_arm"], c["primary_metric"]), (20, "official", "workers_cycles_per_req"))
+        self.assertTrue(c["box_specific"])
+        self.assertEqual(c["cpus"], {"sut": "0-12", "client": "13-14", "origin": "15"})
+        f = json.load(open(os.path.join(MT, "arm-vm", "codegen-8w.json")))
+        self.assertEqual([(s["name"], s["worker_cpus"]) for s in f["shapes"]], [("mt-4w", "0-3"), ("mt-8w", "0-7")])
+        sm = json.load(open(os.path.join(MT, "arm-vm", "smoke-codegen.json")))
+        self.assertEqual((sm["rounds"], sm["smoke"], sm["evidence_mode"]), (1, True, "record"))
+        e = experiment.load(os.path.join(MT, "arm-vm", "codegen.json"))
+        self.assertEqual(experiment.validate(e), [])
+        self.assertFalse(os.path.exists(os.path.join(MT, "x86-vm", "codegen.json")))
+
+    def _res(self, dev_price=0.02, aa_noise=0.001, rounds=20):
+        import random
+        rng = random.Random(5)
+        legs = []
+        for r in range(1, rounds + 1):
+            for s in ("mt-4w", "mt-12w"):
+                off = 30e3 * rng.gauss(1, 0.003)
+                dev = off * 1.03
+                vals = {"official": off, "official-A2": off * rng.gauss(1, aa_noise),
+                        "official-reject": off * (1 - 0.05) * rng.gauss(1, 0.001),
+                        "dev": dev, "dev-reject": dev * (1 - 0.05 - dev_price) * rng.gauss(1, 0.001)}
+                for a, v in vals.items():
+                    legs.append({"leg_id": "r%02d-%s-%s" % (r, s, a), "round": r, "shape": s, "arm": a,
+                                 "verdict": {"valid": True}, "workers_cycles_per_req": v,
+                                 "per_req": {"instructions_u": 1000.0 if a.startswith("official") else 1010.0}})
+        exp = json.load(open(os.path.join(MT, "arm-vm", "codegen.json")))
+        return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": rounds, "incomplete": False}}
+
+    def test_table_primary(self):
+        d = tempfile.mkdtemp()
+        json.dump(self._res(), open(os.path.join(d, "results.json"), "w"))
+        text, js = CGT.table(d)
+        row = js["rungs"]["mt-12w"]
+        self.assertTrue(row["aa_pass"])
+        self.assertAlmostEqual(row["primary"]["mean"], 100 * (math.log(1 / 0.93) - math.log(1 / 0.95)), delta=0.2)
+        self.assertEqual(row["primary_verdict"], "finding")
+        self.assertAlmostEqual(row["direct_confounded"]["mean"], 100 * math.log(1.03), delta=0.01)
+        self.assertAlmostEqual(row["instructions_u_dev_over_official"], 1.01)
+        self.assertIn("confounded", text)
+        json.dump(self._res(dev_price=0.0), open(os.path.join(d, "results.json"), "w"))
+        self.assertTrue(CGT.table(d)[1]["rungs"]["mt-4w"]["primary_verdict"].startswith("no resolved difference"))
+        json.dump(self._res(aa_noise=0.03), open(os.path.join(d, "results.json"), "w"))
+        self.assertEqual(CGT.table(d)[1]["rungs"]["mt-4w"]["primary_verdict"], "no verdict (A/A did not pass)")
+        r = self._res()
+        r["metadata"]["incomplete"] = True
+        json.dump(r, open(os.path.join(d, "results.json"), "w"))
+        self.assertEqual(CGT.table(d)[1]["rungs"]["mt-4w"]["primary_verdict"], experiment.INCOMPLETE)
+
+    def test_script_modes(self):
+        txt = open(os.path.join(MT, "run-u.sh")).read()
+        self.assertIn("codegen-smoke)", txt)
+        self.assertIn('evidence-check "$C/codegen$CG.json"', txt)
 
 
 if __name__ == "__main__":

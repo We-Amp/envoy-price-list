@@ -41,6 +41,12 @@ VM without SMT a vCPU is a core; on a VM with SMT only one CPU of each core is l
 same N means the same number of cores on both VMs. "Top" is the largest such count that leaves
 a spare core.
 
+  codegen*.json  (boxes with a `codegen` section) the arm64 atomics codegen run: official
+                 release against the main dev-image build, each with and without store stats,
+                 plus an A/A copy; 4w and 12w (codegen-8w.json: 4w and 8w, the fallback when
+                 the 12-worker smoke fails the client or rate gates); 20 fixed rounds; tables
+                 from codegen_table.py
+
 Shape mt-s: the 4 KB proxied request to one cluster with one upstream host, one listener,
 one route, HTTP/1.1, round robin, no decision reader of stats (`audit: mt-s`).
 """
@@ -228,6 +234,45 @@ def micro_config(box, sha_list=None):
                          "from the box's smoke), times the threads; run refuses while it is null"}, **MICRO_GATES)
 
 
+def codegen_configs(box):
+    """The arm64 atomics codegen run (boxes with a `codegen` section): the official release
+    (out-of-line atomics helpers) against the main dev-image build (inline LL/SC atomics), each
+    with every store stat and with stats_config reject_all, and an A/A copy of the official arm.
+    The primary contrast is the difference of the two binaries' stats prices,
+    ln(dev / dev-reject) - ln(official / official-reject), paired by round: the other
+    differences between the two builds (1.40.2 against main) cancel in it to the extent they do
+    not touch stat updates. The direct dev / official ratio is reported, labelled confounded.
+    {file: config} for the main rung set and its fallback (top rung 8 workers)."""
+    cg = box["codegen"]
+    rungs = {r["name"]: r for r in box["rungs"] + cg.get("extra_rungs", [])}
+    dev = {"name": "dev", "binaries": json.loads(json.dumps(cg["dev_binaries"])),
+           "evidence": json.loads(json.dumps(BASE_EVIDENCE))}
+    dev_rej = dict(json.loads(json.dumps(dev)), name="dev-reject", settings={"stats_reject_all": True},
+                   evidence=json.loads(json.dumps(REJECT_EVIDENCE)))
+    arms = [arm(box, "official", ev=BASE_EVIDENCE),
+            arm(box, "official-reject", {"stats_reject_all": True}, REJECT_EVIDENCE),
+            dev, dev_rej, arm(box, "official-A2", ev=BASE_EVIDENCE)]
+    out = {}
+    for suffix, names in (("", cg["rungs"]), ("-8w", cg["fallback_rungs"])):
+        b = dict(box, rungs=[rungs[n] for n in names])
+        c = base_cfg(b, "codegen%s-%s" % (suffix, box["name"]))
+        c["box"] = box
+        # 20 fixed rounds (the method needs 12 or more): the arm rotation (period 5) and the rung
+        # rotation (period 2) both balance at 10
+        c.update(base_arm="official", arms=json.loads(json.dumps(arms)), shapes=rung_shapes(b, cg["r_star"], cg["k"]),
+                 rounds=20, rounds_block=20, rounds_max=20, adaptive=False, r_star=cg["r_star"], k=cg["k"],
+                 box_specific=True,
+                 contrast={"primary": "ln(dev / dev-reject) - ln(official / official-reject), paired by round",
+                           "aa": ["official-A2", "official"], "direct": ["dev", "official"],
+                           "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics"})
+        out["codegen%s.json" % suffix] = c
+        sm = json.loads(json.dumps(c))
+        sm.update(name="smoke-codegen%s-%s" % (suffix, box["name"]), rounds=1, rounds_block=1, rounds_max=1, smoke=True,
+                  evidence_mode="record")
+        out["smoke-codegen%s.json" % suffix] = sm
+    return out
+
+
 def configs(box, rates=None):
     rr = (rates or {}).get(box["name"]) or {}
     r_star, k = int(rr.get("r_star", DEFAULT_R_STAR)), int(rr.get("k", DEFAULT_K))
@@ -257,6 +302,8 @@ def configs(box, rates=None):
     sl = os.path.join(HERE, "boxes", "sha256", box["name"] + ".txt")
     arms = (box.get("micro") or {}).get("arms") or MICRO_ARMS
     out["micro.json"] = micro_config(box, read_sha_list(sl, arms) if os.path.exists(sl) else None)
+    if box.get("codegen"):
+        out.update(codegen_configs(box))
     return out
 
 
