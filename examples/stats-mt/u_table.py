@@ -145,8 +145,13 @@ def tables(res, hitm=None):
             min(frs), max(frs)))
     js["level"] = lv
     # growth and cross-socket
-    contrasts = [(a, b, "growth") for a, b in box.get("growth", [])] + \
-        [(a, b, "cross-socket") for a, b in box.get("cross_socket", [])]
+    # a run may name its own contrasts (high-load run U: no 1w rung); else the box's, and only
+    # those whose two rungs the run has
+    have = {sh["name"] for sh in exp["shapes"]}
+    gl = exp["growth"] if "growth" in exp else box.get("growth", [])
+    cl = exp["cross_socket"] if "cross_socket" in exp else box.get("cross_socket", [])
+    contrasts = [(a, b, k) for (a, b, k) in [(a, b, "growth") for a, b in gl] + [(a, b, "cross-socket") for a, b in cl]
+                 if "mt-" + a in have and "mt-" + b in have]
     rows = []
     for a, b, kind in contrasts:
         sa, sb = "mt-" + a, "mt-" + b

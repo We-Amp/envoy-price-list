@@ -792,6 +792,35 @@ class UHiTest(unittest.TestCase):
         txt = open(os.path.join(MT, "run-u.sh")).read()
         for m in ("hi-calibrate)", "hi-smoke)", "hi-queue)", "HI_STOP_S:-9000"):
             self.assertIn(m, txt)
+        self.assertIn("smoke_valid.py", txt)
+        self.assertEqual((u["growth"], u["cross_socket"]), ([["28w", "14w-one"]], [["14w-split", "14w-one"]]))
+
+    def test_table_contrasts_and_smoke_valid(self):
+        import random
+        rng = random.Random(9)
+        exp = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 1900, "k": 16}})["u-hi.json"]
+        legs = []
+        price = {"mt-14w-one": 20e3, "mt-14w-split": 26e3, "mt-28w": 30e3}
+        for r in range(1, 16):
+            for s in exp["shapes"]:
+                b = 300e3 * rng.gauss(1, 0.002)
+                for arm, v in (("base", b), ("base-A2", b * rng.gauss(1, 0.002)),
+                               ("stats-reject", b - price[s["name"]] * rng.gauss(1, 0.01))):
+                    legs.append({"leg_id": "r%02d-%s-%s" % (r, s["name"], arm), "round": r, "shape": s["name"],
+                                 "arm": arm, "verdict": {"valid": True}, "workers_cycles_per_req": v,
+                                 "freq_ratio": 1.0, "sut_busy": 0.5, "steal_share": 0.0})
+        text, js = UT.tables({"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 15, "incomplete": False}})
+        names = [r["contrast"] for r in js["contrasts"]]
+        self.assertEqual(names, ["Δ(28w) − Δ(14w-one)", "Δ(14w-split) − Δ(14w-one)"])
+        self.assertNotIn("1w)", " ".join(names).replace("14w", ""))
+        SV = _mod("mt_smoke_valid", os.path.join(MT, "smoke_valid.py"))
+        sm = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 1900, "k": 16}})["smoke-u-hi.json"]
+        ok = [{"shape": s["name"], "arm": a["name"], "round": 1, "verdict": {"valid": True}}
+              for s in sm["shapes"] for a in sm["arms"]]
+        self.assertEqual(SV.check(sm, {"legs": ok}), [])
+        bad = ok[:-1] + [dict(ok[-1], verdict={"valid": False, "reasons": ["client headroom 0.12 below 0.25"]})]
+        self.assertTrue(any("client headroom" in p for p in SV.check(sm, {"legs": bad})))
+        self.assertTrue(any(p.startswith("missing") for p in SV.check(sm, {"legs": ok[:-1]})))
 
 
 if __name__ == "__main__":

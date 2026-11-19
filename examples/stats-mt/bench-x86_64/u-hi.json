@@ -128,7 +128,19 @@
     2400,
     2700
    ],
-   "note": "run U at 1,000 per worker held the workers 25-28% busy; the client threads were 31% busy at 14 workers and 39% at 28 workers (14 client workers, 14 CPUs), so the 25% headroom gate bounds 28 workers near 1,900 per worker (about 50% worker busy) unless the client does better than linear; the calibration decides"
+   "note": "run U at 1,000 per worker held the workers 25-28% busy; the client threads were 31% busy at 14 workers and 39% at 28 workers (14 client workers, 14 CPUs), so the 25% headroom gate bounds 28 workers near 1,900 per worker (about 50% worker busy) unless the client does better than linear; the calibration decides",
+   "growth": [
+    [
+     "28w",
+     "14w-one"
+    ]
+   ],
+   "cross_socket": [
+    [
+     "14w-split",
+     "14w-one"
+    ]
+   ]
   }
  },
  "envoy": {
@@ -340,5 +352,17 @@
    "record": "built from 3c9cce2f2c / 71a80bcaab; source tree outside test/ identical to 977c664058"
   }
  },
+ "growth": [
+  [
+   "28w",
+   "14w-one"
+  ]
+ ],
+ "cross_socket": [
+  [
+   "14w-split",
+   "14w-one"
+  ]
+ ],
  "uncalibrated": true
 }

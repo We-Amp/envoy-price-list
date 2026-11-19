@@ -308,7 +308,9 @@ def u_hi_configs(box, rates, arms):
     # 15 fixed rounds: the rung rotation (period 3) and the arm rotation (period 3) both balance
     u.update(base_arm="base", arms=json.loads(json.dumps(arms)), shapes=rung_shapes(b, r_star, k), rounds=15,
              rounds_block=15, rounds_max=15, adaptive=False, r_star=r_star, k=k, box_specific=True,
-             target_worker_busy=hi["target_busy"], session_record={"fix_envoy_static": FIX_ENVOY_STATIC})
+             target_worker_busy=hi["target_busy"], session_record={"fix_envoy_static": FIX_ENVOY_STATIC},
+             # H1: the contrasts of this run (no 1w rung): growth at high load and cross-socket
+             growth=hi["growth"], cross_socket=hi["cross_socket"])
     if not rr:
         u["uncalibrated"] = True
     out["u-hi.json"] = u

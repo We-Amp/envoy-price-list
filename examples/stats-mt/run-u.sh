@@ -64,6 +64,13 @@ hi_check() {
     log "u-hi.json is uncalibrated: set RATES_JSON (\"$BOX-hi\") from hi-calibrate"
     bad=1
   fi
+  # H2: the queue starts only after a smoke whose every leg is valid (at the chosen r*)
+  python3 "$S/smoke_valid.py" "$C/smoke-u-hi.json" "$R/smoke-u-hi" > "$R/smoke-u-hi.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-u-hi.valid.txt"
+  if [ -f "$R/smoke-u-hi/results.json" ] && ! python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/smoke-u-hi/results.json'))['experiment'].get('r_star')==json.load(open('$C/u-hi.json')).get('r_star') else 1)"; then
+    log "smoke-u-hi ran at another r* than u-hi.json: smoke again"
+    bad=1
+  fi
   log "evidence-check u-hi against smoke-u-hi"
   if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi" >> "$R/queue.log" 2>&1; then
     log "evidence-check u-hi FAILED (details in queue.log)"
