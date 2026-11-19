@@ -347,6 +347,66 @@ class MainSampler(threading.Thread):
                 self.stop_evt.wait(d)
 
 
+class ThreadSampler(threading.Thread):
+    """MainSampler for a list of threads (run L): every `period_s` one read of each thread's
+    schedstat, run time and run-queue wait in ns (fields 1 and 2), with one time.monotonic()
+    per read; from a thread pinned to `cpus` (the sampler's own CPU, not the client set).
+    series: {tid: [(monotonic s, run ns, wait ns)]}. With `udp_port`, the receive queue of the
+    statsd sink's socket is read about once per second: rx_queue [(monotonic s, bytes)]."""
+
+    def __init__(self, pid, tids, period_s=0.005, cpus=None, udp_port=None, proc="/proc"):
+        super().__init__(daemon=True)
+        self.pid, self.tids, self.period_s, self.cpus = pid, list(tids), period_s, cpus
+        self.udp_port, self.proc = udp_port, proc
+        self.series = {t: [] for t in self.tids}
+        self.rx_queue = []
+        self.stop_evt = threading.Event()
+        self.missing = 0
+        self.affinity = None
+
+    def main_samples(self, tid):
+        """[(t, run ns)] of one thread, the form find_bursts takes."""
+        return [(x[0], x[1]) for x in self.series[tid]]
+
+    def run(self):
+        if self.cpus:
+            try:
+                os.sched_setaffinity(0, self.cpus)
+                self.affinity = sorted(os.sched_getaffinity(0))
+            except (OSError, AttributeError):
+                pass
+        fds = {}
+        for t in self.tids:
+            try:
+                fds[t] = os.open("%s/%d/task/%d/schedstat" % (self.proc, self.pid, t), os.O_RDONLY)
+            except OSError:
+                fds[t] = None
+        t0 = time.monotonic()
+        k = 0
+        next_udp = t0
+        try:
+            while not self.stop_evt.is_set():
+                for t in self.tids:
+                    try:
+                        f = os.pread(fds[t], 96, 0).split()
+                        self.series[t].append((time.monotonic(), int(f[0]), int(f[1])))
+                    except (OSError, TypeError, ValueError, IndexError):
+                        self.missing += 1
+                now = time.monotonic()
+                if self.udp_port is not None and now >= next_udp:
+                    next_udp += 1.0
+                    sk = parse_udp_socket(read("%s/net/udp" % self.proc), self.udp_port)
+                    self.rx_queue.append((now, sk["rx_queue"] if sk else None))
+                k += 1
+                d = t0 + k * self.period_s - time.monotonic()
+                if d > 0:
+                    self.stop_evt.wait(d)
+        finally:
+            for fd in fds.values():
+                if fd is not None:
+                    os.close(fd)
+
+
 def find_bursts(samples, min_busy=0.2, join_gap_s=0.1):
     """Bursts of main-thread work in a run-time series [(t s, run ns)].
 
@@ -603,3 +663,43 @@ def process_side(pid, want_cpus, run0_ns, run1_ns, seconds):
     r.update(cpu_s=round(cpu_s, 4), busy_of_set=round(cpu_s / seconds / max(1, len(want)), 5),
              cpus_used=round(cpu_s / seconds, 4))
     return r
+
+
+# ---------------------------------------------------------------- the latency probe process (run L)
+
+def start_latprobe(own, cpu, args, summary_path, wait_s=60.0):
+    """Start the open-loop latency probe as this run's own child on its own CPU; wait until its
+    map phase is done (the .ready file). A probe that exits first raises with its error."""
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "latprobe.py")
+    for p in (summary_path, summary_path + ".ready"):
+        if os.path.exists(p):
+            os.remove(p)
+    p = own.start(["taskset", "-c", str(cpu), sys.executable, script] + [str(x) for x in args],
+                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    end = time.monotonic() + wait_s
+    while time.monotonic() < end:
+        if os.path.exists(summary_path + ".ready"):
+            return p
+        if p.poll() is not None:
+            break
+        time.sleep(0.05)
+    own.stop(p)
+    why = None
+    try:
+        with open(summary_path) as f:
+            why = json.load(f).get("error")
+    except (OSError, ValueError):
+        pass
+    raise RuntimeError("latency probe not ready: %s" % (why or "no map within %.0f s" % wait_s))
+
+
+def stop_latprobe(own, p, summary_path, grace_s=40.0):
+    """SIGTERM to the probe this run started (it drains and writes its files), then its summary."""
+    rc = own.stop(p, grace_s=grace_s)
+    try:
+        with open(summary_path) as f:
+            out = json.load(f)
+    except (OSError, ValueError):
+        return {"error": "no probe summary", "exit": rc}
+    out["exit"] = rc
+    return out

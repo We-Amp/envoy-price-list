@@ -90,7 +90,8 @@ def verdict(m, cfg=None):
                        % (rate, tgt, (rate / tgt - 1.0) * 100))
     ovf_d = {k: v for k, v in (m.get("client_overflow") or {}).items() if k not in (c["overflow_ignore"] or [])}
     ovf = sum(ovf_d.values())
-    if ovf > c["max_overflow"]:
+    # None: recorded, not gated (run L: a stalled worker makes the client queue, and that is an outcome)
+    if c["max_overflow"] is not None and ovf > c["max_overflow"]:
         reasons.append("client overflow/pool-exhausted counters %d (%s)"
                        % (ovf, ", ".join("%s=%d" % kv for kv in sorted(ovf_d.items()))))
     nc = sum((m.get("client_non2xx") or {}).values())
