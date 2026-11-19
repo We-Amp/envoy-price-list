@@ -302,12 +302,38 @@ class SpanFlushTest(unittest.TestCase):
         self.assertFalse(c["_settled"])
 
 
-class OtlpFitTest(unittest.TestCase):
-    def test_bases(self):
+class OtlpEvidenceTest(unittest.TestCase):
+    """The 1M OTLP loss of run S: 31 full requests of counters and gauges and the 146-point
+    tail accepted, the mixed and the four histogram requests refused below the receiver (an
+    oversized message), 5 stream resets per flush."""
+
+    def test_loss_fails_the_single_basis(self):
         from epl import statsrow as sr
-        f = sr.otlp_fit(930438, 360146, 310146, 3)  # the 1M smoke: no histogram points
-        self.assertEqual((f["n"], f["basis"], f["n_error"]), (3, 2, 0))
-        self.assertLess(f["residual"], 0.001)
-        f = sr.otlp_fit(722800, 36140, 31130, 20)  # 100k: every used stat
-        self.assertEqual((f["n"], f["basis"]), (20, 1))
-        self.assertGreater(sr.otlp_fit(900000, 360146, 310146, 3)["residual"], 0.01)  # a loss
+        used = 360146
+        f = sr.flush_fit(3 * 310146, used, 3)  # three flushes of the lossy export
+        self.assertGreater(f["residual"], 0.01)
+        f = sr.flush_fit(3 * used, used, 3)  # every used stat arrives
+        self.assertEqual((f["n"], f["n_error"], f["residual"]), (3, 0, 0.0))
+
+    def test_otlp_cluster(self):
+        from epl import statsrow as sr
+        c = "cluster.otel_collector."
+        n0 = {c + "upstream_rq_total": 100, c + "http2.rx_reset": 0, c + "upstream_cx_tx_bytes_total": 0}
+        n1 = {c + "upstream_rq_total": 100 + 3 * 37, c + "http2.rx_reset": 15, c + "upstream_cx_tx_bytes_total": 9}
+        o = sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)
+        self.assertEqual((o["requests_per_flush_expected"], o["requests"], o["rx_reset"]), (37, 111, 15))
+        self.assertEqual((o["whole_error"], o["estimate_error"]), (0.0, round(abs(3 - 61 / 20.0), 3)))
+        n1.pop(c + "http2.rx_reset")  # the used-only read leaves an unmoved counter out: 0
+        self.assertEqual(sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)["rx_reset"], 0)
+        self.assertIn("error", sr.otlp_cluster({}, n1, 360146, 10000, 61.0, 20.0))
+        self.assertIn("error", sr.otlp_cluster({c + "upstream_rq_total": 1}, n1, 360146, 10000, 61.0, 20.0))
+
+    def test_collector_conf_and_log(self):
+        from epl import origin
+        conf = origin.collector_conf(4317, 8888, True, 64)
+        self.assertIn("max_recv_msg_size_mib: 64", conf)
+        self.assertNotIn("max_recv_msg_size_mib", origin.collector_conf(4317, 8888, True))
+        s = origin.log_summary("2026-11-19T12:00:00Z\tinfo\tok\n2026-11-19T12:00:01Z\terror\tgrpc: received message "
+                               "larger than max\n")
+        self.assertEqual((s["lines"], s["error_lines"]), (2, 1))
+        self.assertIn("larger than max", s["first_error"])

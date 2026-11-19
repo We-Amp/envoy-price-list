@@ -1,0 +1,419 @@
+{
+ "name": "sf-s-1m-otlp",
+ "machine_label": "example arm64 server (no SMT), bare metal, frequency policy as found; Envoy on 4 cores",
+ "workdir": "~/epl/runs/stats-flush",
+ "box": {
+  "name": "example-aarch64",
+  "arch": "aarch64",
+  "label": "arm-bench-host",
+  "machine_label": "example arm64 server (no SMT), bare metal, frequency policy as found; Envoy on 4 cores",
+  "cpus": {
+   "sut": "8-11",
+   "client": "16-31",
+   "origin": "32-47"
+  },
+  "perf": "/usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "client_binary": "~/nighthawk-arm64/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "collector_image": "otel/opentelemetry-collector:0.120.0@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "image_platform": "linux/arm64",
+  "binaries": {
+   "aarch64": {
+    "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+    "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+   }
+  },
+  "note": "A description for the portability check only: no ARM box is named yet. CPU sets, perf path and image digests are placeholders to be replaced from the real box at its step 0."
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "8-11",
+  "client": "16-31",
+  "origin": "32-47"
+ },
+ "client": {
+  "binary": "~/nighthawk-arm64/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/bin/perf",
+  "main_perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "main_sample_s": 0.02
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "platform": "linux/arm64",
+  "port": 8092,
+  "workers": 8,
+  "prime_file": true,
+  "worker_connections": 65536,
+  "worker_rlimit_nofile": 200000
+ },
+ "collector": {
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "platform": "linux/arm64",
+  "port": 4317,
+  "metrics_port": 8888,
+  "metrics": true,
+  "max_recv_msg_size_mib": 64
+ },
+ "stats_sink": {
+  "port": 8125,
+  "rcvbuf": 268435456,
+  "sample_every": 1
+ },
+ "order": "latin",
+ "order_seed": 31,
+ "adaptive": false,
+ "primary_metric": "main_ms_per_s",
+ "comparisons": "base",
+ "base_arm": "nosink-20s",
+ "arms": [
+  {
+   "name": "nosink-20s",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 10000,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 20
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 10001,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 44096,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 10000,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 21.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    },
+    {
+     "stat": "main.burst_count_error",
+     "scope": "field",
+     "max": 1,
+     "label": "flush bursts in the window as the interval says, +/-1"
+    },
+    {
+     "stat": "quiesce.before_ok",
+     "scope": "field",
+     "equals": true,
+     "label": "quiescent point before"
+    },
+    {
+     "stat": "quiesce.after_ok",
+     "scope": "field",
+     "equals": true,
+     "label": "quiescent point after"
+    },
+    {
+     "stat": "span_flushes.partial",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "span_flushes.n",
+     "scope": "field",
+     "min": 2,
+     "label": "at least two whole flushes"
+    }
+   ],
+   "window_s": 60
+  },
+  {
+   "name": "otlp",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 10000,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 20
+    },
+    "stats_sink": {
+     "kind": "otlp",
+     "max_data_points_per_request": 10000
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 10002,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin and the collector"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 44096,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 10000,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 21.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    },
+    {
+     "stat": "main.burst_count_error",
+     "scope": "field",
+     "max": 1,
+     "label": "flush bursts in the window as the interval says, +/-1"
+    },
+    {
+     "stat": "quiesce.before_ok",
+     "scope": "field",
+     "equals": true,
+     "label": "quiescent point before"
+    },
+    {
+     "stat": "quiesce.after_ok",
+     "scope": "field",
+     "equals": true,
+     "label": "quiescent point after"
+    },
+    {
+     "stat": "span_flushes.partial",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "span_flushes.n",
+     "scope": "field",
+     "min": 2,
+     "label": "at least two whole flushes"
+    },
+    {
+     "stat": "collector_delta.accepted_metric_points_per_flush",
+     "scope": "field",
+     "per": "field:used_total",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "metric points per whole flush = used stats, +/-1%"
+    },
+    {
+     "stat": "collector_delta.fit.n_error",
+     "scope": "field",
+     "max": 1,
+     "label": "the whole flushes the points hold within one of the flushes counted in the span (one in flight)"
+    },
+    {
+     "stat": "collector_delta.fit.residual",
+     "scope": "field",
+     "max": 0.01,
+     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"
+    },
+    {
+     "stat": "otlp_cluster.rx_reset",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "otlp_cluster.whole_error",
+     "scope": "field",
+     "max": 0.2,
+     "label": "requests are whole flushes of ceil(used / 10,000) requests (within 0.2 of one)"
+    },
+    {
+     "stat": "otlp_cluster.estimate_error",
+     "scope": "field",
+     "max": 1,
+     "label": "that number of flushes as the span and the interval say, +/-1"
+    },
+    {
+     "stat": "collector_log.error_lines",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "collector_delta.settled",
+     "scope": "field",
+     "equals": true,
+     "label": "collector read settled at both quiescent points"
+    },
+    {
+     "stat": "collector_delta.refused_metric_points",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    }
+   ],
+   "window_s": 60
+  }
+ ],
+ "shapes": [
+  {
+   "name": "idle-1m",
+   "path": "/idle",
+   "kind": "idle",
+   "rps": 0,
+   "bursts_visible": true,
+   "ready_timeout_s": 180,
+   "admin_timeout_s": 120,
+   "settle_s": 3.0
+  }
+ ],
+ "uncalibrated": true,
+ "rounds": 8,
+ "rounds_block": 8,
+ "rounds_max": 8,
+ "s_refs": {
+  "otlp": "nosink-20s"
+ }
+}

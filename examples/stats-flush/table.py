@@ -186,7 +186,12 @@ def run_s_tables(runs):
         refs = res["experiment"].get("s_refs") or {}
         for a in ("statsd", "dogstatsd-buf", "otlp"):
             if a in refs:
-                row = span_price_row(res, sh, a, refs[a], "%s per flush" % a, "s")
+                src, lab = res, "%s per flush" % a
+                if a == "otlp" and rung == "1m" and runs.get("s-1m-otlp"):
+                    # the re-run with the collector's receive limit raised supersedes the first
+                    # 1M otlp row (which lost the histogram requests of every flush)
+                    src, lab = runs["s-1m-otlp"], "otlp per flush (re-run, receive limit raised)"
+                row = span_price_row(src, sh, a, refs[a], lab, "s")
                 # the A/A whose reach a row uses: the reference's interval; the 20 s reference has no
                 # copy of its own and uses the 5 s reach (stated in the row)
                 row["aa_key"] = rung if refs[a] == "nosink" else rung + "@5s"
@@ -316,7 +321,7 @@ HDR = ("| Row | Shape | Arm vs ref | Effect [95% CI] | Widened | Holm p | Pairs 
 def tables(sess):
     L, js = [], {}
     runs = {n: load(os.path.join(sess, n)) for n in ("m-10k", "m-100k", "m-300k", "m-1m", "w", "s-100k", "s-1m",
-                                                     "x-1m", "sw")}
+                                                     "x-1m", "sw", "s-1m-otlp")}
     runs = {k: v for k, v in runs.items() if v}
     rungs = {}
     if os.path.exists(os.path.join(sess, "rungs.json")):

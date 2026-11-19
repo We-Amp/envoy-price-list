@@ -164,14 +164,19 @@ EV_DOG = EV_QUIESCENT + [
      "label": "whole flushes counted as the span and the measured period say, +/-1"},
     {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
 EV_OTLP = EV_QUIESCENT + [
-    {"stat": "collector_delta.fit.basis", "scope": "field", "ref": {"arm": "self"}, "tol": 0,
-     "label": "points per flush on the same basis as in the smoke (used stats, or used counters and gauges)"},
-    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
-     "label": "metric points per whole flush as in the smoke, +/-1%"},
+    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "per": "field:used_total",
+     "per_request": 1.0, "tol": 0.01, "label": "metric points per whole flush = used stats, +/-1%"},
     {"stat": "collector_delta.fit.n_error", "scope": "field", "max": 1,
      "label": "the whole flushes the points hold within one of the flushes counted in the span (one in flight)"},
     {"stat": "collector_delta.fit.residual", "scope": "field", "max": 0.01,
-     "label": "points are whole flushes of their basis (residual under 1% of one flush): no loss"},
+     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"},
+    # independent of the collector's count: Envoy's export requests and stream resets
+    zero("otlp_cluster.rx_reset"),
+    {"stat": "otlp_cluster.whole_error", "scope": "field", "max": 0.2,
+     "label": "requests are whole flushes of ceil(used / 10,000) requests (within 0.2 of one)"},
+    {"stat": "otlp_cluster.estimate_error", "scope": "field", "max": 1,
+     "label": "that number of flushes as the span and the interval say, +/-1"},
+    zero("collector_log.error_lines"),
     {"stat": "collector_delta.settled", "scope": "field", "equals": True,
      "label": "collector read settled at both quiescent points"},
     zero("collector_delta.refused_metric_points")]
@@ -203,7 +208,10 @@ def base_cfg(box, name):
         "origin": {"mode": "docker", "image": box["origin_image"], "platform": box["image_platform"], "port": 8092,
                    "workers": 8, "prime_file": True, "worker_connections": 65536, "worker_rlimit_nofile": 200000},
         "collector": {"image": box["collector_image"], "platform": box["image_platform"], "port": 4317,
-                      "metrics_port": 8888, "metrics": True},
+                      "metrics_port": 8888, "metrics": True,
+                      # an OTLP stats request of 10,000 histogram points is about 4.5 MB, over the
+                      # receiver's 4 MiB default (refused below the receiver, a stream reset)
+                      "max_recv_msg_size_mib": 64},
         "stats_sink": {"port": SINK_PORT, "rcvbuf": 268435456, "sample_every": 1},
         "order": "latin", "order_seed": ORDER_SEED, "adaptive": False,
         "primary_metric": "main_ms_per_s", "comparisons": "base",
@@ -346,6 +354,12 @@ def configs(box, cal=None):
         sarms = S_ARMS_1M if rung == "1m" else S_ARMS
         cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
+        if rung == "1m":
+            # the re-run of the 1M otlp row with the collector's receive limit raised (the first
+            # run lost the histogram requests of every flush): otlp and its 20 s reference, 8 rounds,
+            # checked against the 1M smoke
+            cfg("s-1m-otlp.json", "sf-s-1m-otlp", rung, k, ["nosink-20s", "otlp"], [idle_shape(rung, cal)],
+                rounds=8, rounds_block=8, rounds_max=8, comparisons="base", s_refs={"otlp": "nosink-20s"})
         cfg("s-%s.json" % rung, "sf-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
             rounds=S_ROUNDS[rung], rounds_block=S_ROUNDS[rung], rounds_max=S_ROUNDS[rung], comparisons="base",
             s_refs={a: S_REF.get(a, {}).get(rung, "nosink") for a in sarms if a not in ("nosink", "nosink-A2")

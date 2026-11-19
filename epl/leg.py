@@ -1347,6 +1347,7 @@ class RealBackend:
         envoy = elog = sink = sampler = prober = scraper = span = None
         sink_out = None
         elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
+        t_leg_wall = time.time()
         try:
             sink, sink_out = self._sink_start(aenv, leg_id)
             t_s = time.monotonic()
@@ -1371,6 +1372,7 @@ class RealBackend:
             if pre["status"] != 200:
                 raise RuntimeError("pre-window /stats returned %s" % pre["status"])
             n0 = pre["numeric"]
+            t_pre = time.monotonic()
             m["pre_read"] = {k: pre[k] for k in ("total", "histograms", "text_readouts", "seconds", "bytes")}
             m["stats_total"] = pre["total"]
             m["active_clusters"] = n0.get("cluster_manager.active_clusters")
@@ -1441,6 +1443,14 @@ class RealBackend:
             m["used_total"] = post.get("total")
             m["used_cg_lines"] = (post.get("total") or 0) - (post.get("histograms") or 0) - \
                 (post.get("text_readouts") or 0)
+            if kind == "otlp":
+                # the export requests on Envoy's side, independent of the collector's count: requests
+                # per flush (the sink cuts one every max_data_points_per_request points) and stream
+                # resets between the pre-window and post-window reads
+                m["otlp_cluster"] = statsrow.otlp_cluster(
+                    n0, n1, m.get("used_total"),
+                    int((aenv.get("stats_sink") or {}).get("max_data_points_per_request") or 10000),
+                    t_post - t_pre, interval)
             if getattr(self, "calibrate", False):
                 # calibration only: N and used N by kind (each read flushes under on_admin)
                 bk = {}
@@ -1563,15 +1573,10 @@ class RealBackend:
                         # T5/S3: the collector reads are not atomic with the quiescent points (a
                         # flush can start or finish exporting between a quiescent point and its
                         # read), so the divisor is the whole number of flushes the points hold,
-                        # n = round(points / used stats), and n may differ from the flushes counted
-                        # in the span by at most one; a real loss leaves a residual and fails
-                        # the points a flush exports: every used stat at 100k, but the used counters
-                        # and gauges only at 1M (the smoke: 310,146 of 360,146 per flush, no
-                        # histogram points), so the fit takes whichever of the two bases leaves the
-                        # smaller residual and records it (basis 1 = used stats, 2 = used counters
-                        # and gauges); the evidence holds the basis to the smoke's
-                        fitd = statsrow.otlp_fit(cd["accepted_metric_points"], m.get("used_total"),
-                                                 m.get("used_cg_lines"), sn)
+                        # n = round(points / used stats: one point per used counter, gauge and
+                        # histogram), and n may differ from the flushes counted in the span by at
+                        # most one; a real loss leaves a residual and fails
+                        fitd = statsrow.flush_fit(cd["accepted_metric_points"], m.get("used_total"), sn)
                         cd["fit"] = fitd
                         if fitd.get("n"):
                             cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / fitd["n"]
@@ -1593,6 +1598,10 @@ class RealBackend:
                     m["envoy_log_emfile"] = None
             if sink is not None:
                 m["udpsink"] = statsrow.stop_udpsink(self.own, sink, sink_out)
+            if kind == "otlp" and self.collector is not None:
+                # the collector's own log over this leg, kept beside the leg
+                m["collector_log"] = self.collector.save_log_since(
+                    t_leg_wall, os.path.join(self.run_dir, "collector", leg_id + ".log"))
         if arm.get("evidence") is not None:
             from . import evidence
             m["evidence"] = evidence.evaluate(m, arm["evidence"], self.config_dumps.get(arm["name"]),

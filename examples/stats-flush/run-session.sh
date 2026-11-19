@@ -19,6 +19,9 @@
 #   run-session.sh s-check                  freeze s-100k, s-1m and sw from their smokes and check every
 #                                          smoke leg (no override)
 #   run-session.sh s-queue [EPL_ARGS...]    s-check and the time estimate, then s-100k, s-1m and sw within S_STOP_S (default 3 h 30 min)
+#   run-session.sh s-otlp-smoke [EPL_ARGS...] the 1M smoke again, checked for s-1m-otlp (after the
+#                                          collector receive limit fix)
+#   run-session.sh s-otlp [EPL_ARGS...]     s-1m-otlp (otlp and nosink-20s at 1M, 8 rounds) after it
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
@@ -67,7 +70,7 @@ smoke_of() {  # the smoke a run is checked against; the 5 s statsd fallback has 
   case "$1" in
     m-10k) s=smoke-m-10k;; m-300k) s=smoke-m-300k;; w) s=smoke-w;;
     m-100k) s=smoke-100k;; m-1m|x-1m) s=smoke-1m;;
-    s-100k) s=smoke-s-100k;; s-1m) s=smoke-s-1m;; sw) s=smoke-sw;;
+    s-100k) s=smoke-s-100k;; s-1m|s-1m-otlp) s=smoke-s-1m;; sw) s=smoke-sw;;
     mfix-*) s=smoke-$1;;
   esac
   if [ -d "$R/smoke/$s.statsd5" ]; then echo "$s.statsd5"; else echo "$s"; fi
@@ -223,6 +226,32 @@ case "$mode" in
     trap - TERM INT
     s_check
     log "S smoke done rc=$?"
+    ;;
+  s-otlp-smoke)
+    # the 1M smoke again (after the collector's receive limit was raised), then its check
+    log "S 1M smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
+    rewrite
+    guard_begin || exit 1
+    trap on_term TERM INT
+    rm -rf "$R/smoke/smoke-s-1m"
+    bg_wait $EPL run "$C/smoke-s-1m.json" --out "$R/smoke/smoke-s-1m" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end smoke smoke-s-1m rc=$?"
+    guard_end
+    trap - TERM INT
+    SRUNS="s-1m-otlp" s_check
+    log "S 1M smoke done rc=$?"
+    ;;
+  s-otlp)
+    # the 1M otlp row again: otlp and nosink-20s, 8 rounds, after a clean 1M smoke
+    log "S otlp re-run start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    SRUNS="s-1m-otlp" s_check || { log "S otlp re-run not started (smoke or evidence; no override)"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    L=${S_STOP_S:-5400}
+    log "start s-1m-otlp (${L}s stop)"
+    bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/s-1m-otlp.json" \
+      --out "$R/s-1m-otlp" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end s-1m-otlp rc=$?"
     ;;
   s-check)
     s_check

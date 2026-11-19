@@ -101,8 +101,12 @@ class ConfigsTest(unittest.TestCase):
             st = {i["stat"] for i in sa[name]["evidence"]}
             self.assertTrue({"quiesce.before_ok", "quiesce.after_ok", "span_flushes.partial"} <= st, name)
         ot = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.accepted_metric_points_per_flush"][0]
-        self.assertEqual((ot["ref"], ot["tol"]), ({"arm": "self"}, 0.01))
-        self.assertIn("collector_delta.fit.basis", {i["stat"] for i in sa["otlp"]["evidence"]})
+        self.assertEqual((ot["per"], ot["tol"]), ("field:used_total", 0.01))  # one basis: every used stat
+        st = {i["stat"] for i in sa["otlp"]["evidence"]}
+        self.assertNotIn("collector_delta.fit.basis", st)
+        self.assertTrue({"otlp_cluster.rx_reset", "otlp_cluster.whole_error", "otlp_cluster.estimate_error",
+                         "collector_log.error_lines"} <= st)
+        self.assertEqual(s["collector"]["max_recv_msg_size_mib"], 64)
         sw = experiment.load(os.path.join(X86, "sw.json"))
         self.assertEqual([a["name"] for a in sw["arms"]], ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"])
         self.assertEqual((sw["shapes"][0]["rps"], sw["rounds"], sw["primary_metric"]), (5200, 10, "cycles_total"))
@@ -631,3 +635,30 @@ class RunSTableTest(unittest.TestCase):
         self.assertIn("S_STOP_S:-12600", txt)
         self.assertIn("s-budget", txt)
         self.assertIn('smoke-valid "$C/$(smoke_of "$run").json"', txt)
+
+
+class OtlpRerunTest(unittest.TestCase):
+    def test_config_script_table(self):
+        c = experiment.load(os.path.join(X86, "s-1m-otlp.json"))
+        self.assertEqual([a["name"] for a in c["arms"]], ["nosink-20s", "otlp"])
+        self.assertEqual((c["rounds"], c["collector"]["max_recv_msg_size_mib"]), (8, 64))
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        for m in ("s-otlp-smoke)", "s-otlp)", 'SRUNS="s-1m-otlp" s_check', "s-1m|s-1m-otlp) s=smoke-s-1m"):
+            self.assertIn(m, txt)
+        exp1 = experiment.load(os.path.join(X86, "s-1m.json"))
+
+        def res_of(exp, arms, otlp_ms):
+            legs = []
+            for r in range(1, 9):
+                for a in arms:
+                    v = otlp_ms if a == "otlp" else 300.0 + r
+                    legs.append({"leg_id": "r%02d-%s" % (r, a), "round": r, "shape": "idle-1m", "arm": a,
+                                 "verdict": {"valid": True}, "span_flushes": {"n": 3, "partial": 0,
+                                                                              "run_ms_per_flush": v + r}})
+            return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 8, "incomplete": False}}
+        old = res_of(exp1, [a["name"] for a in exp1["arms"]], 1271.0)
+        new = res_of(c, ["nosink-20s", "otlp"], 1500.0)
+        lines, js = TAB.run_s_tables({"s-1m": old, "s-1m-otlp": new})
+        ot = [r for r in js["rows"] if r["arm"] == "otlp"][0]
+        self.assertIn("re-run", ot["label"])
+        self.assertAlmostEqual(ot["arm_ms_per_flush"], 1500.0 + 4.5)

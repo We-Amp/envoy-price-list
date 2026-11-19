@@ -135,7 +135,7 @@ COLLECTOR_CONF = """receivers:
     protocols:
       grpc:
         endpoint: 127.0.0.1:%d
-exporters:
+%sexporters:
   nop:
 service:
   telemetry:
@@ -165,10 +165,14 @@ TELEMETRY_BASIC = ("      level: basic\n"
                    "                port: %d\n")
 
 
-def collector_conf(port, metrics_port=None, metrics=False):
-    """metrics: also a metrics pipeline (OTLP receiver, nop exporter) for the stats sink."""
+def collector_conf(port, metrics_port=None, metrics=False, max_recv_msg_size_mib=None):
+    """metrics: also a metrics pipeline (OTLP receiver, nop exporter) for the stats sink.
+    max_recv_msg_size_mib: the gRPC receiver's message limit (the collector's default is 4 MiB;
+    an OTLP stats export of 10,000 histogram points is about 4.5 MB and is refused below the
+    receiver, visible only as a stream reset on Envoy's side)."""
     tel = TELEMETRY_BASIC % int(metrics_port) if metrics_port else TELEMETRY_NONE
-    return COLLECTOR_CONF % (int(port), tel, METRICS_PIPELINE if metrics else "")
+    lim = "        max_recv_msg_size_mib: %d\n" % int(max_recv_msg_size_mib) if max_recv_msg_size_mib else ""
+    return COLLECTOR_CONF % (int(port), lim, tel, METRICS_PIPELINE if metrics else "")
 
 
 SPANS_RE = re.compile(r"^otelcol_receiver_(accepted|refused)_(spans|metric_points)(?:_total)?(?:\{[^}]*\})?"
@@ -182,6 +186,16 @@ def parse_collector_metrics(text):
     for kind, what, v in SPANS_RE.findall(text or ""):
         out[kind + "_" + what] = out.get(kind + "_" + what, 0.0) + float(v)
     return {k: int(round(v)) for k, v in out.items()}
+
+
+LOG_ERROR_RE = re.compile(r"\t(error|ERROR|fatal|panic)\t|\b(level=error|\"level\":\"error\")")
+
+
+def log_summary(text):
+    """{lines, error_lines, first_error} of a collector log (console or JSON encoding)."""
+    lines = [x for x in (text or "").splitlines() if x.strip()]
+    errs = [x for x in lines if LOG_ERROR_RE.search(x)]
+    return {"lines": len(lines), "error_lines": len(errs), "first_error": errs[0][:300] if errs else None}
 
 
 class Collector:
@@ -228,7 +242,8 @@ class Collector:
                 raise RuntimeError("collector port %d already in use" % p)
         d = os.path.join(self.run_dir, "collector")
         os.makedirs(d, exist_ok=True)
-        conf = collector_conf(port, self.metrics_port, bool(self.cfg.get("metrics")))
+        conf = collector_conf(port, self.metrics_port, bool(self.cfg.get("metrics")),
+                              self.cfg.get("max_recv_msg_size_mib"))
         with open(os.path.join(d, "config.yaml"), "w") as f:
             f.write(conf)
         name = "epl-collector-%d" % os.getpid()
@@ -249,8 +264,21 @@ class Collector:
                               self.cfg["image"]], capture_output=True, text=True, timeout=30).stdout.strip()
         self.side = side_service("collector", self.container_id, self.cpus, self.log)
         self.meta.update(image_id=img, container_name=name, config_sha256=sysprobe.text_sha256(conf),
-                         exporter="nop")
+                         exporter="nop", max_recv_msg_size_mib=self.cfg.get("max_recv_msg_size_mib"))
         return self.meta
+
+    def save_log_since(self, since_epoch_s, path):
+        """The container's log since a wall time, written to path; {lines, error_lines, first_error}."""
+        if not self.container_id:
+            return {"error": "collector not running"}
+        since = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(since_epoch_s - 1)) + "Z"
+        r = subprocess.run(["docker", "logs", "--since", since, self.container_id], capture_output=True, text=True,
+                           timeout=60)
+        text = (r.stdout or "") + (r.stderr or "")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(text)
+        return log_summary(text) if r.returncode == 0 else {"error": "docker logs exited %d" % r.returncode}
 
     def stop(self):
         if self.container_id:

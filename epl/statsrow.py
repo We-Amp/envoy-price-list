@@ -10,6 +10,7 @@ start. Pure functions take text or series so they are unit-tested on recorded da
 import concurrent.futures
 import http.client
 import json
+import math
 import os
 import re
 import subprocess
@@ -199,18 +200,30 @@ def settled_scrape(collector, tries=20, step_s=0.25):
     return last
 
 
-def otlp_fit(points, used_total, used_cg, expected):
-    """flush_fit of OTLP points against both bases (1: every used stat, 2: the used counters and
-    gauges), the one with the smaller residual, with `basis` set."""
-    best = None
-    for basis, per in ((1, used_total), (2, used_cg)):
-        f = flush_fit(points, per, expected)
-        if "error" in f or not f.get("n"):
-            continue
-        f["basis"] = basis
-        if best is None or f["residual"] < best["residual"]:
-            best = f
-    return best or {"error": "no basis for the OTLP fit"}
+def otlp_cluster(n0, n1, used_total, per_request, span_s, interval_s):
+    """Envoy's side of the OTLP export over the span between two stats reads: the requests sent
+    (upstream_rq_total) against ceil(used stats / points per request) per flush, and the
+    HTTP/2 stream resets (the collector refusing a request below its receiver, as an oversized
+    message, shows only here). The flushes in the span are estimated from its length and the
+    interval (the reads are not at quiescent points), so the request count must be a whole
+    number of flushes within 0.2 of one and within one flush of that estimate."""
+    c = "cluster.otel_collector."
+    if c + "upstream_rq_total" not in n0 or c + "upstream_rq_total" not in n1:
+        return {"error": "no %supstream_rq_total in the stats reads" % c}
+    if c + "http2.rx_reset" not in n0:
+        return {"error": "no %shttp2.rx_reset in the pre-window read" % c}
+    rq = n1[c + "upstream_rq_total"] - n0[c + "upstream_rq_total"]
+    # the post-window read is used-only: a stat that never moved is absent and is 0
+    rst = n1.get(c + "http2.rx_reset", 0) - n0.get(c + "http2.rx_reset", 0)
+    per_flush = int(math.ceil(float(used_total) / per_request)) if used_total else None
+    out = {"requests": rq, "rx_reset": rst, "requests_per_flush_expected": per_flush,
+           "tx_bytes": n1.get(c + "upstream_cx_tx_bytes_total", 0) - n0.get(c + "upstream_cx_tx_bytes_total", 0)}
+    if per_flush and interval_s:
+        f = rq / float(per_flush)
+        est = span_s / float(interval_s)
+        out.update(flushes=round(f, 3), flushes_estimated=round(est, 3),
+                   whole_error=round(abs(f - round(f)), 3), estimate_error=round(abs(round(f) - est), 3))
+    return out
 
 
 def quiesce(pid, port=None, timeout_s=30.0, step_s=0.03, max_busy=0.1):
