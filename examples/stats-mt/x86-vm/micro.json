@@ -77,7 +77,9 @@
     ]
    },
    "pmu": true,
-   "max_invol_switches": null
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "rule of 2026-11-18: per thread max(5, 25/s x window), times the threads, on every box (5 per thread at the 0.2 s smoke, 25 per thread at 1 s)"
   },
   "note": "The x86 comparison VM: 16 vCPU = 8 cores with SMT. Threads map to physical cores, as on the Arm VM (where a vCPU is a core): one CPU per core is listed and its sibling stays idle, so N threads use N cores on both VMs. CPU numbers assume CPUs 0-7 are one per core and 8-15 their siblings; the micro runner checks this with lscpu -p=CPU,CORE at the start and refuses otherwise (edit the lists then). Microbenchmarks: threads 1, 4 and 7 (top: one spare core), histogram workers 1 and 7; the involuntary-switch bound is frozen from the session's smoke. End to end only 1w and 4w fit (SUT 0-4 with the main thread on 4, client 5-6, origin 7, siblings idle); the 12-worker rung of the Arm VM has no x86 counterpart here. Perf through sudo, PMU standard; steal gated at 2%. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/x86-vm.txt after the rebuild."
  },
@@ -105,9 +107,9 @@
  "pinned": true,
  "model_reference": "bmModelCurrent",
  "pmu": true,
- "max_invol_switches": null,
- "invol_switches_per_s": null,
- "invol_bound_record": null,
+ "max_invol_switches": 5,
+ "invol_switches_per_s": 25,
+ "invol_bound_record": "rule of 2026-11-18: per thread max(5, 25/s x window), times the threads, on every box (5 per thread at the 0.2 s smoke, 25 per thread at 1 s)",
  "pairs": [
   [
    "fix-relaxed",

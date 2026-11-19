@@ -282,8 +282,10 @@ class MicroConfigTest(unittest.TestCase):
         self.assertIn("18:43:40Z", z["invol_bound_record"])
         self.assertEqual(MICRO.invol_limit(MICRO.smoke_config(z), 4), 20.0)
         self.assertEqual(MICRO.invol_limit(z, 19), 475.0)
-        self.assertIsNone(MICRO.invol_limit(_micro("x86-vm")))
-        self.assertIsNone(a["max_invol_switches"])
+        for vm in ("x86-vm", "arm-vm"):  # the rule's values on every box, nothing VM-local
+            v = _micro(vm)
+            self.assertEqual((v["max_invol_switches"], v["invol_switches_per_s"]), (5, 25))
+            self.assertEqual(MICRO.invol_limit(v, 12), 300.0)
         self.assertNotIn("spread_counter", a)
 
     def test_placeholders_refused(self):
@@ -422,7 +424,7 @@ class MicroGateTest(unittest.TestCase):
 
     def test_run_refuses_without_switch_bound(self):
         with self.assertRaises(SystemExit):
-            MICRO.run(_micro("arm-vm"), tempfile.mkdtemp(), "/nonexistent")
+            MICRO.run(dict(_micro("arm-vm"), max_invol_switches=None), tempfile.mkdtemp(), "/nonexistent")
 
     def test_cores(self):
         cores = MICRO.parse_lscpu("# CPU,CORE\n" + "".join("%d,%d\n" % (c, c % 8) for c in range(16)))
