@@ -61,23 +61,26 @@ check() {
 hi_check() {
   local bad=0
   if grep -q '"uncalibrated": true' "$C/u-hi.json"; then
-    log "u-hi.json is uncalibrated: set RATES_JSON (\"$BOX-hi\") from hi-calibrate"
+    log "u-hi.json is uncalibrated: set RATES_JSON (the box's u_hi.rates_key) from hi-calibrate"
     bad=1
   fi
   # H2: the queue starts only after a smoke whose every leg is valid (at the chosen r*)
-  python3 "$S/smoke_valid.py" "$C/smoke-u-hi.json" "$R/smoke-u-hi" > "$R/smoke-u-hi.valid.txt" 2>&1 || bad=1
-  tee -a "$R/queue.log" < "$R/smoke-u-hi.valid.txt"
-  if [ -f "$R/smoke-u-hi/results.json" ] && ! python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/smoke-u-hi/results.json'))['experiment'].get('r_star')==json.load(open('$C/u-hi.json')).get('r_star') else 1)"; then
+  python3 "$S/smoke_valid.py" "$C/smoke-u-hi.json" "$R/smoke-u-hi$HI_TAG" > "$R/smoke-u-hi$HI_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-u-hi$HI_TAG.valid.txt"
+  if [ -f "$R/smoke-u-hi$HI_TAG/results.json" ] && ! python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/smoke-u-hi$HI_TAG/results.json'))['experiment'].get('r_star')==json.load(open('$C/u-hi.json')).get('r_star') else 1)"; then
     log "smoke-u-hi ran at another r* than u-hi.json: smoke again"
     bad=1
   fi
   log "evidence-check u-hi against smoke-u-hi"
-  if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi" >> "$R/queue.log" 2>&1; then
+  if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi$HI_TAG" >> "$R/queue.log" 2>&1; then
     log "evidence-check u-hi FAILED (details in queue.log)"
     bad=1
   fi
   return $bad
 }
+
+# the high-load attempt's directories: HI_TAG (for example -1500) keeps each attempt apart
+HI_TAG=${HI_TAG:-}
 
 mode=${1:-}
 shift || true
@@ -136,13 +139,13 @@ case "$mode" in
         >> "$R/queue.log" 2>&1
       log "end u-hi calibrate $sh rc=$?"
     done
-    log "pick r* (worker busy 60-70% at both rungs with client headroom >= 25% at 28w; else the highest rate the headroom allows) into RATES_JSON as \"$BOX-hi\""
+    log "pick r* (worker busy 60-70% at both rungs with client headroom >= 25% at 28w; else the highest rate the headroom allows) into RATES_JSON under the box's u_hi.rates_key"
     ;;
   hi-smoke)
     rewrite
     log "u-hi smoke start box $BOX"
-    rm -rf "$R/smoke-u-hi"
-    $EPL run "$C/smoke-u-hi.json" --out "$R/smoke-u-hi" --allow-short "$@" >> "$R/queue.log" 2>&1
+    rm -rf "$R/smoke-u-hi$HI_TAG"
+    $EPL run "$C/smoke-u-hi.json" --out "$R/smoke-u-hi$HI_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end u-hi smoke rc=$?"
     hi_check
     log "u-hi smoke done rc=$?"
@@ -157,9 +160,9 @@ case "$mode" in
     hi_check || { log "u-hi not started (calibration or evidence; no override)"; exit 1; }
     L=${HI_STOP_S:-9000}
     log "start u-hi (${L}s stop)"
-    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi" \
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi$HI_TAG" \
       --allow-short "$@" >> "$R/queue.log" 2>&1
-    log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi > $R/u-hi.md"
+    log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi$HI_TAG > $R/u-hi$HI_TAG.md"
     ;;
   codegen-smoke)
     # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker

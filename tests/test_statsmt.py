@@ -784,7 +784,7 @@ class UHiTest(unittest.TestCase):
                           for s in u["shapes"]], [16, 16, 16])
         cal = json.load(open(os.path.join(MT, "bench-x86_64", "cal-u-hi.json")))
         self.assertEqual([a["name"] for a in cal["arms"]], ["base", "stats-reject"])
-        c = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 2100, "k": 16}})
+        c = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi-1500": {"r_star": 2100, "k": 16}})
         self.assertNotIn("uncalibrated", c["u-hi.json"])
         self.assertEqual([s["rps"] for s in c["u-hi.json"]["shapes"]], [29400, 29400, 58800])
         self.assertTrue(c["u.json"]["uncalibrated"])  # run U's own key is separate
@@ -793,12 +793,16 @@ class UHiTest(unittest.TestCase):
         for m in ("hi-calibrate)", "hi-smoke)", "hi-queue)", "HI_STOP_S:-9000"):
             self.assertIn(m, txt)
         self.assertIn("smoke_valid.py", txt)
+        self.assertIn('--out "$R/u-hi$HI_TAG"', txt)
+        # one rates key per attempt: the stopped 1,800 attempt's key does not feed the configs
+        c18 = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 1800, "k": 16}})["u-hi.json"]
+        self.assertTrue(c18["uncalibrated"])
         self.assertEqual((u["growth"], u["cross_socket"]), ([["28w", "14w-one"]], [["14w-split", "14w-one"]]))
 
     def test_table_contrasts_and_smoke_valid(self):
         import random
         rng = random.Random(9)
-        exp = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 1900, "k": 16}})["u-hi.json"]
+        exp = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi-1500": {"r_star": 1900, "k": 16}})["u-hi.json"]
         legs = []
         price = {"mt-14w-one": 20e3, "mt-14w-split": 26e3, "mt-28w": 30e3}
         for r in range(1, 16):
@@ -814,7 +818,7 @@ class UHiTest(unittest.TestCase):
         self.assertEqual(names, ["Δ(28w) − Δ(14w-one)", "Δ(14w-split) − Δ(14w-one)"])
         self.assertNotIn("1w)", " ".join(names).replace("14w", ""))
         SV = _mod("mt_smoke_valid", os.path.join(MT, "smoke_valid.py"))
-        sm = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi": {"r_star": 1900, "k": 16}})["smoke-u-hi.json"]
+        sm = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi-1500": {"r_star": 1900, "k": 16}})["smoke-u-hi.json"]
         ok = [{"shape": s["name"], "arm": a["name"], "round": 1, "verdict": {"valid": True}}
               for s in sm["shapes"] for a in sm["arms"]]
         self.assertEqual(SV.check(sm, {"legs": ok}), [])

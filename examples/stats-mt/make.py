@@ -299,7 +299,9 @@ def u_hi_configs(box, rates, arms):
     share (RATES_JSON key "<box>-hi"; without it the configs carry a placeholder and are marked
     uncalibrated). cal-u-hi.json is the calibration config (calibrate with --arm base)."""
     hi = box["u_hi"]
-    rr = (rates or {}).get(box["name"] + "-hi") or {}
+    # the rates key: the box's u_hi.rates_key (one key per attempt, so an earlier attempt's rate
+    # stays recorded), else "<box>-hi"
+    rr = (rates or {}).get(hi.get("rates_key") or box["name"] + "-hi") or {}
     r_star, k = int(rr.get("r_star", hi["placeholder_r_star"])), int(rr.get("k", DEFAULT_K))
     b = dict(box, rungs=[r for r in box["rungs"] if r["name"] in hi["rungs"]])
     out = {}

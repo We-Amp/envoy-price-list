@@ -138,6 +138,14 @@
      "14w-split",
      "14w-one"
     ]
+   ],
+   "rates_key": "bench-x86_64-hi-1500",
+   "attempts": [
+    {
+     "rates_key": "bench-x86_64-hi",
+     "r_star": 1800,
+     "result": "stopped 2026-11-19 15:55-16:32 CET: 8 of 15 28w legs invalid (6 other tasks on the SUT CPUs 0.053-0.071 against 0.05, 2 client pool overflow); 31 valid, 8 invalid; kept as a failed attempt"
+    }
    ]
   }
  },
