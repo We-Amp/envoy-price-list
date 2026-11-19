@@ -652,8 +652,7 @@ class OtlpRerunTest(unittest.TestCase):
         # F1: every arm of the re-run is smoked by the 1M smoke; s-1m keeps its own arm set
         sm = {a["name"] for a in experiment.load(os.path.join(X86, "smoke-s-1m.json"))["arms"]}
         self.assertLessEqual({a["name"] for a in c["arms"]}, sm)
-        self.assertNotIn("nosink-20s-A2", {a["name"] for a in exp1["arms"]} if False else
-                         {a["name"] for a in experiment.load(os.path.join(X86, "s-1m.json"))["arms"]})
+        self.assertNotIn("nosink-20s-A2", {a["name"] for a in experiment.load(os.path.join(X86, "s-1m.json"))["arms"]})
         exp1 = experiment.load(os.path.join(X86, "s-1m.json"))
 
         def res_of(exp, arms, otlp_ms):
