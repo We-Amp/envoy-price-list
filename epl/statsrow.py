@@ -210,13 +210,17 @@ def otlp_cluster(n0, n1, used_total, per_request, span_s, interval_s):
     c = "cluster.otel_collector."
     if c + "upstream_rq_total" not in n0 or c + "upstream_rq_total" not in n1:
         return {"error": "no %supstream_rq_total in the stats reads" % c}
-    if c + "http2.rx_reset" not in n0:
-        return {"error": "no %shttp2.rx_reset in the pre-window read" % c}
+    # the HTTP/2 codec stats of a cluster appear with its first HTTP/2 connection, which can come
+    # after the pre-window read (the first export of the leg): absent there they are 0. The
+    # post-window read is used-only, so an unmoved counter is absent there too; that the codec's
+    # stats exist under this name is proven by any http2.* stat of the cluster in that read
+    # (a renamed or missing stat fails closed through http2_stats_present)
+    h2 = sorted(k for k in n1 if k.startswith(c + "http2."))
     rq = n1[c + "upstream_rq_total"] - n0[c + "upstream_rq_total"]
-    # the post-window read is used-only: a stat that never moved is absent and is 0
     rst = n1.get(c + "http2.rx_reset", 0) - n0.get(c + "http2.rx_reset", 0)
     per_flush = int(math.ceil(float(used_total) / per_request)) if used_total else None
     out = {"requests": rq, "rx_reset": rst, "requests_per_flush_expected": per_flush,
+           "http2_stats_present": bool(h2), "http2_stats": h2[:20],
            "tx_bytes": n1.get(c + "upstream_cx_tx_bytes_total", 0) - n0.get(c + "upstream_cx_tx_bytes_total", 0)}
     if per_flush and interval_s:
         f = rq / float(per_flush)

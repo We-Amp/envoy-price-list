@@ -171,6 +171,8 @@ EV_OTLP = EV_QUIESCENT + [
     {"stat": "collector_delta.fit.residual", "scope": "field", "max": 0.01,
      "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"},
     # independent of the collector's count: Envoy's export requests and stream resets
+    {"stat": "otlp_cluster.http2_stats_present", "scope": "field", "equals": True,
+     "label": "the collector cluster's HTTP/2 codec stats exist in the post-window read"},
     zero("otlp_cluster.rx_reset"),
     {"stat": "otlp_cluster.whole_error", "scope": "field", "max": 0,
      "label": "requests are exactly whole flushes of ceil(used / 10,000) requests (the reads are served by the "

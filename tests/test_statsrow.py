@@ -323,10 +323,17 @@ class OtlpEvidenceTest(unittest.TestCase):
         o = sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)
         self.assertEqual((o["requests_per_flush_expected"], o["requests"], o["rx_reset"]), (37, 111, 15))
         self.assertEqual((o["whole_error"], o["estimate_error"]), (0.0, round(abs(3 - 61 / 20.0), 3)))
+        self.assertTrue(o["http2_stats_present"])
         n1.pop(c + "http2.rx_reset")  # the used-only read leaves an unmoved counter out: 0
+        n1[c + "http2.streams_active"] = 0
         self.assertEqual(sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)["rx_reset"], 0)
         self.assertIn("error", sr.otlp_cluster({}, n1, 360146, 10000, 61.0, 20.0))
-        self.assertIn("error", sr.otlp_cluster({c + "upstream_rq_total": 1}, n1, 360146, 10000, 61.0, 20.0))
+        # the smoke of 2026-11-19: the codec stats appeared after the pre-window read
+        n0b = {c + "upstream_rq_total": 100}
+        o = sr.otlp_cluster(n0b, n1, 360146, 10000, 61.0, 20.0)
+        self.assertEqual((o["rx_reset"], o["http2_stats_present"]), (0, True))
+        n1b = {c + "upstream_rq_total": 211}
+        self.assertFalse(sr.otlp_cluster(n0b, n1b, 360146, 10000, 61.0, 20.0)["http2_stats_present"])
 
     def test_collector_conf_and_log(self):
         from epl import origin
