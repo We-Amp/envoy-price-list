@@ -169,6 +169,31 @@ def flush_fit(sent, used_lines, expected):
             "expected": expected, "n_error": abs(n - expected) if expected is not None else None}
 
 
+def span_flushes(bursts, t0, t1):
+    """Flushes wholly between two quiescent points t0 < t1 (monotonic s): the bursts that start
+    at or after t0 and end at or before t1. A quiescent point lies between flushes, so a flush
+    is either inside the span or outside it; `partial` counts bursts that cross an edge (a
+    quiescent point that was not one)."""
+    inside = [b for b in bursts if b["start_t"] >= t0 and b["end_t"] <= t1]
+    partial = [b for b in bursts if (b["start_t"] < t0 < b["end_t"]) or (b["start_t"] < t1 < b["end_t"])]
+    return {"n": len(inside), "partial": len(partial)}
+
+
+def settled_scrape(collector, tries=20, step_s=0.25):
+    """Collector counters read until two consecutive reads agree (bounded); `_settled` says
+    whether they did."""
+    last = collector.scrape()
+    for _ in range(tries):
+        time.sleep(step_s)
+        cur = collector.scrape()
+        if "error" not in cur and "error" not in last and cur == last:
+            cur["_settled"] = True
+            return cur
+        last = cur
+    last["_settled"] = False
+    return last
+
+
 def quiesce(pid, port=None, timeout_s=30.0, step_s=0.03, max_busy=0.1):
     """Wait (bounded) for a quiescent point: the main thread idle over one step (no flush in
     progress) and, with a sink port, its receive queue empty (every datagram sent so far has

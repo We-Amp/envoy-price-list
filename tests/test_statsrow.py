@@ -269,3 +269,30 @@ class FieldEvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpanFlushTest(unittest.TestCase):
+    """T5: the flushes between two quiescent points are counted whole, and the collector is read
+    until it settles."""
+
+    def test_span_flushes(self):
+        from epl import statsrow as sr
+        bursts = [{"start_t": 0.5, "end_t": 0.8}, {"start_t": 1.5, "end_t": 1.9}, {"start_t": 2.5, "end_t": 2.7},
+                  {"start_t": 3.9, "end_t": 4.2}]
+        self.assertEqual(sr.span_flushes(bursts, 1.0, 3.0), {"n": 2, "partial": 0})
+        self.assertEqual(sr.span_flushes(bursts, 1.0, 4.0), {"n": 2, "partial": 1})  # 4.0 is inside a flush
+        self.assertEqual(sr.span_flushes([], 0.0, 9.0), {"n": 0, "partial": 0})
+
+    def test_settled_scrape(self):
+        from epl import statsrow as sr
+
+        class C:
+            def __init__(self, seq):
+                self.seq = list(seq)
+
+            def scrape(self):
+                return dict(self.seq.pop(0) if len(self.seq) > 1 else self.seq[0])
+        c = sr.settled_scrape(C([{"p": 1}, {"p": 5}, {"p": 9}, {"p": 9}]), tries=5, step_s=0)
+        self.assertEqual((c["p"], c["_settled"]), (9, True))
+        c = sr.settled_scrape(C([{"p": i} for i in range(10)]), tries=3, step_s=0)
+        self.assertFalse(c["_settled"])

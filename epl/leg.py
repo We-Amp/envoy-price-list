@@ -1344,7 +1344,7 @@ class RealBackend:
         names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1)) if sc else []
         m["stats_clusters_count"] = len(names)
         kind = (aenv.get("stats_sink") or {}).get("kind")
-        envoy = elog = sink = sampler = prober = scraper = None
+        envoy = elog = sink = sampler = prober = scraper = span = None
         sink_out = None
         elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
         try:
@@ -1378,6 +1378,10 @@ class RealBackend:
             time.sleep(settle)
             # window
             vm0 = statsrow.memory_kb(pid)
+            # the span sampler runs from before the first quiescent point to after the second, so
+            # the flushes between the two are counted whole (a quiescent point is between flushes)
+            span = statsrow.MainSampler(pid, pid, float(mcfg.get("main_sample_s", 0.02)), client_cpus)
+            span.start()
             # a quiescent point (no flush in progress, the sink's queue read empty) before the
             # kernel counters, so the window's datagrams are whole flushes
             q0_ok, q0_s = statsrow.quiesce(pid, e["stats_sink"]["port"] if sink else None,
@@ -1385,7 +1389,7 @@ class RealBackend:
             tu0 = time.monotonic()
             u0 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
             sk0 = sysprobe.proc_run_ns(sink.pid) if sink else None
-            coll0 = self.collector.scrape() if (self.collector and kind == "otlp") else None
+            coll0 = statsrow.settled_scrape(self.collector) if (self.collector and kind == "otlp") else None
             r0, rwhy0 = sysprobe.cpu_run_ns()
             k0 = sysprobe.proc_run_ns(pid)
             th0 = statsrow.threads_run_ns(pid)
@@ -1414,6 +1418,14 @@ class RealBackend:
                                            float(shape.get("quiesce_timeout_s", 30)))
             tu1 = time.monotonic()
             u1 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
+            # the collector at the second quiescent point: read until two reads agree (the export
+            # of the last flush may still be in flight after the main thread went idle)
+            c1 = statsrow.settled_scrape(self.collector) if coll0 is not None and self.collector else None
+            span.stop_evt.set()
+            span.join(timeout=adm_t + 10)
+            sb = statsrow.find_bursts(span.samples, float(shape.get("burst_min_busy", 0.2)),
+                                      float(shape.get("burst_join_s", 0.1)))
+            m["span_flushes"] = statsrow.span_flushes(sb, tu0, tu1)
             m["quiesce"] = {"before_ok": q0_ok, "before_s": q0_s, "after_ok": q1_ok, "after_s": q1_s,
                             "span_s": round(tu1 - tu0, 3)}
             sk1 = sysprobe.proc_run_ns(sink.pid) if sink else None
@@ -1527,28 +1539,38 @@ class RealBackend:
                     per = main.get("period_s") if not statsrow.saturated(main.get("run_ms_per_s")) else None
                     exp_n = int(round((tu1 - tu0) / (per or interval)))
                     main["saturated"] = statsrow.saturated(main.get("run_ms_per_s"))
+                    sn = m["span_flushes"]["n"]
                     if kind == "statsd":
                         m["udp"]["fit"] = statsrow.flush_fit(m["udp"]["sent"], m["used_cg_lines"], exp_n)
                         if m["udp"]["fit"].get("n"):
                             m["udp"]["sent_per_flush"] = m["udp"]["sent"] / m["udp"]["fit"]["n"]
-                    elif exp_n:
-                        # batched lines: datagrams per flush over the flushes the span holds
-                        m["udp"]["sent_per_flush"] = m["udp"]["sent"] / exp_n
+                            m["udp"]["fit"]["span_n_error"] = abs(m["udp"]["fit"]["n"] - sn)
+                    elif sn:
+                        # batched lines (T5): datagrams over the whole flushes counted between the two
+                        # quiescent points, with that count checked against the span and period
+                        m["udp"]["sent_per_flush"] = m["udp"]["sent"] / sn
+                        m["udp"]["span_fit"] = {"n": sn, "expected": exp_n, "n_error": abs(sn - exp_n)}
                 m.setdefault("side_services", {})["udpsink"] = statsrow.process_side(
                     sink.pid, e["cpus"]["origin"], sk0, sk1, busy_win)
-            if coll0 is not None and self.collector:
-                c1 = self.collector.scrape()
+            if coll0 is not None and c1 is not None:
                 if "error" in coll0 or "error" in c1:
                     m["collector_delta"] = {"error": coll0.get("error") or c1.get("error")}
                 else:
-                    cd = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)}
-                    if flushes and "accepted_metric_points" in cd:
-                        cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / flushes
+                    cd = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)
+                          if not k.startswith("_")}
+                    sn = m["span_flushes"]["n"]
+                    if sn and "accepted_metric_points" in cd:
+                        # T5: points over the whole flushes between the two quiescent points (the
+                        # collector read at both), and the fit against the used stats (one data
+                        # point per used counter, gauge and histogram)
+                        cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / sn
+                        cd["fit"] = statsrow.flush_fit(cd["accepted_metric_points"], m.get("used_total"), sn)
+                    cd["settled"] = c1.get("_settled")
                     m["collector_delta"] = cd
         except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg
             m["error"] = "%s: %s" % (type(ex).__name__, ex)
         finally:
-            for th in (sampler, prober, scraper):
+            for th in (sampler, prober, scraper, span):
                 if th is not None:
                     th.stop_evt.set()
             if envoy is not None:
