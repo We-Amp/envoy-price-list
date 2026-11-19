@@ -785,12 +785,22 @@
      "label": "at least two whole flushes"
     },
     {
+     "stat": "collector_delta.fit.basis",
+     "scope": "field",
+     "ref": {
+      "arm": "self"
+     },
+     "tol": 0,
+     "label": "points per flush on the same basis as in the smoke (used stats, or used counters and gauges)"
+    },
+    {
      "stat": "collector_delta.accepted_metric_points_per_flush",
      "scope": "field",
-     "per": "field:used_total",
-     "per_request": 1.0,
+     "ref": {
+      "arm": "self"
+     },
      "tol": 0.01,
-     "label": "metric points per whole flush = used stats, +/-1%"
+     "label": "metric points per whole flush as in the smoke, +/-1%"
     },
     {
      "stat": "collector_delta.fit.n_error",
@@ -802,7 +812,7 @@
      "stat": "collector_delta.fit.residual",
      "scope": "field",
      "max": 0.01,
-     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"
+     "label": "points are whole flushes of their basis (residual under 1% of one flush): no loss"
     },
     {
      "stat": "collector_delta.settled",

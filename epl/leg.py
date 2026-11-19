@@ -1565,7 +1565,13 @@ class RealBackend:
                         # read), so the divisor is the whole number of flushes the points hold,
                         # n = round(points / used stats), and n may differ from the flushes counted
                         # in the span by at most one; a real loss leaves a residual and fails
-                        fitd = statsrow.flush_fit(cd["accepted_metric_points"], m.get("used_total"), sn)
+                        # the points a flush exports: every used stat at 100k, but the used counters
+                        # and gauges only at 1M (the smoke: 310,146 of 360,146 per flush, no
+                        # histogram points), so the fit takes whichever of the two bases leaves the
+                        # smaller residual and records it (basis 1 = used stats, 2 = used counters
+                        # and gauges); the evidence holds the basis to the smoke's
+                        fitd = statsrow.otlp_fit(cd["accepted_metric_points"], m.get("used_total"),
+                                                 m.get("used_cg_lines"), sn)
                         cd["fit"] = fitd
                         if fitd.get("n"):
                             cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / fitd["n"]

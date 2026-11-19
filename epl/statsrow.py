@@ -199,6 +199,20 @@ def settled_scrape(collector, tries=20, step_s=0.25):
     return last
 
 
+def otlp_fit(points, used_total, used_cg, expected):
+    """flush_fit of OTLP points against both bases (1: every used stat, 2: the used counters and
+    gauges), the one with the smaller residual, with `basis` set."""
+    best = None
+    for basis, per in ((1, used_total), (2, used_cg)):
+        f = flush_fit(points, per, expected)
+        if "error" in f or not f.get("n"):
+            continue
+        f["basis"] = basis
+        if best is None or f["residual"] < best["residual"]:
+            best = f
+    return best or {"error": "no basis for the OTLP fit"}
+
+
 def quiesce(pid, port=None, timeout_s=30.0, step_s=0.03, max_busy=0.1):
     """Wait (bounded) for a quiescent point: the main thread idle over one step (no flush in
     progress) and, with a sink port, its receive queue empty (every datagram sent so far has

@@ -101,7 +101,8 @@ class ConfigsTest(unittest.TestCase):
             st = {i["stat"] for i in sa[name]["evidence"]}
             self.assertTrue({"quiesce.before_ok", "quiesce.after_ok", "span_flushes.partial"} <= st, name)
         ot = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.accepted_metric_points_per_flush"][0]
-        self.assertEqual((ot["per"], ot["tol"]), ("field:used_total", 0.01))
+        self.assertEqual((ot["ref"], ot["tol"]), ({"arm": "self"}, 0.01))
+        self.assertIn("collector_delta.fit.basis", {i["stat"] for i in sa["otlp"]["evidence"]})
         sw = experiment.load(os.path.join(X86, "sw.json"))
         self.assertEqual([a["name"] for a in sw["arms"]], ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"])
         self.assertEqual((sw["shapes"][0]["rps"], sw["rounds"], sw["primary_metric"]), (5200, 10, "cycles_total"))

@@ -164,12 +164,14 @@ EV_DOG = EV_QUIESCENT + [
      "label": "whole flushes counted as the span and the measured period say, +/-1"},
     {"stat": "udp.drop_share", "scope": "field", "max": 0.01, "label": "drops under 1%"}]
 EV_OTLP = EV_QUIESCENT + [
-    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "per": "field:used_total",
-     "per_request": 1.0, "tol": 0.01, "label": "metric points per whole flush = used stats, +/-1%"},
+    {"stat": "collector_delta.fit.basis", "scope": "field", "ref": {"arm": "self"}, "tol": 0,
+     "label": "points per flush on the same basis as in the smoke (used stats, or used counters and gauges)"},
+    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "ref": {"arm": "self"}, "tol": 0.01,
+     "label": "metric points per whole flush as in the smoke, +/-1%"},
     {"stat": "collector_delta.fit.n_error", "scope": "field", "max": 1,
      "label": "the whole flushes the points hold within one of the flushes counted in the span (one in flight)"},
     {"stat": "collector_delta.fit.residual", "scope": "field", "max": 0.01,
-     "label": "points are whole flushes of the used stats (residual under 1% of one flush): no loss"},
+     "label": "points are whole flushes of their basis (residual under 1% of one flush): no loss"},
     {"stat": "collector_delta.settled", "scope": "field", "equals": True,
      "label": "collector read settled at both quiescent points"},
     zero("collector_delta.refused_metric_points")]

@@ -300,3 +300,14 @@ class SpanFlushTest(unittest.TestCase):
         self.assertEqual((c["p"], c["_settled"]), (9, True))
         c = sr.settled_scrape(C([{"p": i} for i in range(10)]), tries=3, step_s=0)
         self.assertFalse(c["_settled"])
+
+
+class OtlpFitTest(unittest.TestCase):
+    def test_bases(self):
+        from epl import statsrow as sr
+        f = sr.otlp_fit(930438, 360146, 310146, 3)  # the 1M smoke: no histogram points
+        self.assertEqual((f["n"], f["basis"], f["n_error"]), (3, 2, 0))
+        self.assertLess(f["residual"], 0.001)
+        f = sr.otlp_fit(722800, 36140, 31130, 20)  # 100k: every used stat
+        self.assertEqual((f["n"], f["basis"]), (20, 1))
+        self.assertGreater(sr.otlp_fit(900000, 360146, 310146, 3)["residual"], 0.01)  # a loss
