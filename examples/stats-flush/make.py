@@ -49,6 +49,13 @@ Rungs (K generated clusters, target N stats): 10k (100), 100k (1,000), 300k (3,0
                      and fh, 12 rounds (not in this session's queue)
   ab-template.json   the fix A/B (base, fix, base-A2, official): a template for the later
                      session; the fix and base binaries are filled in when they are built
+  lat.json, smoke-lat.json   run L, flush latency (boxes in LAT_BOXES only): 10,000 clusters under
+                     load (Nighthawk 4,400 req/s plus the open-loop probe's 800), 10 s flush interval,
+                     60 s window; shapes own (main thread on its own core) and shared (main thread on
+                     worker_0's core), workers one CPU each; cells own x {nosink, statsd, otlp} and
+                     shared x {nosink, statsd}; 5 rounds, one Latin square over the cells, seed 31.
+                     The two files differ only in name, rounds and the smoke flag. --lat LAT_JSON
+                     ({window_s, nh_rps, cells}) applies a cut or a rate step decided from the smoke
 
 Evidence per arm (fields of the idle leg; numbers from the calibration where the plan
 says so; ref items frozen from the smoke).
@@ -57,6 +64,7 @@ says so; ref items frozen from the smoke).
 import argparse
 import glob
 import json
+import math
 import os
 import sys
 
@@ -184,6 +192,190 @@ EV_OTLP = EV_QUIESCENT + [
 EV_PROM = [{"stat": "prom.all_200", "scope": "field", "equals": True},
            {"stat": "prom.lines_p50", "scope": "field", "ref": {"arm": "self"}, "tol": 0.005},
            {"stat": "prom.count_error", "scope": "field", "max": 1}]
+
+
+# ---------------------------------------------------------------- run L (flush latency)
+
+LAT_K = 10000            # generated clusters (the 1m rung)
+LAT_INTERVAL_S = 10      # every arm: a statsd flush on a shared core needs about 4 s of wall time
+LAT_WINDOW_S = 60
+LAT_NH_RPS = 4400        # Nighthawk, 16 workers x 275; the probe adds 16 x 50
+LAT_ROUNDS = 5
+LAT_TAIL_S = 5
+LAT_CELLS = {"nosink": ["own", "shared"], "statsd": ["own", "shared"], "otlp": ["own"]}
+# CPUs of the run on each box it is written for: Envoy on 0-4 (workers 0-3 one CPU each, main on
+# 4 or on 0), the sampler thread and the probe on a CPU each, their SMT siblings left idle
+LAT_BOXES = {"bench-x86_64": {"sut": "0-4", "client": "20-29,60-69", "sampler": "30", "probe": "31",
+                              "reserved": "70-71", "worker_cpus": "0-3", "own_main_cpu": 4, "shared_main_cpu": 0}}
+LAT_PROBE = {"data_conns": 16, "data_hz": 50, "data_stagger_ms": 1.25, "per_worker": 4,
+             "admin_period_ms": 50, "control_conns": 2, "control_hz": 25,
+             "map_requests": 100, "map_margin": 5.0, "map_max_opens": 64, "gap_ms": 1.0, "drain_s": 10.0,
+             "sample_s": 0.005, "read_allow_factor": 3.0, "ready_timeout_s": 60,
+             "guard_s": 0.02, "onset_s": 0.05, "post_s": 0.25, "edge_s": 0.5, "sham_step_s": 0.5,
+             "admin_slow_ms": 20.0, "admin_widen_s": 0.06}
+
+
+def true(stat, label=None):
+    it = {"stat": stat, "scope": "field", "equals": True}
+    if label:
+        it["label"] = label
+    return it
+
+
+def bound(stat, lo=None, hi=None, label=None):
+    it = {"stat": stat, "scope": "field"}
+    if lo is not None:
+        it["min"] = lo
+    if hi is not None:
+        it["max"] = hi
+    if label:
+        it["label"] = label
+    return it
+
+
+def exact(stat, n, label=None):
+    it = {"stat": stat, "scope": "field", "equals": n, "tol_abs": 0}
+    if label:
+        it["label"] = label
+    return it
+
+
+def ev_lat(window_s, nh_rps, workers=4):
+    """The gates every run-L leg must pass (plan section 5). Every expectation is a number of
+    this config or a count of the same leg; nothing is taken from a smoke (no `ref`)."""
+    p = LAT_PROBE
+    n = int(window_s // LAT_INTERVAL_S)
+    return [
+        true("lat_senders_running", "the client and the probe were still sending when the count read ended"),
+        {"stat": "client_rate_2xx", "scope": "field", "equals": nh_rps, "tol": 0.005,
+         "label": "Nighthawk 2xx rate within 0.5% of its target"},
+        true("lat_nh.open_loop", "--open-loop in the client's arguments"),
+        bound("lat_nh.sent_ratio", 0.995, 1.005, "Nighthawk requests sent = rate x duration, +/-0.5%"),
+        true("lat.probe.finished", "the probe wrote its whole log"),
+        true("lat.probe.drained", "the probe sent and got back everything due before it stopped"),
+        bound("lat.probe.data_count_error", None, 16,
+              "probe data requests with an intended time in the window = rate x window, +/-16"),
+        exact("lat.probe.data_unanswered", 0, "every probe data request answered"),
+        exact("lat.probe.data_errors", 0, "no error or close on a probe data connection (none is reopened)"),
+        exact("lat.probe.data_non200", 0), exact("lat.probe.control_errors", 0),
+        exact("lat.probe.data_connections_used", p["data_conns"]),
+        bound("lat.probe.lateness.p99_ms", None, 0.2, "probe lateness p99 at most 0.2 ms"),
+        bound("lat.probe.lateness.over_1ms_share", None, 0.001, "probe lateness over 1 ms at most 0.1%"),
+        bound("lat.probe.loop_gaps_window", None, 5, "probe loop gaps over 1 ms at most 5"),
+        bound("lat.probe.gap_dropped_share", None, 0.001, "probes dropped for a loop gap at most 0.1%"),
+        true("lat.map.ok", "the probe mapped its connections"),
+        exact("lat.map.workers", workers), exact("lat.map.connections", p["data_conns"]),
+        exact("lat.map.per_worker_min", p["per_worker"], "exactly 4 probe connections per worker"),
+        exact("lat.map.per_worker_max", p["per_worker"]),
+        exact("lat.map.cpu0_connections", p["per_worker"]),
+        bound("lat.map.min_margin", p["map_margin"], None, "every connection's owner clear by a factor of 5"),
+        true("lat.map.one_cpu_each", "every owning worker allowed on one CPU"),
+        true("lat.map.unchanged_at_end", "the same connections on the same workers at the end"),
+        bound("lat.flush.whole", n - 1, n, "whole flushes in the used span as the interval and window say"),
+        bound("lat.flush.grid_max_error_s", None, 0.1, "flush starts one interval apart, +/-0.1 s; none off the grid"),
+        bound("lat.clock.pair_error_ms", None, 1.0, "harness and probe clock pairs agree within 1 ms"),
+        bound("lat.clock.admin_slow_outside", None, 1,
+              "admin probes over 20 ms lie in a flush burst (widened by 60 ms), at most 1 exception"),
+        exact("lat.clock.bursts_without_slow_admin", 0, "every whole flush burst holds a slow admin probe"),
+        exact("lat.sampler.threads", workers + 1), exact("lat.sampler.missing", 0),
+        bound("lat.sampler.share", 0.95, None, "at least 95% of the expected samples"),
+        bound("lat.sampler.max_gap_ms", None, 25.0, "largest sample gap at most 25 ms"),
+        true("quiesce.before_ok", "quiescent point before the client"),
+        true("quiesce.after_ok", "quiescent point after the client (the sink's queue empty)"),
+    ]
+
+
+EV_LAT_NOSINK = [
+    {"stat": "stats_sinks", "scope": "config", "absent": True, "label": "no stats sink configured"},
+    {"stat": "cluster.otel_collector.*", "scope": "leg", "absent": True, "label": "no collector cluster"},
+    bound("udp_leg.delivered", None, 1000, "UDP counters flat over the leg (under 1,000 datagrams on the box)"),
+    bound("udp_leg.no_ports", None, 1000, "no datagrams to a closed port")]
+EV_LAT_STATSD = [
+    exact("udp_leg.rcvbuf_errors", 0, "kernel RcvbufErrors flat over the leg"),
+    exact("udp_leg.socket_drops", 0, "the sink socket dropped nothing"),
+    true("udpsink.drain_quiet", "the receiver read its queue empty before it stopped"),
+    exact("udpsink.classes.other", 0, "every datagram a counter, gauge or timer line"),
+    bound("lat.statsd.flushes", 5, None, "the receiver saw at least 5 whole flushes between the quiescent points"),
+    bound("lat.statsd.max_rel_error", None, 0.005,
+          "counter and gauge lines of every flush within 0.5% of the admin count of used ones"),
+    bound("lat.statsd.spread", None, 0.001, "the flushes of the leg equal within 0.1%"),
+    bound("lat.statsd.marks_window_error", None, 1, "uptime lines in the window = flush bursts, +/-1"),
+    bound("lat.statsd.ms_per_request", 2.95, 3.10, "timer lines per request (3 per-request histograms)")]
+EV_LAT_OTLP = [
+    zero("otlp_cluster.rx_reset"),
+    bound("otlp_cluster.whole_error", None, 0, "export requests are exactly whole flushes of ceil(used / 10,000)"),
+    bound("otlp_cluster.estimate_error", None, 1, "that number of flushes as the span and the interval say, +/-1"),
+    {"stat": "collector_delta.accepted_metric_points_per_flush", "scope": "field", "per": "field:used_total",
+     "per_request": 1.0, "tol": 0.01, "label": "metric points per whole flush = used stats, +/-1%"},
+    bound("collector_delta.fit.n_error", None, 1, "the flushes the points hold within one of Envoy's request count"),
+    bound("collector_delta.fit.residual", None, 0.01, "points are whole flushes (residual under 1% of one)"),
+    zero("collector_delta.refused_metric_points"),
+    true("collector_delta.settled", "collector read settled at both quiescent points"),
+    exact("collector_cfg.max_recv_msg_size_mib", 64, "the collector's config.yaml carries the 64 MiB receive limit")]
+
+
+def lat_configs(box, cal, knobs=None):
+    """{file: config} of run L for a box in LAT_BOXES. knobs (from the smoke, applied before the
+    queue): window_s (cut 1), nh_rps (rule S-3), cells {arm: [shapes]} (cut 2, rule S-4)."""
+    lb = LAT_BOXES[box["name"]]
+    knobs = knobs or {}
+    window = int(knobs.get("window_s", LAT_WINDOW_S))
+    nh_rps = int(knobs.get("nh_rps", LAT_NH_RPS))
+    cells = knobs.get("cells", LAT_CELLS)
+    c1m = (cal or {}).get("1m") or {}
+    settle = float(c1m.get("settle_s", 3.0))
+    lead = 2
+    out = {}
+    for fn, name, rounds, smoke in (("lat.json", "sf-lat", LAT_ROUNDS, False), ("smoke-lat.json", "sf-smoke-lat", 1, True)):
+        c = base_cfg(box, name)
+        c["cpus"] = {"sut": lb["sut"], "client": lb["client"], "origin": box["cpus"]["origin"],
+                     "sampler": lb["sampler"], "probe": lb["probe"], "reserved": lb["reserved"]}
+        c["client"]["duration_s"] = int(math.ceil(lead + settle + window + LAT_TAIL_S))
+        c["measure"].update(lead_in_s=lead, window_s=window, main_sampler=True, per_thread=True,
+                            latency=dict(LAT_PROBE, cpu0=lb["shared_main_cpu"]))
+        # a stalled worker is the treatment: the client's queue and pool counters and the worker
+        # shares are recorded, not gated; the listener's rate (client + probe) within 0.5%
+        c["validity"] = {"rate_tolerance": 0.005, "max_pending_total": None, "max_overflow": None,
+                         "max_worker_share_factor": None, "min_worker_share_factor": None}
+        sh = {"path": "/s", "kind": "proxied", "body_bytes": 4096, "rps": nh_rps, "workers": 4,
+              "worker_cpus": lb["worker_cpus"], "worker_pin": "one_to_one",
+              # bounds only: Envoy starts on one CPU here and its admin reads run beside the load,
+              # so never under the uncalibrated defaults
+              "ready_timeout_s": max(180, c1m.get("ready_timeout_s", 180)),
+              "admin_timeout_s": max(120, c1m.get("admin_timeout_s", 120)),
+              "pre_window_settle_s": settle}
+        shapes = [dict(sh, name="own", main_cpu=lb["own_main_cpu"]),
+                  dict(sh, name="shared", main_cpu=lb["shared_main_cpu"], main_shares_worker=True)]
+        common = ev_periodic(LAT_INTERVAL_S, visible=False) + ev_lat(window, nh_rps)
+        flush = {"interval_s": LAT_INTERVAL_S}
+        every = {
+            "nosink": lambda: arm(box, "nosink", stats_set(LAT_K, stats_flush=flush),
+                                  ev_common(LAT_K, "1m", cal) + common + EV_LAT_NOSINK),
+            "statsd": lambda: arm(box, "statsd", stats_set(LAT_K, stats_flush=flush, stats_sink={"kind": "statsd"}),
+                                  ev_common(LAT_K, "1m", cal) + common + EV_LAT_STATSD),
+            "otlp": lambda: arm(box, "otlp", stats_set(LAT_K, stats_flush=flush, stats_sink={
+                "kind": "otlp", "max_data_points_per_request": OTLP_MAX_POINTS}),
+                ev_common(LAT_K, "1m", cal, otlp=True) + common + EV_LAT_OTLP),
+        }
+        arms = []
+        for an in ("nosink", "statsd", "otlp"):
+            if cells.get(an):
+                a = every[an]()
+                a["shapes"] = list(cells[an])
+                arms.append(a)
+        shapes = [s_ for s_ in shapes if any(s_["name"] in a["shapes"] for a in arms)]
+        c.update(base_arm=arms[0]["name"], arms=arms, shapes=shapes, box_specific=True, primary_metric="cycles_total",
+                 comparisons="base", rounds=rounds, rounds_block=rounds, rounds_max=rounds,
+                 abort_after_invalid=3 * sum(len(a["shapes"]) for a in arms), abort_after_invalid_rounds=3,
+                 lat={"interval_s": LAT_INTERVAL_S, "window_s": window, "nh_rps": nh_rps,
+                      "probe_rps": LAT_PROBE["data_conns"] * LAT_PROBE["data_hz"],
+                      "floors": {"p50_us": 20, "p99_us": 120, "share_over_2ms_points": 0.2}})
+        if smoke:
+            c["smoke"] = True
+        if not rung_calibrated(cal, "1m"):
+            c["uncalibrated"] = True
+        out[fn] = c
+    return out
 
 
 # ---------------------------------------------------------------- configs
@@ -324,8 +516,10 @@ def mfix_arms(box, k, rung, cal):
     return out
 
 
-def configs(box, cal=None):
+def configs(box, cal=None, lat=None):
     out = {}
+    if box["name"] in LAT_BOXES:
+        out.update(lat_configs(box, cal, lat))
 
     def cfg(fname, name, rung, k, arms, shapes, **kw):
         c = base_cfg(box, name)
@@ -472,12 +666,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--box", action="append")
     ap.add_argument("--rungs")
+    ap.add_argument("--lat", help="run L knobs decided from its smoke: {window_s, nh_rps, cells}")
     a = ap.parse_args()
     boxes = a.box or sorted(glob.glob(os.path.join(HERE, "boxes", "*.json")))
     cal = None
     if a.rungs:
         with open(a.rungs) as f:
             cal = json.load(f)
+    lat = None
+    if a.lat:
+        with open(a.lat) as f:
+            lat = json.load(f)
     for bp in boxes:
         with open(bp) as f:
             box = json.load(f)
@@ -486,11 +685,11 @@ def main():
         with open(os.path.join(d, "box.json"), "w") as f:
             json.dump(box, f, indent=1)
             f.write("\n")
-        for fn, c in configs(box, cal).items():
+        for fn, c in configs(box, cal, lat).items():
             with open(os.path.join(d, fn), "w") as f:
                 json.dump(c, f, indent=1)
                 f.write("\n")
-        print("%s: %d configs" % (box["name"], len(configs(box, cal))))
+        print("%s: %d configs" % (box["name"], len(configs(box, cal, lat))))
 
 
 if __name__ == "__main__":

@@ -16,6 +16,11 @@
     python3 session.py merge-smoke OUT ORIG NEW ARM  a smoke directory for the check: ORIG's
                                                     legs and config dumps with ARM's taken from
                                                     NEW (the 5 s statsd fallback's own smoke)
+    python3 session.py lat-rules CFG SMOKE_DIR      run L: the smoke rules S-3 to S-9 on the smoke's
+                                                    legs and the budget from its seconds per leg
+    python3 session.py lat-stamp CFG STAMP          record a passed lat-check: harness version, a
+                                                    hash of the harness sources and of CFG
+    python3 session.py lat-stamp-ok CFG STAMP       exit 0 only when STAMP is of these sources and CFG
 """
 
 import glob
@@ -108,16 +113,142 @@ def smoke_problems(cfg_path, smoke_dir):
         if m.get("arm"):
             latest[(m.get("shape"), m.get("arm"), m.get("round"))] = m
     probs = []
-    for sh in exp["shapes"]:
-        for a in exp["arms"]:
-            got = [m for (s_, ar, r), m in latest.items() if s_ == sh["name"] and ar == a["name"]]
-            if not got:
-                probs.append("missing: %s %s" % (sh["name"], a["name"]))
-            for m in got:
-                v = m.get("verdict") or {}
-                if not v.get("valid"):
-                    probs.append("invalid: %s %s: %s" % (sh["name"], a["name"], "; ".join(v.get("reasons") or [])))
+    # every (shape, arm) the config runs: all pairs, or only the cells its arms list
+    for sh, a in experiment.cells(exp):
+        got = [m for (s_, ar, r), m in latest.items() if s_ == sh["name"] and ar == a["name"]]
+        if not got:
+            probs.append("missing: %s %s" % (sh["name"], a["name"]))
+        for m in got:
+            v = m.get("verdict") or {}
+            if not v.get("valid"):
+                probs.append("invalid: %s %s: %s" % (sh["name"], a["name"], "; ".join(v.get("reasons") or [])))
     return probs
+
+
+# ---------------------------------------------------------------- run L (flush latency)
+
+LAT_BUDGET_S = 55 * 60
+LAT_BUSY = (0.25, 0.45)
+LAT_FLUSH_WALL_MAX_S = 7.0
+LAT_MANIP_MIN = 10.0
+LAT_CONTROL_P99_US = 1000.0
+LAT_RXQ_MAX_SHARE = 0.5
+
+
+def _get(m, dotted):
+    v = m
+    for p in dotted.split("."):
+        if not isinstance(v, dict) or p not in v:
+            return None
+        v = v[p]
+    return v
+
+
+def lat_rules(cfg_path, smoke_dir, out=sys.stdout):
+    """[problem] of the run-L smoke rules that are not per-leg gates (plan section 6): S-3 worker
+    busy share, S-4 flush length on the shared core, S-5 the manipulation check, S-6 the
+    receiver's queue, S-7 the control stream, S-8 the budget, S-9 the otlp leg. A missing leg or
+    a missing value is a problem (fail closed). The per-leg gates (S-1, the rest of S-7 and
+    S-9) are the legs' own verdicts, checked by smoke-valid and evidence-check."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    from epl import experiment
+    exp = experiment.load(cfg_path)
+    latest = {}
+    p = os.path.join(smoke_dir, "legs.jsonl")
+    for m in (legs(p) if os.path.exists(p) else []):
+        if m.get("arm"):
+            latest[(m.get("shape"), m.get("arm"))] = m
+    cells = [(sh["name"], a["name"]) for sh, a in experiment.cells(exp)]
+    probs = []
+
+    def need(cell, dotted, rule):
+        m = latest.get(cell)
+        v = _get(m, dotted) if m else None
+        if v is None:
+            probs.append("%s: %s/%s has no %s" % (rule, cell[0], cell[1], dotted))
+        return v
+
+    def check(rule, cell, dotted, lo=None, hi=None, what=""):
+        v = need(cell, dotted, rule)
+        if v is None:
+            return
+        ok = (lo is None or v >= lo) and (hi is None or v <= hi)
+        out.write("%s %s/%s %s = %s (%s)%s\n" % (rule, cell[0], cell[1], dotted, v, what, "" if ok else "  FAIL"))
+        if not ok:
+            probs.append("%s: %s/%s %s = %s, wanted %s" % (rule, cell[0], cell[1], dotted, v, what))
+
+    for cell in cells:
+        if cell not in latest:
+            probs.append("S-1: no smoke leg of %s/%s" % cell)
+    if ("own", "nosink") in cells:
+        check("S-3", ("own", "nosink"), "lat.worker_busy_mean", LAT_BUSY[0], LAT_BUSY[1],
+              "worker busy share 25%% to 45%%; outside: Nighthawk rate in steps of 400 towards 35%%, lat-smoke again")
+    else:
+        probs.append("S-3: the config has no own/nosink cell")
+    if ("shared", "statsd") in cells:
+        check("S-4", ("shared", "statsd"), "lat.flush.wall_s_max", None, LAT_FLUSH_WALL_MAX_S,
+              "longest flush at most 7 s; above: shared/statsd is replaced by shared/otlp")
+        for k in ("lat.manipulation.in_over_out", "lat.manipulation.in_over_others"):
+            check("S-5", ("shared", "statsd"), k, LAT_MANIP_MIN, None,
+                  "run-queue wait of the worker on the shared CPU, in flush, at least 10x")
+    for cell in cells:
+        if cell[1] == "statsd":
+            check("S-6", cell, "udp_leg.rcvbuf_errors", None, 0, "kernel drops 0")
+            check("S-6", cell, "udp_leg.socket_drops", None, 0, "socket drops 0")
+            check("S-6", cell, "lat.rx_queue.max_share", None, LAT_RXQ_MAX_SHARE,
+                  "receive queue at most half of the granted buffer")
+        check("S-7", cell, "lat.probe.control.p99_us", None, LAT_CONTROL_P99_US, "control stream p99 under 1 ms")
+        check("S-7", cell, "lat.probe.lateness.p99_ms", None, 0.2, "probe lateness p99")
+        check("S-7", cell, "lat.probe.loop_gaps_window", None, 5, "probe loop gaps")
+        if cell[1] == "otlp":
+            check("S-9", cell, "otlp_cluster.rx_reset", None, 0, "no export stream reset")
+            m = latest.get(cell) or {}
+            per, used = _get(m, "collector_delta.accepted_metric_points_per_flush"), m.get("used_total")
+            if per is None or not used:
+                probs.append("S-9: own/otlp has no points per flush or used count")
+            else:
+                ok = abs(per / float(used) - 1.0) <= 0.01
+                out.write("S-9 own/otlp points per flush %s against %s used stats%s\n" % (per, used, "" if ok else "  FAIL"))
+                if not ok:
+                    probs.append("S-9: points per flush %s is not the used stats %s" % (per, used))
+    spl = seconds_per_leg(smoke_dir)
+    n = len(experiment.schedule(exp, 1, exp["rounds"]))
+    if spl is None:
+        probs.append("S-8: no seconds per leg in the smoke")
+    else:
+        tot = spl * n
+        out.write("S-8 %.0f s per leg x %d legs = %.1f min (limit %.0f min; a re-run round adds %.1f min)\n" % (
+            spl, n, tot / 60, LAT_BUDGET_S / 60, spl * len(cells) / 60))
+        if tot > LAT_BUDGET_S:
+            probs.append("S-8: expected %.1f min above %.0f min: apply the cut order (window 60 to 50 s, then drop "
+                         "own/otlp) with make.py --lat and smoke again" % (tot / 60, LAT_BUDGET_S / 60))
+    return probs
+
+
+def source_sha256():
+    """One hash over the harness sources a run L uses (so a stamp is of this code whether or not
+    the checkout has git)."""
+    import hashlib
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    files = sorted(glob.glob(os.path.join(root, "epl", "*.py"))) + \
+        sorted(glob.glob(os.path.join(root, "examples", "stats-flush", "*.py"))) + \
+        sorted(glob.glob(os.path.join(root, "examples", "stats-flush", "*.sh")))
+    h = hashlib.sha256()
+    for f in files:
+        h.update(os.path.relpath(f, root).encode() + b"\0")
+        with open(f, "rb") as fh:
+            h.update(fh.read())
+    return h.hexdigest()
+
+
+def lat_stamp(cfg_path):
+    import hashlib
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    from epl import experiment
+    with open(cfg_path, "rb") as f:
+        cfg = hashlib.sha256(f.read()).hexdigest()
+    return {"harness": experiment.harness_version(), "source_sha256": source_sha256(), "config_sha256": cfg,
+            "config": os.path.basename(cfg_path)}
 
 
 def merge_rungs(out_path, cal_dirs):
@@ -273,6 +404,32 @@ def main(argv):
             print(p)
         print("smoke %s: %s" % (argv[2], "all legs valid" if not probs else "NOT clean (%d problems)" % len(probs)))
         return 1 if probs else 0
+    if cmd == "lat-rules":
+        probs = lat_rules(argv[1], argv[2])
+        for p in probs:
+            print("PROBLEM %s" % p)
+        print("run L smoke rules: %s" % ("pass" if not probs else "NOT passed (%d problems)" % len(probs)))
+        return 1 if probs else 0
+    if cmd == "lat-stamp":
+        st = dict(lat_stamp(argv[1]), passed=True)
+        with open(argv[2], "w") as f:
+            json.dump(st, f, indent=1, sort_keys=True)
+        print(json.dumps(st, sort_keys=True))
+        return 0
+    if cmd == "lat-stamp-ok":
+        try:
+            with open(argv[2]) as f:
+                st = json.load(f)
+        except (OSError, ValueError):
+            print("no passed lat-check recorded (%s)" % argv[2])
+            return 1
+        now = lat_stamp(argv[1])
+        bad = [k for k in ("source_sha256", "config_sha256", "harness") if st.get(k) != now[k]]
+        if bad or not st.get("passed"):
+            print("the recorded lat-check is not of this harness and config (differs: %s)" % ", ".join(bad or ["passed"]))
+            return 1
+        print("lat-check of this harness and config: passed (%s)" % now["harness"])
+        return 0
     if cmd == "s-budget":
         t = s_budget(argv[1], argv[2], float(argv[3]))
         if t is None:
