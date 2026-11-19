@@ -355,7 +355,9 @@ def configs(box, cal=None):
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
         # run S: the sinks at the two rungs, with the A/A; 5 rounds (one Latin square of 5 arms)
         sarms = S_ARMS_1M if rung == "1m" else S_ARMS
-        cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, sarms, [idle_shape(rung, cal)],
+        # the 1M smoke also smokes the re-run's A/A arm (s-1m-otlp), so its evidence has a leg
+        smarms = sarms + (["nosink-20s-A2"] if rung == "1m" else [])
+        cfg("smoke-s-%s.json" % rung, "sf-smoke-s-" + rung, rung, k, smarms, [idle_shape(rung, cal)],
             rounds=1, rounds_block=1, rounds_max=1, smoke=True, evidence_mode="record")
         if rung == "1m":
             # the re-run of the 1M otlp row with the collector's receive limit raised (the first
