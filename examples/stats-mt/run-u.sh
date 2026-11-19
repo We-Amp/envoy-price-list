@@ -7,9 +7,11 @@
 #   run-u.sh smoke [EPL_ARGS...]       one round of base, stats-reject and base-A2 at every rung
 #   run-u.sh check                     the configs calibrated, the evidence checked against the smoke
 #   run-u.sh queue [EPL_ARGS...]       run U, then the HITM evidence legs (boxes that list hitm_events)
-#   run-u.sh codegen-smoke [EPL_ARGS...] (boxes with a codegen section) one round of the codegen run
-#   run-u.sh codegen [EPL_ARGS...]     the codegen run after its smoke (evidence checked against it);
-#                                     CG=-8w selects the fallback configs (top rung 8 workers)
+#   run-u.sh codegen-smoke [EPL_ARGS...] (boxes with a codegen section) the atomics check of both
+#                                     binaries, then one round at 4w/12w; when only 12w legs are
+#                                     invalid, one round at 4w/8w; writes codegen.choice
+#   run-u.sh codegen [EPL_ARGS...]     the codegen run with the passing smoke's rungs (refuses
+#                                     without one; evidence checked against it)
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -99,15 +101,40 @@ case "$mode" in
     log "queue done; tables: python3 $S/u_table.py $R/u --hitm $R/u-hitm > $R/u.md"
     ;;
   codegen-smoke)
-    CG=${CG:-}
-    log "codegen smoke$CG start box $BOX"
-    $EPL run "$C/smoke-codegen$CG.json" --out "$R/smoke-codegen$CG" --allow-short "$@" >> "$R/queue.log" 2>&1
-    rc=$?
-    log "end codegen smoke$CG rc=$rc"
-    exit $rc
+    # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker
+    # fallback smoke when only top-rung legs were invalid; the choice is written for `codegen`
+    rm -f "$R/codegen.choice"
+    log "codegen atomics check box $BOX"
+    python3 "$S/codegen_check.py" atomics "$C/codegen.json" "$R/codegen-atomics.json" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { log "codegen atomics check FAILED; no smoke"; exit 1; }
+    for CG in "" "-8w"; do
+      log "codegen smoke$CG start box $BOX"
+      rm -rf "$R/smoke-codegen$CG"
+      $EPL run "$C/smoke-codegen$CG.json" --out "$R/smoke-codegen$CG" --allow-short "$@" >> "$R/queue.log" 2>&1
+      log "end codegen smoke$CG rc=$?"
+      python3 "$S/codegen_check.py" smoke "$C/smoke-codegen$CG.json" "$R/smoke-codegen$CG" \
+        --json "$R/smoke-codegen$CG.check.json" 2>&1 | tee -a "$R/queue.log"
+      rc=${PIPESTATUS[0]}
+      if [ "$rc" -eq 0 ]; then
+        echo "$CG" > "$R/codegen.choice"
+        log "codegen smoke$CG passed; codegen will run codegen$CG.json"
+        exit 0
+      fi
+      if [ "$rc" -ne 2 ] || [ -n "$CG" ]; then
+        log "codegen smoke$CG FAILED (rc=$rc); no fallback"
+        exit 1
+      fi
+      log "codegen smoke: only 12-worker legs invalid; trying the 8-worker fallback"
+    done
+    exit 1
     ;;
   codegen)
-    CG=${CG:-}
+    [ -f "$R/codegen.choice" ] || { log "codegen: no passing smoke (run codegen-smoke first); not started"; exit 1; }
+    CG=$(cat "$R/codegen.choice")
+    python3 "$S/codegen_check.py" smoke "$C/smoke-codegen$CG.json" "$R/smoke-codegen$CG" >> "$R/queue.log" 2>&1 \
+      || { log "codegen: smoke-codegen$CG does not pass its check; not started"; exit 1; }
+    python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/codegen-atomics.json'))['ok'] else 1)" \
+      || { log "codegen: atomics check missing or failed; not started"; exit 1; }
     log "evidence-check codegen$CG against smoke-codegen$CG"
     if ! $EPL evidence-check "$C/codegen$CG.json" "$R/smoke-codegen$CG" >> "$R/queue.log" 2>&1; then
       log "evidence-check codegen$CG FAILED (details in queue.log); not started"

@@ -264,11 +264,16 @@ def codegen_configs(box):
                  box_specific=True,
                  contrast={"primary": "ln(dev / dev-reject) - ln(official / official-reject), paired by round",
                            "aa": ["official-A2", "official"], "direct": ["dev", "official"],
-                           "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics"})
+                           "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics",
+                           # checked from the binaries before the smoke (codegen_check.py atomics)
+                           "expect_style": {"official": "outline", "dev": "llsc-inline"},
+                           # store-stat operations per request compared between these arms in the smoke
+                           "stat_ops_pair": ["official", "dev"]})
         out["codegen%s.json" % suffix] = c
         sm = json.loads(json.dumps(c))
         sm.update(name="smoke-codegen%s-%s" % (suffix, box["name"]), rounds=1, rounds_block=1, rounds_max=1, smoke=True,
                   evidence_mode="record")
+        sm["measure"]["stat_ops_probe"] = True
         out["smoke-codegen%s.json" % suffix] = sm
     return out
 

@@ -595,6 +595,8 @@ class CodegenTest(unittest.TestCase):
         self.assertAlmostEqual(row["direct_confounded"]["mean"], 100 * math.log(1.03), delta=0.01)
         self.assertAlmostEqual(row["instructions_u_dev_over_official"], 1.01)
         self.assertIn("confounded", text)
+        self.assertIn("Absolute", text)
+        self.assertAlmostEqual(row["absolute"]["mean"], 30e3 * 1.03 * 0.07 - 30e3 * 0.05, delta=150)
         json.dump(self._res(dev_price=0.0), open(os.path.join(d, "results.json"), "w"))
         self.assertTrue(CGT.table(d)[1]["rungs"]["mt-4w"]["primary_verdict"].startswith("no resolved difference"))
         json.dump(self._res(aa_noise=0.03), open(os.path.join(d, "results.json"), "w"))
@@ -608,6 +610,81 @@ class CodegenTest(unittest.TestCase):
         txt = open(os.path.join(MT, "run-u.sh")).read()
         self.assertIn("codegen-smoke)", txt)
         self.assertIn('evidence-check "$C/codegen$CG.json"', txt)
+        self.assertNotIn("CG=${CG:-}", txt)
+
+
+CGC = _mod("mt_codegen_check", os.path.join(MT, "codegen_check.py"))
+
+
+class CodegenCheckTest(unittest.TestCase):
+    def test_count_and_style(self):
+        lines = ["  4005d0:\tldaxr\tx1, [x0]", "  4005d4:\tstlxr\tw2, x1, [x0]", "  4005d8:\tldaddal\tx1, x2, [x0]",
+                 "  4005dc: \tcasal\tx1, x2, [x0]", "  4005e0:\tldr\tx1, [x0]",
+                 "  4005e4:\t885ffc01 \tldaxr\tw1, [x0]", "Disassembly of section .text:"]
+        c = CGC.count_atomics(lines)
+        self.assertEqual((c["exclusive"], c["lse"]), (3, 2))
+        self.assertEqual(CGC.style({"exclusive": 90034, "lse": 38}), "llsc-inline")
+        self.assertEqual(CGC.style({"exclusive": 224, "lse": 56}), "outline")
+        self.assertEqual(CGC.style({"exclusive": 224, "lse": 0}), "unclear")
+        self.assertEqual(CGC.style({"exclusive": 5000, "lse": 10}), "unclear")
+
+    def test_config_contrast(self):
+        c = json.load(open(os.path.join(MT, "arm-vm", "codegen.json")))
+        self.assertEqual(c["contrast"]["expect_style"], {"official": "outline", "dev": "llsc-inline"})
+        self.assertFalse(c["measure"].get("stat_ops_probe"))
+        sm = json.load(open(os.path.join(MT, "arm-vm", "smoke-codegen.json")))
+        self.assertTrue(sm["measure"]["stat_ops_probe"])
+
+    def test_prometheus_stat_ops(self):
+        t0 = ("# TYPE envoy_cluster_upstream_rq_total counter\nenvoy_cluster_upstream_rq_total{envoy_cluster_name=\"o\"} 10\n"
+              "# TYPE envoy_cluster_upstream_cx_tx_bytes_total counter\nenvoy_cluster_upstream_cx_tx_bytes_total{} 100\n"
+              "# TYPE envoy_cluster_upstream_rq_active gauge\nenvoy_cluster_upstream_rq_active{} 1\n"
+              "# TYPE envoy_cluster_upstream_rq_time histogram\nenvoy_cluster_upstream_rq_time_bucket{le=\"1\"} 3\n"
+              "envoy_cluster_upstream_rq_time_sum{} 7\nenvoy_cluster_upstream_rq_time_count{} 5\n")
+        t1 = t0.replace("} 10", "} 30").replace("} 100", "} 9000").replace("_count{} 5", "_count{} 25")
+        p0, p1 = leg.parse_prometheus(t0), leg.parse_prometheus(t1)
+        so = leg.stat_ops(p0, p1)
+        self.assertEqual(so["counter_incs"], 20.0)  # byte counters left out
+        self.assertEqual(so["histogram_samples"], 20.0)
+        self.assertEqual(len(so["counters_changed"]), 2)
+
+    def _smoke(self, d, cfg, bad=None, dev_incs=20.0, invalid=()):
+        legs = []
+        for s in cfg["shapes"]:
+            for a in cfg["arms"]:
+                m = {"leg_id": "r01-%s-%s" % (s["name"], a["name"]), "round": 1, "shape": s["name"], "arm": a["name"],
+                     "attempt": 1, "verdict": {"valid": (s["name"], a["name"]) not in invalid,
+                                               "reasons": ["client headroom 0.10 below 0.25"]
+                                               if (s["name"], a["name"]) in invalid else []},
+                     "responses": 10000}
+                if a["name"] in ("official", "dev"):
+                    m["stat_ops"] = {"counter_incs": 10000 * (dev_incs if a["name"] == "dev" else 20.0),
+                                     "histogram_samples": 10000 * 3.0, "counters_changed": ["a", "b"]}
+                legs.append(m)
+        json.dump({"experiment": cfg, "legs": legs, "metadata": {}}, open(os.path.join(d, "results.json"), "w"))
+
+    def test_smoke_check(self):
+        cfg = json.load(open(os.path.join(MT, "arm-vm", "smoke-codegen.json")))
+        d = tempfile.mkdtemp()
+        self._smoke(d, cfg)
+        self.assertTrue(CGC.smoke(cfg, d)["ok"])
+        self._smoke(d, cfg, dev_incs=20.5)
+        r = CGC.smoke(cfg, d)
+        self.assertFalse(r["ok"])
+        self.assertFalse(r["capacity_only"])
+        self.assertTrue(any("counter_incs_per_req" in p for p in r["problems"]))
+        self._smoke(d, cfg, invalid=[("mt-12w", "dev")])
+        r = CGC.smoke(cfg, d)
+        self.assertFalse(r["ok"])
+        self.assertTrue(r["capacity_only"])  # only the top rung: the fallback applies
+        self._smoke(d, cfg, invalid=[("mt-4w", "dev")])
+        self.assertFalse(CGC.smoke(cfg, d)["capacity_only"])
+
+    def test_script_gates(self):
+        txt = open(os.path.join(MT, "run-u.sh")).read()
+        self.assertIn('codegen_check.py" atomics', txt)
+        self.assertIn("codegen.choice", txt)
+        self.assertIn("no passing smoke", txt)
 
 
 if __name__ == "__main__":

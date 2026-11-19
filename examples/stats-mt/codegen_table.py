@@ -16,7 +16,13 @@ round, log ratios in percent with a 95% t interval:
              or less the stats cost in the inline LL/SC build than in the out-of-line
              helpers build. A finding needs an interval excluding zero and a mean of at least
              1% of the official build's cycles per request.
+  absolute   (dev - dev-reject) - (official - official-reject) in cycles per request, paired
+             by round: the same contrast without the baseline in the denominator (a build whose
+             other work is slower shrinks its percentage with no change in the absolute cost).
   direct     dev / official: labelled confounded (the builds differ beyond the atomics).
+
+The two rungs are two separate rows, each with its own A/A gate; there is no multiplicity
+correction across them.
 
 Beside them the level of each arm (median cycles and instructions per request) and the
 instructions-per-request ratio dev / official, which shows whether the codegen difference is
@@ -70,6 +76,10 @@ def rung_rows(rounds, incomplete=False):
     prim = interval([lr(v["dev"], v["dev-reject"]) - lr(v["official"], v["official-reject"])
                      for v in rounds.values()])
     direct = interval([lr(v["dev"], v["official"]) for v in rounds.values()])
+    absolute = u_table.t_interval([(v["dev"] - v["dev-reject"]) - (v["official"] - v["official-reject"])
+                                   for v in rounds.values()])
+    price_abs = {"official": u_table.t_interval([v["official"] - v["official-reject"] for v in rounds.values()]),
+                 "dev": u_table.t_interval([v["dev"] - v["dev-reject"] for v in rounds.values()])}
     aa_ok = (aa.get("half_width") is not None and aa["half_width"] <= AA_LIMIT_PCT and aa["lo"] <= 0 <= aa["hi"])
     if incomplete:
         verdict = experiment.INCOMPLETE
@@ -83,13 +93,20 @@ def rung_rows(rounds, incomplete=False):
     else:
         verdict = "no resolved difference; at most %.2f%%" % max(abs(prim["lo"]), abs(prim["hi"]))
     return {"rounds": len(rounds), "aa": aa, "aa_pass": aa_ok, "price_official": p_off, "price_dev": p_dev,
-            "primary": prim, "primary_verdict": verdict, "direct_confounded": direct}
+            "primary": prim, "primary_verdict": verdict, "absolute": absolute, "price_absolute": price_abs,
+            "direct_confounded": direct}
 
 
 def fmt(t):
     if t.get("lo") is None:
         return "%s (n=%d)" % ("-" if t.get("mean") is None else "%+.2f%%" % t["mean"], t["n"])
     return "%+.2f%% [%+.2f, %+.2f]" % (t["mean"], t["lo"], t["hi"])
+
+
+def fmt_abs(t):
+    if t.get("lo") is None:
+        return "-" if t.get("mean") is None else "%+.0f (n=%d)" % (t["mean"], t["n"])
+    return "%+.0f [%+.0f, %+.0f]" % (t["mean"], t["lo"], t["hi"])
 
 
 def table(run_dir, metric=u_table.METRIC):
@@ -125,6 +142,14 @@ def table(run_dir, metric=u_table.METRIC):
             s, row["rounds"], fmt(row["aa"]), "" if row["aa_pass"] else " (fails)", fmt(row["price_official"]),
             fmt(row["price_dev"]), fmt(row["primary"]), row["primary_verdict"], fmt(row["direct_confounded"])))
     L.append("")
+    L.append("Absolute (cycles per request, 95%% t interval over rounds):\n")
+    L.append("| Rung | Stats price, official | Stats price, dev | (dev - dev-reject) - (official - official-reject) |\n"
+             "|---|---|---|---|")
+    for s, row in js["rungs"].items():
+        L.append("| %s | %s | %s | %s |" % (s, fmt_abs(row["price_absolute"]["official"]),
+                                           fmt_abs(row["price_absolute"]["dev"]), fmt_abs(row["absolute"])))
+    L.append("")
+    L.append("The two rungs are separate rows with their own A/A gate; no multiplicity correction across them.\n")
     L.append("| Rung | Arm | Median %s | Median user instructions per request |\n|---|---|---|---|" % metric)
     for s, row in js["rungs"].items():
         for a in ARMS:

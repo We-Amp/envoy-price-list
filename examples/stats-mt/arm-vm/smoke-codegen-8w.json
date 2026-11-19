@@ -154,7 +154,8 @@
   "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations",
   "per_thread": true,
   "numastat": false,
-  "responses_from": "origin"
+  "responses_from": "origin",
+  "stat_ops_probe": true
  },
  "validity": {
   "max_steal_share": 0.02,
@@ -360,7 +361,15 @@
    "dev",
    "official"
   ],
-  "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics"
+  "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics",
+  "expect_style": {
+   "official": "outline",
+   "dev": "llsc-inline"
+  },
+  "stat_ops_pair": [
+   "official",
+   "dev"
+  ]
  },
  "smoke": true,
  "evidence_mode": "record"

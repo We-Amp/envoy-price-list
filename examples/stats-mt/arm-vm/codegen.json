@@ -360,6 +360,14 @@
    "dev",
    "official"
   ],
-  "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics"
+  "direct_label": "confounded: 1.40.2 against main 5e1439980a differ beyond the atomics",
+  "expect_style": {
+   "official": "outline",
+   "dev": "llsc-inline"
+  },
+  "stat_ops_pair": [
+   "official",
+   "dev"
+  ]
  }
 }

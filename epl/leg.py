@@ -278,6 +278,59 @@ def _stat_deltas(q0, q1):
     return {k: q1[k] - q0.get(k, 0) for k in sorted(q1) if DELTA_KEYS_RE.search(k) and q1[k] != q0.get(k, 0)}
 
 
+def parse_prometheus(text):
+    """{(type, name with labels): value} of an Envoy /stats/prometheus page (counters, gauges and
+    histogram _count / _sum samples)."""
+    types, out = {}, {}
+    for line in (text or "").splitlines():
+        if line.startswith("# TYPE "):
+            parts = line.split()
+            if len(parts) >= 4:
+                types[parts[2]] = parts[3]
+            continue
+        if not line or line.startswith("#"):
+            continue
+        key, _, val = line.rpartition(" ")
+        base = key.split("{", 1)[0]
+        fam = base
+        for suf in ("_count", "_sum", "_bucket"):
+            if base.endswith(suf) and types.get(base[: -len(suf)]) == "histogram":
+                fam = base[: -len(suf)]
+        t = types.get(fam)
+        if t is None:
+            continue
+        try:
+            out[(t if fam == base else t + base[len(fam):], key)] = float(val)
+        except ValueError:
+            pass
+    return out
+
+
+def stat_ops(p0, p1):
+    """Store-stat operations over a window from two /stats/prometheus snapshots: counter
+    increments (the sum of counter deltas, byte counters left out because they add sizes, not
+    one per event), histogram samples (the _count deltas), and the counters that changed.
+    Gauge updates cannot be counted from snapshots (an inc and a dec cancel)."""
+    inc = samples = 0.0
+    changed = []
+    for (t, k), v in p1.items():
+        d = v - p0.get((t, k), 0.0)
+        if t == "counter" and d:
+            changed.append(k)
+            if "bytes" not in k:
+                inc += d
+        elif t == "histogram_count" and d:
+            samples += d
+    return {"counter_incs": inc, "histogram_samples": samples, "counters_changed": sorted(changed)}
+
+
+def admin_prometheus(port, timeout=5.0):
+    st, body = admin_get(port, "/stats/prometheus?usedonly", timeout=timeout)
+    if st != 200:
+        raise RuntimeError("admin /stats/prometheus returned %d" % st)
+    return parse_prometheus(body)
+
+
 def _stat_window(q0, q1):
     """Every filtered stat's change over the window, zeros included, so evidence can tell a
     counter that stayed at 0 from one that does not exist (gauges come out as changes too)."""
@@ -891,6 +944,8 @@ class RealBackend:
                     c0 = sysprobe.proc_threads_cpu(cl.pid)
                     e0 = sysprobe.proc_threads_detail(envoy.pid)
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
+                    # smoke-only probe (measure.stat_ops_probe): every store stat around the window
+                    sp0 = admin_prometheus(ecfg["admin_port"], adm_t) if mcfg.get("stat_ops_probe") else None
                     t_q0 = time.monotonic()
                     q0 = admin_stats(ecfg["admin_port"], adm_t)
                     from_origin = mcfg.get("responses_from") == "origin"
@@ -965,6 +1020,8 @@ class RealBackend:
                     # the response count's time base ends with the last count read, before
                     # anything slow (thread checks, numastat) runs
                     t2 = time.monotonic()
+                    if sp0 is not None:
+                        m["stat_ops"] = stat_ops(sp0, admin_prometheus(ecfg["admin_port"], adm_t))
                     if rung["main_cpu"] is not None:
                         # where every thread ran last, after the window: still on its own set
                         m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
