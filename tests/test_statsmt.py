@@ -366,7 +366,7 @@ class MicroConfigTest(unittest.TestCase):
 
 class MicroGateTest(unittest.TestCase):
     def setUp(self):
-        self.cfg = dict(_micro("arm-vm"), max_invol_switches=2)
+        self.cfg = dict(_micro("arm-vm"), max_invol_switches=2, invol_switches_per_s=None)
         self.rc = [r for r in self.cfg["runs"] if r["binary"] == "stat_update_benchmark"][0]
 
     def test_pass_and_env(self):
