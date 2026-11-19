@@ -40,14 +40,15 @@ each process the box must be idle; on a VM the steal share over the process is g
 Gates, per repetition, fail-closed (a failing output is not kept and the entry is re-run on the
 next start): exit 0; no repetition errored or skipped; every expected benchmark (name and
 count) has all its repetitions and a median; the time outside the common window,
-(1 - window_overlap) * window_s, at most 2 ms + 0.5% of the window (overlap about 0.990 at
-0.2 s, 0.993 at 1 s: batch granularity passes, a descheduled thread does not); invol_switches
+(1 - window_overlap) * window_s, at most 2 ms + 0.5% of the window + 3 batches of the slowest
+thread (256 operations over its rate: threads whose skew is within the clock-read granularity
+count as concurrent; a descheduled thread does not); invol_switches
 (summed over the threads) known and <= the bound per thread times the threads: per thread
 max(max_invol_switches, invol_switches_per_s * window_s) where the box sets a rate
 (max(5, 25/s x window) on every box), else max_invol_switches (frozen from the box's own smoke;
 `run` refuses while it is unset);
-the counts per repetition are recorded in runs.jsonl and the bound in meta.json; the slowest thread's operations at least 20,000 per second
-of window and never under 1,024 (a stalled thread, not a slow contended one); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
+the counts per repetition are recorded in runs.jsonl and the bound in meta.json; the slowest thread's operations at least 1,024 (four batches:
+a stalled thread, not a starved contended one, whose count is a result); cycles_per_op and instructions_per_op non-negative where the box has a PMU;
 the per-process steal gate. fairness is a result, never a gate.
 
 Table: per benchmark and arm the median of each round's repetition median; per pair of arms
@@ -75,7 +76,8 @@ sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from epl import stats, sysprobe  # noqa: E402
 
 METRICS = ["cycles_per_op", "instructions_per_op", "ns_per_op", "ops_per_sec", "fairness", "min_thread_ops",
-           "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample", "min_distance_bytes"]
+           "window_overlap", "invol_switches", "steal_ticks", "ns_per_sample", "min_distance_bytes",
+           "pooled_cycles_per_op"]
 SMOKE = {"warmup_s": 0.05, "window_s": 0.2, "repetitions": 2}
 
 
@@ -83,8 +85,19 @@ def ops_floor(cfg):
     return max(int(cfg["min_thread_ops_abs"]), int(math.ceil(cfg["ops_floor_per_s"] * cfg["window_s"])))
 
 
-def max_nonoverlap_s(cfg):
-    return cfg["max_nonoverlap_s"] + cfg["max_nonoverlap_share"] * cfg["window_s"]
+def batch_s(cfg, min_thread_ops):
+    """The slowest thread's time per clock-read batch: ops_per_batch over its rate in the window."""
+    if not min_thread_ops or float(min_thread_ops) <= 0:
+        return 0.0
+    return float(cfg.get("ops_per_batch", 256)) * cfg["window_s"] / float(min_thread_ops)
+
+
+def max_nonoverlap_s(cfg, min_thread_ops=None):
+    """Time a repetition may spend outside the common window: 2 ms + 0.5% of the window + a few
+    batches of the slowest thread (the second revision of the gates: a thread looks at the clock
+    once per batch, so threads whose skew is within that granularity count as concurrent)."""
+    return (cfg["max_nonoverlap_s"] + cfg["max_nonoverlap_share"] * cfg["window_s"]
+            + float(cfg.get("nonoverlap_batches", 0)) * batch_s(cfg, min_thread_ops))
 
 
 def invol_limit(cfg, threads=1):
@@ -245,7 +258,7 @@ def gate_problems(b, cfg, rc):
     probs = []
     if rc.get("kind") == "window":
         ov = b.get("window_overlap")
-        lim_s = max_nonoverlap_s(cfg)
+        lim_s = max_nonoverlap_s(cfg, b.get("min_thread_ops"))
         if ov is None or (1.0 - float(ov)) * cfg["window_s"] > lim_s + 1e-12:
             probs.append("%s: window overlap %s: %s ms outside the common window, limit %.2f ms" % (
                 nm, ov, "?" if ov is None else "%.2f" % (1000 * (1.0 - float(ov)) * cfg["window_s"]), 1000 * lim_s))
@@ -498,6 +511,7 @@ def parse(out):
                 continue
             pm = re.search(r"placement=(\S+)", b.get("label", ""))
             m = {k: (None if b.get(k) is None or float(b[k]) < 0 else float(b[k])) for k in METRICS}
+            m["pooled_cycles_per_op"] = pooled_cycles(m, threads_of(norm_name(b["run_name"])))
             rows.append((rnd, arm, pm.group(1) if pm else "-", norm_name(b["run_name"]), m))
     return rows
 
@@ -523,8 +537,23 @@ def paired(ref, arm):
     return stats.paired_log_ratio([ref[r] for r in rounds], [arm[r] for r in rounds]), rounds
 
 
+def pooled_cycles(m, threads):
+    """Cycles per operation over all threads together: threads x clock / pooled throughput. The
+    benchmark's cycles_per_op is the mean of the threads' own ratios, which starved threads
+    dominate; with one clock rate for every busy thread, cycles_per_op / ns_per_op is that clock
+    (GHz), and the pooled cost is threads x GHz x 1e9 / ops_per_sec."""
+    c, ns, ops = m.get("cycles_per_op"), m.get("ns_per_op"), m.get("ops_per_sec")
+    if not threads or not c or not ns or not ops:
+        return None
+    return threads * (c / ns) * 1e9 / ops
+
+
 def primary(name):
-    return "ns_per_sample" if name.startswith("bmHistogramRecord") else "cycles_per_op"
+    return "ns_per_sample" if name.startswith("bmHistogramRecord") else "pooled_cycles_per_op"
+
+
+def secondary(name):
+    return () if name.startswith("bmHistogramRecord") else ("ops_per_sec",)
 
 
 def table(out, rounds_needed=5):
@@ -534,9 +563,10 @@ def table(out, rounds_needed=5):
     data = {m: by_key(rows, m) for m in METRICS}
     L = ["# Stats microbenchmarks (%s)\n" % meta.get("config"),
          "Per round the median over the repetitions; paired log ratio over the rounds with a 95%% t interval "
-         "(negative: faster or cheaper than the reference). Cycles per operation are the primary measure "
-         "(ns per sample for the histogram); ns per operation beside them. Binaries unchanged during the "
-         "run: %s.\n" % meta.get("sha256_unchanged")]
+         "(negative: cheaper than the reference; for throughput, negative is slower). The headline is the "
+         "pooled cost, cycles per operation over all threads together, with the pooled throughput beside it "
+         "(ns per sample for the histogram); fairness is a result in its own table. Binaries unchanged "
+         "during the run: %s.\n" % meta.get("sha256_unchanged")]
     js = {"pairs": [], "model": [], "h1": [], "fairness": {}}
 
     def fmt(p, rr):
@@ -546,10 +576,10 @@ def table(out, rounds_needed=5):
     L.append("## Arm against arm\n")
     L.append("| Benchmark | Placement | Arm vs ref | Measure | Effect [95% CI] | Rounds | Ref |\n|---|---|---|---|---|---|---|")
     for a, ref, which in meta["pairs"]:
-        for (name, pl) in sorted(set(data["cycles_per_op"]) | set(data["ns_per_sample"])):
+        for (name, pl) in sorted(set(data["pooled_cycles_per_op"]) | set(data["ns_per_sample"])):
             if which == "n1" and threads_of(name) not in (1, None):
                 continue
-            for metric in (primary(name), "ns_per_op"):
+            for metric in (primary(name),) + secondary(name):
                 per = data[metric].get((name, pl)) or {}
                 if a not in per or ref not in per:
                     continue
@@ -563,14 +593,14 @@ def table(out, rounds_needed=5):
                 L.append("| %s | %s | %s vs %s | %s | %s | %.2f |" % (name, pl, a, ref, metric, fmt(p, rr),
                                                                      row["ref_value"]))
     L.append("")
-    L.append("## Model variants against Current (one build)\n")
-    L.append("| Benchmark | Threads | Placement | Effect on cycles/op [95% CI] | Rounds |\n|---|---|---|---|---|")
-    for (name, pl), per in sorted(data["cycles_per_op"].items()):
+    L.append("## Model variants against Current (one build; pooled cycles/op)\n")
+    L.append("| Benchmark | Threads | Placement | Effect on pooled cycles/op [95% CI] | Rounds |\n|---|---|---|---|---|")
+    for (name, pl), per in sorted(data["pooled_cycles_per_op"].items()):
         m = re.match(r"bmModel(\w+?)(Shared|PerThreadSpaced)/", name)
         if not m or m.group(1) == "Current":
             continue
         ref_name = name.replace("bmModel" + m.group(1), "bmModelCurrent", 1)
-        ref = data["cycles_per_op"].get((ref_name, pl))
+        ref = data["pooled_cycles_per_op"].get((ref_name, pl))
         if not ref:
             continue
         for a in sorted(per):
@@ -583,12 +613,12 @@ def table(out, rounds_needed=5):
                                 "lo_pct": p["lo_pct"], "hi_pct": p["hi_pct"], "rounds": len(rr)})
             L.append("| %s | %s | %s | %s |" % (name.split("/")[0], threads_of(name), pl, fmt(p, rr)))
     L.append("")
-    L.append("## Shared against per-thread spaced, per arm (H1; cycles/op)\n")
+    L.append("## Shared against per-thread spaced, per arm (H1; pooled cycles/op)\n")
     L.append("| Benchmark | Threads | Placement | Arm | Shared / spaced [95% CI] | Rounds |\n|---|---|---|---|---|---|")
-    for (name, pl), per in sorted(data["cycles_per_op"].items()):
+    for (name, pl), per in sorted(data["pooled_cycles_per_op"].items()):
         if "Shared" not in name:
             continue
-        spaced = data["cycles_per_op"].get((name.replace("Shared", "PerThreadSpaced"), pl))
+        spaced = data["pooled_cycles_per_op"].get((name.replace("Shared", "PerThreadSpaced"), pl))
         if not spaced:
             continue
         for a in sorted(per):

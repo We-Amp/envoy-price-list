@@ -240,7 +240,8 @@ def _bench_out(names, cfg, reps=None, bad=None, extra=None):
         raw = nm.replace("/manual_time", "/iterations:1/manual_time") if "threads:" in nm else \
             nm.replace("/manual_time", "/min_time:1.000/manual_time")
         good = {"window_overlap": 0.999, "invol_switches": 0, "min_thread_ops": 2e6, "cycles_per_op": 20.0,
-                "instructions_per_op": 9.0, "ns_per_op": 6.0, "fairness": 0.9, "ns_per_sample": 30.0}
+                "instructions_per_op": 9.0, "ns_per_op": 6.0, "fairness": 0.9, "ns_per_sample": 30.0,
+                "ops_per_sec": 1.0e8}
         good.update(extra or {})
         for i in range(reps):
             e = dict(good, name=raw, run_name=raw, run_type="iteration")
@@ -259,10 +260,10 @@ class MicroConfigTest(unittest.TestCase):
         self.assertEqual(a["pairs"], [["fix-relaxed", "fix", "all"], ["fix-relaxed-p1", "fix-relaxed", "all"]])
         by = {r["binary"]: r for r in a["runs"]}
         self.assertEqual(by["atomic_model_benchmark"]["arms"], ["fix"])
-        self.assertEqual(by["atomic_model_benchmark"]["threads"], [1, 4, 12])
+        self.assertEqual(by["atomic_model_benchmark"]["threads"], [1, 4, 8, 12])
         self.assertNotIn("TestFlagShared/", " ".join(x for x in by["atomic_model_benchmark"]["expect"]
                                                     if not x.startswith("bmModelRelaxedTestFlag")))
-        self.assertEqual(len(by["atomic_model_benchmark"]["expect"]), 5 * 2 * 3)
+        self.assertEqual(len(by["atomic_model_benchmark"]["expect"]), 5 * 2 * 4)
         self.assertIn("bmPrimitiveCounterIncShared/manual_time/threads:4", by["stat_update_benchmark"]["expect"])
         self.assertIn("bmGaugeSetPerThreadSpaced/manual_time/threads:12", by["stat_update_benchmark"]["expect"])
         self.assertFalse(any("GaugeIncDec" in x or "RequestMix" in x for x in by["stat_update_benchmark"]["expect"]))
@@ -373,7 +374,7 @@ class MicroGateTest(unittest.TestCase):
     def test_pass_and_env(self):
         self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg), self.cfg, self.rc), [])
         env = MICRO.run_env(self.cfg, self.rc)
-        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,12")
+        self.assertEqual(env["STATS_BENCH_THREADS"], "1,4,8,12")
         self.assertEqual((env["STATS_BENCH_WARMUP"], env["STATS_BENCH_SECONDS"]), ("0.2", "1"))
 
     def _fails(self, bad, word, extra=None):
@@ -393,16 +394,28 @@ class MicroGateTest(unittest.TestCase):
         self.assertEqual(MICRO.check_output(_bench_out(four, bm, extra={"invol_switches": 100}), bm, rc4), [])
         self.assertTrue(MICRO.check_output(_bench_out(four, bm, extra={"invol_switches": 101}), bm, rc4))
         self._fails({"invol_switches": -1}, "unavailable")
-        self._fails({"min_thread_ops": 19999}, "floor 20000")
-        self._fails({"window_overlap": 0.9929}, "outside the common window")
+        self._fails({"min_thread_ops": 1023}, "floor 1024")
+        self._fails({"window_overlap": 0.992}, "outside the common window")  # 8 ms > 7 ms + 3 x 0.128 ms
+        # a starved slowest thread (13,824 operations: 18.5 ms per batch) gets 3 batches more
+        slow = {"min_thread_ops": 13824}
+        self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg,
+                                                       extra=dict(slow, window_overlap=0.95)), self.cfg, self.rc), [])
+        self._fails(dict(slow, window_overlap=0.93), "outside the common window")
         self._fails({"cycles_per_op": -1}, "cycles_per_op unavailable")
         self._fails({"error_occurred": True, "error_message": "Skipping"}, "Skipping")
         self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg,
-                                                       extra={"window_overlap": 0.9931, "min_thread_ops": 20000}),
+                                                       extra={"window_overlap": 0.9927, "min_thread_ops": 1024 * 1000}),
                                             self.cfg, self.rc), [])
         # fairness is a result, not a gate
         self.assertEqual(MICRO.check_output(_bench_out(self.rc["expect"], self.cfg, extra={"fairness": 0.2}),
                                             self.cfg, self.rc), [])
+
+    def test_pooled_cycles(self):
+        # 12 threads at 3 GHz, 3.74 M operations per second in all: about 9,626 cycles per operation
+        m = {"cycles_per_op": 30000.0, "ns_per_op": 10000.0, "ops_per_sec": 3.74e6}
+        self.assertAlmostEqual(MICRO.pooled_cycles(m, 12), 12 * 3e9 / 3.74e6)
+        self.assertIsNone(MICRO.pooled_cycles(dict(m, cycles_per_op=None), 12))
+        self.assertIsNone(MICRO.pooled_cycles(m, None))
 
     def test_completeness(self):
         probs = MICRO.check_output(_bench_out(self.rc["expect"][:-1], self.cfg), self.cfg, self.rc)
@@ -453,10 +466,10 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
         cfg = _micro("arm-vm")
         s = MICRO.smoke_config(cfg)
         self.assertEqual((s["rounds"], s["repetitions"], s["warmup_s"], s["window_s"]), (1, 2, 0.05, 0.2))
-        self.assertEqual(MICRO.ops_floor(s), 4000)
+        self.assertEqual(MICRO.ops_floor(s), 1024)
         self.assertAlmostEqual(MICRO.max_nonoverlap_s(s), 0.003)
-        self.assertEqual(MICRO.ops_floor(dict(s, window_s=0.01)), 1024)
         self.assertAlmostEqual(MICRO.max_nonoverlap_s(cfg), 0.007)
+        self.assertAlmostEqual(MICRO.max_nonoverlap_s(cfg, 256000), 0.007 + 3 * 0.001)
         self.assertEqual([r["binary"] for r in s["runs"]], ["atomic_model_benchmark", "stat_update_benchmark",
                                                            "histogram_record_benchmark"])
         self.assertTrue(all(r["arms"] == ["fix"] for r in s["runs"]))
@@ -526,7 +539,7 @@ class MicroPlanSmokeTableTest(unittest.TestCase):
                     bm.extend(o["benchmarks"])
                 json.dump({"benchmarks": bm}, open(os.path.join(d, "r%02d-1-stat_update-vm-%s.json" % (r, arm)), "w"))
         text, js = MICRO.table(d)
-        row = [p for p in js["pairs"] if p["metric"] == "cycles_per_op" and p["benchmark"].startswith("bmCounterIncShared")][0]
+        row = [p for p in js["pairs"] if p["metric"] == "pooled_cycles_per_op" and p["benchmark"].startswith("bmCounterIncShared")][0]
         self.assertAlmostEqual(row["effect_pct"], -10.0, places=6)
         self.assertTrue(row["descriptive"])
         h1 = [x for x in js["h1"] if x["arm"] == "fix" and x["benchmark"].startswith("bmCounterInc")][0]

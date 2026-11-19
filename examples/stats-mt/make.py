@@ -97,8 +97,9 @@ STAT_BENCHES = ["bmCounterIncShared", "bmCounterIncPerThreadSpaced", "bmGaugeSet
 TIME_PARTS = "(/min_time:[0-9.]+)?(/min_warmup_time:[0-9.]+)?(/iterations:[0-9]+)?"
 # gates, first revision: the operations floor is a rate (a stalled thread, not a slow
 # contended one), the overlap gate an absolute time (batch granularity passes)
-MICRO_GATES = {"ops_floor_per_s": 20000, "min_thread_ops_abs": 1024, "max_nonoverlap_s": 0.002,
-               "max_nonoverlap_share": 0.005}
+# second revision: the overlap allowance adds 3 batches of the slowest thread; the floor is 1,024 operations
+MICRO_GATES = {"ops_floor_per_s": 0, "min_thread_ops_abs": 1024, "max_nonoverlap_s": 0.002,
+               "max_nonoverlap_share": 0.005, "nonoverlap_batches": 3, "ops_per_batch": 256}
 
 
 def arm(box, name, settings=None, ev=None):

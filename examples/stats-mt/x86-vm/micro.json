@@ -375,8 +375,10 @@
  },
  "steal_gate": 0.02,
  "note": "involuntary-switch bound per repetition: per thread max(max_invol_switches, invol_switches_per_s x window) where the box sets a rate, else max_invol_switches (frozen from the box's smoke), times the threads; run refuses while it is null",
- "ops_floor_per_s": 20000,
+ "ops_floor_per_s": 0,
  "min_thread_ops_abs": 1024,
  "max_nonoverlap_s": 0.002,
- "max_nonoverlap_share": 0.005
+ "max_nonoverlap_share": 0.005,
+ "nonoverlap_batches": 3,
+ "ops_per_batch": 256
 }
