@@ -2,6 +2,7 @@
 
 import copy
 import json
+import math
 import os
 import platform
 import random
@@ -292,9 +293,31 @@ def effective_order(exp):
     return exp["order"]
 
 
+def arm_in_shape(arm, shape):
+    """An arm may run in some shapes only (`shapes`: their names); without it, in every shape."""
+    only = arm.get("shapes")
+    return only is None or shape["name"] in only
+
+
+def shape_arms(exp, shape):
+    return [a for a in exp["arms"] if arm_in_shape(a, shape)]
+
+
+def restricted(exp):
+    return any(a.get("shapes") is not None for a in exp["arms"])
+
+
 def order_period(exp):
-    """Rounds after which every arm has been in every position equally often."""
+    """Rounds after which every arm has been in every position equally often (with arms that
+    run in some shapes only, under a Latin order: in every shape, the least common multiple of
+    the shapes' arm counts)."""
     o = effective_order(exp)
+    if o == "latin" and restricted(exp):
+        per = 1
+        for sh in exp.get("shapes", []):
+            n = len(shape_arms(exp, sh)) or 1
+            per = per * n // math.gcd(per, n)
+        return per
     return 2 if o == "abba" else len(exp["arms"]) if o == "latin" else 2 * len(exp["arms"])
 
 
@@ -403,6 +426,18 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env must be an object" % a.get("name"))
         if "hop2_env" in a and not arm_settings(a).get("two_hop"):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
+    if restricted(exp):
+        for a in arms:
+            only = a.get("shapes")
+            if only is not None and (not isinstance(only, list) or not only or any(x not in snames for x in only)):
+                errs.append("arm %s: shapes must be a non-empty list of shape names" % a.get("name"))
+        base = exp.get("base_arm", names[0] if names else None)
+        if any(a.get("name") == base and a.get("shapes") is not None for a in arms) \
+                and exp["comparisons"] == "base":
+            errs.append("base_arm must run in every shape (comparisons are against it)")
+        for s in exp.get("shapes", []):
+            if len(shape_arms(exp, s)) < 2:
+                errs.append("shape %s: fewer than 2 arms run in it" % s.get("name"))
     if uses(exp, "two_hop") and "hop2" not in sets:
         errs.append("a two_hop arm needs cpus.hop2")
     if needs_collector(exp) and not exp["collector"].get("image"):
@@ -534,6 +569,21 @@ def round_order(exp, r):
     return fwd if forward else list(reversed(fwd))
 
 
+def shape_round_order(exp, r, shape):
+    """Arm order of round r in one shape. With every arm in the shape: round_order. With arms
+    that run in some shapes only, a Latin order rotates the shape's own arm list (so every arm
+    of the shape is in every position equally often there); the other orders keep the round's
+    order with the absent arms left out."""
+    mine = shape_arms(exp, shape)
+    if len(mine) == len(exp["arms"]):
+        return round_order(exp, r)
+    if effective_order(exp) == "latin" and mine:
+        off = random.Random("epl-latin:%s" % exp.get("order_seed", 1)).randrange(len(mine))
+        s = (r - 1 + off) % len(mine)
+        return mine[s:] + mine[:s]
+    return [a for a in round_order(exp, r) if arm_in_shape(a, shape)]
+
+
 def shape_order(exp, r):
     """Shapes of round r: as configured, or (shape_order latin) rotated by round from a seeded
     offset, so a drift over the session is not aliased onto one shape (a rung)."""
@@ -550,9 +600,8 @@ def schedule(exp, first=1, last=None):
     last = exp["rounds"] if last is None else last
     out = []
     for r in range(first, last + 1):
-        order = round_order(exp, r)
         for sh in shape_order(exp, r):
-            for a in order:
+            for a in shape_round_order(exp, r, sh):
                 out.append((r, sh, a))
     return out
 
@@ -801,7 +850,8 @@ def complete_rounds(exp, legs):
     r = 0
     while True:
         nxt = range(r + 1, r + per + 1)
-        if all((x, sh["name"], a["name"]) in have for x in nxt for sh in exp["shapes"] for a in exp["arms"]):
+        if all((x, sh["name"], a["name"]) in have for x in nxt for sh in exp["shapes"]
+               for a in shape_arms(exp, sh)):
             r += per
         else:
             return r
@@ -860,7 +910,10 @@ def analyse(exp, legs, floor=None):
             sres["arms"][an] = summ
         sres["confirmatory"] = []
         conf = [(p[0], p[1]) for p in exp.get("confirmatory") or [] if confirmatory_in_shape(p, s)]
+        here = {a["name"] for a in shape_arms(exp, sh)}
         for an, rn, kind in [(a, r, "row") for a, r in comparison_pairs(exp)] + [(a, r, "conf") for a, r in conf]:
+            if an not in here or rn not in here:
+                continue  # an arm that does not run in this shape has no row here
             rounds = sorted(r for (ss, aa, r) in by if ss == s and aa == an and (s, rn, r) in by)
             comp = {"arm": an, "ref": rn, "rounds_paired": rounds}
             for key, _, get in METRICS:
@@ -1100,7 +1153,7 @@ class Runner:
                 for m in cur:
                     m["superseded"] = True
                 self._record({"supersede": [m["leg_id"] for m in cur]})
-                for a in round_order(self.exp, r):
+                for a in shape_round_order(self.exp, r, sh):
                     self._leg(legs, r, sh, a, bpath, attempt)
 
     def run(self, simulate=False):

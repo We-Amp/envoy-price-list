@@ -18,6 +18,8 @@ def check(cfg, res):
     probs = []
     for sh in cfg["shapes"]:
         for a in cfg["arms"]:
+            if a.get("shapes") is not None and sh["name"] not in a["shapes"]:
+                continue  # the arm does not run in this shape
             got = [m for (s, ar, r), m in legs.items() if s == sh["name"] and ar == a["name"]]
             if not got:
                 probs.append("missing: %s %s" % (sh["name"], a["name"]))

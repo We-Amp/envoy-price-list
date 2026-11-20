@@ -1457,5 +1457,88 @@ class DosePilotTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
 
 
+class ArmShapesTest(unittest.TestCase):
+    """Arms that run in some shapes only (`shapes` on an arm)."""
+
+    def exp(self, order="latin", **over):
+        raw = json.load(open(os.path.join(MT, "bench-x86_64", "u-hi.json")))
+        raw.pop("uncalibrated", None)
+        raw["arms"].append(dict(json.loads(json.dumps(raw["arms"][0])), name="extra-1", shapes=["mt-14w-one"]))
+        raw["arms"].append(dict(json.loads(json.dumps(raw["arms"][0])), name="extra-2", shapes=["mt-14w-one"]))
+        raw.update(order=order, **over)
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "x.json"), "w") as f:
+            json.dump(raw, f)
+        return experiment.load(os.path.join(d, "x.json"))
+
+    def test_unrestricted_runs_are_unchanged(self):
+        for fn in ("u.json", "u-hi.json", "u-hitm.json"):
+            exp = experiment.load(os.path.join(MT, "bench-x86_64", fn))
+            self.assertFalse(experiment.restricted(exp))
+            self.assertEqual(experiment.order_period(exp), len(exp["arms"]))
+            for r in range(1, exp["rounds"] + 1):
+                for sh in exp["shapes"]:
+                    self.assertEqual(experiment.shape_round_order(exp, r, sh), experiment.round_order(exp, r))
+            plan = experiment.schedule(exp)
+            want = [(r, sh["name"], a["name"]) for r in range(1, exp["rounds"] + 1)
+                    for sh in experiment.shape_order(exp, r) for a in experiment.round_order(exp, r)]
+            self.assertEqual([(r, sh["name"], a["name"]) for r, sh, a in plan], want)
+
+    def test_schedule_and_balance(self):
+        exp = self.exp()
+        self.assertEqual(experiment.validate(exp), [])
+        self.assertEqual(experiment.order_period(exp), 15)  # lcm of 5 arms in one shape and 3 in the others
+        plan = experiment.schedule(exp)
+        self.assertEqual(len(plan), 15 * (5 + 3 + 3))
+        pos = {}
+        for r in range(1, 16):
+            for sh in exp["shapes"]:
+                names = [a["name"] for a in experiment.shape_round_order(exp, r, sh)]
+                self.assertEqual("extra-1" in names, sh["name"] == "mt-14w-one")
+                for i, n in enumerate(names):
+                    pos[(sh["name"], n, i)] = pos.get((sh["name"], n, i), 0) + 1
+        self.assertEqual({v for (s, n, i), v in pos.items() if s == "mt-14w-one"}, {3})
+        self.assertEqual({v for (s, n, i), v in pos.items() if s != "mt-14w-one"}, {5})
+        # another order: the round's order with the absent arms left out
+        rot = self.exp(order="rotate", rounds=30, rounds_block=30, rounds_max=30)
+        for r in (1, 2, 7):
+            full = [a["name"] for a in experiment.round_order(rot, r)]
+            got = [a["name"] for a in experiment.shape_round_order(rot, r, rot["shapes"][1])]
+            self.assertEqual(got, [n for n in full if not n.startswith("extra")])
+
+    def test_complete_rounds_and_analysis(self):
+        exp = self.exp()
+        legs = [{"round": r, "shape": sh["name"], "arm": a["name"], "verdict": {"valid": True}, "leg_id": "x",
+                 "workers_cycles_per_req": 100.0 + r, "per_req": {"cycles_total": 100.0 + r, "instructions_u": 50.0}}
+                for r, sh, a in experiment.schedule(exp)]
+        self.assertEqual(experiment.complete_rounds(exp, legs), 15)  # no leg expected where an arm does not run
+        short = [m for m in legs if not (m["round"] == 15 and m["arm"] == "extra-2")]
+        self.assertEqual(experiment.complete_rounds(exp, short), 0)
+        an = experiment.analyse(exp, legs)
+        rows = lambda s: [c["arm"] for c in an["shapes"][s]["comparisons"]]  # noqa: E731
+        self.assertEqual(rows("mt-14w-one"), ["stats-reject", "base-A2", "extra-1", "extra-2"])
+        self.assertEqual(rows("mt-28w"), ["stats-reject", "base-A2"])
+        self.assertEqual(an["shapes"]["mt-28w"]["arms"]["extra-1"]["legs"], 0)
+
+    def test_validate(self):
+        bad = self.exp()
+        bad["arms"][-1]["shapes"] = ["mt-1w"]
+        self.assertTrue(any("shapes must be a non-empty list of shape names" in e for e in experiment.validate(bad)))
+        bad = self.exp()
+        bad["arms"][0]["shapes"] = ["mt-14w-one"]
+        self.assertTrue(any("base_arm must run in every shape" in e for e in experiment.validate(bad)))
+        bad = self.exp()
+        for a in bad["arms"][1:3]:
+            a["shapes"] = ["mt-14w-one"]
+        self.assertTrue(any("fewer than 2 arms run in it" in e for e in experiment.validate(bad)))
+        bad = self.exp(rounds=12, rounds_block=12, rounds_max=12)
+        self.assertTrue(any("multiple of 15" in e for e in experiment.validate(bad)))
+
+    def test_rerun_keeps_the_shape_order(self):
+        src = open(os.path.join(HERE, "epl", "experiment.py")).read()
+        i = src.index("    def _rerun_invalid(")
+        self.assertIn("for a in shape_round_order(self.exp, r, sh):", src[i:src.index("    def run(self", i)])
+
+
 if __name__ == "__main__":
     unittest.main()
