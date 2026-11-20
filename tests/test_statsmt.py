@@ -879,5 +879,68 @@ class StatsAccessLogSettingTest(unittest.TestCase):
                 envoy_config.stats_access_log(bad)
 
 
+class DoseLegTest(unittest.TestCase):
+    def test_parse_and_record(self):
+        body = ("dose.c000.port.10110: 5\ndose.c001.port.10110: 7\nhttp.ingress_http.downstream_rq_2xx: 9\n"
+                "dose.h: P0(nan,0) P25(nan,0)\ndosex.c: 1\nhttp.ingress_http.downstream_rq_completed: 40\n\n")
+        self.assertEqual(leg.parse_stat_count(body, "dose."), (2, 12, 40))
+        self.assertEqual(leg.parse_stat_count("", "dose."), (0, 0, None))
+        a = {"n": 448, "sum": 1000, "requests": 100, "read_s": 0.1}
+        b = {"n": 512, "sum": 65000, "requests": 1100, "read_s": 0.2}
+        r = leg.stat_count_record("dose.", a, b, 0.31)
+        self.assertEqual((r["start_n"], r["end_n"], r["new_in_window"], r["sum_delta"]), (448, 512, 64, 64000))
+        # the sum per request uses the request counter of the same two reads
+        self.assertEqual((r["requests_delta"], r["sum_per_request"], r["pre_window_s"]), (1000, 64.0, 0.31))
+        # an arm that rejects every stat has no request counter: no ratio, never a division by zero
+        r = leg.stat_count_record("dose.", dict(a, requests=None, n=0, sum=0), dict(b, requests=None, n=0, sum=0))
+        self.assertEqual((r["start_n"], r["sum_per_request"]), (0, None))
+        self.assertIsNone(leg.stat_count_record("dose.", a, dict(b, requests=100))["sum_per_request"])
+
+    def test_admin_reads(self):
+        from unittest import mock
+        seen = []
+
+        def get(port, path, timeout=5.0):
+            seen.append((path, timeout))
+            return 200, "dose.c000.port.10110: 3\nother: 1\nhttp.ingress_http.downstream_rq_completed: 8\n"
+        with mock.patch.object(leg, "admin_get", get):
+            import urllib.parse
+            sc = leg.stat_count(9921, "dose.", 30.0)
+            self.assertEqual((sc["n"], sc["sum"], sc["requests"]), (1, 3, 8))
+            self.assertEqual(seen[-1][1], 30.0)
+            self.assertTrue(seen[-1][0].startswith("/stats?type=Counters&filter="))
+            self.assertEqual(urllib.parse.unquote(seen[-1][0].split("filter=", 1)[1]),
+                             "^(dose\\.|http\\.ingress_http\\.downstream_rq_completed$)")
+            q = leg.admin_stats(9921, 30.0, "^dose\\.c000\\.port\\.10110$")
+            self.assertEqual(q["dose.c000.port.10110"], 3)
+            flt = urllib.parse.unquote(seen[-1][0].split("filter=", 1)[1])
+            self.assertEqual(flt, leg.STAT_FILTER + "|^dose\\.c000\\.port\\.10110$")
+            leg.admin_stats(9921)
+            self.assertEqual(urllib.parse.unquote(seen[-1][0].split("filter=", 1)[1]), leg.STAT_FILTER)  # unchanged
+        with mock.patch.object(leg, "admin_get", lambda *a, **k: (503, "")):
+            with self.assertRaises(RuntimeError):  # a failed read is an invalid leg, never zero stats
+                leg.stat_count(9921, "dose.")
+
+    def test_reads_outside_the_time_base(self):
+        src = open(os.path.join(HERE, "epl", "leg.py")).read()
+        i_q0 = src.index("                    t_q0 = time.monotonic()")
+        i_t2 = src.index("                    t2 = time.monotonic()")
+        self.assertLess(src.index("sc0 = stat_count(ecfg[\"admin_port\"], scp, adm_t) if scp else None"), i_q0)
+        self.assertGreater(src.index('m["stat_count"] = stat_count_record('), i_t2)
+        self.assertEqual(src.count("admin_stats(ecfg[\"admin_port\"], adm_t, sfx)"), 3)  # q0, q1, leg end
+
+    def test_stat_ops_apart(self):
+        p0 = {("counter", 'envoy_dose_c000{port="40000"}'): 10.0, ("counter", "envoy_http_rq_total"): 5.0}
+        p1 = {("counter", 'envoy_dose_c000{port="40000"}'): 110.0, ("counter", 'envoy_dose_c001{port="40000"}'): 100.0,
+              ("counter", "envoy_http_rq_total"): 105.0}
+        self.assertEqual(leg.prometheus_prefix("dose."), "envoy_dose_")
+        r = leg.stat_ops(p0, p1, "envoy_dose_")
+        self.assertEqual((r["counter_incs"], r["counters_changed"]), (100.0, ["envoy_http_rq_total"]))
+        self.assertEqual((r["apart_incs"], r["apart_changed"]), (200.0, 2))
+        r = leg.stat_ops(p0, p1)
+        self.assertEqual(r["counter_incs"], 300.0)
+        self.assertNotIn("apart_incs", r)
+
+
 if __name__ == "__main__":
     unittest.main()

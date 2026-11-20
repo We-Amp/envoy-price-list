@@ -121,8 +121,11 @@ DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_
 END_KEYS_RE = re.compile(r"(ssl\.(versions|ciphers|curves|sigalgs)\.|upstream_cx_active$|downstream_cx_active$)")
 
 
-def admin_stats(port, timeout=5.0):
-    st, body = admin_get(port, "/stats?filter=" + urllib.parse.quote(STAT_FILTER), timeout=timeout)
+def admin_stats(port, timeout=5.0, extra=None):
+    """The filtered stats snapshot; `extra` (measure.stat_filter_extra) is one more regex
+    alternative, for a stat an experiment's evidence reads that the fixed filter leaves out."""
+    flt = STAT_FILTER + ("|" + extra if extra else "")
+    st, body = admin_get(port, "/stats?filter=" + urllib.parse.quote(flt), timeout=timeout)
     if st != 200:
         raise RuntimeError("admin /stats returned %d" % st)
     out = {}
@@ -134,6 +137,59 @@ def admin_stats(port, timeout=5.0):
             except ValueError:
                 pass
     return out
+
+
+STAT_COUNT_REQUESTS = "http.ingress_http.downstream_rq_completed"
+
+
+def parse_stat_count(body, prefix, beside=STAT_COUNT_REQUESTS):
+    """(number of stats, sum of their values, value of the stat `beside` or None) over the lines
+    of an admin /stats page; the count and sum cover the names that start with `prefix`."""
+    n = total = 0
+    other = None
+    for line in body.splitlines():
+        k, sep, v = line.partition(": ")
+        if not sep or not (k.startswith(prefix) or k == beside):
+            continue
+        try:
+            x = int(v.strip())
+        except ValueError:
+            continue
+        if k == beside:
+            other = x
+            continue
+        total += x
+        n += 1
+    return n, total, other
+
+
+def stat_count(port, prefix, timeout=5.0):
+    """{n, sum, requests, read_s}: how many counters whose name starts with `prefix` exist, the
+    sum of their values, and Envoy's completed-request counter from the same read, so the sum
+    has a request count taken with it (measure.stat_count_prefix). One admin read of counters
+    only; with tens of thousands of them it takes a while, so it runs outside the response
+    count's time base. A failed read raises: the leg is then invalid, never counted as zero stats."""
+    t = time.monotonic()
+    flt = "^(%s|%s$)" % (re.escape(prefix), re.escape(STAT_COUNT_REQUESTS))
+    st, body = admin_get(port, "/stats?type=Counters&filter=" + urllib.parse.quote(flt), timeout=timeout)
+    if st != 200:
+        raise RuntimeError("admin /stats (counters %s*) returned %d" % (prefix, st))
+    n, total, rq = parse_stat_count(body, prefix)
+    return {"n": n, "sum": total, "requests": rq, "read_s": round(time.monotonic() - t, 4)}
+
+
+def stat_count_record(prefix, a, b, pre_window_s=None):
+    """The leg's `stat_count` record from the reads before (a) and after (b) the window: the
+    counts, how many stats appeared in between (a reconnect creates new per-connection
+    counters), and the sum's change per request completed between the same two reads (None
+    without Envoy's request counter: an arm that rejects every stat). `pre_window_s`: the time
+    from the first read before the window to the window's start (it comes out of the client
+    run's slack: lead-in + this + window must stay under the client's duration)."""
+    rq = None if a["requests"] is None or b["requests"] is None else b["requests"] - a["requests"]
+    return {"prefix": prefix, "start_n": a["n"], "end_n": b["n"], "new_in_window": b["n"] - a["n"],
+            "sum_delta": b["sum"] - a["sum"], "requests_delta": rq,
+            "sum_per_request": (b["sum"] - a["sum"]) / rq if rq else None,
+            "start_read_s": a["read_s"], "end_read_s": b["read_s"], "pre_window_s": pre_window_s}
 
 
 def wait_ready(port, timeout_s, proc):
@@ -306,22 +362,38 @@ def parse_prometheus(text):
     return out
 
 
-def stat_ops(p0, p1):
+def stat_ops(p0, p1, apart=None):
     """Store-stat operations over a window from two /stats/prometheus snapshots: counter
     increments (the sum of counter deltas, byte counters left out because they add sizes, not
     one per event), histogram samples (the _count deltas), and the counters that changed.
-    Gauge updates cannot be counted from snapshots (an inc and a dec cancel)."""
-    inc = samples = 0.0
+    Gauge updates cannot be counted from snapshots (an inc and a dec cancel).
+    `apart`: counters whose Prometheus name starts with it (an experiment's own generated
+    counters, tens of thousands of names) are summed on their own (`apart_incs`, `apart_changed`)
+    and stay out of the other figures and of the name list."""
+    inc = samples = a_inc = 0.0
     changed = []
+    a_changed = 0
     for (t, k), v in p1.items():
         d = v - p0.get((t, k), 0.0)
         if t == "counter" and d:
+            if apart and k.startswith(apart):
+                a_inc += d
+                a_changed += 1
+                continue
             changed.append(k)
             if "bytes" not in k:
                 inc += d
         elif t == "histogram_count" and d:
             samples += d
-    return {"counter_incs": inc, "histogram_samples": samples, "counters_changed": sorted(changed)}
+    out = {"counter_incs": inc, "histogram_samples": samples, "counters_changed": sorted(changed)}
+    if apart:
+        out.update(apart=apart, apart_incs=a_inc, apart_changed=a_changed)
+    return out
+
+
+def prometheus_prefix(stat_prefix):
+    """The Prometheus name prefix of the stats under a flat-name prefix (dose. -> envoy_dose_)."""
+    return "envoy_" + re.sub(r"[^A-Za-z0-9_]", "_", stat_prefix)
 
 
 def admin_prometheus(port, timeout=5.0):
@@ -860,6 +932,8 @@ class RealBackend:
         hop_b = None
         sink = sink_out = sampler = None
         adm_t = float(shape.get("admin_timeout_s", 5.0))
+        sfx = mcfg.get("stat_filter_extra")
+        scp = mcfg.get("stat_count_prefix")
         side_u0 = {}
         if self.side_expected:
             # placement of every side-service process, read before Envoy starts
@@ -945,9 +1019,13 @@ class RealBackend:
                     e0 = sysprobe.proc_threads_detail(envoy.pid)
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
                     # smoke-only probe (measure.stat_ops_probe): every store stat around the window
+                    t_reads0 = time.monotonic()
                     sp0 = admin_prometheus(ecfg["admin_port"], adm_t) if mcfg.get("stat_ops_probe") else None
+                    # the stat count by prefix (measure.stat_count_prefix): before the window's
+                    # first snapshot and after its time base ends, so a slow read is in neither
+                    sc0 = stat_count(ecfg["admin_port"], scp, adm_t) if scp else None
                     t_q0 = time.monotonic()
-                    q0 = admin_stats(ecfg["admin_port"], adm_t)
+                    q0 = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     from_origin = mcfg.get("responses_from") == "origin"
                     o0 = origin_requests(e) if from_origin else None
                     st0 = sysprobe_steal()
@@ -1013,15 +1091,19 @@ class RealBackend:
                     k1 = sysprobe.proc_run_ns(envoy.pid)
                     kb1 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     p1 = sysprobe.per_cpu_times()
-                    q1 = admin_stats(ecfg["admin_port"], adm_t)
+                    q1 = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     o1 = origin_requests(e) if from_origin else None
                     st1 = sysprobe_steal()
                     qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
                     # the response count's time base ends with the last count read, before
                     # anything slow (thread checks, numastat) runs
                     t2 = time.monotonic()
+                    if sc0 is not None:
+                        m["stat_count"] = stat_count_record(scp, sc0, stat_count(ecfg["admin_port"], scp, adm_t),
+                                                            round(t0 - t_reads0, 3))
                     if sp0 is not None:
-                        m["stat_ops"] = stat_ops(sp0, admin_prometheus(ecfg["admin_port"], adm_t))
+                        m["stat_ops"] = stat_ops(sp0, admin_prometheus(ecfg["admin_port"], adm_t),
+                                                 prometheus_prefix(scp) if scp else None)
                     if rung["main_cpu"] is not None:
                         # where every thread ran last, after the window: still on its own set
                         m["rung_pin_after"] = pin_check(envoy.pid, rung["main_cpu"], rung["worker_set"], workers)
@@ -1230,7 +1312,7 @@ class RealBackend:
             if envoy is not None and envoy.poll() is None:
                 # end-of-leg snapshot: cumulative counters over the whole leg, just before the stop
                 try:
-                    m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t)
+                    m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     m["sut_stats_leg_end_ok"] = True
                     self._save_stats(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
                     sc = aenv.get("stats_clusters")

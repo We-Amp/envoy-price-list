@@ -34,7 +34,8 @@ Scopes:
   leg     the end-of-leg admin snapshot, taken just before Envoy is stopped
           (`sut_stats_leg_end`; cumulative since Envoy started, warm-up included)
   field   a value of the leg record, by dotted path (`access_log_lines`,
-          `collector_delta.accepted_spans`, `tcmalloc_percpu_slab_bytes`)
+          `collector_delta.accepted_spans`, `tcmalloc_percpu_slab_bytes`,
+          `stat_count.start_n`: the stats under measure.stat_count_prefix before the window)
   config  the arm's /config_dump, saved at the arm's first start: every occurrence
           of the key NAME, anywhere in the dump; `equals` needs all of them equal
           to X (and at least one), `present` at least one, `absent` none
