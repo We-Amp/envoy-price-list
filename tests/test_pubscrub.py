@@ -219,6 +219,39 @@ class TreeTest(unittest.TestCase):
         self.assertEqual(sorted(r.stdout.split()), ["micro/r01-0-atomic_model.json"])
         self.assertIn("/home/bob", read(os.path.join(self.d, "queue.console")))
 
+    def test_a_label_per_directory(self):
+        # three machines in one tree: one label per sub tree, the longest directory wins
+        for sub, host in (("a/micro", "box-a"), ("b", "box-b"), ("b/deep/er", "box-c"), ("top", "box-d")):
+            write(os.path.join(self.d, "multi", sub, "r01.json"), json.dumps({"context": {"host_name": host}}))
+        root = os.path.join(self.d, "multi")
+        default, by_dir = pubscrub.parse_labels(["a=bench", "b=vm", "b/deep=vm-2", "other"])
+        self.assertEqual((default, by_dir), ("other", {"a": "bench", "b": "vm", "b/deep": "vm-2"}))
+        pubscrub.scrub_publish_tree(root, default, labels=by_dir)
+        got = {sub: json.loads(read(os.path.join(root, sub, "r01.json")))["context"]["host_name"]
+               for sub in ("a/micro", "b", "b/deep/er", "top")}
+        self.assertEqual(got, {"a/micro": "bench", "b": "vm", "b/deep/er": "vm-2", "top": "other"})
+        # the gate on the whole tree: clean with the labels, 3 false alarms with one label
+        self.assertEqual(pubscrub.scrub_publish_tree(root, default, labels=by_dir, check=True)["changed"], {})
+        self.assertEqual(len(pubscrub.scrub_publish_tree(root, "bench", check=True)["changed"]), 3)
+        for bad in ("=x", "a=", "/=x"):
+            with self.assertRaises(ValueError):
+                pubscrub.parse_labels([bad])
+
+    def test_cli_labels_file(self):
+        root = os.path.join(self.d, "multi")
+        write(os.path.join(root, "a", "r.json"), '{"host_name": "bench"}')
+        write(os.path.join(root, "b", "r.json"), '{"host_name": "vm"}')
+        lf = os.path.join(self.d, "labels.txt")
+        write(lf, "# labels\na=bench\nb=vm\n")
+        run = lambda *a: subprocess.run([sys.executable, EPL, "scrub", root, "--check"] + list(a),  # noqa: E731
+                                        capture_output=True, text=True)
+        self.assertEqual(run("--labels-file", lf).returncode, 0)
+        self.assertEqual(run("--host-label", "a=bench", "--host-label", "b=vm").returncode, 0)
+        r = run("--host-label", "bench")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("b/r.json host_name=1", r.stdout)
+        self.assertIn("DIR=LABEL", run("--host-label", "a=").stderr)
+
     def test_replace_file_must_be_pairs(self):
         p = os.path.join(self.d, "r.json")
         for bad in ('{"a": "b"}', '[["a"]]', '[["", "b"]]', '[["a", 1]]'):

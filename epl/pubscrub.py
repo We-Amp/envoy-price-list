@@ -24,6 +24,12 @@ those:
 The names of rule 6 and the strings of rule 7 are private by nature: keep those files outside
 the tree that is published.
 
+A tree with the records of several machines needs one label per machine: `--host-label DIR=LABEL`
+(repeatable) or `--labels-file FILE` (one DIR=LABEL per line) gives the label for everything under
+DIR, relative to RUN_DIR; the longest matching DIR wins and a plain `--host-label LABEL` is the label
+elsewhere. With one label for a tree of three machines, `--check` reports every host_name of the
+other two.
+
 A file that is not UTF-8 text is not touched and is listed, so nothing binary is published
 unseen. `--check` writes nothing and exits 1 when a rule would still change a file: the gate
 to run on the tree before it is committed.
@@ -119,11 +125,37 @@ def gzip_bytes(data):
     return buf.getvalue()
 
 
-def scrub_publish_tree(root, host_label="host", names=(), replace=(), check=False):
+def parse_labels(items):
+    """["LABEL" | "DIR=LABEL", ...] -> (default label, {dir: label}). A later plain label replaces
+    an earlier one; DIR is relative to the tree, without a trailing slash."""
+    default, by_dir = "host", {}
+    for it in items or []:
+        d, sep, label = it.partition("=")
+        if not sep:
+            default = it
+        elif not d.strip("/") or not label:
+            raise ValueError("a label is LABEL or DIR=LABEL, got %r" % it)
+        else:
+            by_dir[d.strip("/")] = label
+    return default, by_dir
+
+
+def label_for(rel, default, by_dir):
+    """The label of a file at rel (posix, relative to the tree): the longest DIR that contains it."""
+    parts = rel.split("/")
+    for n in range(len(parts) - 1, 0, -1):
+        hit = by_dir.get("/".join(parts[:n]))
+        if hit is not None:
+            return hit
+    return default
+
+
+def scrub_publish_tree(root, host_label="host", names=(), replace=(), check=False, labels=None):
     """Apply the rules to every file under root. Returns {"changed": {path: {rule: count}},
     "binary": [paths not text, untouched], "files": files seen}. With check=True nothing is
-    written."""
+    written. `labels`: {dir relative to root: label} for the sub trees of other machines."""
     changed, binary, seen = {}, [], 0
+    labels = labels or {}
     for d, dirs, files in os.walk(root):
         dirs.sort()
         for fn in sorted(files):
@@ -147,7 +179,7 @@ def scrub_publish_tree(root, host_label="host", names=(), replace=(), check=Fals
             if text is None:
                 binary.append(rel)
                 continue
-            new, counts = scrub_publish_text(text, host_label, names, replace)
+            new, counts = scrub_publish_text(text, label_for(rel.replace(os.sep, "/"), host_label, labels), names, replace)
             if new == text:
                 continue
             changed[rel] = counts

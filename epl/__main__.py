@@ -13,7 +13,7 @@ Commands (see README.md):
   portability-check DIR...                        stats row: configs per box are free of other boxes' literals
   request-probe CFG --arm A --shape S [--trace C] [--expect H=V]   one request through a throw-away Envoy
   scrub RUN_DIR                  replace home directory paths with ~ in a run directory
-  scrub RUN_DIR --publish [--check] [--host-label L] [--name OLD=NEW] [--names-file F] [--replace-file F]
+  scrub RUN_DIR --publish [--check] [--host-label L|DIR=L] [--labels-file F] [--name OLD=NEW] [--names-file F] [--replace-file F]
                                  the wider scrub before a tree is published (epl/pubscrub.py)
   selftest                       offline tests: statistics, validity gates, schedule, dry run
   remote HOST <run|calibrate|status|fetch|ship> ...  same, on a bench box over ssh
@@ -654,7 +654,12 @@ def cmd_scrub(args):
         replace = pubscrub.load_replace_file(args.replace_file) if args.replace_file else []
     except (ValueError, OSError) as e:
         sys.exit("scrub: %s" % e)
-    rep = pubscrub.scrub_publish_tree(root, args.host_label, names, replace, check=args.check)
+    try:
+        default, by_dir = pubscrub.parse_labels((pubscrub.load_names_file(args.labels_file) if args.labels_file else [])
+                                                + (args.host_label or []))
+    except (ValueError, OSError) as e:
+        sys.exit("scrub: %s" % e)
+    rep = pubscrub.scrub_publish_tree(root, default, names, replace, check=args.check, labels=by_dir)
     for p in sorted(rep["changed"]):
         print("%s %s" % (p, " ".join("%s=%d" % kv for kv in sorted(rep["changed"][p].items()))))
     for p in rep["binary"]:
@@ -866,7 +871,10 @@ def main(argv=None):
                         "fields, cloud VM names (see epl/pubscrub.py)")
     p.add_argument("--check", action="store_true", help="with the --publish rules: write nothing, exit 1 if a "
                                                         "file would change")
-    p.add_argument("--host-label", default="host", help="what a host name becomes (default: host)")
+    p.add_argument("--host-label", action="append", metavar="LABEL | DIR=LABEL",
+                   help="what a host name becomes (default: host); DIR=LABEL for a sub tree of another machine; "
+                        "repeatable")
+    p.add_argument("--labels-file", help="DIR=LABEL lines (and at most one plain LABEL), for a tree of several machines")
     p.add_argument("--name", action="append", metavar="OLD=NEW", help="replace a name (whole tokens); repeatable")
     p.add_argument("--names-file", help="OLD=NEW lines; keep this file outside the tree")
     p.add_argument("--replace-file", help="JSON list of [old, new] exact strings; keep it outside the tree")
