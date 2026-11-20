@@ -269,3 +269,87 @@ class FieldEvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpanFlushTest(unittest.TestCase):
+    """T5: the flushes between two quiescent points are counted whole, and the collector is read
+    until it settles."""
+
+    def test_span_flushes(self):
+        from epl import statsrow as sr
+        bursts = [{"start_t": a, "end_t": b, "wall_s": b - a, "run_ns": int((b - a) * 1e9)}
+                  for a, b in ((0.5, 0.8), (1.5, 1.9), (2.5, 2.7), (3.9, 4.2))]
+        f = sr.span_flushes(bursts, 1.0, 3.0)
+        self.assertEqual((f["n"], f["partial"]), (2, 0))
+        self.assertAlmostEqual(f["run_ms_per_flush"], 300.0, places=3)  # (400 + 200) / 2
+        f = sr.span_flushes(bursts, 1.0, 4.0)
+        self.assertEqual((f["n"], f["partial"]), (2, 1))  # 4.0 is inside a flush
+        f = sr.span_flushes([], 0.0, 9.0)
+        self.assertEqual((f["n"], f["partial"], f["run_ms_per_flush"]), (0, 0, None))
+
+    def test_settled_scrape(self):
+        from epl import statsrow as sr
+
+        class C:
+            def __init__(self, seq):
+                self.seq = list(seq)
+
+            def scrape(self):
+                return dict(self.seq.pop(0) if len(self.seq) > 1 else self.seq[0])
+        c = sr.settled_scrape(C([{"p": 1}, {"p": 5}, {"p": 9}, {"p": 9}]), tries=5, step_s=0)
+        self.assertEqual((c["p"], c["_settled"]), (9, True))
+        c = sr.settled_scrape(C([{"p": i} for i in range(10)]), tries=3, step_s=0)
+        self.assertFalse(c["_settled"])
+
+
+class OtlpEvidenceTest(unittest.TestCase):
+    """The 1M OTLP loss of run S: 31 full requests of counters and gauges and the 146-point
+    tail accepted, the mixed and the four histogram requests refused below the receiver (an
+    oversized message), 5 stream resets per flush."""
+
+    def test_loss_fails_the_single_basis(self):
+        from epl import statsrow as sr
+        used = 360146
+        f = sr.flush_fit(3 * 310146, used, 3)  # three flushes of the lossy export
+        self.assertGreater(f["residual"], 0.01)
+        f = sr.flush_fit(3 * used, used, 3)  # every used stat arrives
+        self.assertEqual((f["n"], f["n_error"], f["residual"]), (3, 0, 0.0))
+
+    def test_otlp_cluster(self):
+        from epl import statsrow as sr
+        c = "cluster.otel_collector."
+        n0 = {c + "upstream_rq_total": 100, c + "http2.rx_reset": 0, c + "upstream_cx_tx_bytes_total": 0}
+        n1 = {c + "upstream_rq_total": 100 + 3 * 37, c + "http2.rx_reset": 15, c + "upstream_cx_tx_bytes_total": 9}
+        o = sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)
+        self.assertEqual((o["requests_per_flush_expected"], o["requests"], o["rx_reset"]), (37, 111, 15))
+        self.assertEqual((o["whole_error"], o["estimate_error"]), (0.0, round(abs(3 - 61 / 20.0), 3)))
+        self.assertTrue(o["http2_stats_present"])
+        n1.pop(c + "http2.rx_reset")  # the used-only read leaves an unmoved counter out: 0
+        n1[c + "http2.streams_active"] = 0
+        self.assertEqual(sr.otlp_cluster(n0, n1, 360146, 10000, 61.0, 20.0)["rx_reset"], 0)
+        self.assertIn("error", sr.otlp_cluster({}, n1, 360146, 10000, 61.0, 20.0))
+        # the smoke of 2026-11-19: the codec stats appeared after the pre-window read
+        n0b = {c + "upstream_rq_total": 100}
+        o = sr.otlp_cluster(n0b, n1, 360146, 10000, 61.0, 20.0)
+        self.assertEqual((o["rx_reset"], o["http2_stats_present"]), (0, True))
+        n1b = {c + "upstream_rq_total": 211}
+        self.assertFalse(sr.otlp_cluster(n0b, n1b, 360146, 10000, 61.0, 20.0)["http2_stats_present"])
+
+    def test_collector_conf_and_log(self):
+        from epl import origin
+        conf = origin.collector_conf(4317, 8888, True, 64)
+        self.assertIn("max_recv_msg_size_mib: 64", conf)
+        self.assertNotIn("max_recv_msg_size_mib", origin.collector_conf(4317, 8888, True))
+        s = origin.log_summary("2026-11-19T12:00:00Z\tinfo\tok\n2026-11-19T12:00:01Z\terror\tgrpc: received message "
+                               "larger than max\n")
+        self.assertEqual((s["lines"], s["error_lines"]), (2, 1))
+        self.assertIn("larger than max", s["first_error"])
+
+
+class PreReadTimeTest(unittest.TestCase):
+    def test_one_t_pre(self):
+        # R1: the uptime check's time base is assigned once, before the pre-window read; the
+        # otlp_cluster span has its own start
+        src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "epl", "leg.py")).read()
+        self.assertEqual(src.count("t_pre = time.monotonic()"), 1)
+        self.assertIn("t_post - t_cl0", src)

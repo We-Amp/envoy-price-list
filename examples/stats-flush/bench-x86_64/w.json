@@ -93,7 +93,8 @@
   "platform": "linux/amd64",
   "port": 4317,
   "metrics_port": 8888,
-  "metrics": true
+  "metrics": true,
+  "max_recv_msg_size_mib": 64
  },
  "stats_sink": {
   "port": 8125,

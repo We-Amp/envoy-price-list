@@ -67,6 +67,7 @@ OTLP_SINK = "type.googleapis.com/envoy.extensions.stat_sinks.open_telemetry.v3.S
 # Stats-row cluster generator: K extra static clusters to the origin, selected per request by
 # a header on one route. Names look like service names (45 to 75 characters as full stat
 # names); `.test` is a reserved name.
+ORIGIN_STATUS_PATH = "/epl-status"  # nginx stub_status on the origin (responses counted there)
 STATS_CLUSTER_HEADER = "x-epl-cluster"
 STATS_PRIME_PATH = "/epl-prime"
 STATS_WORDS = ["accounts", "billing", "catalog", "checkout", "delivery", "directory", "events", "feedback",
@@ -327,6 +328,41 @@ def stats_sink(sk, envoy_cfg):
     return {"name": name, "typed_config": tc}
 
 
+# What the multi-threaded stats shape must not contain: anything that reads a stat to decide
+# (least-request or bounded-load balancing, outlier detection, health checks, the fault and
+# local rate-limit filters, a stats sink).
+AUDIT_LB = {"ROUND_ROBIN"}
+
+
+def audit_mt_s(b):
+    """[problem] of a bootstrap against the decision-reader list of the mt-s shape."""
+    probs = []
+    clusters = b["static_resources"]["clusters"]
+    if [c["name"] for c in clusters] != ["origin"]:
+        probs.append("clusters %s, expected the one origin cluster" % [c["name"] for c in clusters])
+    for c in clusters:
+        if c.get("lb_policy", "ROUND_ROBIN") not in AUDIT_LB:
+            probs.append("cluster %s lb_policy %s" % (c["name"], c.get("lb_policy")))
+        for k in ("outlier_detection", "health_checks", "common_lb_config", "least_request_lb_config"):
+            if c.get(k):
+                probs.append("cluster %s has %s" % (c["name"], k))
+        eps = [e for ep in c["load_assignment"]["endpoints"] for e in ep["lb_endpoints"]]
+        if len(eps) != 1:
+            probs.append("cluster %s has %d hosts, expected one" % (c["name"], len(eps)))
+    ls = b["static_resources"]["listeners"]
+    if len(ls) != 1:
+        probs.append("%d listeners, expected one" % len(ls))
+    for l_ in ls:
+        for ch in l_["filter_chains"]:
+            for f in ch["filters"]:
+                hf = [x["name"] for x in f["typed_config"].get("http_filters", [])]
+                if hf != ["envoy.filters.http.router"]:
+                    probs.append("http filters %s, expected the router only" % hf)
+    if b.get("stats_sinks"):
+        probs.append("a stats sink is configured")
+    return probs
+
+
 def _static_cluster(name, port, http2=False):
     c = {"name": name, "connect_timeout": "1s", "type": "STATIC", "lb_policy": "ROUND_ROBIN",
          "load_assignment": {"cluster_name": name, "endpoints": [{"lb_endpoints": [{
@@ -568,7 +604,8 @@ AUTHZ_GRPC_BODY = b"\x00\x00\x00\x00\x00"
 
 
 def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_timeout_s=600,
-               keepalive_requests=10000000, types=None, worker_connections=8192, worker_rlimit_nofile=None):
+               keepalive_requests=10000000, types=None, worker_connections=8192, worker_rlimit_nofile=None,
+               stub_status=False):
     authz = ("  server { listen 127.0.0.1:%d; location / { return 200; } }\n" % int(authz_port)) if authz_port else ""
     if authz_grpc_port:
         authz += ("  server { listen 127.0.0.1:%d; http2 on; root /www;\n"
@@ -593,5 +630,7 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
         "%s"
         "}\n" % (int(keepalive_requests), int(keepalive_timeout_s), int(port),
                  "".join("\n    location = %s { types { } default_type %s; }" % (p, t)
-                         for p, t in sorted((types or {}).items())) + ("\n " if types else ""), authz)
+                         for p, t in sorted((types or {}).items()))
+                 + ("\n    location = %s { stub_status; }" % ORIGIN_STATUS_PATH if stub_status else "")
+                 + ("\n " if (types or stub_status) else ""), authz)
     )

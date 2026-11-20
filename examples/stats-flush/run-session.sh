@@ -13,6 +13,25 @@
 #   run-session.sh mfix [EPL_ARGS...]       run M-fix (two own builds, boxes with fix_binaries), after
 #                                          the queue: freeze and check against its own smoke, then
 #                                          mfix-10k, mfix-100k, mfix-1m within MFIX_STOP_S (default 80 min)
+#   run-session.sh s-smoke [EPL_ARGS...]    run S (the sinks; needs rungs.json from calibrate): one round
+#                                          at 100k, 1M and under load (smoke-s-100k, smoke-s-1m, smoke-sw),
+#                                          then s-check
+#   run-session.sh s-check                  freeze s-100k, s-1m and sw from their smokes and check every
+#                                          smoke leg (no override)
+#   run-session.sh s-queue [EPL_ARGS...]    s-check and the time estimate, then s-100k, s-1m and sw within S_STOP_S (default 3 h 30 min)
+#   run-session.sh s-otlp-smoke [EPL_ARGS...] the 1M smoke again, checked for s-1m-otlp (after the
+#                                          collector receive limit fix)
+#   run-session.sh s-otlp [EPL_ARGS...]     s-1m-otlp (otlp and nosink-20s at 1M, 8 rounds) after it
+#   run-session.sh lat-smoke [EPL_ARGS...]  run L (flush latency; needs rungs.json): the configs written
+#                                          again (with $RUNS/lat-knobs.json when it exists: a cut or a
+#                                          rate step), one round of the five cells with the queue's own
+#                                          config and gates (smoke-lat), then lat-check
+#   run-session.sh lat-check                every smoke leg valid, the queue config's evidence on the
+#                                          smoke legs (nothing frozen), the unit tests on this Python,
+#                                          lat_table.py on the smoke, the smoke rules and the budget;
+#                                          a pass is recorded for this harness and config
+#   run-session.sh lat-queue [EPL_ARGS...]  lat (5 rounds) within LAT_STOP_S (default 85 min); refuses
+#                                          without a recorded lat-check of this harness and this lat.json
 #   run-session.sh restore                  put net.core.rmem_max back to the recorded original (after
 #                                          a session that was killed before its trap could run)
 #   run-session.sh queue [EPL_ARGS...]      run M (10k, 100k, 1M), W, M at 300k, then S and X
@@ -45,7 +64,9 @@ FROZEN=$R/frozen
 STOP_S=${STOP_S:-11700}
 RUNGS="10k 100k 300k 1m"
 MANDATORY="m-10k m-100k m-1m w m-300k"
-OPTIONAL=${QUEUE_OPTIONAL-s-100k s-1m x-1m}
+OPTIONAL=${QUEUE_OPTIONAL-x-1m}
+SRUNS="s-100k s-1m sw"
+SSMOKES="smoke-s-100k smoke-s-1m smoke-sw"
 MFIX="mfix-10k mfix-100k mfix-1m"
 SMOKES="smoke-m-10k smoke-100k smoke-m-300k smoke-1m smoke-w"
 mkdir -p "$R"
@@ -58,7 +79,8 @@ smoke_of() {  # the smoke a run is checked against; the 5 s statsd fallback has 
   local s
   case "$1" in
     m-10k) s=smoke-m-10k;; m-300k) s=smoke-m-300k;; w) s=smoke-w;;
-    m-100k|s-100k) s=smoke-100k;; m-1m|s-1m|x-1m) s=smoke-1m;;
+    m-100k) s=smoke-100k;; m-1m|x-1m) s=smoke-1m;;
+    s-100k) s=smoke-s-100k;; s-1m|s-1m-otlp) s=smoke-s-1m;; sw) s=smoke-sw;;
     mfix-*) s=smoke-$1;;
   esac
   if [ -d "$R/smoke/$s.statsd5" ]; then echo "$s.statsd5"; else echo "$s"; fi
@@ -113,6 +135,67 @@ check() {
   [ "$brc" -eq 3 ] && log "mandatory part above 2 h 30 min: decide before the queue (FORCE=1 starts it)"
   [ "$brc" -ne 0 ] && [ "$brc" -ne 3 ] && bad=1
   return $(( bad ? 1 : (brc == 3 ? 3 : 0) ))
+}
+
+s_check() {
+  local bad=0 run
+  for run in $SRUNS; do
+    if grep -q '"uncalibrated": true' "$C/$run.json"; then log "$run uncalibrated"; bad=1; fi
+  done
+  mkdir -p "$FROZEN"
+  for run in $SRUNS; do
+    # every smoke leg must be valid, not only its evidence
+    $SESSION smoke-valid "$C/$(smoke_of "$run").json" "$R/smoke/$(smoke_of "$run")" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
+    log "freeze and check $run against $(smoke_of "$run")"
+    if ! $EPL evidence-check "$C/$run.json" "$R/smoke/$(smoke_of "$run")" --freeze "$FROZEN/$run.json" \
+        >> "$R/queue.log" 2>&1; then
+      log "evidence-check $run FAILED (details in queue.log)"
+      bad=1
+    fi
+  done
+  return $bad
+}
+
+lat_check() {
+  local bad=0
+  local sm=$R/smoke/smoke-lat
+  rm -f "$R/lat-check.json"
+  if grep -q '"uncalibrated": true' "$C/lat.json"; then log "lat uncalibrated"; bad=1; fi
+  # the smoke must be the one lat-smoke ran with these sources and this smoke-lat.json, and lat.json
+  # its queue config: a check by hand after a code, knob or config change cannot pass an older smoke
+  $SESSION lat-smoke-stamp-ok "$C/lat.json" "$C/smoke-lat.json" "$sm" 2>&1 | tee -a "$R/queue.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
+  # every smoke leg valid under the queue's own gates
+  $SESSION smoke-valid "$C/smoke-lat.json" "$sm" 2>&1 | tee -a "$R/queue.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
+  # the queue config's evidence on the smoke legs; nothing is frozen: no expectation comes from the smoke
+  if ! $EPL evidence-check "$C/lat.json" "$sm" >> "$R/queue.log" 2>&1; then
+    log "evidence-check lat FAILED (details in queue.log)"
+    bad=1
+  fi
+  if ! (cd "$H" && python3 -m unittest tests.test_latency) >> "$R/queue.log" 2>&1; then
+    log "unit tests of run L FAILED on this Python (details in queue.log)"
+    bad=1
+  fi
+  if ! python3 "$S/lat_table.py" "$sm" --min-rounds 1 --json "$R/smoke-lat-table.json" > "$R/smoke-lat-table.md" \
+      2>> "$R/queue.log"; then
+    log "lat_table.py did not run end to end on the smoke"
+    bad=1
+  fi
+  $SESSION lat-rules "$C/lat.json" "$sm" 2>&1 | tee -a "$R/queue.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
+  if [ "$bad" = 0 ]; then
+    $SESSION lat-stamp "$C/lat.json" "$R/lat-check.json" >> "$R/queue.log" 2>&1 || bad=1
+  fi
+  return $bad
+}
+
+rewrite_lat() {
+  local knobs=()
+  [ -f "$R/lat-knobs.json" ] && knobs=(--lat "$R/lat-knobs.json") && log "run L knobs: $(tr -d '\n' < "$R/lat-knobs.json")"
+  python3 "$S/make.py" --box "$S/boxes/$BOX.json" --rungs "$R/rungs.json" ${knobs[@]+"${knobs[@]}"} >> "$R/queue.log" 2>&1 \
+    || { log "make.py failed"; exit 1; }
 }
 
 mode=${1:-}
@@ -177,6 +260,126 @@ case "$mode" in
   check)
     check
     exit $?
+    ;;
+  s-smoke)
+    log "S smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
+    [ -f "$R/rungs.json" ] || { log "no rungs.json: calibrate first"; exit 1; }
+    rewrite
+    guard_begin || exit 1
+    trap on_term TERM INT
+    for s in $SSMOKES; do
+      log "smoke $s"
+      rm -rf "$R/smoke/$s"
+      bg_wait $EPL run "$C/$s.json" --out "$R/smoke/$s" --allow-short "$@" >> "$R/queue.log" 2>&1
+      log "end smoke $s rc=$?"
+    done
+    guard_end
+    trap - TERM INT
+    s_check
+    log "S smoke done rc=$?"
+    ;;
+  s-otlp-smoke)
+    # the 1M smoke again (after the collector's receive limit was raised), then its check
+    log "S 1M smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
+    rewrite
+    guard_begin || exit 1
+    trap on_term TERM INT
+    # the first 1M smoke is the record of the OTLP loss: moved aside, never deleted
+    if [ -d "$R/smoke/smoke-s-1m" ]; then
+      aside="$R/smoke/smoke-s-1m.first"
+      [ -e "$aside" ] && aside="$R/smoke/smoke-s-1m.$(date -u +%Y%m%dT%H%M%SZ)"
+      mv "$R/smoke/smoke-s-1m" "$aside" && log "previous 1M smoke kept as $aside"
+    fi
+    bg_wait $EPL run "$C/smoke-s-1m.json" --out "$R/smoke/smoke-s-1m" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end smoke smoke-s-1m rc=$?"
+    guard_end
+    trap - TERM INT
+    SRUNS="s-1m-otlp" s_check
+    log "S 1M smoke done rc=$?"
+    ;;
+  s-otlp)
+    # the 1M otlp row again: otlp and nosink-20s, 8 rounds, after a clean 1M smoke
+    log "S otlp re-run start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    SRUNS="s-1m-otlp" s_check || { log "S otlp re-run not started (smoke or evidence; no override)"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    L=${S_STOP_S:-5400}
+    log "start s-1m-otlp (${L}s stop)"
+    bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/s-1m-otlp.json" \
+      --out "$R/s-1m-otlp" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end s-1m-otlp rc=$?"
+    ;;
+  s-check)
+    s_check
+    exit $?
+    ;;
+  s-queue)
+    log "S queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    s_check || { log "S queue not started (calibration or evidence; no override)"; exit 1; }
+    STOP_S=${S_STOP_S:-12600}
+    $SESSION s-budget "$C" "$R/smoke" "$STOP_S" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { log "S queue not started: expected time above the stop or unknown"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    T0=$(date +%s)
+    left() { echo $(( STOP_S - ($(date +%s) - T0) )); }
+    for run in $SRUNS; do
+      L=$(left)
+      if [ "$L" -le 60 ]; then
+        log "skip $run: S stop reached"
+        continue
+      fi
+      log "start $run (${L}s left before the S stop)"
+      bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$FROZEN/$run.json" \
+        --out "$R/$run" --allow-short "$@" >> "$R/queue.log" 2>&1
+      rc=$?
+      [ "$rc" -eq 124 ] && log "$run stopped at the S stop (SIGTERM); partial results, incomplete"
+      log "end $run rc=$rc"
+    done
+    log "S queue done"
+    ;;
+  lat-smoke)
+    log "L smoke start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX"
+    [ -f "$R/rungs.json" ] || { log "no rungs.json: calibrate first"; exit 1; }
+    rewrite_lat
+    guard_begin || exit 1
+    trap on_term TERM INT
+    mkdir -p "$R/smoke"
+    # an earlier smoke is kept beside the new one, never deleted
+    if [ -d "$R/smoke/smoke-lat" ]; then
+      aside="$R/smoke/smoke-lat.$(date -u +%Y%m%dT%H%M%SZ)"
+      mv "$R/smoke/smoke-lat" "$aside" && log "previous L smoke kept as $aside"
+    fi
+    $SESSION lat-smoke-stamp "$C/smoke-lat.json" "$R/smoke/smoke-lat" >> "$R/queue.log" 2>&1 \
+      || { log "could not stamp the smoke directory"; exit 1; }
+    log "smoke smoke-lat"
+    bg_wait $EPL run "$C/smoke-lat.json" --out "$R/smoke/smoke-lat" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end smoke smoke-lat rc=$?"
+    guard_end
+    trap - TERM INT
+    lat_check
+    log "L smoke done rc=$?"
+    ;;
+  lat-check)
+    lat_check
+    rc=$?
+    log "L check rc=$rc"
+    exit $rc
+    ;;
+  lat-queue)
+    log "L queue start pid $$ harness $(cat "$H/VERSION" 2>/dev/null) box $BOX args: $*"
+    # the check that passed must be of this harness and this lat.json (the configs are not rewritten here)
+    $SESSION lat-stamp-ok "$C/lat.json" "$R/lat-check.json" 2>&1 | tee -a "$R/queue.log"
+    [ "${PIPESTATUS[0]}" -eq 0 ] || { log "L queue not started: no passed lat-check of this harness and config (no override)"; exit 1; }
+    guard_begin || exit 1
+    trap on_term TERM INT
+    L=${LAT_STOP_S:-5100}
+    log "start lat (${L}s stop)"
+    bg_wait timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/lat.json" \
+      --out "$R/lat" --allow-short "$@" >> "$R/queue.log" 2>&1
+    rc=$?
+    [ "$rc" -eq 124 ] && log "lat stopped at the L stop (SIGTERM); only complete rounds count, under 4 is incomplete"
+    log "end lat rc=$rc; table: python3 $S/lat_table.py $R/lat --json $R/lat-table.json > $R/lat-table.md"
     ;;
   restore)
     guard_restore

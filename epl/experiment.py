@@ -292,9 +292,24 @@ def effective_order(exp):
     return exp["order"]
 
 
+def cell_mode(exp):
+    """An arm may list the shapes it runs on (`shapes: [...]`): the experiment is then a set of
+    (shape, arm) cells, and the order rotates over the cells."""
+    return any(a.get("shapes") is not None for a in exp.get("arms", []))
+
+
+def cells(exp):
+    """[(shape, arm)] that have legs, shapes first: every pair, or with `shapes` on an arm only
+    the pairs it lists."""
+    return [(sh, a) for sh in exp["shapes"] for a in exp["arms"]
+            if a.get("shapes") is None or sh["name"] in a["shapes"]]
+
+
 def order_period(exp):
     """Rounds after which every arm has been in every position equally often."""
     o = effective_order(exp)
+    if cell_mode(exp):
+        return len(cells(exp))
     return 2 if o == "abba" else len(exp["arms"]) if o == "latin" else 2 * len(exp["arms"])
 
 
@@ -323,6 +338,17 @@ def validate(exp, allow_short=False, check_rounds=True):
         errs.append("primary_metric must be one of %s" % METRIC_KEYS)
     if exp.get("smoke"):
         check_rounds = False  # a smoke runs each arm once or twice; it carries no comparison
+    snames_all = [s.get("name") for s in exp.get("shapes", [])]
+    if cell_mode(exp):
+        if exp["order"] != "latin":
+            errs.append("arms with `shapes` (cells) need order latin (the rotation runs over the cells)")
+        for a in arms:
+            if a.get("shapes") is not None and (not isinstance(a["shapes"], list) or not a["shapes"]
+                                                or any(x not in snames_all for x in a["shapes"])):
+                errs.append("arm %s: shapes must be a non-empty list of shape names" % a.get("name"))
+        for sh in exp.get("shapes", []):
+            if not any(s2["name"] == sh["name"] for s2, _ in cells(exp)):
+                errs.append("shape %s: no arm runs on it" % sh.get("name"))
     if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate", "latin"):
         per = order_period(exp)
         rmin, rmax, blk = exp["rounds"], exp["rounds_max"], exp["rounds_block"]
@@ -448,6 +474,50 @@ def validate(exp, allow_short=False, check_rounds=True):
         t = s.get("stop_target_half_width_pct")
         if t is not None and not (isinstance(t, (int, float)) and t > 0):
             errs.append("shape %s: stop_target_half_width_pct must be a positive number" % s.get("name"))
+    if exp.get("audit") == "mt-s":
+        for a in arms:
+            try:
+                b = envoy_config.bootstrap(exp.get("shapes", []), small_clusters(arm_envoy(exp, a, "/r")),
+                                           exp["origin"]["port"], "/r/c")
+                errs += ["arm %s: audit: %s" % (a.get("name"), p) for p in envoy_config.audit_mt_s(b)]
+            except (ValueError, KeyError, TypeError) as e:
+                errs.append("arm %s: audit: %s" % (a.get("name"), e))
+    if exp["measure"].get("responses_from") == "origin" and not exp["origin"].get("stub_status"):
+        errs.append("measure.responses_from origin needs origin.stub_status")
+    for s in exp.get("shapes", []):
+        if s.get("main_cpu") is not None:
+            ws = sysprobe.parse_cpuset(s.get("worker_cpus", ""))
+            # main_shares_worker: this shape alone puts the main thread on a worker's CPU
+            inside = int(s["main_cpu"]) in ws and not s.get("main_shares_worker")
+            if not ws or inside or len(ws) != int(s.get("workers", 0)):
+                errs.append("shape %s: a rung needs workers = the size of worker_cpus and a main_cpu outside it"
+                            % s.get("name"))
+            if s.get("main_shares_worker") and int(s["main_cpu"]) not in ws:
+                errs.append("shape %s: main_shares_worker needs a main_cpu inside worker_cpus" % s.get("name"))
+            if s.get("worker_pin") not in (None, "one_to_one"):
+                errs.append("shape %s: worker_pin must be one_to_one when set" % s.get("name"))
+            if not (ws | {int(s["main_cpu"])}) <= sysprobe.parse_cpuset(exp["cpus"]["sut"]):
+                errs.append("shape %s: rung CPUs must lie inside cpus.sut" % s.get("name"))
+    if exp.get("shape_order", "fixed") not in ("fixed", "latin"):
+        errs.append("shape_order must be fixed or latin")
+    lt = exp["measure"].get("latency")
+    if lt is not None:
+        for k in ("sampler", "probe"):
+            if len(sets.get(k, ())) != 1:
+                errs.append("measure.latency needs cpus.%s, one CPU" % k)
+        need = ("data_conns", "data_hz", "data_stagger_ms", "admin_period_ms", "control_conns", "control_hz",
+                "per_worker", "map_requests", "map_margin", "map_max_opens", "gap_ms", "drain_s", "sample_s", "cpu0",
+                "read_allow_factor", "flush_allow_s")
+        miss = [k for k in need if k not in lt]
+        if miss:
+            errs.append("measure.latency lacks %s" % miss)
+        if not exp["measure"].get("main_sampler"):
+            errs.append("measure.latency needs measure.main_sampler")
+        if any(s.get("kind") != "proxied" or s.get("main_cpu") is None or s.get("worker_pin") != "one_to_one"
+               for s in exp.get("shapes", [])):
+            errs.append("measure.latency needs proxied shapes that are rungs with worker_pin one_to_one")
+        if not all(arm_settings(a).get("stats_clusters") for a in arms):
+            errs.append("measure.latency needs stats_clusters on every arm (the reads around the client)")
     if exp.get("evidence_mode", "gate") not in ("gate", "record"):
         errs.append("evidence_mode must be gate or record")
     from . import evidence as _ev
@@ -514,13 +584,38 @@ def round_order(exp, r):
     return fwd if forward else list(reversed(fwd))
 
 
+def shape_order(exp, r):
+    """Shapes of round r: as configured, or (shape_order latin) rotated by round from a seeded
+    offset, so a drift over the session is not aliased onto one shape (a rung)."""
+    sh = exp["shapes"]
+    if exp.get("shape_order") != "latin" or len(sh) < 2:
+        return list(sh)
+    off = random.Random("epl-shapes:%s" % exp.get("order_seed", 1)).randrange(len(sh))
+    s = (r - 1 + off) % len(sh)
+    return sh[s:] + sh[:s]
+
+
+def cell_order(exp, r):
+    """Cells of round r (1-based): one Latin square over the cells, round r starts at cell r-1
+    (mod the number of cells) from a seeded offset, so every cell is in every position once
+    per len(cells) rounds."""
+    cs = cells(exp)
+    off = random.Random("epl-latin:%s" % exp.get("order_seed", 1)).randrange(len(cs))
+    s = (r - 1 + off) % len(cs)
+    return cs[s:] + cs[:s]
+
+
 def schedule(exp, first=1, last=None):
     """[(round, shape, arm)] for rounds first..last (default: the minimum rounds)."""
     last = exp["rounds"] if last is None else last
     out = []
+    if cell_mode(exp):
+        for r in range(first, last + 1):
+            out += [(r, sh, a) for sh, a in cell_order(exp, r)]
+        return out
     for r in range(first, last + 1):
         order = round_order(exp, r)
-        for sh in exp["shapes"]:
+        for sh in shape_order(exp, r):
             for a in order:
                 out.append((r, sh, a))
     return out
@@ -770,7 +865,7 @@ def complete_rounds(exp, legs):
     r = 0
     while True:
         nxt = range(r + 1, r + per + 1)
-        if all((x, sh["name"], a["name"]) in have for x in nxt for sh in exp["shapes"] for a in exp["arms"]):
+        if all((x, sh["name"], a["name"]) in have for x in nxt for sh, a in cells(exp)):
             r += per
         else:
             return r
@@ -1053,6 +1148,8 @@ class Runner:
     def _rerun_invalid(self, legs, first, last, bpath):
         """Re-run, at the end of a block, every (round, shape) in it that has an invalid leg:
         all arms again, in the round's own order, so the round stays balanced."""
+        if cell_mode(self.exp):
+            return self._rerun_invalid_rounds(legs, first, last, bpath)
         for attempt in range(1, self.exp.get("rerun_invalid", 1) + 1):
             todo = []
             for r in range(first, last + 1):
@@ -1072,9 +1169,38 @@ class Runner:
                 for a in round_order(self.exp, r):
                     self._leg(legs, r, sh, a, bpath, attempt)
 
+    def _rerun_invalid_rounds(self, legs, first, last, bpath):
+        """Cells: a round with an invalid leg is run again whole (every cell, in the round's own
+        order) at the end of the block. `abort_after_invalid_rounds` (default 3) rounds with an
+        invalid leg in a row, first runs and re-runs counted in the order they ran, abort."""
+        for attempt in range(1, self.exp.get("rerun_invalid", 1) + 1):
+            todo = []
+            for r in range(first, last + 1):
+                cur = [m for m in legs if m["round"] == r and not m.get("superseded")]
+                if any(not m["verdict"]["valid"] for m in cur):
+                    todo.append((r, cur))
+            if not todo:
+                return
+            for r, cur in todo:
+                self.log("re-running round %d, every cell (attempt %d): invalid %s" % (
+                    r, attempt, [m["leg_id"] for m in cur if not m["verdict"]["valid"]]))
+                for m in cur:
+                    m["superseded"] = True
+                self._record({"supersede": [m["leg_id"] for m in cur]})
+                self._round_done([self._leg(legs, r, sh, a, bpath, attempt) for sh, a in cell_order(self.exp, r)])
+
+    def _round_done(self, round_legs):
+        """Cells: count rounds with an invalid leg in a row, as they ran; abort at the limit."""
+        bad = any(not m["verdict"]["valid"] for m in round_legs)
+        self._round_streak = self._round_streak + 1 if bad else 0
+        lim = int(self.exp.get("abort_after_invalid_rounds", 3))
+        if self._round_streak >= lim:
+            raise RuntimeError("%d rounds in a row with an invalid leg; giving up" % self._round_streak)
+
     def run(self, simulate=False):
         exp = self.exp
         self._invalid_streak = 0
+        self._round_streak = 0
         bpath, btexts, certs = prepare_bootstraps(exp, self.run_dir, self.log, make_certs=not simulate)
         btxt = btexts[exp["arms"][0]["name"]]
         with open(os.path.join(self.run_dir, "experiment.json"), "w") as f:
@@ -1137,6 +1263,8 @@ class Runner:
                                 current=leg_id(r, sh, a),
                                 invalid_so_far=sum(1 for m in legs if not m["verdict"]["valid"]))
                     self._leg(legs, r, sh, a, bpath)
+                    if cell_mode(exp) and (i + 1 == len(plan) or plan[i + 1][0] != r):
+                        self._round_done([x for x in legs if x["round"] == r and not x.get("superseded")])
                 self._rerun_invalid(legs, done + 1, target, bpath)
                 done = target
                 an = analyse(exp, legs, floor)

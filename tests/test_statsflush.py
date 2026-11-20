@@ -47,7 +47,7 @@ class ConfigsTest(unittest.TestCase):
                     self.assertEqual(json.load(f), json.loads(json.dumps(c)), fn + ": rerun make.py")
 
     def test_validate_and_legs(self):
-        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 16, "s-1m": 16, "x-1m": 16}
+        want = {"m-10k": 16, "m-100k": 16, "m-300k": 16, "m-1m": 16, "w": 32, "s-100k": 50, "s-1m": 64, "sw": 50, "x-1m": 16}
         for fn in sorted(os.listdir(X86)):
             if fn == "box.json":
                 continue
@@ -82,8 +82,36 @@ class ConfigsTest(unittest.TestCase):
         self.assertEqual(len(b["static_resources"]["clusters"]), 1001)
         s = experiment.load(os.path.join(X86, "s-1m.json"))
         sa = {x["name"]: x for x in s["arms"]}
-        self.assertEqual(sa["prom"]["prom_scrape_s"], 5)
+        self.assertEqual(sorted(sa), ["dogstatsd-buf", "nosink", "nosink-20s", "nosink-5s", "nosink-5s-A2", "nosink-A2",
+                                      "otlp", "statsd"])  # prom dropped; same-interval references at 1M (S2)
+        self.assertEqual(s["s_refs"], {"statsd": "nosink-5s", "dogstatsd-buf": "nosink-5s", "otlp": "nosink-20s"})
+        self.assertEqual((sa["nosink-20s"]["settings"]["stats_flush"], sa["nosink-20s"]["window_s"]),
+                         ({"interval_s": 20}, 60))
+        self.assertEqual((s["rounds"], experiment.load(os.path.join(X86, "s-100k.json"))["rounds"]), (8, 10))
+        ot_fit = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.fit.n_error"][0]
+        self.assertEqual(ot_fit["max"], 1)  # S3: one flush in flight at a non-atomic read
         self.assertEqual(sa["otlp"]["settings"]["stats_sink"]["kind"], "otlp")
+        # at 1M by the saturation rule: dogstatsd-buf every 5 s, otlp every 20 s with a 60 s window
+        self.assertEqual(sa["dogstatsd-buf"]["settings"]["stats_flush"], {"interval_s": 5})
+        self.assertEqual(sa["dogstatsd-buf"]["settings"]["stats_sink"]["max_bytes_per_datagram"], 1432)
+        self.assertEqual((sa["otlp"]["settings"]["stats_flush"], sa["otlp"]["window_s"]), ({"interval_s": 20}, 60))
+        s100 = {x["name"]: x for x in experiment.load(os.path.join(X86, "s-100k.json"))["arms"]}
+        self.assertEqual(s100["otlp"]["settings"]["stats_flush"], {"interval_s": 1})
+        for name in ("dogstatsd-buf", "otlp"):
+            st = {i["stat"] for i in sa[name]["evidence"]}
+            self.assertTrue({"quiesce.before_ok", "quiesce.after_ok", "span_flushes.partial"} <= st, name)
+        ot = [i for i in sa["otlp"]["evidence"] if i["stat"] == "collector_delta.accepted_metric_points_per_flush"][0]
+        self.assertEqual((ot["per"], ot["tol"]), ("field:used_total", 0.01))  # one basis: every used stat
+        st = {i["stat"] for i in sa["otlp"]["evidence"]}
+        self.assertNotIn("collector_delta.fit.basis", st)
+        self.assertTrue({"otlp_cluster.rx_reset", "otlp_cluster.whole_error", "otlp_cluster.estimate_error",
+                         "otlp_cluster.http2_stats_present",
+                         "collector_log.error_lines"} <= st)
+        self.assertEqual(s["collector"]["max_recv_msg_size_mib"], 64)
+        sw = experiment.load(os.path.join(X86, "sw.json"))
+        self.assertEqual([a["name"] for a in sw["arms"]], ["nosink", "nosink-A2", "statsd", "dogstatsd-buf", "otlp"])
+        self.assertEqual((sw["shapes"][0]["rps"], sw["rounds"], sw["primary_metric"]), (5200, 10, "cycles_total"))
+        self.assertTrue(experiment.needs_collector(sw))
         self.assertTrue(experiment.needs_collector(s))
         x = experiment.load(os.path.join(X86, "x-1m.json"))
         xa = {y["name"]: y for y in x["arms"]}
@@ -257,7 +285,9 @@ class SessionHelpersTest(unittest.TestCase):
         for s in ("smoke-m-10k", "smoke-100k", "smoke-m-300k", "smoke-1m", "smoke-w"):
             self.assertIn(s, txt)
         self.assertEqual(SESS.MANDATORY, ["m-10k", "m-100k", "m-1m", "w", "m-300k"])
-        self.assertEqual(SESS.OPTIONAL, ["s-100k", "s-1m", "x-1m"])
+        self.assertEqual(SESS.OPTIONAL, ["x-1m"])
+        for mode in ("s-smoke)", "s-check)", "s-queue)", 'SRUNS="s-100k s-1m sw"', "S_STOP_S:-12600"):
+            self.assertIn(mode, txt)
         r = subprocess.run(["bash", "-n", os.path.join(SF, "run-session.sh")], capture_output=True, timeout=30)
         self.assertEqual(r.returncode, 0)
 
@@ -559,3 +589,88 @@ class ObservationTest(unittest.TestCase):
         self.assertIn("flushes start one interval apart", text)
         txt = open(os.path.join(SF, "table.py")).read()
         self.assertIn("own builds (5e1439980a / 3c9cce2f2c)", txt)
+
+
+class RunSTableTest(unittest.TestCase):
+    def test_span_rows(self):
+        import random
+        rng = random.Random(4)
+        exp = experiment.load(os.path.join(X86, "s-1m.json"))
+        price = {"nosink": 280.0, "nosink-A2": 280.0, "nosink-5s": 300.0, "nosink-5s-A2": 300.0, "nosink-20s": 320.0,
+                 "statsd": 2400.0,
+                 "dogstatsd-buf": 900.0, "otlp": 12000.0}
+        legs = []
+        for r in range(1, 9):
+            for a, v in price.items():
+                legs.append({"leg_id": "r%02d-idle-1m-%s" % (r, a), "round": r, "shape": "idle-1m", "arm": a,
+                             "verdict": {"valid": True}, "flush_interval_s": 1,
+                             "span_flushes": {"n": 4, "partial": 0, "run_ms_per_flush": v * rng.gauss(1, 0.005)}})
+        res = {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 8, "incomplete": False}}
+        lines, js = TAB.run_s_tables({"s-1m": res})
+        rows = {r["arm"]: r for r in js["rows"]}
+        self.assertEqual(rows["statsd"]["ref"], "nosink-5s")
+        self.assertEqual(rows["otlp"]["ref"], "nosink-20s")
+        self.assertAlmostEqual(rows["statsd"]["effect_pct"], 100 * (2400 / 300 - 1), delta=5)
+        self.assertAlmostEqual(rows["otlp"]["price_ms_per_flush"]["mean"], 12000 - 320, delta=150)
+        self.assertIn("1m", js["aa"])
+        self.assertIn("1m@5s", js["aa"])
+        self.assertEqual(rows["statsd"]["aa_key"], "1m@5s")
+        self.assertIn("A/A reach of the 5 s reference", rows["otlp"]["note"])
+        self.assertNotIn("flush-off", " ".join(lines))
+        self.assertTrue(any("Run S" in x for x in lines))
+
+    def test_smoke_valid_and_s_budget(self):
+        d = tempfile.mkdtemp()
+        cfgp = os.path.join(X86, "smoke-s-100k.json")
+        exp = experiment.load(cfgp)
+        legs = [{"leg_id": a["name"], "shape": "idle-100k", "arm": a["name"], "round": 1, "verdict": {"valid": True}}
+                for a in exp["arms"]]
+        with open(os.path.join(d, "legs.jsonl"), "w") as f:
+            for m in legs:
+                f.write(json.dumps(m) + "\n")
+            f.write(json.dumps(dict(legs[2], verdict={"valid": False, "reasons": ["drops 2%"]})) + "\n")
+        probs = SESS.smoke_problems(cfgp, d)
+        self.assertEqual(len(probs), 1)
+        self.assertIn("drops 2%", probs[0])
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        self.assertIn("S_STOP_S:-12600", txt)
+        self.assertIn("s-budget", txt)
+        self.assertIn('smoke-valid "$C/$(smoke_of "$run").json"', txt)
+
+
+class OtlpRerunTest(unittest.TestCase):
+    def test_config_script_table(self):
+        c = experiment.load(os.path.join(X86, "s-1m-otlp.json"))
+        self.assertEqual([a["name"] for a in c["arms"]], ["nosink-20s", "otlp", "nosink-20s-A2"])
+        self.assertEqual((c["rounds"], c["collector"]["max_recv_msg_size_mib"]), (9, 64))
+        we = [i for i in {a["name"]: a for a in c["arms"]}["otlp"]["evidence"] if i["stat"] == "otlp_cluster.whole_error"]
+        self.assertEqual(we[0]["max"], 0)  # N1: exact
+        txt = open(os.path.join(SF, "run-session.sh")).read()
+        for m in ("s-otlp-smoke)", "s-otlp)", 'SRUNS="s-1m-otlp" s_check', "s-1m|s-1m-otlp) s=smoke-s-1m",
+                  "smoke-s-1m.first"):
+            self.assertIn(m, txt)
+        self.assertNotIn('rm -rf "$R/smoke/smoke-s-1m"', txt)
+        # F1: every arm of the re-run is smoked by the 1M smoke; s-1m keeps its own arm set
+        sm = {a["name"] for a in experiment.load(os.path.join(X86, "smoke-s-1m.json"))["arms"]}
+        self.assertLessEqual({a["name"] for a in c["arms"]}, sm)
+        self.assertNotIn("nosink-20s-A2", {a["name"] for a in experiment.load(os.path.join(X86, "s-1m.json"))["arms"]})
+        exp1 = experiment.load(os.path.join(X86, "s-1m.json"))
+
+        def res_of(exp, arms, otlp_ms):
+            legs = []
+            for r in range(1, 9):
+                for a in arms:
+                    v = otlp_ms if a == "otlp" else 300.0 + r
+                    legs.append({"leg_id": "r%02d-%s" % (r, a), "round": r, "shape": "idle-1m", "arm": a,
+                                 "verdict": {"valid": True}, "span_flushes": {"n": 3, "partial": 0,
+                                                                              "run_ms_per_flush": v + r}})
+            return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 8, "incomplete": False}}
+        old = res_of(exp1, [a["name"] for a in exp1["arms"]], 1271.0)
+        new = res_of(c, ["nosink-20s", "otlp", "nosink-20s-A2"], 1500.0)
+        lines, js = TAB.run_s_tables({"s-1m": old, "s-1m-otlp": new})
+        ot = [r for r in js["rows"] if r["arm"] == "otlp"][0]
+        self.assertIn("re-run", ot["label"])
+        self.assertAlmostEqual(ot["arm_ms_per_flush"], 1500.0 + 4.5)
+        self.assertEqual(ot["aa_key"], "1m@20s-rerun")
+        self.assertIn("1m@20s-rerun", js["aa"])
+        self.assertIn("discarded", ot["note"])

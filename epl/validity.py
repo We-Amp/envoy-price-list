@@ -62,6 +62,8 @@ DEFAULTS = {
     # at most this share of the container's CPU set; the container's cpuset and every
     # process in it must sit on the configured set. None turns the gate off.
     "max_side_service_busy": 0.5,
+    # Cloud VMs: share of CPU time stolen by the hypervisor over the window (None: not gated)
+    "max_steal_share": None,
 }
 
 
@@ -83,12 +85,14 @@ def verdict(m, cfg=None):
     rate = m.get("sut_rate_2xx")
     if rate is None or not tgt:
         reasons.append("no achieved-rate measurement")
-    elif abs(rate / tgt - 1.0) > c["rate_tolerance"]:
+    # None: the rate is recorded only (run L gates the listener's request count itself, exactly)
+    elif c["rate_tolerance"] is not None and abs(rate / tgt - 1.0) > c["rate_tolerance"]:
         reasons.append("achieved rate %.1f misses target %d by %.2f%%"
                        % (rate, tgt, (rate / tgt - 1.0) * 100))
     ovf_d = {k: v for k, v in (m.get("client_overflow") or {}).items() if k not in (c["overflow_ignore"] or [])}
     ovf = sum(ovf_d.values())
-    if ovf > c["max_overflow"]:
+    # None: recorded, not gated (run L: a stalled worker makes the client queue, and that is an outcome)
+    if c["max_overflow"] is not None and ovf > c["max_overflow"]:
         reasons.append("client overflow/pool-exhausted counters %d (%s)"
                        % (ovf, ", ".join("%s=%d" % kv for kv in sorted(ovf_d.items()))))
     nc = sum((m.get("client_non2xx") or {}).values())
@@ -169,6 +173,25 @@ def verdict(m, cfg=None):
         if not sv.get("pids_ok"):
             reasons.append("side service %s: processes off the configured set: %s"
                            % (name, sv.get("bad_pids") or "no process found"))
+    if c["max_steal_share"] is not None and (m.get("steal_share") is None or m["steal_share"] > c["max_steal_share"]):
+        reasons.append("steal time %s of the CPU time in the window, limit %.1f%%" % (
+            "unknown" if m.get("steal_share") is None else "%.2f%%" % (100 * m["steal_share"]),
+            100 * c["max_steal_share"]))
+    if m.get("rung_pin") is not None and not m["rung_pin"].get("ok"):
+        reasons.append("rung threads not on their cores: %s" % m["rung_pin"])
+    if m.get("rung_pin_after") is not None and not m["rung_pin_after"].get("ok"):
+        reasons.append("rung threads left their cores during the leg: %s" % m["rung_pin_after"])
+    if m.get("responses_from") == "origin":
+        if not m.get("origin_reads_ok") or not m.get("responses"):
+            reasons.append("no origin response count (stub_status read failed or zero)")
+        adm = m.get("responses_admin_raw")
+        if adm and m.get("responses_raw") and abs(m["responses_raw"] / float(adm) - 1.0) > 0.005:
+            reasons.append("origin response count %d differs from Envoy's %d by more than 0.5%%"
+                           % (m["responses_raw"], adm))
+    if m.get("workers_expected") is not None and (m.get("workers_perf_threads") != m["workers_expected"]
+                                                 or m.get("workers_cycles_per_req") is None):
+        reasons.append("worker-only cycles cover %s of %d worker threads" % (
+            m.get("workers_perf_threads"), m["workers_expected"]))
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]

@@ -1,0 +1,83 @@
+{
+ "name": "x86-vm",
+ "arch": "x86_64",
+ "label": "x86-vm",
+ "kind": "cloud-vm",
+ "machine_label": "a current x86 cloud VM, 16 vCPU (8 cores with SMT, one thread per core, siblings idle), spot, PMU on",
+ "cpus": {
+  "sut": "0-4",
+  "client": "5-6",
+  "origin": "7"
+ },
+ "main_cpu": 4,
+ "rungs": [
+  {
+   "name": "1w",
+   "workers": 1,
+   "worker_cpus": "0",
+   "client_concurrency": 1
+  },
+  {
+   "name": "4w",
+   "workers": 4,
+   "worker_cpus": "0-3",
+   "client_concurrency": 2
+  }
+ ],
+ "growth": [
+  [
+   "4w",
+   "1w"
+  ]
+ ],
+ "cross_socket": [],
+ "perf": "sudo -n /usr/bin/perf",
+ "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+ "hitm_events": null,
+ "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:PIN-THE-AMD64-DIGEST-ON-THE-VM",
+ "image_platform": "linux/amd64",
+ "binaries": {
+  "x86_64": {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ },
+ "steal_gate": 0.02,
+ "micro": {
+  "root": "~/epl/bins/stats/r5",
+  "rows": [
+   "model",
+   "stat",
+   "histogram"
+  ],
+  "placement": "vm",
+  "cpus": "0-7",
+  "threads": [
+   1,
+   4,
+   7
+  ],
+  "histogram_workers": [
+   1,
+   7
+  ],
+  "smoke": {
+   "threads": [
+    1,
+    2,
+    4
+   ],
+   "histogram_workers": [
+    1,
+    2
+   ]
+  },
+  "pmu": true,
+  "max_invol_switches": 5,
+  "invol_switches_per_s": 25,
+  "invol_bound_record": "rule of 2026-11-18: per thread max(5, 25/s x window), times the threads, on every box (5 per thread at the 0.2 s smoke, 25 per thread at 1 s)"
+ },
+ "note": "The x86 comparison VM: 16 vCPU = 8 cores with SMT. Threads map to physical cores, as on the Arm VM (where a vCPU is a core): one CPU per core is listed and its sibling stays idle, so N threads use N cores on both VMs. CPU numbers assume CPUs 0-7 are one per core and 8-15 their siblings; the micro runner checks this with lscpu -p=CPU,CORE at the start and refuses otherwise (edit the lists then). Microbenchmarks: threads 1, 4 and 7 (top: one spare core), histogram workers 1 and 7; the involuntary-switch bound is frozen from the session's smoke. End to end only 1w and 4w fit (SUT 0-4 with the main thread on 4, client 5-6, origin 7, siblings idle); the 12-worker rung of the Arm VM has no x86 counterpart here. Perf through sudo, PMU standard; steal gated at 2%. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/x86-vm.txt after the rebuild."
+}
