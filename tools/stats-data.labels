@@ -1,0 +1,18 @@
+# machine label per directory of data/stats, for: python3 bin/epl scrub data/stats --check --labels-file tools/stats-data.labels
+arm-codegen=arm-vm
+arm-lse-llsc=arm-vm
+contention=bench-x86_64
+flush-latency=bench-x86_64
+microbenchmarks/bench-x86_64=bench-x86_64
+microbenchmarks/x86-vm=x86-vm
+microbenchmarks/arm-vm=arm-vm
+microbenchmarks/arm-vm-b=arm-vm
+microbenchmarks/reeval/x86-vm-r5=x86-vm
+microbenchmarks/reeval/arm-vm-r5=arm-vm
+microbenchmarks/reeval/arm-vm-r5b=arm-vm
+microbenchmarks-flush-overlap/x86-vm=x86-vm
+microbenchmarks-flush-overlap/arm-vm=arm-vm
+multi-worker=bench-x86_64
+multi-worker-high-load=bench-x86_64
+sink-flush-cost=bench-x86_64
+sink-types=bench-x86_64

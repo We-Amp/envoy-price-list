@@ -12,7 +12,8 @@ already scrubbed with `epl scrub --publish`. Per study the script
   WHAT-WAS-CHANGED.md from docs/stats-data/ at the top level. The archive is reproducible: the
   same tree gives the same bytes;
 - and, unless --no-write, rewrites data/stats-data.manifest (every file of every archive: sha256,
-  size, study, path), data/stats-data.SHA256SUMS (the archives) and docs/stats-tables/ (the
+  size, study, path), data/stats-data.SHA256SUMS (the archives), docs/stats-data/ASSETS.md (the
+  archives with sizes and checksums, for readers) and docs/stats-tables/ (the
   rendered tables and analysis outputs under 200 KB, copied from the tree).
 
 OUT_DIR/SHA256SUMS is written beside the archives. With --study only those archives are built and
@@ -102,6 +103,20 @@ def main():
         dst = os.path.join(TABLES_DIR, arc)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(src, dst)
+    with open(os.path.join(sd.REPO, "docs", "stats-data", "ASSETS.md"), "w") as f:
+        f.write("# Stats study data: the release assets\n\n"
+                "Assets of the release of tag `%s` (`%s<asset>`), written by\n"
+                "`tools/build-stats-data.py`. `python3 tools/fetch-stats-data.py` downloads, checks and unpacks them.\n\n"
+                "| Asset | Size | Files | Unpacked | sha256 |\n|---|---|---|---|---|\n" % (sd.TAG, sd.BASE_URL))
+        for (h, name), study in zip(sums, studies):
+            mine = [m for m in manifest if m[2] == study]
+            f.write("| `%s` | %.1f MB | %d | %.1f MB | `%s` |\n" % (
+                name, os.path.getsize(os.path.join(a.out, name)) / 1e6, len(mine), sum(m[1] for m in mine) / 1e6, h))
+        f.write("\nTogether: %.0f MB to download, %.0f MB unpacked, %d files (two of them, `README.md` and\n"
+                "`WHAT-WAS-CHANGED.md`, are in every archive). The same checksums are in `data/stats-data.SHA256SUMS`;\n"
+                "every file of every archive is in `data/stats-data.manifest` with its size and sha256.\n" % (
+                    sum(os.path.getsize(os.path.join(a.out, n)) for _, n in sums) / 1e6, sum(m[1] for m in manifest) / 1e6,
+                    len(manifest)))
     print("manifest: %d files, %.1f MB; tables kept in git: %d files, %.2f MB" % (
         len(manifest), sum(m[1] for m in manifest) / 1e6, len(tables), sum(os.path.getsize(s) for _, s in tables) / 1e6))
 

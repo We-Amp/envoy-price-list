@@ -16,6 +16,11 @@ checked against data/stats-data.SHA256SUMS before anything is unpacked, and ever
 against data/stats-data.manifest (sha256 and size). --verify checks an unpacked tree again, for
 example after rendering the tables from it. --keep DIR keeps the downloaded archives.
 
+An archive that the release does not have (HTTP 404, or no such file in the directory) is not an
+error when no study was named: its study is skipped with a message and the others are fetched and
+checked. Naming a study whose archive is absent is an error. Any other failure, and any checksum
+that does not match, ends with a non-zero exit.
+
 Python 3.8 or later, standard library only.
 """
 import argparse
@@ -25,6 +30,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import urllib.error
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,15 +38,26 @@ sys.path.insert(0, HERE)
 import stats_data as sd  # noqa: E402
 
 
+class Absent(Exception):
+    """The source does not have this asset."""
+
+
 def obtain(src, name, to):
-    """Copy or download one asset to `to`."""
+    """Copy or download one asset to `to`; Absent when the source does not have it."""
     if os.path.isdir(src):
+        if not os.path.isfile(os.path.join(src, name)):
+            raise Absent(name)
         shutil.copyfile(os.path.join(src, name), to)
         return
     url = src.rstrip("/") + "/" + name
     req = urllib.request.Request(url, headers={"User-Agent": "fetch-stats-data"})
-    with urllib.request.urlopen(req, timeout=120) as r, open(to, "wb") as f:
-        shutil.copyfileobj(r, f)
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r, open(to, "wb") as f:
+            shutil.copyfileobj(r, f)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise Absent(name)
+        raise
 
 
 def unpack(archive, dest, expected):
@@ -90,7 +107,11 @@ def main():
     bad = [s for s in studies if s not in known]
     if bad:
         sys.exit("unknown study %s; known: %s" % (bad, ", ".join(known)))
-    if not a.verify:
+    skipped = []
+    if a.verify:
+        if not a.study:  # an unpacked tree may hold some of the studies only
+            skipped = [s for s in studies if not os.path.isdir(os.path.join(a.dest, s))]
+    else:
         tmp = a.keep or tempfile.mkdtemp(prefix="stats-data-")
         os.makedirs(tmp, exist_ok=True)
         try:
@@ -100,6 +121,12 @@ def main():
                 print("fetching %s" % name, flush=True)
                 try:
                     obtain(a.src, name, path)
+                except Absent:
+                    if a.study:
+                        sys.exit("%s: not at %s" % (name, a.src))
+                    print("%s: not at %s (withheld or not yet published); the study %s is skipped" % (name, a.src, s))
+                    skipped.append(s)
+                    continue
                 except Exception as e:  # noqa: BLE001 (network, file system: say which asset and stop)
                     sys.exit("%s: cannot fetch from %s: %s" % (name, a.src, e))
                 if name not in sums or sd.sha256_file(path) != sums[name]:
@@ -108,11 +135,15 @@ def main():
         finally:
             if not a.keep:
                 shutil.rmtree(tmp, ignore_errors=True)
+    studies = [s for s in studies if s not in skipped]
+    if not studies:
+        sys.exit("no study %s" % ("to verify under %s" % a.dest if a.verify else "could be fetched from %s" % a.src))
     entries = [m for m in manifest if m[2] in studies]
     probs = verify(a.dest, entries)
     for p in probs[:40]:
         print(p)
-    print("%d files of %d studies checked against the manifest, %d problems" % (len(entries), len(studies), len(probs)))
+    print("%d files of %d studies checked against the manifest, %d problems%s" % (
+        len(entries), len(studies), len(probs), "; skipped (absent): %s" % ", ".join(skipped) if skipped else ""))
     sys.exit(1 if probs else 0)
 
 

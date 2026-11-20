@@ -129,10 +129,56 @@ class FetchTest(Base):
 
     def test_missing_asset_and_unknown_study(self):
         os.remove(self.asset)
+        r = self.fetch("--from", self.assets)   # the only archive is absent: nothing to fetch
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("is skipped", r.stdout)
+        self.assertIn("no study could be fetched", r.stderr)
+        r = self.fetch("--from", self.assets, "contention")   # named: an error
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("not at", r.stderr)
+        self.assertIn("unknown study", self.fetch("--from", self.assets, "nope").stderr)
+
+    def add_second_study(self):
+        """A second study in the manifest and the checksum list, its archive in self.assets."""
+        src = os.path.join(self.tree, "arm-codegen", "codegen.md")
+        write(src, "| rung | effect |\n")
+        other = os.path.join(self.assets, sd.ASSET % "arm-codegen")
+        sd.write_archive(other, [("arm-codegen/codegen.md", src)])
+        with open(self.manifest, "a") as f:
+            f.write("%s  %d  arm-codegen  arm-codegen/codegen.md\n" % (sd.sha256_file(src), os.path.getsize(src)))
+        with open(self.sums, "a") as f:
+            f.write("%s  %s\n" % (sd.sha256_file(other), os.path.basename(other)))
+        return other
+
+    def test_a_withheld_archive_does_not_fail_the_others(self):
+        os.remove(self.add_second_study())
+        r = self.fetch("--from", self.assets)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("the study arm-codegen is skipped", r.stdout)
+        self.assertIn("3 files of 1 studies checked against the manifest, 0 problems; skipped (absent): arm-codegen", r.stdout)
+        self.assertFalse(os.path.exists(os.path.join(self.dest, "arm-codegen")))
+        r = self.fetch("--verify")           # the unpacked tree without that study verifies
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("skipped (absent): arm-codegen", r.stdout)
+        self.assertEqual(self.fetch("--verify", "arm-codegen").returncode, 1)   # asked for by name: missing files
+
+    def test_a_corrupt_archive_among_several_fails(self):
+        other = self.add_second_study()
+        with open(other, "r+b") as f:
+            f.seek(20)
+            b = f.read(1)
+            f.seek(20)
+            f.write(bytes([b[0] ^ 1]))
         r = self.fetch("--from", self.assets)
         self.assertNotEqual(r.returncode, 0)
-        self.assertIn("cannot fetch", r.stderr)
-        self.assertIn("unknown study", self.fetch("--from", self.assets, "nope").stderr)
+        self.assertIn("nothing unpacked", r.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.dest, "arm-codegen")))
+
+    def test_fetch_twice_is_the_same(self):
+        self.assertEqual(self.fetch("--from", self.assets).returncode, 0)
+        snap = {r: sd.sha256_file(os.path.join(self.dest, r)) for r in sd.tree_files(self.dest)}
+        self.assertEqual(self.fetch("--from", self.assets).returncode, 0)
+        self.assertEqual({r: sd.sha256_file(os.path.join(self.dest, r)) for r in sd.tree_files(self.dest)}, snap)
 
     def test_list(self):
         self.assertIn("contention", self.fetch("--list").stdout)
@@ -201,6 +247,12 @@ class RepositoryListsTest(unittest.TestCase):
         for rel in files:
             self.assertEqual(sd.sha256_file(os.path.join(root, rel)), by.get(rel), rel)
             self.assertLessEqual(os.path.getsize(os.path.join(root, rel)), 200 * 1024, rel)
+
+    def test_the_labels_file_is_the_study_table(self):
+        want = sorted("%s=%s" % ((st + "/" + sub).rstrip("/"), lab) for st, subs in sd.STUDIES.items() for sub, lab in subs)
+        with open(os.path.join(HERE, "tools", "stats-data.labels")) as f:
+            got = sorted(ln.strip() for ln in f if ln.strip() and not ln.startswith("#"))
+        self.assertEqual(got, want)
 
     def test_the_data_directory_is_ignored_by_git(self):
         with open(os.path.join(HERE, ".gitignore")) as f:
