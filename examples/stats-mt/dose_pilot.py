@@ -41,7 +41,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import u_table  # noqa: E402
 
-RUN_LEGS, EVIDENCE_LEGS = 165, 48
+RUN_LEGS, EVIDENCE_LEGS = 78, 12
 
 
 def latest(res):

@@ -1008,21 +1008,27 @@ class DoseConfigTest(unittest.TestCase):
         A, B, D = "mt-14w-one", "mt-14w-split", "mt-28w"
         self.assertEqual([(a["name"], a["shapes"]) for a in u["arms"]],
                          [("own-128", [A, B]), ("shared-128", [A, B]), ("own-128-A2", [A, B]),
-                          ("own-64", [A, D]), ("shared-64", [A, D]), ("own-64-A2", [D])])
+                          ("own-64", [A, D]), ("shared-64", [A, D]), ("own-64-A2", [D]),
+                          ("hot-own-128", [A]), ("hot-shared-128", [A])])
+        self.assertEqual(u["dose"]["hot"], {"cell": "A", "counters": 128, "reference": "hot-own-128",
+                                            "shared": "hot-shared-128"})
         self.assertEqual([(a["settings"]["stats_access_log"]["counters"], a["settings"]["stats_access_log"]["tag"])
                           for a in u["arms"]],
                          [(128, "%DOWNSTREAM_REMOTE_PORT%"), (128, "%DOWNSTREAM_LOCAL_PORT%"),
                           (128, "%DOWNSTREAM_REMOTE_PORT%"), (64, "%DOWNSTREAM_REMOTE_PORT%"),
-                          (64, "%DOWNSTREAM_LOCAL_PORT%"), (64, "%DOWNSTREAM_REMOTE_PORT%")])
+                          (64, "%DOWNSTREAM_LOCAL_PORT%"), (64, "%DOWNSTREAM_REMOTE_PORT%"),
+                          (128, "%DOWNSTREAM_REMOTE_PORT%"), (128, "%DOWNSTREAM_LOCAL_PORT%")])
+        self.assertEqual([bool(a["settings"]["stats_access_log"].get("hot")) for a in u["arms"]], [False] * 6 + [True] * 2)
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
         per = {}
         for r, sh, a in experiment.schedule(exp):
             if r == 1:
                 per.setdefault(sh["cell"], []).append(a["name"])
         self.assertEqual({k: sorted(v) for k, v in per.items()},
-                         {"A": ["own-128", "own-128-A2", "own-64", "shared-128", "shared-64"],
+                         {"A": ["hot-own-128", "hot-shared-128", "own-128", "own-128-A2", "own-64", "shared-128",
+                                "shared-64"],
                           "B": ["own-128", "own-128-A2", "shared-128"], "D": ["own-64", "own-64-A2", "shared-64"]})
-        self.assertEqual(sum(len(v) for v in per.values()), 11)
+        self.assertEqual(sum(len(v) for v in per.values()), 13)
         # every cell names its own dose, reference, shared arm and A/A; cell D's are at 64
         self.assertEqual([(x["cell"], x["counters"], x["reference"], x["shared"], x["aa"]) for x in u["dose"]["cells"]],
                          [("A", 128, "own-128", "shared-128", ["own-128-A2", "own-128"]),
@@ -1040,7 +1046,7 @@ class DoseConfigTest(unittest.TestCase):
             self.assertEqual(mine(own), mine(a2))
         # no arm runs in every cell: the harness's own rows are between the arms of a cell
         self.assertEqual((u["comparisons"], u["base_arm"]), ("all_pairs", "own-128"))
-        self.assertEqual(experiment.validate(exp), [])
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
         self.assertNotIn("uncalibrated", c["smoke-dose.json"])
         self.assertEqual(c["smoke-dose.json"]["dose"], u["dose"])  # dose-check compares the two
         self.assertTrue(c["u.json"]["uncalibrated"])  # run U's key is separate
@@ -1050,7 +1056,8 @@ class DoseConfigTest(unittest.TestCase):
         u256 = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": 256, "connections": 16}})["dose.json"]
         self.assertEqual([x["counters"] for x in u256["dose"]["cells"]], [256, 256, 64])
         self.assertEqual([a["name"] for a in u256["arms"]],
-                         ["own-256", "shared-256", "own-256-A2", "own-64", "shared-64", "own-64-A2"])
+                         ["own-256", "shared-256", "own-256-A2", "own-64", "shared-64", "own-64-A2", "hot-own-128",
+                          "hot-shared-128"])
         # the pilot is the same whatever is chosen
         self.assertEqual(c["dose-pilot.json"], MK.configs(box("bench-x86_64"))["dose-pilot.json"])
         # 8 connections per worker: its own shape names, connection counts and counter expectations
@@ -1065,7 +1072,7 @@ class DoseConfigTest(unittest.TestCase):
         own = [i for i in u["arms"][0]["evidence"] if i["stat"] == "stat_count.start_n"]
         self.assertEqual([(i["shape"], i["min"], i["max"]) for i in own],
                          [("mt-14w-one-c8", 128 * 112, 2 * 128 * 112), ("mt-14w-split-c8", 128 * 112, 2 * 128 * 112)])
-        self.assertEqual(experiment.validate(experiment.load(self.tmp(u))), [])
+        self.assertEqual(experiment.validate(experiment.load(self.tmp(u)), allow_short=True), [])
         self.assertEqual([s["name"] for s in c8["dose-evidence.json"]["shapes"]], [s["name"] for s in u["shapes"]])
 
     def test_per_arm_k_in_evidence(self):
@@ -1074,17 +1081,21 @@ class DoseConfigTest(unittest.TestCase):
         conns = {"mt-14w-one": 224, "mt-14w-split": 224, "mt-28w": 448}
         for a in u["arms"]:
             K = a["settings"]["stats_access_log"]["counters"]
-            self.assertEqual(K, int(a["name"].split("-")[1]))
+            hot = bool(a["settings"]["stats_access_log"].get("hot"))
+            self.assertEqual(K, int([x for x in a["name"].split("-") if x.isdigit()][0]))
+            self.assertEqual(hot, a["name"].startswith("hot-"))
+            n = 1 if hot else K   # counter objects per set; the increments per request are K either way
             byst = {}
             for i in a["evidence"]:
                 byst.setdefault(i["stat"], []).append(i)
             s = byst["stat_count.sum_per_request"][0]
             self.assertEqual((s["min"], s["max"]), (K - 0.5, K + 0.5), a["name"])
-            if a["name"].startswith("shared"):
-                self.assertEqual([i["equals"] for i in byst["stat_count.start_n"] + byst["stat_count.end_n"]], [K, K])
+            if "shared" in a["name"]:
+                self.assertEqual([i["equals"] for i in byst["stat_count.start_n"] + byst["stat_count.end_n"]], [n, n])
+                self.assertEqual(byst["dose.c000.port.10110"][0]["per_request"], float(K if hot else 1))
             else:
                 self.assertEqual([(i["shape"], i["min"], i["max"]) for i in byst["stat_count.start_n"]],
-                                 [(sh, K * conns[sh], 2 * K * conns[sh]) for sh in a["shapes"]], a["name"])
+                                 [(sh, n * conns[sh], 2 * n * conns[sh]) for sh in a["shapes"]], a["name"])
         # cell D's own arm at 64: 28,672 counters for its 448 connections (the pilot's passing size), not 57,344
         d = [i for i in {a["name"]: a for a in u["arms"]}["own-64"]["evidence"] if i.get("shape") == "mt-28w"][0]
         self.assertEqual((d["min"], d["max"]), (28672, 57344))
@@ -1118,7 +1129,7 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual((u["dose"]["socket"], u["dose"]["workers"]), (["B", "A"], ["D", "A"]))
         self.assertNotIn("load", u["dose"])
         self.assertEqual((u["rounds"], u["rounds_max"], u["adaptive"], u["order"], u["shape_order"]),
-                         (15, 15, False, "latin", "latin"))
+                         (6, 6, False, "latin", "latin"))
         self.assertEqual(u["primary_metric"], "workers_cycles_per_req")
         self.assertEqual(u["measure"]["stat_count_prefix"], "dose.")
         self.assertEqual(u["measure"]["stat_filter_extra"], "^dose\\.c000\\.port\\.10110$")
@@ -1127,23 +1138,35 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual((u["measure"]["window_s"], u["client"]["duration_s"]), (20, 30))
         self.assertEqual(MK.configs(box("bench-x86_64"))["u-hi.json"]["client"]["duration_s"], 25)
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
-        self.assertEqual(experiment.validate(exp), [])
+        # a short run: 6 rounds, so --allow-short; rounds complete in blocks of 3
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
+        self.assertTrue(any("rounds must be >= 12" in e for e in experiment.validate(exp)))
+        self.assertEqual((u["rotation_block"], experiment.order_period(exp)), (3, 3))
+        self.assertEqual((u["dose"]["rounds"], u["dose"]["short_run"]), (6, True))
         plan = experiment.schedule(exp)
-        self.assertEqual(len(plan), 165)  # 11 legs per round x 15 rounds
+        self.assertEqual(len(plan), 78)  # 13 legs per round x 6 rounds
         per = {}
         for r, sh, a in plan:
             per.setdefault((r, sh["cell"]), []).append(a["name"])
-        self.assertEqual({len(v) for (r, c), v in per.items() if c == "A"}, {5})
+        self.assertEqual({len(v) for (r, c), v in per.items() if c == "A"}, {7})
         self.assertEqual({len(v) for (r, c), v in per.items() if c != "A"}, {3})
         self.assertTrue(all("-128" not in n for (r, c), v in per.items() if c == "D" for n in v))
-        self.assertTrue(all("-64" not in n for (r, c), v in per.items() if c == "B" for n in v))
-        # every arm of a cell in every position equally often there
+        self.assertTrue(all("-64" not in n and "hot" not in n for (r, c), v in per.items() if c == "B" for n in v))
+        # balance as far as 6 rounds allow: in the 3-arm cells every arm is in every position
+        # twice; in cell A (7 arms) every arm takes 6 different positions, one each
         pos = {}
         for (r, c), v in per.items():
             for i, n in enumerate(v):
-                pos[(c, n, i)] = pos.get((c, n, i), 0) + 1
-        self.assertEqual({v for (c, n, i), v in pos.items() if c == "A"}, {3})
-        self.assertEqual({v for (c, n, i), v in pos.items() if c != "A"}, {5})
+                pos.setdefault((c, n), []).append(i)
+        for (c, n), ps in pos.items():
+            if c == "A":
+                self.assertEqual((len(ps), len(set(ps))), (6, 6), n)
+            else:
+                self.assertEqual(sorted(ps), [0, 0, 1, 1, 2, 2], (c, n))
+        self.assertEqual(len({n for (c, n) in pos if c == "A"}), 7)
+        # every cell leads a round twice
+        lead = [experiment.shape_order(exp, r)[0]["cell"] for r in range(1, 7)]
+        self.assertEqual(sorted(lead), ["A", "A", "B", "B", "D", "D"])
         firsts = {experiment.shape_order(exp, r)[0]["name"] for r in range(1, 4)}
         self.assertEqual(len(firsts), 3)
         for a in exp["arms"]:
@@ -1297,14 +1320,14 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual((sm["rounds"], sm["smoke"], sm["evidence_mode"]), (1, True, "record"))
         self.assertEqual(sm["arms"], c["dose.json"]["arms"])
         self.assertEqual(len(experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64",
-                                                                             "smoke-dose.json")))), 11)
-        # the evidence legs: base, stats-reject, own and shared at the cell's dose, 4 rounds per cell
+                                                                             "smoke-dose.json")))), 13)
+        # the evidence legs: base, stats-reject, own and shared at the cell's dose, 1 round per cell
         ev = c["dose-evidence.json"]
-        self.assertEqual((ev["rounds"], ev["base_arm"], ev["comparisons"]), (4, "base", "base"))
+        self.assertEqual((ev["rounds"], ev["base_arm"], ev["comparisons"], ev["rotation_block"]), (1, "base", "base", 1))
         self.assertEqual([s["cell"] for s in ev["shapes"]], ["A", "B", "D"])
         eexp = experiment.load(os.path.join(MT, "bench-x86_64", "dose-evidence.json"))
         plan = experiment.schedule(eexp)
-        self.assertEqual(len(plan), 48)
+        self.assertEqual(len(plan), 12)
         per = {}
         for r, sh, a in plan:
             per.setdefault(sh["cell"], set()).add(a["name"])
@@ -1317,29 +1340,21 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual(ev["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
         self.assertTrue(ev["measure"]["stat_ops_probe"])
         self.assertEqual(experiment.validate(eexp, allow_short=True), [])
-        pos = {}
-        for r in range(1, 5):
-            for sh in eexp["shapes"]:
-                for i, a in enumerate(experiment.shape_round_order(eexp, r, sh)):
-                    pos[(sh["cell"], a["name"], i)] = pos.get((sh["cell"], a["name"], i), 0) + 1
-        self.assertEqual(set(pos.values()), {1})  # 4 arms per cell, 4 rounds: every position once
-        # the evidence smoke: one round in the cells that show every evidence arm (A and D), the
-        # same event list and probe
+        # the evidence smoke: one round in cell A, the same event list and probe, its own arms only
         se = c["smoke-dose-evidence.json"]
         self.assertEqual(([s["cell"] for s in se["shapes"]], se["rounds"], se["smoke"], se["evidence_mode"]),
-                         (["A", "D"], 1, True, "record"))
-        self.assertEqual([a["name"] for a in se["arms"]], [a["name"] for a in ev["arms"]])
-        self.assertEqual([a["settings"] for a in se["arms"] if a.get("settings")],
-                         [a["settings"] for a in ev["arms"] if a.get("settings")])
+                         (["A"], 1, True, "record"))
+        self.assertEqual([a["name"] for a in se["arms"]], ["base", "stats-reject", "own-128", "shared-128"])
+        self.assertEqual([a.get("settings") for a in se["arms"]], [a.get("settings") for a in ev["arms"][:4]])
         self.assertEqual(se["measure"], ev["measure"])
-        splan = experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64", "smoke-dose-evidence.json")))
-        self.assertEqual(len(splan), 8)
-        self.assertEqual({a["name"] for r, sh, a in splan}, {a["name"] for a in ev["arms"]})  # every arm has a leg
+        self.assertEqual(len(experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64",
+                                                                             "smoke-dose-evidence.json")))), 4)
         # the smoke of the run covers all 11 cell-arm pairs; the smoke check knows which arms run where
         SV = _mod("mt_smoke_valid", os.path.join(MT, "smoke_valid.py"))
         ok = [{"shape": sh["name"], "arm": a["name"], "round": 1, "verdict": {"valid": True}}
               for r, sh, a in experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64", "smoke-dose.json")))]
-        self.assertEqual(len(ok), 11)
+        self.assertEqual(len(ok), 13)
+        self.assertIn(("mt-14w-one", "hot-shared-128"), {(m["shape"], m["arm"]) for m in ok})
         self.assertEqual({(m["shape"], m["arm"]) for m in ok},
                          {(sh, a["name"]) for a in c["dose.json"]["arms"] for sh in a["shapes"]})
         self.assertEqual(SV.check(sm, {"legs": ok}), [])
@@ -1442,14 +1457,16 @@ class DoseConfigTest(unittest.TestCase):
 HITM_U = ("mem_load_uops_l3_hit_retired.xsnp_hitm:u", "mem_load_uops_l3_miss_retired.remote_hitm:u")
 
 
-def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=None, seed=5, rho_low=0.01):
+def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=None, seed=5, rho_low=0.01, rho_hot=0.06):
     """A synthetic dose run on the slot's config: per cell (shape name) the true ln(shared / own)
     at the cell's own dose, and in the second dose's cell the true ln(shared / own) at that dose.
-    Own cycles are 545,000 plus 1,150 per counter (the logger's own cost)."""
+    Own cycles are 545,000 plus 1,150 per counter (the logger's own cost). `rounds` decides
+    whether it is a short run (under 12), as the box's dose.rounds does for the real config."""
     import random
     rng = random.Random(seed)
     exp = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
-    low = exp["dose"]["low"]
+    exp["dose"].update(rounds=rounds, short_run=rounds < 12)
+    low, hot = exp["dose"]["low"], exp["dose"]["hot"]
     legs = []
     for r in range(1, rounds + 1):
         for c in exp["dose"]["cells"]:
@@ -1463,6 +1480,11 @@ def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=None, seed=5, rho_low=0
                 bl = (545e3 + 1150 * low["counters"]) * rng.gauss(1, 0.004)
                 il = 162e3 + 2800 * low["counters"]
                 arms += [(low["reference"], bl, il), (low["shared"], bl * math.exp(rho_low) * rng.gauss(1, 0.003), il)]
+            if c["cell"] == hot["cell"]:
+                # the hot counter stays in the worker's cache in own: cheaper than the spread own arm
+                bh = (545e3 + 900 * hot["counters"]) * rng.gauss(1, 0.004)
+                ih = 162e3 + 2800 * hot["counters"]
+                arms += [(hot["reference"], bh, ih), (hot["shared"], bh * math.exp(rho_hot) * rng.gauss(1, 0.003), ih)]
             for arm, v, i in arms:
                 legs.append({"leg_id": "r%02d-%s-%s" % (r, c["shape"], arm), "round": r, "shape": c["shape"], "arm": arm,
                              "verdict": {"valid": True}, "workers_cycles_per_req": v,
@@ -1939,16 +1961,16 @@ class DosePilotTest(unittest.TestCase):
         self.assertEqual(rep["rates_key"], "bench-x86_64-dose-1")
         # seconds per leg and what that makes of the run
         self.assertEqual((rep["q5"]["mean_s"], rep["q5"]["max_s"]), (60.0, 60.0))
-        self.assertAlmostEqual(rep["q5"]["run_h"], 165 * 60 / 3600.0)
-        self.assertAlmostEqual(rep["q5"]["evidence_min"], 48.0)
+        self.assertAlmostEqual(rep["q5"]["run_h"], 78 * 60 / 3600.0)
+        self.assertAlmostEqual(rep["q5"]["evidence_min"], 12.0)
         self.assertEqual(rep["q6"]["largest"]["start_n"], 2 * 128 * 448)
         t = self.DP.text(rep, cfg)
         for needle in ("1. bootstrap --mode validate: base OK", "-> K = 128", "-> 8 connections per worker",
                        "own local 7.00 remote 0.00, shared local 160.60 remote 0.00; (shared - own) local +153.60 remote "
                        "+0.00",
                        "ONE ROUND each (not an estimate)", "loopback against wildcard listener at K = 128",
-                       "seconds per leg: mean 60, max 60 over 17 legs; at the mean the 165-leg run takes 2.75 h and the "
-                       "48 evidence legs 48 min", "client slack 7.0 s", "(exploratory)",
+                       "seconds per leg: mean 60, max 60 over 17 legs; at the mean the 78-leg run takes 1.30 h and the "
+                       "12 evidence legs 12 min", "client slack 7.0 s", "(exploratory)",
                        'pilot OK: recommend {"bench-x86_64-dose-1": {"counters": 128, "connections": 8}}'):
             self.assertIn(needle, t)
         self.assertNotIn("OVER HALF THE SLACK", t)
@@ -2232,9 +2254,9 @@ class DosePilotTest(unittest.TestCase):
 
     def test_script_modes(self):
         txt = open(os.path.join(MT, "run-u.sh")).read()
-        for m in ("dose-pilot)", "dose-smoke)", "dose-check)", "dose-queue)", "DOSE_STOP_S:-12600",
-                  "DOSE_EV_STOP_S:-4500", "dose_pilot.py", '--out "$R/dose$DOSE_TAG"',
-                  '--evidence $R/dose-evidence$DOSE_TAG',
+        for m in ("dose-pilot)", "dose-smoke)", "dose-check)", "dose-queue)", "DOSE_STOP_S:-6300",
+                  "DOSE_EV_STOP_S:-1500", "dose_pilot.py", '--out "$R/dose$DOSE_TAG"',
+                  '--evidence "$R/dose-evidence$DOSE_TAG"',
                   "dose not started (choice, pilot record, smoke or evidence; no override)",
                   'DOSE_PILOT_TAG=${DOSE_PILOT_TAG:-$DOSE_TAG}'):
             self.assertIn(m, txt)
@@ -2244,11 +2266,13 @@ class DosePilotTest(unittest.TestCase):
         q = txt[txt.index("  dose-queue)"):txt.index("  codegen-smoke)")]
         self.assertLess(q.index("dose_check ||"), q.index("$EPL run"))
         self.assertLess(q.index('"$C/dose.json"'), q.index('"$C/dose-evidence.json"'))
+        # the tables follow the evidence legs in the same chain
+        self.assertLess(q.index('"$C/dose-evidence.json"'), q.index('u_table.py" "$R/dose$DOSE_TAG" --evidence'))
         chk = txt[txt.index("dose_check() {"):txt.index("mode=${1:-}")]
         for m in ("smoke_valid.py", "evidence-check", 'dose_gate.py" "$C/dose.json" "$R/smoke-dose$DOSE_TAG" '
                   '"$R/dose-pilot$DOSE_PILOT_TAG.json"', '"$R/dose-decision$DOSE_PILOT_TAG.json"',
                   'smoke_valid.py" "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG"',
-                  'evidence-check "$C/dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG"'):
+                  'evidence-check "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG"'):
             self.assertIn(m, chk)
         # the smoke runs the run's round and the evidence legs' round
         self.assertLess(sm.index('"$C/smoke-dose.json"'), sm.index('"$C/smoke-dose-evidence.json"'))
@@ -2373,12 +2397,13 @@ class ArmShapesTest(unittest.TestCase):
         with open(os.path.join(d, "dose.json"), "w") as f:
             json.dump(c, f)
         r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "epl"), "run", os.path.join(d, "dose.json"),
-                            "--dry-run", "--out", os.path.join(d, "run")], capture_output=True, text=True, timeout=120)
+                            "--dry-run", "--allow-short", "--out", os.path.join(d, "run")], capture_output=True,
+                           text=True, timeout=120)
         self.assertEqual(r.returncode, 0, r.stderr[-500:])
         with open(os.path.join(d, "run", "results.json")) as f:
             res = json.load(f)
-        self.assertEqual(len(res["legs"]), 165)
-        self.assertEqual((res["metadata"]["rounds_complete"], res["metadata"]["incomplete"]), (15, False))
+        self.assertEqual(len(res["legs"]), 78)
+        self.assertEqual((res["metadata"]["rounds_complete"], res["metadata"]["incomplete"]), (6, False))
         text, js = UT.render(res)
         self.assertEqual(len(js["statements"]), 5)
         self.assertTrue(all("wall_s" in m for m in res["legs"]))
@@ -2542,6 +2567,52 @@ class ShortRunAndHotCounterTest(unittest.TestCase):
             with self.assertRaises(ValueError, msg=bad):
                 envoy_config.stats_access_log(bad)
 
+    def test_hot_pair_bootstraps(self):
+        # in the run: the hot pair differs from cell A's spread pair in the counter names only
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
+        bs = {a["name"]: envoy_config.bootstrap_text(exp["shapes"], experiment.arm_envoy(exp, a, "/r"), 8092)
+              for a in exp["arms"]}
+        import re
+        norm = lambda t: re.sub(r'"c\d\d\d"', '"x"', t)  # noqa: E731
+        self.assertEqual(norm(bs["hot-shared-128"]), norm(bs["shared-128"]))
+        self.assertEqual(norm(bs["hot-own-128"]), norm(bs["own-128"]))
+        self.assertNotEqual(bs["hot-own-128"], bs["own-128"])
+        self.assertEqual(bs["hot-own-128"].count('"c000"'), 128)
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
+
+    def test_hot_evidence(self):
+        from epl import evidence
+        u = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
+        arms = {a["name"]: a for a in u["arms"]}
+        dump = lambda tag: {"x": [{"value_format": tag}] * 128, "stats_flush_interval": "240s",  # noqa: E731
+                            "l": {"address": "0.0.0.0", "port_value": 10110}}
+
+        def leg(arm, start, end, per_req, shared_counter=None, new=0):
+            w = {"http.ingress_http.downstream_cx_total": 0}
+            if shared_counter is not None:
+                w["dose.c000.port.10110"] = shared_counter
+            return {"shape": "mt-14w-one", "arm": arm, "responses_raw": 420000, "sut_stats_window": w,
+                    "sut_stats_window_ok": True,
+                    "stat_count": {"start_n": start, "end_n": end, "new_in_window": new, "sum_per_request": per_req}}
+        sh, own = arms["hot-shared-128"]["evidence"], arms["hot-own-128"]["evidence"]
+        ld, rd = dump("%DOWNSTREAM_LOCAL_PORT%"), dump("%DOWNSTREAM_REMOTE_PORT%")
+        # hot shared: one counter object, 128 increments per request on it
+        self.assertTrue(evidence.evaluate(leg("hot-shared-128", 1, 1, 128.0, 128 * 420000), sh, ld)["ok"])
+        self.assertFalse(evidence.evaluate(leg("hot-shared-128", 128, 128, 128.0, 128 * 420000), sh, ld)["ok"])  # spread
+        self.assertFalse(evidence.evaluate(leg("hot-shared-128", 1, 1, 128.0, 420000), sh, ld)["ok"])   # one per request
+        self.assertFalse(evidence.evaluate(leg("hot-shared-128", 1, 1, 1.0, 128 * 420000), sh, ld)["ok"])
+        # the spread shared arm's evidence does not accept a hot leg, nor the reverse
+        self.assertFalse(evidence.evaluate(leg("shared-128", 1, 1, 128.0, 128 * 420000), arms["shared-128"]["evidence"],
+                                           ld)["ok"])
+        # hot own: one counter per connection (224, or 448 with the warm-up client's), 128 increments per request
+        for n in (224, 448):
+            self.assertTrue(evidence.evaluate(leg("hot-own-128", n, n, 128.0), own, rd)["ok"], n)
+        self.assertFalse(evidence.evaluate(leg("hot-own-128", 223, 223, 128.0), own, rd)["ok"])
+        self.assertFalse(evidence.evaluate(leg("hot-own-128", 128 * 224, 128 * 224, 128.0), own, rd)["ok"])  # spread
+        self.assertFalse(evidence.evaluate(leg("hot-own-128", 224, 225, 128.0, new=1), own, rd)["ok"])
+        self.assertFalse(evidence.evaluate(leg("hot-own-128", 224, 224, 128.0, shared_counter=5), own, rd)["ok"])
+        self.assertFalse(evidence.evaluate(leg("hot-own-128", 224, 224, 127.0), own, rd)["ok"])
+
     def test_rotation_block(self):
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "u-hi.json"))
         exp.pop("uncalibrated", None)
@@ -2563,6 +2634,98 @@ class ShortRunAndHotCounterTest(unittest.TestCase):
         # without it nothing changes for the existing runs
         for fn in ("u.json", "u-hi.json", "u-hitm.json"):
             self.assertNotIn("rotation_block", json.load(open(os.path.join(MT, "bench-x86_64", fn))))
+
+    def test_short_run_statements(self):
+        # six rounds: no 12-round minimum; the same interval forms and finding rules
+        res = _dose_run(RHO, rounds=6)
+        text, js, st = self.rows(res, _dose_evidence())
+        self.assertTrue(js["short_run"])
+        self.assertIn("SHORT RUN of 6 rounds", text.splitlines()[0])
+        self.assertIn("no minimum of 12 valid rounds applies", text)
+        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5"])
+        self.assertIn("Holm over 5", text)
+        self.assertFalse([r for r in st.values() if "incomplete" in r["verdict"]])
+        self.assertEqual(js["cells"]["A"]["valid_rounds"], 6)
+        ra = js["cells"]["A"]["rho_rounds"]
+        self.assertEqual(len(ra), 6)
+        self.assertAlmostEqual(st["S1"]["w"]["hi"], UT.widened(list(ra.values()))["hi"])   # the same widened form
+        self.assertEqual(st["S2"]["verdict"], "finding: line transfer")                   # 5% at K = 128 resolves
+        # what six rounds do not resolve: "not resolved in a short run, under X", X the widened upper end
+        res = _dose_run({"mt-14w-one": 0.004, "mt-14w-split": 0.05, "mt-28w": 0.006}, rounds=6, rho_low=0.004)
+        _, js, st = self.rows(res, _dose_evidence())
+        for k in ("S1", "S3"):
+            self.assertTrue(st[k]["verdict"].startswith("not resolved in a short run, under %+.2f%% (" % st[k]["w"]["hi"]),
+                            st[k]["verdict"])
+            self.assertNotIn("bound", st[k]["verdict"])
+        self.assertEqual(st["S5"]["verdict"], "not resolved in a short run, under %+.2f points" % st["S5"]["w"]["hi"])
+        self.assertEqual(st["S4"]["verdict"], "resolved: higher across sockets")
+        # the A/A rule and the invalid-comparison rule are the same in a short run
+        _, js, st = self.rows(_dose_run(RHO, rounds=6, aa_noise=0.03), _dose_evidence())
+        self.assertTrue(all(st[k]["verdict"].startswith("no verdict: cell ") for k in st))
+        _, js, st = self.rows(_dose_run(dict(RHO, **{"mt-28w": -0.03}), rounds=6), _dose_evidence())
+        self.assertEqual(st["S3"]["verdict"], "comparison invalid (own slower than shared)")
+        # a stopped short run is still incomplete
+        res = _dose_run(RHO, rounds=6)
+        res["metadata"]["incomplete"] = True
+        _, _, st = self.rows(res, _dose_evidence())
+        self.assertEqual({r["verdict"] for r in st.values()}, {experiment.INCOMPLETE})
+        # the long run's wording and minimum are unchanged
+        _, js, st = self.rows(_dose_run({"mt-14w-one": 0.004, "mt-14w-split": 0.05, "mt-28w": 0.006}, rho_low=0.004),
+                              _dose_evidence())
+        self.assertFalse(js["short_run"])
+        self.assertTrue(st["S1"]["verdict"].startswith("bound: rho_A <= "))
+        self.assertTrue(st["S5"]["verdict"].startswith("not resolved: <= "))
+
+    def test_one_round_of_evidence(self):
+        # the evidence legs are one round per cell: means without intervals still feed the label,
+        # the band and the model row
+        ev = _dose_evidence()
+        ev["legs"] = [m for m in ev["legs"] if m["round"] == 1]
+        ev["metadata"]["rounds_complete"] = 1
+        text, js, st = self.rows(_dose_run(RHO, rounds=6), ev)
+        e = js["evidence"]["A"]
+        self.assertEqual((e["hitm_shared_minus_own"]["n"], e["footprint"]["n"]), (1, 1))
+        self.assertNotIn("lo", e["hitm_shared_minus_own"])
+        self.assertAlmostEqual(e["h"], 0.3, delta=0.05)
+        self.assertEqual(st["S2"]["verdict"], "finding: line transfer")
+        p = {(x["cell"], x["counters"]): x for x in js["prices"]}[("B", 128)]
+        self.assertAlmostEqual(p["band"], p["price"]["mean"] + p["footprint_d"] * 45.0)
+        m = js["model"]["cells"]["B"][0]
+        self.assertAlmostEqual(m["x_pct"], 100 * 17.0 * m["P"] / 545e3)
+        self.assertIn("hitm_scaled_pct", m)
+
+    def test_hot_pair_is_exploratory(self):
+        res = _dose_run(RHO, rounds=6, rho_hot=0.06)
+        text, js, st = self.rows(res, _dose_evidence())
+        hot = js["hot"]
+        self.assertEqual((hot["cell"], hot["counters"], hot["own"], hot["shared"], hot["valid_rounds"]),
+                         ("A", 128, "hot-own-128", "hot-shared-128", 6))
+        # its rho and price come from its own two arms, per 128 updates
+        legs = lambda arm: {m["round"]: m["workers_cycles_per_req"] for m in res["legs"]  # noqa: E731
+                            if m["shape"] == "mt-14w-one" and m["arm"] == arm}
+        o, s_ = legs("hot-own-128"), legs("hot-shared-128")
+        self.assertAlmostEqual(hot["rho_t"]["mean"], sum(100 * math.log(s_[r] / o[r]) for r in o) / 6)
+        self.assertAlmostEqual(hot["price"]["mean"], sum((s_[r] - o[r]) / 128 for r in o) / 6)
+        self.assertAlmostEqual(hot["rho"]["hi"], UT.widened([100 * math.log(s_[r] / o[r]) for r in sorted(o)])["hi"])
+        # outside the statements: five of them, Holm over five, with or without the hot pair
+        self.assertEqual(len(st), 5)
+        self.assertFalse([r for r in st.values() if "hot" in r["statement"]])
+        res2 = json.loads(json.dumps(res))
+        res2["legs"] = [m for m in res2["legs"] if not m["arm"].startswith("hot-")]
+        _, js2, st2 = self.rows(res2, _dose_evidence())
+        self.assertEqual([st2[k]["holm_p"] for k in st2], [st[k]["holm_p"] for k in st])
+        self.assertEqual([st2[k]["verdict"] for k in st2], [st[k]["verdict"] for k in st])
+        # printed beside cell A's K = 128 pair, marked exploratory, with the ratio of the two prices
+        self.assertIn("| A (HOT COUNTER, exploratory) | 14w-one |", text)
+        self.assertIn("| A, HOT COUNTER (exploratory) | 128 on one counter |", text)
+        ratio = hot["price"]["mean"] / js["cells"]["A"]["price"]["mean"]
+        self.assertIn("Hot counter in cell A (EXPLORATORY, outside the statements, 6 rounds)", text)
+        self.assertIn("(%.2f times)" % ratio, text)
+        self.assertGreater(ratio, 2.0)
+        # no model row and no footprint band rest on it
+        self.assertNotIn("hot", json.dumps(js["model"]))
+        self.assertFalse([p for p in js["prices"] if "hot" in json.dumps(p["cell"])])
+        self.assertEqual(len(js["prices"]), 4)
 
 
 if __name__ == "__main__":

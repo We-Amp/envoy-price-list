@@ -220,6 +220,15 @@
     "cell": "A",
     "counters": 64
    },
+   "hot": {
+    "cell": "A",
+    "counters": 128,
+    "note": "exploratory, outside the statements: the logger's counter list is 128 entries of the same counter, so one counter object takes 128 increments per request (about 2.7 million a second at 14 workers x 1,500) where the spread arms give 128 objects one each; the same lookups and adds per request"
+   },
+   "rounds": 6,
+   "evidence_rounds": 1,
+   "rotation_block": 3,
+   "short_run_note": "short run: 6 rounds instead of 15, 1 round of evidence legs per cell; the cell rotation and the 3-arm cells' arm rotations balance twice in 6 rounds; cell A has 7 arms, so each of its arms takes 6 of the 7 positions once",
    "socket": [
     "B",
     "A"
@@ -284,7 +293,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
+   "note": "run R1 (dose), a short run: K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "envoy": {

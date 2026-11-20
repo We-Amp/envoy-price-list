@@ -220,6 +220,15 @@
     "cell": "A",
     "counters": 64
    },
+   "hot": {
+    "cell": "A",
+    "counters": 128,
+    "note": "exploratory, outside the statements: the logger's counter list is 128 entries of the same counter, so one counter object takes 128 increments per request (about 2.7 million a second at 14 workers x 1,500) where the spread arms give 128 objects one each; the same lookups and adds per request"
+   },
+   "rounds": 6,
+   "evidence_rounds": 1,
+   "rotation_block": 3,
+   "short_run_note": "short run: 6 rounds instead of 15, 1 round of evidence legs per cell; the cell rotation and the 3-arm cells' arm rotations balance twice in 6 rounds; cell A has 7 arms, so each of its arms takes 6 of the 7 positions once",
    "socket": [
     "B",
     "A"
@@ -284,7 +293,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
+   "note": "run R1 (dose), a short run: K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "envoy": {
@@ -865,6 +874,170 @@
    "shapes": [
     "mt-28w"
    ]
+  },
+  {
+   "name": "hot-own-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%",
+     "hot": true
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 224,
+     "max": 448,
+     "shape": "mt-14w-one",
+     "label": "1 dose counter per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ]
+  },
+  {
+   "name": "hot-shared-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%",
+     "hot": true
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 1,
+     "tol_abs": 0,
+     "label": "1 dose counter before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 1,
+     "tol_abs": 0,
+     "label": "1 dose counter after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 128.0,
+     "tol": 0.01,
+     "label": "128 increments per request on a shared counter"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ]
   }
  ],
  "shapes": [
@@ -942,10 +1115,19 @@
   }
  ],
  "k": 16,
+ "rotation_block": 3,
  "dose": {
   "counters": 128,
   "connections": 16,
   "rates_key": "bench-x86_64-dose-1",
+  "rounds": 6,
+  "short_run": true,
+  "hot": {
+   "cell": "A",
+   "counters": 128,
+   "reference": "hot-own-128",
+   "shared": "hot-shared-128"
+  },
   "cells": [
    {
     "cell": "A",

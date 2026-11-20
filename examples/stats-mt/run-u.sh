@@ -22,16 +22,16 @@
 #                                     dose_pilot.py prints the answers and writes the pilot record
 #                                     with the recommended {"counters": K, "connections": c}, to
 #                                     put into RATES_JSON under the box's dose.rates_key
-#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at that choice (11 legs) and one round of the
-#                                     evidence legs in the cells that show every arm (8 legs), then
-#                                     dose-check
+#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at that choice (13 legs) and one round of the
+#                                     evidence legs in the first cell (4 legs), then dose-check
 #   run-u.sh dose-check                the choice made; a clean pilot record that recommends it, or a
 #                                     decision record ($R/dose-decision$DOSE_PILOT_TAG.json)
 #                                     that the pilot record's checks 1, 2 and 6 support; every
 #                                     smoke leg valid with the run's own arm settings; evidence
-#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json (165 legs) within DOSE_STOP_S (default
-#                                     3 h 30 min), then the evidence legs within DOSE_EV_STOP_S
-#                                     (default 1 h 15 min); no leg starts where it would overlap
+#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json (a short run: 78 legs) within
+#                                     DOSE_STOP_S (default 1 h 45 min), then the evidence legs (12)
+#                                     within DOSE_EV_STOP_S (default 25 min), in one chain, then
+#                                     the tables; no leg starts where it would overlap
 #                                     00:00-00:10 UTC (the configs' avoid_utc)
 #                                     DOSE_TAG names an attempt's directories (a pilot or smoke
 #                                     never replaces an earlier one: pick a new tag);
@@ -141,9 +141,9 @@ dose_check() {
   python3 "$S/smoke_valid.py" "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" \
     > "$R/smoke-dose-evidence$DOSE_TAG.valid.txt" 2>&1 || bad=1
   tee -a "$R/queue.log" < "$R/smoke-dose-evidence$DOSE_TAG.valid.txt"
-  log "evidence-check dose-evidence against smoke-dose-evidence"
-  if ! $EPL evidence-check "$C/dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" >> "$R/queue.log" 2>&1; then
-    log "evidence-check dose-evidence FAILED (details in queue.log)"
+  log "evidence-check smoke-dose-evidence (its own arms; the evidence legs gate themselves)"
+  if ! $EPL evidence-check "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" >> "$R/queue.log" 2>&1; then
+    log "evidence-check smoke-dose-evidence FAILED (details in queue.log)"
     bad=1
   fi
   return $bad
@@ -267,17 +267,20 @@ case "$mode" in
   dose-queue)
     rewrite
     dose_check || { log "dose not started (choice, pilot record, smoke or evidence; no override)"; exit 1; }
-    L=${DOSE_STOP_S:-12600}
+    L=${DOSE_STOP_S:-6300}
     log "start dose (${L}s stop)"
     timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose.json" --out "$R/dose$DOSE_TAG" \
       --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end dose rc=$?"
     # the evidence legs, outside the timed run (HITM events in user mode, store-stat operations)
-    L=${DOSE_EV_STOP_S:-4500}
+    L=${DOSE_EV_STOP_S:-1500}
     log "start dose-evidence (${L}s stop)"
     timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose-evidence.json" \
       --out "$R/dose-evidence$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
-    log "end dose-evidence rc=$?; tables: python3 $S/u_table.py $R/dose$DOSE_TAG --evidence $R/dose-evidence$DOSE_TAG > $R/dose$DOSE_TAG.md"
+    log "end dose-evidence rc=$?"
+    python3 "$S/u_table.py" "$R/dose$DOSE_TAG" --evidence "$R/dose-evidence$DOSE_TAG" --json "$R/dose$DOSE_TAG.table.json" \
+      > "$R/dose$DOSE_TAG.md" 2>> "$R/queue.log"
+    log "tables rc=$?: $R/dose$DOSE_TAG.md"
     ;;
   codegen-smoke)
     # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker
