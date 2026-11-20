@@ -19,13 +19,15 @@
 #   run-u.sh hi-smoke [EPL_ARGS...]    one round of u-hi, then hi-check (calibration, evidence)
 #   run-u.sh hi-queue [EPL_ARGS...]    hi-check, then u-hi within HI_STOP_S (default 2 h 30 min)
 #   run-u.sh dose-pilot [EPL_ARGS...]  (boxes with a dose section) run R1's pilot: one round of base and
-#                                     own/shared at every K of the choice list on the pilot cells;
+#                                     own/shared at every K of the choice list on the pilot cells,
+#                                     own/shared at the middle K on the 28-worker cell (16 legs);
 #                                     dose_pilot.py prints the answers and the K to put into
 #                                     RATES_JSON as {"<dose.rates_key>": {"counters": K}}
 #   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at the chosen K, then dose-check
 #   run-u.sh dose-check                K chosen, every smoke leg valid at that K, evidence
-#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json within DOSE_STOP_S (default 2 h
-#                                     30 min), then the evidence legs within DOSE_EV_STOP_S (1 h)
+#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json (165 legs) within DOSE_STOP_S (default
+#                                     3 h 30 min), then the evidence legs within DOSE_EV_STOP_S
+#                                     (default 1 h 15 min)
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -230,13 +232,13 @@ case "$mode" in
   dose-queue)
     rewrite
     dose_check || { log "dose not started (K, smoke or evidence; no override)"; exit 1; }
-    L=${DOSE_STOP_S:-9000}
+    L=${DOSE_STOP_S:-12600}
     log "start dose (${L}s stop)"
     timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose.json" --out "$R/dose$DOSE_TAG" \
       --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end dose rc=$?"
     # the evidence legs, outside the timed run (HITM events in user mode, store-stat operations)
-    L=${DOSE_EV_STOP_S:-3600}
+    L=${DOSE_EV_STOP_S:-4500}
     log "start dose-evidence (${L}s stop)"
     timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose-evidence.json" \
       --out "$R/dose-evidence$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1

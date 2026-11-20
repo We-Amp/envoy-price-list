@@ -175,32 +175,55 @@
      "cell": "A",
      "rung": "14w-one",
      "rate_per_worker": 1500,
-     "role": "reference"
+     "role": "reference",
+     "sockets": 1
     },
     {
      "cell": "B",
      "rung": "14w-split",
      "rate_per_worker": 1500,
-     "role": "socket"
+     "role": "socket",
+     "sockets": 2
+    },
+    {
+     "cell": "D",
+     "rung": "28w",
+     "rate_per_worker": 1500,
+     "role": "workers",
+     "sockets": 2
     },
     {
      "cell": "C",
      "rung": "7w-one",
      "rate_per_worker": 3000,
-     "role": "load"
+     "role": "load",
+     "sockets": 1,
+     "exploratory": true
     }
    ],
+   "slot_cells": [
+    "A",
+    "B",
+    "D"
+   ],
+   "low": {
+    "cell": "A",
+    "divisor": 4
+   },
    "socket": [
     "B",
     "A"
    ],
-   "load": [
-    "C",
+   "workers": [
+    "D",
     "A"
    ],
    "pilot_cells": [
     "A",
     "C"
+   ],
+   "pilot_mid_cells": [
+    "D"
    ],
    "pilot_rule": {
     "cell": "A",
@@ -214,10 +237,12 @@
    },
    "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
    "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+   "flush_interval_s": 240,
+   "flush_note": "every dose arm sets this stats flush interval: longer than a leg's Envoy lives (about a minute), under the 300 s the bootstrap accepts, so the main thread's flush does not latch the own arms' counters during the window; base and stats-reject keep the default 5 s",
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); cells A and B at the 1,500 per worker of the completed high-load attempt, cell C the same 21,000 total on 7 workers with the same 14 client threads; the 7w-one rung is the dose run's own (extra_rungs), so run U's rung set is unchanged; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
   }
  },
  "envoy": {
@@ -297,6 +322,9 @@
     "stats_access_log": {
      "counters": 128,
      "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
     }
    },
    "evidence": [
@@ -305,6 +333,12 @@
      "scope": "config",
      "equals": "%DOWNSTREAM_REMOTE_PORT%",
      "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
      "stat": "stat_count.start_n",
@@ -325,10 +359,10 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 14336,
-     "max": 28672,
-     "shape": "mt-7w-one",
-     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
+     "min": 57344,
+     "max": 114688,
+     "shape": "mt-28w",
+     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -365,6 +399,9 @@
     "stats_access_log": {
      "counters": 128,
      "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
     }
    },
    "evidence": [
@@ -373,6 +410,12 @@
      "scope": "config",
      "equals": "%DOWNSTREAM_LOCAL_PORT%",
      "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
      "stat": "stat_count.start_n",
@@ -417,6 +460,9 @@
     "stats_access_log": {
      "counters": 128,
      "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
     }
    },
    "evidence": [
@@ -425,6 +471,12 @@
      "scope": "config",
      "equals": "%DOWNSTREAM_REMOTE_PORT%",
      "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
      "stat": "stat_count.start_n",
@@ -445,10 +497,10 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 14336,
-     "max": 28672,
-     "shape": "mt-7w-one",
-     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
+     "min": 57344,
+     "max": 114688,
+     "shape": "mt-28w",
+     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -470,6 +522,134 @@
      "max": 130.56,
      "label": "128 increments per request over all dose counters"
     }
+   ]
+  },
+  {
+   "name": "own-32",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 32,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    }
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 7168,
+     "max": 14336,
+     "shape": "mt-14w-one",
+     "label": "32 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 31.36,
+     "max": 32.64,
+     "label": "32 increments per request over all dose counters"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ]
+  },
+  {
+   "name": "shared-32",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 32,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    }
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 32,
+     "tol_abs": 0,
+     "label": "32 dose counters before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 32,
+     "tol_abs": 0,
+     "label": "32 dose counters after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "one increment per request on a shared counter"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 31.36,
+     "max": 32.64,
+     "label": "32 increments per request over all dose counters"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
    ]
   }
  ],
@@ -513,23 +693,23 @@
    "cell": "B"
   },
   {
-   "name": "mt-7w-one",
+   "name": "mt-28w",
    "path": "/s",
    "kind": "proxied",
    "body_bytes": 4096,
-   "rps": 21000,
-   "workers": 7,
-   "worker_cpus": "0-6",
+   "rps": 42000,
+   "workers": 28,
+   "worker_cpus": "0-13,20-33",
    "main_cpu": 19,
    "client_concurrency": 14,
-   "client_connections_per_worker": 8,
+   "client_connections_per_worker": 32,
    "client_extra_args": [
     "--rate-limiter-plugin-config",
     "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
    ],
    "lead_in_s": 3,
    "admin_timeout_s": 30,
-   "cell": "C"
+   "cell": "D"
   }
  ],
  "rounds": 15,
@@ -553,6 +733,7 @@
     "shape": "mt-14w-one",
     "rung": "14w-one",
     "role": "reference",
+    "sockets": 1,
     "workers": 14,
     "rate_per_worker": 1500
    },
@@ -561,26 +742,35 @@
     "shape": "mt-14w-split",
     "rung": "14w-split",
     "role": "socket",
+    "sockets": 2,
     "workers": 14,
     "rate_per_worker": 1500
    },
    {
-    "cell": "C",
-    "shape": "mt-7w-one",
-    "rung": "7w-one",
-    "role": "load",
-    "workers": 7,
-    "rate_per_worker": 3000
+    "cell": "D",
+    "shape": "mt-28w",
+    "rung": "28w",
+    "role": "workers",
+    "sockets": 2,
+    "workers": 28,
+    "rate_per_worker": 1500
    }
   ],
   "socket": [
    "B",
    "A"
   ],
-  "load": [
-   "C",
+  "workers": [
+   "D",
    "A"
-  ]
+  ],
+  "low": {
+   "cell": "A",
+   "counters": 32,
+   "reference": "own-32",
+   "shared": "shared-32"
+  },
+  "flush_interval_s": 240
  },
  "uncalibrated": true
 }

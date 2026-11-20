@@ -1002,12 +1002,19 @@ class DoseConfigTest(unittest.TestCase):
             c = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": K}})
             u = c["dose.json"]
             self.assertNotIn("uncalibrated", u)
-            self.assertEqual([a["name"] for a in u["arms"]], ["own-%d" % K, "shared-%d" % K, "own-%d-A2" % K])
+            self.assertEqual([a["name"] for a in u["arms"]], ["own-%d" % K, "shared-%d" % K, "own-%d-A2" % K,
+                                                              "own-%d" % (K // 4), "shared-%d" % (K // 4)])
             self.assertEqual(u["base_arm"], "own-%d" % K)
             tags = [a["settings"]["stats_access_log"] for a in u["arms"]]
             self.assertEqual(tags, [{"counters": K, "tag": "%DOWNSTREAM_REMOTE_PORT%"},
                                     {"counters": K, "tag": "%DOWNSTREAM_LOCAL_PORT%"},
-                                    {"counters": K, "tag": "%DOWNSTREAM_REMOTE_PORT%"}])
+                                    {"counters": K, "tag": "%DOWNSTREAM_REMOTE_PORT%"},
+                                    {"counters": K // 4, "tag": "%DOWNSTREAM_REMOTE_PORT%"},
+                                    {"counters": K // 4, "tag": "%DOWNSTREAM_LOCAL_PORT%"}])
+            # the low dose (K / 4) runs in cell A only
+            self.assertEqual([a.get("shapes") for a in u["arms"]], [None, None, None, ["mt-14w-one"], ["mt-14w-one"]])
+            self.assertEqual(u["dose"]["low"], {"cell": "A", "counters": K // 4, "reference": "own-%d" % (K // 4),
+                                                "shared": "shared-%d" % (K // 4)})
             self.assertEqual(u["arms"][0]["evidence"], u["arms"][2]["evidence"])  # the A/A arm is a copy
             self.assertEqual(u["dose"]["counters"], K)
             self.assertEqual((u["dose"]["reference"], u["dose"]["shared"], u["dose"]["aa"]),
@@ -1027,13 +1034,19 @@ class DoseConfigTest(unittest.TestCase):
                 s["client_connections_per_worker"]) for s in u["shapes"]]
         self.assertEqual(got, [("A", "mt-14w-one", 14, "0-13", 21000, 14, 16),
                                ("B", "mt-14w-split", 14, "0-6,20-26", 21000, 14, 16),
-                               ("C", "mt-7w-one", 7, "0-6", 21000, 14, 8)])
+                               ("D", "mt-28w", 28, "0-13,20-33", 42000, 14, 32)])
+        hi = MK.configs(box("bench-x86_64"), {"bench-x86_64-hi-1800": {"r_star": 1500, "k": 16}})["u-hi.json"]
+        d28 = dict([s for s in u["shapes"] if s["cell"] == "D"][0])
+        for extra in ("admin_timeout_s", "cell"):
+            d28.pop(extra)
+        self.assertEqual(d28, [s for s in hi["shapes"] if s["name"] == "mt-28w"][0])  # run U-hi's 28w rung
         for s in u["shapes"]:
             self.assertEqual(s["client_concurrency"] * s["client_connections_per_worker"], 16 * s["workers"])
             self.assertEqual((s["main_cpu"], s["admin_timeout_s"], s["lead_in_s"]), (19, 30, 3))
-        self.assertEqual([(c["cell"], c["rate_per_worker"], c["role"]) for c in u["dose"]["cells"]],
-                         [("A", 1500, "reference"), ("B", 1500, "socket"), ("C", 3000, "load")])
-        self.assertEqual((u["dose"]["socket"], u["dose"]["load"]), (["B", "A"], ["C", "A"]))
+        self.assertEqual([(c["cell"], c["rate_per_worker"], c["role"], c["sockets"]) for c in u["dose"]["cells"]],
+                         [("A", 1500, "reference", 1), ("B", 1500, "socket", 2), ("D", 1500, "workers", 2)])
+        self.assertEqual((u["dose"]["socket"], u["dose"]["workers"]), (["B", "A"], ["D", "A"]))
+        self.assertNotIn("load", u["dose"])
         self.assertEqual((u["rounds"], u["rounds_max"], u["adaptive"], u["order"], u["shape_order"]),
                          (15, 15, False, "latin", "latin"))
         self.assertEqual(u["primary_metric"], "workers_cycles_per_req")
@@ -1045,21 +1058,75 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual(MK.configs(box("bench-x86_64"))["u-hi.json"]["client"]["duration_s"], 25)
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
         self.assertEqual(experiment.validate(exp), [])
-        self.assertEqual(len(experiment.schedule(exp)), 135)  # 3 cells x 3 arms x 15 rounds
+        plan = experiment.schedule(exp)
+        self.assertEqual(len(plan), 165)  # 11 legs per round x 15 rounds
+        per = {}
+        for r, sh, a in plan:
+            per.setdefault((r, sh["cell"]), []).append(a["name"])
+        self.assertEqual({len(v) for (r, c), v in per.items() if c == "A"}, {5})
+        self.assertEqual({len(v) for (r, c), v in per.items() if c != "A"}, {3})
+        self.assertTrue(all("-32" not in n for (r, c), v in per.items() if c != "A" for n in v))
+        # every arm of a cell in every position equally often there
+        pos = {}
+        for (r, c), v in per.items():
+            for i, n in enumerate(v):
+                pos[(c, n, i)] = pos.get((c, n, i), 0) + 1
+        self.assertEqual({v for (c, n, i), v in pos.items() if c == "A"}, {3})
+        self.assertEqual({v for (c, n, i), v in pos.items() if c != "A"}, {5})
         firsts = {experiment.shape_order(exp, r)[0]["name"] for r in range(1, 4)}
         self.assertEqual(len(firsts), 3)
         for a in exp["arms"]:
             b = envoy_config.bootstrap(exp["shapes"], experiment.arm_envoy(exp, a, "/r"), 8092)
             self.assertEqual(envoy_config.audit_mt_s(b), [], a["name"])
 
+    def test_flush_interval(self):
+        b = box("bench-x86_64")
+        iv = b["dose"]["flush_interval_s"]
+        c = MK.configs(b, DOSE_RATES)
+        # longer than a leg's Envoy lives (warm-up, client run, a minute of reads and start-up),
+        # under the 300 s the bootstrap accepts
+        self.assertGreater(iv, 5 + b["dose"]["client_duration_s"] + 60)
+        self.assertLess(iv, 300)
+        for fn in ("dose.json", "smoke-dose.json", "dose-evidence.json", "dose-pilot.json"):
+            exp = experiment.load(os.path.join(MT, "bench-x86_64", fn))
+            for a in c[fn]["arms"]:
+                dose_arm = "stats_access_log" in (a.get("settings") or {})
+                self.assertEqual((a.get("settings") or {}).get("stats_flush"),
+                                 {"interval_s": iv} if dose_arm else None, (fn, a["name"]))
+                arm = [x for x in exp["arms"] if x["name"] == a["name"]][0]
+                bs = envoy_config.bootstrap(exp["shapes"], experiment.arm_envoy(exp, arm, "/r"), 8092)
+                # base and stats-reject keep Envoy's default (no key at all)
+                self.assertEqual(bs.get("stats_flush_interval"), "%ds" % iv if dose_arm else None, (fn, a["name"]))
+                self.assertNotIn("stats_flush_on_admin", bs)
+                if dose_arm:
+                    self.assertIn({"stat": "stats_flush_interval", "scope": "config", "equals": "%ds" % iv,
+                                   "label": "stats flush interval %d s (no flush during the leg)" % iv}, a["evidence"])
+                    # nothing a dose arm's evidence reads needs a flush: the config dump, counters
+                    # (cumulative at the increment) and the leg's own stat count
+                    for it in a["evidence"]:
+                        self.assertTrue(it["scope"] == "config" or it["stat"].startswith("stat_count.")
+                                        or it["stat"] == "dose.c000.port.10110", it)
+        # the existing runs carry no flush setting
+        for fn in ("u.json", "u-hi.json", "u-hitm.json"):
+            self.assertFalse([a for a in c[fn]["arms"] if "stats_flush" in (a.get("settings") or {})])
+
     def test_pilot_smoke_evidence_configs(self):
         c = MK.configs(box("bench-x86_64"), DOSE_RATES)
         p = c["dose-pilot.json"]
         self.assertEqual([a["name"] for a in p["arms"]],
                          ["base", "own-64", "shared-64", "own-128", "shared-128", "own-256", "shared-256"])
-        self.assertEqual([s["cell"] for s in p["shapes"]], ["A", "C"])
+        self.assertEqual([s["cell"] for s in p["shapes"]], ["A", "C", "D"])
+        # every K and base on cells A and C; on the 28-worker cell own and shared at the middle K only
+        ac = ["mt-14w-one", "mt-7w-one"]
+        self.assertEqual([a.get("shapes") for a in p["arms"]], [ac, ac, ac, None, None, ac, ac])
+        self.assertEqual(p["dose"]["mid"], 128)
+        self.assertEqual({c_["cell"]: c_.get("exploratory", False) for c_ in p["dose"]["cells"]},
+                         {"A": False, "C": True, "D": False})
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose-pilot.json"))
-        self.assertEqual(len(experiment.schedule(exp)), 14)  # within about 18 legs
+        plan = experiment.schedule(exp)
+        self.assertEqual(len(plan), 16)  # near 20 legs
+        self.assertEqual(sorted(a["name"] for r, sh, a in plan if sh["name"] == "mt-28w"), ["own-128", "shared-128"])
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
         self.assertTrue(p["smoke"])
         self.assertEqual(p["evidence_mode"], "record")
         self.assertEqual(p["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
@@ -1069,14 +1136,25 @@ class DoseConfigTest(unittest.TestCase):
         sm = c["smoke-dose.json"]
         self.assertEqual((sm["rounds"], sm["smoke"], sm["evidence_mode"]), (1, True, "record"))
         self.assertEqual(sm["arms"], c["dose.json"]["arms"])
+        self.assertEqual(len(experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64",
+                                                                             "smoke-dose.json")))), 11)
         ev = c["dose-evidence.json"]
         self.assertEqual((ev["rounds"], ev["base_arm"]), (4, "base"))
+        self.assertEqual([s["cell"] for s in ev["shapes"]], ["A", "B", "D"])  # the slot's cells
         self.assertEqual(len(experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64",
                                                                              "dose-evidence.json")))), 48)
         self.assertEqual(ev["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
         self.assertTrue(ev["measure"]["stat_ops_probe"])
         self.assertEqual(experiment.validate(experiment.load(os.path.join(MT, "bench-x86_64", "dose-evidence.json")),
                                              allow_short=True), [])
+        # the smoke check knows which arms run where
+        SV = _mod("mt_smoke_valid", os.path.join(MT, "smoke_valid.py"))
+        ok = [{"shape": sh["name"], "arm": a["name"], "round": 1, "verdict": {"valid": True}}
+              for r, sh, a in experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64", "smoke-dose.json")))]
+        self.assertEqual(len(ok), 11)
+        self.assertEqual(SV.check(sm, {"legs": ok}), [])
+        self.assertEqual(SV.check(sm, {"legs": [m for m in ok if m["arm"] != "shared-32"]}),
+                         ["missing: mt-14w-one shared-32"])
 
     def leg(self, arm, shape="mt-14w-one", **sc):
         m = {"shape": shape, "arm": arm, "responses_raw": 420000,
@@ -1090,7 +1168,7 @@ class DoseConfigTest(unittest.TestCase):
         arms = {a["name"]: a for a in u["arms"]}
         for a in u["arms"]:
             self.assertEqual(evidence.validate_items(a["evidence"], list(arms)), [], a["name"])
-        dump = lambda tag: {"x": [{"value_format": tag}] * 128}  # noqa: E731
+        dump = lambda tag: {"x": [{"value_format": tag}] * 128, "stats_flush_interval": "240s"}  # noqa: E731
         sh, own = arms["shared-128"]["evidence"], arms["own-128"]["evidence"]
         good = self.leg("shared-128")
         good["sut_stats_window"]["dose.c000.port.10110"] = 420100
@@ -1107,7 +1185,10 @@ class DoseConfigTest(unittest.TestCase):
         self.assertFalse(evidence.evaluate(none, sh, dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
         # own: K per connection (224 connections at 14 workers, 112 at 7), with or without the warm-up client's
         rd = dump("%DOWNSTREAM_REMOTE_PORT%")
-        for shape, conns in (("mt-14w-one", 224), ("mt-14w-split", 224), ("mt-7w-one", 112)):
+        self.assertFalse(evidence.evaluate(good, sh, {"x": [{"value_format": "%DOWNSTREAM_LOCAL_PORT%"}]})["ok"])
+        self.assertFalse(evidence.evaluate(good, sh, dict(dump("%DOWNSTREAM_LOCAL_PORT%"),
+                                                          stats_flush_interval="5s"))["ok"])  # a default flush
+        for shape, conns in (("mt-14w-one", 224), ("mt-14w-split", 224), ("mt-28w", 448)):
             for sets in (1, 2):
                 n = sets * 128 * conns
                 self.assertTrue(evidence.evaluate(self.leg("own-128", shape, start_n=n, end_n=n), own, rd)["ok"],
@@ -1123,8 +1204,14 @@ class DoseConfigTest(unittest.TestCase):
             self.assertFalse(evidence.evaluate(shared_obj, own, rd)["ok"])
             self.assertFalse(evidence.evaluate(self.leg("own-128", shape, start_n=n, end_n=n, sum_per_request=64.0),
                                                own, rd)["ok"])
-        self.assertFalse(evidence.evaluate(self.leg("own-128", "mt-14w-one", start_n=128 * 112 - 128, end_n=1), own,
-                                           rd)["ok"])
+        self.assertFalse(evidence.evaluate(self.leg("own-128", "mt-28w", start_n=128 * 224, end_n=128 * 224), own,
+                                           rd)["ok"])  # the 14-worker count at the 28-worker cell
+        # the low dose: its own K, and items for its one cell only
+        low = arms["own-32"]["evidence"]
+        self.assertEqual([i["shape"] for i in low if "shape" in i], ["mt-14w-one"])
+        lowleg = self.leg("own-32", "mt-14w-one", start_n=32 * 224, end_n=32 * 224, sum_per_request=32.1)
+        self.assertTrue(evidence.evaluate(lowleg, low, {"x": [{"value_format": "%DOWNSTREAM_REMOTE_PORT%"}],
+                                                        "stats_flush_interval": "240s"})["ok"])
         # the evidence legs' base arm: no dose counters at all
         base = [a for a in MK.configs(box("bench-x86_64"), DOSE_RATES)["dose-evidence.json"]["arms"]
                 if a["name"] == "base"][0]["evidence"]
@@ -1135,8 +1222,9 @@ class DoseConfigTest(unittest.TestCase):
 HITM_U = ("mem_load_uops_l3_hit_retired.xsnp_hitm:u", "mem_load_uops_l3_miss_retired.remote_hitm:u")
 
 
-def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=200.2e3, seed=5):
-    """A synthetic dose run: per cell (shape name) the true ln(shared / own)."""
+def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=200.2e3, seed=5, rho_low=0.005):
+    """A synthetic dose run: per cell (shape name) the true ln(shared / own) at K, and in the
+    low dose's cell the true ln(shared / own) at K / 4."""
     import random
     rng = random.Random(seed)
     exp = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
@@ -1144,8 +1232,12 @@ def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=200.2e3, seed=5):
     for r in range(1, rounds + 1):
         for s in exp["shapes"]:
             b = 540e3 * rng.gauss(1, 0.004)
-            for arm, v, ins in (("own-128", b, 200e3), ("own-128-A2", b * rng.gauss(1, aa_noise), 200e3),
-                                ("shared-128", b * math.exp(rho[s["name"]]) * rng.gauss(1, 0.003), ins_shared)):
+            arms = [("own-128", b, 200e3), ("own-128-A2", b * rng.gauss(1, aa_noise), 200e3),
+                    ("shared-128", b * math.exp(rho[s["name"]]) * rng.gauss(1, 0.003), ins_shared)]
+            if s["name"] == "mt-14w-one":
+                bl = 530e3 * rng.gauss(1, 0.004)
+                arms += [("own-32", bl, 190e3), ("shared-32", bl * math.exp(rho_low) * rng.gauss(1, 0.0005), 190e3)]
+            for arm, v, ins in arms:
                 legs.append({"leg_id": "r%02d-%s-%s" % (r, s["name"], arm), "round": r, "shape": s["name"], "arm": arm,
                              "verdict": {"valid": True}, "workers_cycles_per_req": v,
                              "per_req": {"instructions_u": ins}, "sut_busy": 0.4})
@@ -1163,7 +1255,7 @@ def _dose_evidence(h=1.2, events=HITM_U, seed=6):
             for arm, x in per.items():
                 x = x * rng.gauss(1, 0.02)
                 legs.append({"leg_id": "e", "round": r, "shape": s["name"], "arm": arm, "verdict": {"valid": True},
-                             "workers_cycles_per_req": 540e3, "sut_busy": 0.68 if "7w" in s["name"] else 0.36,
+                             "workers_cycles_per_req": 540e3, "sut_busy": 0.38 if "28w" in s["name"] else 0.36,
                              "responses": 420000,
                              "stat_ops": {"counter_incs": 25 * 420000, "histogram_samples": 4 * 420000,
                                           "counters_changed": []},
@@ -1171,7 +1263,7 @@ def _dose_evidence(h=1.2, events=HITM_U, seed=6):
     return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 4, "incomplete": False}}
 
 
-RHO = {"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.022}
+RHO = {"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-28w": 0.045}
 
 
 class DoseTableTest(unittest.TestCase):
@@ -1194,9 +1286,9 @@ class DoseTableTest(unittest.TestCase):
 
     def test_findings_and_line_transfer(self):
         text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
-        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5"])
-        self.assertIn("Holm over 5", text)
-        for i, (cell, rho) in enumerate((("A", 2.0), ("B", 5.0), ("C", 2.2))):
+        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5", "S6"])
+        self.assertIn("Holm over 6", text)
+        for i, (cell, rho) in enumerate((("A", 2.0), ("B", 5.0), ("D", 4.5))):
             r = st["S%d" % (i + 1)]
             self.assertEqual((r["kind"], r["cell"]), ("cell", cell))
             self.assertAlmostEqual(r["w"]["mean"], rho, delta=0.4)
@@ -1206,21 +1298,85 @@ class DoseTableTest(unittest.TestCase):
         self.assertAlmostEqual(st["S4"]["w"]["mean"], 3.0, delta=0.5)
         self.assertEqual(st["S4"]["verdict"], "resolved: higher across sockets")
         self.assertIn("+2 to +4 points", text)
-        self.assertEqual((st["S5"]["kind"], st["S5"]["cells"]), ("load", ["C", "A"]))
-        self.assertTrue(st["S5"]["verdict"].startswith("not resolved"))
+        self.assertEqual((st["S5"]["kind"], st["S5"]["cells"]), ("workers", ["D", "A"]))
+        self.assertAlmostEqual(st["S5"]["w"]["mean"], 2.5, delta=0.5)
+        self.assertEqual(st["S5"]["verdict"], "resolved: higher at the larger worker count")
+        self.assertIn("no directional prediction", text)
+        self.assertEqual((st["S6"]["kind"], st["S6"]["cell"]), ("linearity", "A"))
         # S4 and S5 are paired by round and carry two widening terms
         ra, rb = js["cells"]["A"]["rho_rounds"], js["cells"]["B"]["rho_rounds"]
         d = [rb[r] - ra[r] for r in sorted(ra)]
         self.assertAlmostEqual(st["S4"]["w"]["hi"], UT.widened(d, terms=2)["hi"])
         self.assertAlmostEqual(st["S1"]["w"]["hi"], UT.widened(list(ra.values()))["hi"])
-        # Holm over the five statements
+        # Holm over the six statements
         hp = UT.stats.holm([st[k]["w"]["p"] for k in st])
         self.assertEqual([st[k]["holm_p"] for k in st], hp)
-        # cycles per shared update: about ln-ratio x cycles / K
+        # cycles per shared update: about ln-ratio x cycles / K; the low dose has its own row
         self.assertAlmostEqual(js["cells"]["A"]["price"]["mean"], 540e3 * (math.exp(0.02) - 1) / 128, delta=8)
+        self.assertAlmostEqual(js["low"]["price"]["mean"], 530e3 * (math.exp(0.005) - 1) / 32, delta=8)
+        self.assertIn("| A | 32 |", text)
         # either spelling of the HITM events
         _, _, st2 = self.rows(_dose_run(RHO), _dose_evidence(events=UT.HITM))
         self.assertEqual(st2["S1"]["verdict"], "finding: line transfer")
+        # no workers verdict when cell D's A/A fails
+        res = _dose_run(RHO)
+        for m in res["legs"]:
+            if m["arm"] == "own-128-A2" and m["shape"] == "mt-28w":
+                m["workers_cycles_per_req"] *= 1.0 + (0.04 if m["round"] % 2 else -0.04)
+        _, _, st3 = self.rows(res, _dose_evidence())
+        self.assertTrue(st3["S5"]["verdict"].startswith("no verdict: an A/A of its cells failed"))
+        self.assertEqual(st3["S4"]["verdict"], "resolved: higher across sockets")
+
+    def test_linearity(self):
+        # P(K) = (exp(rho_K) - 1) x C / K: equal prices give 0, a fourfold dose at the same rho gives ln(1/4)
+        rk = {r: 2.0 + 0.1 * (r % 3 - 1) for r in range(1, 16)}
+        rl = {r: 0.5 + 0.02 * (r % 5 - 2) for r in range(1, 16)}
+        w = UT.linearity(rk, rl, 540e3, 530e3, 128, 32)
+        mk, ml = sum(rk.values()) / 1500.0, sum(rl.values()) / 1500.0
+        pk, pl = math.expm1(mk) * 540e3 / 128, math.expm1(ml) * 530e3 / 32
+        self.assertAlmostEqual(w["price_k"], pk)
+        self.assertAlmostEqual(w["price_low"], pl)
+        self.assertAlmostEqual(w["mean"], 100 * math.log(pk / pl))
+        a, b = math.exp(mk) / math.expm1(mk), math.exp(ml) / math.expm1(ml)
+        xs, ys = [rk[r] / 100 for r in sorted(rk)], [rl[r] / 100 for r in sorted(rl)]
+        cov = sum((x - mk) * (y - ml) for x, y in zip(xs, ys)) / 14
+        var = (a * a * UT.stats.stdev(xs) ** 2 + b * b * UT.stats.stdev(ys) ** 2 - 2 * a * b * cov) / 15
+        self.assertAlmostEqual(w["se"], 100 * math.sqrt(var))
+        self.assertAlmostEqual(w["width"], 100 * math.sqrt(var + (a * a + b * b) * 0.0034 ** 2))
+        self.assertAlmostEqual(w["hi"] - w["mean"], 1.96 * w["width"])
+        self.assertAlmostEqual(w["hi_unwidened"] - w["mean"], 1.96 * w["se"])
+        same = UT.linearity({r: 2.0 for r in range(1, 16)}, {r: 2.0 for r in range(1, 16)}, 500e3, 500e3, 128, 32)
+        self.assertAlmostEqual(same["mean"], 100 * math.log(0.25))
+        # a price that is not positive: no verdict, never a logarithm of a negative number
+        neg = UT.linearity(rk, {r: -0.2 for r in rk}, 540e3, 530e3, 128, 32)
+        self.assertEqual((neg["mean"], neg["why"]), (None, "the price is not positive at Klow"))
+        self.assertIsNone(UT.linearity({1: 2.0}, {1: 0.5}, 1.0, 1.0, 128, 32)["mean"])
+        # in the table: linear when the widened interval contains 0
+        text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
+        w = st["S6"]["w"]
+        self.assertTrue(w["lo"] <= 0 <= w["hi"])
+        self.assertTrue(st["S6"]["linear"])
+        self.assertTrue(st["S6"]["verdict"].startswith("linear: the widened interval contains 0"))
+        self.assertIn("it fails to show a departure", text)
+        self.assertIn("every cell uses the price at K", text)
+        # a far cheaper update at the low dose (rho at K / 4 as large as at K): not linear,
+        # and the model row of the low dose's cell uses the Klow price and says so
+        text, js, st = self.rows(_dose_run(dict(RHO, **{"mt-14w-one": 0.3}), rho_low=0.3), _dose_evidence())
+        self.assertFalse(st["S6"]["linear"])
+        self.assertTrue(st["S6"]["verdict"].startswith("not linear: P(K) / P(Klow) = 0.2"))
+        self.assertIn("the model row uses the Klow price", st["S6"]["verdict"])
+        m = js["model"]["cells"]
+        self.assertEqual(m["A"]["price_basis"], "Klow = 32 (not linear)")
+        self.assertAlmostEqual(m["A"]["P"], js["low"]["price"]["hi"])
+        self.assertEqual(m["B"]["price_basis"], "K = 128 (no Klow arm in this cell)")
+        self.assertAlmostEqual(m["B"]["P"], js["cells"]["B"]["price"]["hi"])
+        self.assertIn("the low dose's cell uses the Klow price", text)
+        # the Klow pair's A/A is the cell's own-K A/A
+        _, _, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
+        self.assertTrue(st["S6"]["verdict"].startswith("no verdict: the cell's A/A failed"))
+        # a low-dose price that is not positive
+        _, _, st = self.rows(_dose_run(RHO, rho_low=-0.004), _dose_evidence())
+        self.assertEqual(st["S6"]["verdict"], "no verdict: the price is not positive at Klow")
 
     def test_not_called_line_transfer(self):
         res = _dose_run(RHO)
@@ -1236,14 +1392,14 @@ class DoseTableTest(unittest.TestCase):
 
     def test_bounds(self):
         # under 1%: a bound with the widened interval's upper end, never "no effect"
-        text, js, st = self.rows(_dose_run({"mt-14w-one": 0.004, "mt-14w-split": 0.02, "mt-7w-one": 0.0}),
-                                 _dose_evidence())
+        text, js, st = self.rows(_dose_run({"mt-14w-one": 0.004, "mt-14w-split": 0.02, "mt-28w": 0.0},
+                                           rho_low=0.001), _dose_evidence())
         r = st["S1"]
         self.assertEqual(r["verdict"].split(" (")[0], "bound: rho_A <= %+.2f%%" % r["w"]["hi"])
         self.assertIn("under 1%", r["verdict"])
         self.assertFalse(r["finding"])
         self.assertIn("includes 0", st["S3"]["verdict"])
-        self.assertTrue(st["S3"]["verdict"].startswith("bound: rho_C <= "))
+        self.assertTrue(st["S3"]["verdict"].startswith("bound: rho_D <= "))
         self.assertEqual(st["S2"]["verdict"], "finding: line transfer")
         self.assertIn("is a bound on rho, not evidence of no cost", text)
         # a failed A/A (half-width over 1%): the cell is a bound, its contrasts carry no verdict
@@ -1254,7 +1410,7 @@ class DoseTableTest(unittest.TestCase):
         self.assertIn("A/A gate failed", st["S1"]["verdict"])
         self.assertTrue(st["S4"]["verdict"].startswith("no verdict: an A/A of its cells failed"))
         # an estimate over 1% but inside the A/A's reach is a bound too
-        res = _dose_run({"mt-14w-one": 0.012, "mt-14w-split": 0.05, "mt-7w-one": 0.02})
+        res = _dose_run({"mt-14w-one": 0.012, "mt-14w-split": 0.05, "mt-28w": 0.02})
         own = {m["round"]: m["workers_cycles_per_req"] for m in res["legs"]
                if m["arm"] == "own-128" and m["shape"] == "mt-14w-one"}
         for m in res["legs"]:
@@ -1268,43 +1424,41 @@ class DoseTableTest(unittest.TestCase):
         self.assertIn("within the A/A's reach", st["S1"]["verdict"])
         self.assertTrue(st["S1"]["verdict"].startswith("bound: rho_A <= "))
 
-    def test_load_statement(self):
-        _, _, st = self.rows(_dose_run({"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.06}),
-                             _dose_evidence())
-        self.assertIn("refutes the \"no queueing\" reading", st["S5"]["verdict"])
-        self.assertIn("load ladder", st["S5"]["verdict"])
-        _, _, st = self.rows(_dose_run({"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.02}),
-                             _dose_evidence())
-        self.assertFalse(st["S5"]["resolved"])
-        self.assertNotIn("refutes", st["S5"]["verdict"])
-
     def test_incomplete(self):
         res = _dose_run(RHO)
         res["metadata"]["incomplete"] = True
         text, js, st = self.rows(res, _dose_evidence())
         self.assertEqual({r["verdict"] for r in st.values()}, {experiment.INCOMPLETE})
-        self.assertNotIn("x_pct", js["model"])
+        self.assertEqual(len(st), 6)
+        self.assertNotIn("headline", js["model"])
         self.assertIn("no model row", text)
 
     def test_model_row(self):
         text, js, _ = self.rows(_dose_run(RHO), _dose_evidence())
         self.assertIn("## Model row for the plain config (a MODEL, not a measurement)", text)
-        self.assertIn("**MODEL:** sharing store stats across 7-14 workers, one or two sockets, 36-68% busy, costs at "
+        # one-socket and two-socket figures apart, each marked a model
+        self.assertIn("**MODEL, one socket:** sharing store stats across 14 workers (cell A), 36% busy, costs at "
                       "most ", text)
-        self.assertIn("not measured in the plain config", text)
+        self.assertIn("**MODEL, two sockets:** sharing store stats across 14 workers (cell B) and 28 workers (cell D), "
+                      "36-38% busy, costs at most ", text)
+        self.assertEqual(text.count("not measured in the plain config"), 2)
+        self.assertEqual(js["model"]["headline"]["one socket"], js["model"]["cells"]["A"]["x_pct"])
+        self.assertEqual(js["model"]["headline"]["two sockets"],
+                         max(js["model"]["cells"][c]["x_pct"] for c in ("B", "D")))
+        self.assertEqual([js["model"]["cells"][c]["sockets"] for c in ("A", "B", "D")], [1, 2, 2])
         m, e, c = js["model"]["cells"]["B"], js["evidence"]["B"], js["cells"]["B"]
         self.assertAlmostEqual(e["h"], 1.2, delta=0.05)
         self.assertAlmostEqual(m["T"], e["hitm_base_minus_reject"]["hi"] / e["h"])
         self.assertAlmostEqual(m["P"], c["price"]["hi"])
         self.assertAlmostEqual(m["x_pct"], 100 * m["T"] * m["P"] / 540e3)
-        self.assertEqual(js["model"]["x_pct"], max(r["x_pct"] for r in js["model"]["cells"].values()))
+        self.assertEqual(m["price_basis"], "K = 128")
         self.assertFalse(m["T_above_ops"])
         self.assertAlmostEqual(e["stat_ops_per_req"], 29.0)
         # without the evidence legs there is no model row, and the text says what is missing
         text, js, _ = self.rows(_dose_run(RHO))
         self.assertIn("No evidence legs given", text)
         self.assertEqual(js["model"], {"cells": {}})
-        self.assertNotIn("**MODEL:**", text)
+        self.assertNotIn("**MODEL", text)
         # h not positive: no model
         text, js, _ = self.rows(_dose_run(RHO), _dose_evidence(h=-0.1))
         self.assertEqual(js["model"]["cells"]["A"]["why"], "h is not positive")
@@ -1333,11 +1487,13 @@ class DosePilotTest(unittest.TestCase):
         for s in cfg["shapes"]:
             conns = s["workers"] * 16
             for a in cfg["arms"]:
+                if a.get("shapes") is not None and s["name"] not in a["shapes"]:
+                    continue
                 n = a["name"]
                 k = int(n.split("-")[1]) if "-" in n else 0
                 sh = n.startswith("shared")
                 m = {"shape": s["name"], "arm": n, "round": 1, "verdict": {"valid": True},
-                     "workers_cycles_per_req": base, "responses": 420000, "sut_busy": 0.36, "client_headroom": 0.5,
+                     "workers_cycles_per_req": base * (1.0 + (0.0002 * k if sh else 0.0)), "responses": 420000, "sut_busy": 0.36, "client_headroom": 0.5,
                      "client_pending_total": 14, "client_workers": 14, "sut_foreign_cpus": 0.01,
                      "perf_min_running_pct": 100.0,
                      "per_req": {"instructions_u": 200e3 + 300 * k + (ins_extra if sh else 0.0),
@@ -1362,12 +1518,23 @@ class DosePilotTest(unittest.TestCase):
         self.assertAlmostEqual(rep["q4"]["rows"][0]["share"], 1.2 * 64 * 100 / 540e3)
         self.assertEqual([r["ok"] for r in rep["q4"]["rows"]], [False, True, True])
         self.assertAlmostEqual(rep["q3"]["rows"][0]["h"], 1.2)
-        self.assertEqual(len(rep["q2"]["rows"]), 6)  # 3 K x 2 cells
+        self.assertEqual(len(res["legs"]), 16)
+        self.assertEqual([(r["cell"], r["k"]) for r in rep["q2"]["rows"]],
+                         [("A", 64), ("A", 128), ("A", 256), ("C", 64), ("C", 128), ("C", 256), ("D", 128)])
         self.assertAlmostEqual(rep["stat_ops"]["A"], 29.0)
-        self.assertEqual(rep["q6"]["counters"], [2 * 256 * 224, 2 * 256 * 112])
+        self.assertNotIn("D", rep["stat_ops"])  # base does not run in the 28-worker cell
+        self.assertEqual(rep["exploratory"], ["C"])
+        self.assertEqual(rep["q6"]["counters"], [2 * 256 * 224])
+        # the 28-worker cell at the middle K holds as many counters as cell A at the largest K
+        # (448 connections x 128 = 224 x 256); a K of 256 in the slot would double it
+        self.assertEqual(rep["q6"]["largest"]["counters"], 2 * 128 * 448)
+        self.assertEqual([r["start_n"] for r in rep["q1"]["counts"] if r["cell"] == "D"], [2 * 128 * 448, 128])
+        self.assertAlmostEqual(rep["q3"]["rows"][1]["rho_pct"], 100 * math.log(1 + 0.0002 * 128))
         t = self.DP.text(rep, cfg)
         for needle in ("1. bootstrap --mode validate: base OK", "-> K = 128", "pilot OK: K = 128", "h = 1.200",
-                       "load cell PASS", "own-256 held 114688, 57344 counters", "client slack 7.0 s"):
+                       "slot cells PASS", "own-256 held 114688 counters", "client slack 7.0 s",
+                       "largest counter set: cell A own-256, 114688 counters",
+                       "exploratory, never deciding: cell C", "D  own-128", "(exploratory cell)"):
             self.assertIn(needle, t)
         self.assertNotIn("OVER HALF THE SLACK", t)
 
@@ -1395,13 +1562,22 @@ class DosePilotTest(unittest.TestCase):
         rep = self.DP.answers(cfg, res, ov(cfg))
         self.assertFalse(rep["q2"]["ok"] or rep["ok"])
 
-        def bad_load(m):
-            if m["shape"] == "mt-7w-one" and m["arm"] == "shared-256":
-                m["verdict"] = {"valid": False, "reasons": ["client headroom 12% under 25%"]}
-        cfg, res = self.run_(mut=bad_load)
+        def bad(shape):
+            def f(m):
+                if m["shape"] == shape and m["arm"] == "shared-128":
+                    m["verdict"] = {"valid": False, "reasons": ["client headroom 12% under 25%"]}
+                    m["evidence"] = {"ok": False, "failed": ["x"]}
+            return f
+        # the 28-worker cell decides: an invalid leg there fails the pilot
+        cfg, res = self.run_(mut=bad("mt-28w"))
         rep = self.DP.answers(cfg, res, ov(cfg))
         self.assertFalse(rep["q5"]["ok"] or rep["ok"])
         self.assertTrue(any("client headroom" in p for p in rep["problems"]))
+        # the load cell is exploratory: printed as invalid, never deciding
+        cfg, res = self.run_(mut=bad("mt-7w-one"))
+        rep = self.DP.answers(cfg, res, ov(cfg))
+        self.assertTrue(rep["ok"] and rep["q5"]["ok"] and rep["q1"]["ok"], rep["problems"])
+        self.assertIn("INVALID (exploratory cell)", self.DP.text(rep, cfg))
 
         def limit(m):
             if m["arm"] == "own-256":
@@ -1440,8 +1616,8 @@ class DosePilotTest(unittest.TestCase):
 
     def test_script_modes(self):
         txt = open(os.path.join(MT, "run-u.sh")).read()
-        for m in ("dose-pilot)", "dose-smoke)", "dose-check)", "dose-queue)", "DOSE_STOP_S:-9000",
-                  "DOSE_EV_STOP_S:-3600", "dose_pilot.py", '--out "$R/dose$DOSE_TAG"',
+        for m in ("dose-pilot)", "dose-smoke)", "dose-check)", "dose-queue)", "DOSE_STOP_S:-12600",
+                  "DOSE_EV_STOP_S:-4500", "dose_pilot.py", '--out "$R/dose$DOSE_TAG"',
                   '--evidence $R/dose-evidence$DOSE_TAG', "dose not started (K, smoke or evidence; no override)"):
             self.assertIn(m, txt)
         # the smoke refuses an uncalibrated K before it runs anything; the queue runs only after dose_check
@@ -1538,6 +1714,21 @@ class ArmShapesTest(unittest.TestCase):
         src = open(os.path.join(HERE, "epl", "experiment.py")).read()
         i = src.index("    def _rerun_invalid(")
         self.assertIn("for a in shape_round_order(self.exp, r, sh):", src[i:src.index("    def run(self", i)])
+
+    def test_dose_dry_run(self):
+        c = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "dose.json"), "w") as f:
+            json.dump(c, f)
+        r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "epl"), "run", os.path.join(d, "dose.json"),
+                            "--dry-run", "--out", os.path.join(d, "run")], capture_output=True, text=True, timeout=120)
+        self.assertEqual(r.returncode, 0, r.stderr[-500:])
+        with open(os.path.join(d, "run", "results.json")) as f:
+            res = json.load(f)
+        self.assertEqual(len(res["legs"]), 165)
+        self.assertEqual((res["metadata"]["rounds_complete"], res["metadata"]["incomplete"]), (15, False))
+        text, js = UT.render(res)
+        self.assertEqual(len(js["statements"]), 6)
 
 
 if __name__ == "__main__":

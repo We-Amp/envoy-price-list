@@ -175,32 +175,55 @@
      "cell": "A",
      "rung": "14w-one",
      "rate_per_worker": 1500,
-     "role": "reference"
+     "role": "reference",
+     "sockets": 1
     },
     {
      "cell": "B",
      "rung": "14w-split",
      "rate_per_worker": 1500,
-     "role": "socket"
+     "role": "socket",
+     "sockets": 2
+    },
+    {
+     "cell": "D",
+     "rung": "28w",
+     "rate_per_worker": 1500,
+     "role": "workers",
+     "sockets": 2
     },
     {
      "cell": "C",
      "rung": "7w-one",
      "rate_per_worker": 3000,
-     "role": "load"
+     "role": "load",
+     "sockets": 1,
+     "exploratory": true
     }
    ],
+   "slot_cells": [
+    "A",
+    "B",
+    "D"
+   ],
+   "low": {
+    "cell": "A",
+    "divisor": 4
+   },
    "socket": [
     "B",
     "A"
    ],
-   "load": [
-    "C",
+   "workers": [
+    "D",
     "A"
    ],
    "pilot_cells": [
     "A",
     "C"
+   ],
+   "pilot_mid_cells": [
+    "D"
    ],
    "pilot_rule": {
     "cell": "A",
@@ -214,10 +237,12 @@
    },
    "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
    "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+   "flush_interval_s": 240,
+   "flush_note": "every dose arm sets this stats flush interval: longer than a leg's Envoy lives (about a minute), under the 300 s the bootstrap accepts, so the main thread's flush does not latch the own arms' counters during the window; base and stats-reject keep the default 5 s",
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); cells A and B at the 1,500 per worker of the completed high-load attempt, cell C the same 21,000 total on 7 workers with the same 14 client threads; the 7w-one rung is the dose run's own (extra_rungs), so run U's rung set is unchanged; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
   }
  },
  "envoy": {

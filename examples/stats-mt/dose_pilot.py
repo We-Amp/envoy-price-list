@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """The answers of the dose run's pilot (make.py dose-pilot.json), printed from its legs so that
-nobody computes them by hand. Exit 0 when questions 1, 2, 5 and 6 pass, every leg is valid and
-question 4 picks a K; else 1.
+nobody computes them by hand. Exit 0 when questions 1, 2, 5 and 6 pass, every leg outside the
+exploratory cells is valid and question 4 picks a K; else 1. A cell marked exploratory (the
+load cell, in the pilot only) is printed and never decides.
 
     python3 examples/stats-mt/dose_pilot.py PILOT_CFG PILOT_DIR [--json OUT.json]
 
@@ -19,8 +20,11 @@ its reasons and fails the pilot).
   4. K: the smallest of the choices with h x K x 100 cycles / base worker cycles per request
      >= 2.5% in the rule's cell (h: the mean over the choices in that cell; the per-K values are
      printed beside it).
-  5. The load cell: worker busy share, client headroom, client pending, other tasks on the SUT
-     CPUs, per leg; passes when every leg of the cell is valid.
+  5. Gates per leg: worker busy share, client headroom, client pending, other tasks on the SUT
+     CPUs; passes when every leg of the slot's cells is valid (the 28-worker cell runs own and
+     shared at the middle K: the client gates and the admin read time of its counter set).
+     Beside it, per K and cell, one round's 100 x ln(shared / own) of worker cycles per request
+     (one pair: exploratory in every cell).
   6. Scope limit: the largest own arm's counters all exist and count (a counter over a scope
      limit would be a null object: the sum per request would fall short), and no
      server.stats_overflow stat in the saved stat dumps.
@@ -70,6 +74,10 @@ def overflow_lines(run_dir, arms):
     return out
 
 
+def runs_in(arm, shape):
+    return arm.get("shapes") is None or shape in arm["shapes"]
+
+
 def answers(cfg, res, overflow=None):
     d = cfg["dose"]
     rule = d["pilot_rule"]
@@ -80,17 +88,21 @@ def answers(cfg, res, overflow=None):
     lead = max([cfg["measure"]["lead_in_s"]] + [sh.get("lead_in_s") or 0 for sh in cfg["shapes"]])
     rep = {"problems": [], "slack_s": cfg["client"]["duration_s"] - lead - cfg["measure"]["window_s"]}
     arms = [a["name"] for a in cfg["arms"]]
+    # the legs the config schedules: an arm may run in some cells only
+    here = {c["cell"]: [a["name"] for a in cfg["arms"] if runs_in(a, c["shape"])] for c in cells}
+    expl = {c["cell"] for c in cells if c.get("exploratory")}
+    rep["exploratory"] = sorted(expl)
     # every leg present and valid
     rep["legs"] = []
     for c in cells:
-        for a in arms:
+        for a in here[c["cell"]]:
             m = legs.get((c["shape"], a))
             v = (m or {}).get("verdict") or {}
             rep["legs"].append({"cell": c["cell"], "arm": a, "present": m is not None, "valid": _valid(m),
                                 "reasons": v.get("reasons") or []})
             if m is None:
                 rep["problems"].append("missing leg: cell %s %s" % (c["cell"], a))
-            elif not _valid(m):
+            elif not _valid(m) and c["cell"] not in expl:
                 rep["problems"].append("invalid leg: cell %s %s: %s" % (c["cell"], a, "; ".join(v.get("reasons") or [])))
     # 1. validate and stat count
     bv = (res.get("metadata") or {}).get("bootstrap_validate")
@@ -98,7 +110,7 @@ def answers(cfg, res, overflow=None):
     if not bv or not all(q1["validate"].values()):
         q1["ok"] = False
     for c in cells:
-        for a in arms:
+        for a in here[c["cell"]]:
             m = legs.get((c["shape"], a)) or {}
             sc, ev = m.get("stat_count") or {}, m.get("evidence") or {}
             row = {"cell": c["cell"], "arm": a, "start_n": sc.get("start_n"), "end_n": sc.get("end_n"),
@@ -106,7 +118,7 @@ def answers(cfg, res, overflow=None):
                    "read_s": [sc.get("start_read_s"), sc.get("end_read_s")],
                    "evidence_ok": ev.get("ok"), "failed": ev.get("failed") or []}
             q1["counts"].append(row)
-            if not ev.get("ok"):
+            if not ev.get("ok") and c["cell"] not in expl:
                 q1["ok"] = False
     rep["q1"] = q1
     # 2 and 3. instructions and h per K and cell
@@ -114,20 +126,26 @@ def answers(cfg, res, overflow=None):
     tol = 100.0 * rule["instructions_tol"]
     for c in cells:
         for k in ks:
+            if "own-%d" % k not in here[c["cell"]] or "shared-%d" % k not in here[c["cell"]]:
+                continue
             own, sh = legs.get((c["shape"], "own-%d" % k)), legs.get((c["shape"], "shared-%d" % k))
             io, ish = _ins(own), _ins(sh)
             diff = 100.0 * math.log(ish / io) if io and ish else None
             ok = diff is not None and abs(diff) <= tol
             q2["rows"].append({"cell": c["cell"], "k": k, "own": io, "shared": ish, "diff_pct": diff, "ok": ok})
-            q2["ok"] = q2["ok"] and ok
+            q2["ok"] = q2["ok"] and (ok or c["cell"] in expl)
             ho, hs = u_table.hitm_per_req(own or {}), u_table.hitm_per_req(sh or {})
             h = (hs - ho) / k if ho is not None and hs is not None else None
+            co, cs_ = _cyc(own), _cyc(sh)
             q3["rows"].append({"cell": c["cell"], "k": k, "own": ho, "shared": hs, "h": h,
+                               "rho_pct": 100.0 * math.log(cs_ / co) if co and cs_ else None,
                                "expected": None if h is None else rule["h_expected"][0] <= h <= rule["h_expected"][1]})
     rep["q2"], rep["q3"] = q2, q3
     # beside 3: the store-stat operations per request of base (the model row's cross-check)
     rep["stat_ops"] = {}
     for c in cells:
+        if "base" not in here[c["cell"]]:
+            continue
         m = legs.get((c["shape"], "base")) or {}
         so, n = m.get("stat_ops"), m.get("responses")
         rep["stat_ops"][c["cell"]] = (so["counter_incs"] + so["histogram_samples"]) / n if so and n else None
@@ -148,25 +166,28 @@ def answers(cfg, res, overflow=None):
     rep["q4"] = q4
     # 5. the load cell
     q5 = {"rows": [], "ok": True}
-    load_cells = [c for c in cells if c["role"] == "load"]
     for c in cells:
-        for a in arms:
+        for a in here[c["cell"]]:
             m = legs.get((c["shape"], a)) or {}
             q5["rows"].append({"cell": c["cell"], "arm": a, "busy": m.get("sut_busy"),
                                "headroom": m.get("client_headroom"), "pending": m.get("client_pending_total"),
                                "pending_limit": m.get("client_workers"), "foreign": m.get("sut_foreign_cpus"),
                                "perf_running_pct": m.get("perf_min_running_pct"), "valid": _valid(m)})
-            if c in load_cells and not _valid(m):
+            if c["cell"] not in expl and not _valid(m):
                 q5["ok"] = False
-    if not load_cells:
-        q5["ok"] = False
     rep["q5"] = q5
     # 6. scope limit
     kmax = max(ks)
-    rows = [r for r in q1["counts"] if r["arm"] == "own-%d" % kmax]
+    rows = [r for r in q1["counts"] if r["arm"] == "own-%d" % kmax and r["cell"] not in expl]
+    # the largest counter set of the pilot, whatever its arm (the 28-worker cell at the middle K)
+    owns = [r for r in q1["counts"] if r["arm"].startswith("own-") and r["start_n"] is not None]
+    big = max(owns, key=lambda r: r["start_n"]) if owns else None
     q6 = {"arm": "own-%d" % kmax, "counters": [r["start_n"] for r in rows],
           "sum_per_request": [r["sum_per_request"] for r in rows], "overflow": overflow,
-          "ok": bool(rows) and all(r["evidence_ok"] for r in rows)}
+          "largest": None if big is None else {"cell": big["cell"], "arm": big["arm"], "counters": big["start_n"],
+                                               "read_s": big["read_s"], "evidence_ok": big["evidence_ok"]},
+          "ok": bool(rows) and all(r["evidence_ok"] for r in rows) and (
+              big is None or big["cell"] in expl or bool(big["evidence_ok"]))}
     if overflow is None or any(v is None or v for v in overflow.values()):
         q6["ok"] = False
     rep["q6"] = q6
@@ -202,9 +223,9 @@ def text(rep, cfg):
     L.append("   -> %s" % ("PASS" if rep["q2"]["ok"] else "FAIL"))
     L.append("3. h = HITM:u (shared - own) per request / K (expected %.1f-%.1f; not gated):" % tuple(rule["h_expected"]))
     for r in rep["q3"]["rows"]:
-        L.append("   %-2s K=%-4d HITM:u/req own %s  shared %s  h = %s%s" % (
+        L.append("   %-2s K=%-4d HITM:u/req own %s  shared %s  h = %s%s  one round's 100 x ln(shared / own) cycles %s" % (
             r["cell"], r["k"], _f(r["own"], "%.2f"), _f(r["shared"], "%.2f"), _f(r["h"]),
-            "" if r["expected"] in (True, None) else "  (outside the expected range)"))
+            "" if r["expected"] in (True, None) else "  (outside the expected range)", _f(r["rho_pct"], "%+.2f")))
     L.append("   store-stat operations per request, base (counter increments and histogram samples): %s" % ", ".join(
         "%s %s" % (c, _f(v, "%.1f")) for c, v in rep["stat_ops"].items()))
     q4 = rep["q4"]
@@ -219,12 +240,12 @@ def text(rep, cfg):
     L.append("5. gates per leg (worker busy, client headroom, client pending / limit, other tasks on the SUT CPUs, "
              "perf running):")
     for r in rep["q5"]["rows"]:
-        L.append("   %-2s %-12s busy %s  headroom %s  pending %s/%s  foreign %s  perf %s  %s" % (
+        L.append("   %-2s %-12s busy %s  headroom %s  pending %s/%s  foreign %s  perf %s  %s%s" % (
             r["cell"], r["arm"], _f(r["busy"] and 100 * r["busy"], "%.1f%%"),
             _f(r["headroom"] and 100 * r["headroom"], "%.0f%%"), _f(r["pending"], "%d"),
             _f(r["pending_limit"], "%d"), _f(r["foreign"]), _f(r["perf_running_pct"], "%.1f%%"),
-            "valid" if r["valid"] else "INVALID"))
-    L.append("   -> load cell %s" % ("PASS" if rep["q5"]["ok"] else "FAIL"))
+            "valid" if r["valid"] else "INVALID", " (exploratory cell)" if r["cell"] in rep["exploratory"] else ""))
+    L.append("   -> slot cells %s" % ("PASS" if rep["q5"]["ok"] else "FAIL"))
     q6 = rep["q6"]
     L.append("6. scope limit: %s held %s counters; increments per request %s; server.stats_overflow in the stat "
              "dumps: %s" % (q6["arm"], ", ".join(_f(n, "%d") for n in q6["counters"]) or "-",
@@ -232,7 +253,13 @@ def text(rep, cfg):
                             "no dumps read" if q6["overflow"] is None else
                             ", ".join("%s: %s" % (a, "no dump" if v is None else "; ".join(v))
                                       for a, v in q6["overflow"].items() if v is None or v) or "none"))
+    if q6["largest"]:
+        g = q6["largest"]
+        L.append("   largest counter set: cell %s %s, %d counters, admin read %s s before and %s s after the window" % (
+            g["cell"], g["arm"], g["counters"], _f(g["read_s"][0], "%.2f"), _f(g["read_s"][1], "%.2f")))
     L.append("   -> %s" % ("PASS" if q6["ok"] else "FAIL"))
+    if rep["exploratory"]:
+        L.append("exploratory, never deciding: cell %s" % ", ".join(rep["exploratory"]))
     for p in rep["problems"]:
         L.append("PROBLEM " + p)
     L.append("pilot %s" % ("OK: K = %d" % q4["k"] if rep["ok"] else "NOT clean"))
