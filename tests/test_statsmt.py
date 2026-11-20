@@ -2141,5 +2141,25 @@ class ConfigEvidenceHarnessTest(unittest.TestCase):
         self.assertIn('m["wall_s"] = round(time.monotonic() - t_leg, 1)', body)
 
 
+class PilotOrderTest(unittest.TestCase):
+    def test_fixed_order(self):
+        # a fixed order balances nothing: only a smoke (a pilot) may use it
+        u = experiment.load(os.path.join(MT, "bench-x86_64", "u-hi.json"))
+        u["order"] = "fixed"
+        names = [a["name"] for a in u["arms"]]
+        u["arms"][2]["shapes"] = ["mt-28w"]
+        for r in (1, 2, 3):
+            self.assertEqual([a["name"] for a in experiment.round_order(u, r)], names)  # as listed, every round
+            self.assertEqual([a["name"] for a in experiment.shape_round_order(u, r, u["shapes"][0])], names[:2])
+            self.assertEqual([a["name"] for a in experiment.shape_round_order(u, r, u["shapes"][2])], names)
+        self.assertEqual(experiment.order_period(u), 1)
+        u["arms"][2].pop("shapes")
+        self.assertTrue(any("order fixed is for a smoke" in e for e in experiment.validate(u, allow_short=True)))
+        u["smoke"] = True
+        self.assertFalse([e for e in experiment.validate(u, allow_short=True) if "order" in e])
+        u["order"] = "sorted"
+        self.assertTrue(any("order must be" in e for e in experiment.validate(u, allow_short=True)))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -312,6 +312,8 @@ def order_period(exp):
     run in some shapes only, under a Latin order: in every shape, the least common multiple of
     the shapes' arm counts)."""
     o = effective_order(exp)
+    if o == "fixed":
+        return 1
     if o == "latin" and restricted(exp):
         per = 1
         for sh in exp.get("shapes", []):
@@ -336,8 +338,11 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm name %r must be [A-Za-z0-9._-]+" % n)
     if exp.get("base_arm", names[0] if names else None) not in names:
         errs.append("base_arm not among arms")
-    if exp["order"] not in ("auto", "abba", "rotate", "latin"):
-        errs.append("order must be auto, abba, rotate or latin")
+    if exp["order"] not in ("auto", "abba", "rotate", "latin", "fixed"):
+        errs.append("order must be auto, abba, rotate, latin or fixed")
+    elif exp["order"] == "fixed" and not exp.get("smoke"):
+        # arms in the configured order every round: nothing is balanced, so no comparison may rest on it
+        errs.append("order fixed is for a smoke (a pilot) only")
     elif exp["order"] == "abba" and len(arms) > 2:
         errs.append("abba with %d arms pins the middle arms to fixed positions; use rotate (or auto)" % len(arms))
     if exp["comparisons"] not in ("base", "all_pairs"):
@@ -579,6 +584,9 @@ def round_order(exp, r):
     arms = exp["arms"]
     k = len(arms)
     pair = (r - 1) // 2
+    if effective_order(exp) == "fixed":
+        # the configured order, every round (a pilot that must reach its deciding legs first)
+        return list(arms)
     if effective_order(exp) == "latin":
         # one Latin square: round r starts at arm r-1 (mod k); k rounds put every arm in every
         # position once (a seeded rotation offset, no reversed rounds)
