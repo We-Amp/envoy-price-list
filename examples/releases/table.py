@@ -35,7 +35,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from epl import experiment, stats  # noqa: E402
 
-TAU = 0.34  # between-run A/A spread (one SD, log-%), PHASE2 label-swap pooling over every A/A run
+TAU = 0.34  # between-run A/A spread (one SD, log-%), label-swap pooling over every A/A run
 BASE = "v1.40.2"
 AA = "v1.40.2-A2"
 ORDER = ["v1.32.13", "v1.34.14", "v1.36.13", "v1.37.11", "v1.38.9", "v1.40.2"]
