@@ -139,8 +139,12 @@
      "14w-one"
     ]
    ],
-   "rates_key": "bench-x86_64-hi-1500",
+   "rates_key": "bench-x86_64-hi-1800",
    "attempts": [
+    {
+     "rates_key": "bench-x86_64-hi-1500",
+     "r_star": 1500
+    },
     {
      "rates_key": "bench-x86_64-hi",
      "r_star": 1800,
