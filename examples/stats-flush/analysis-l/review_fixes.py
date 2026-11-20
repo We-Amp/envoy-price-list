@@ -96,6 +96,7 @@ for c in CELLS:
 
 print()
 print("F9. ADMIN probes sent from start + 20 ms to end - 100 ms: answered more than 50 / 20 / 10 ms before the burst end (primary set)")
+f9_sent = f9_e20 = 0  # the no-sink and statsd cells together (the OTLP flush answers during its burst)
 for c in CELLS:
     n = e50 = e20 = e10 = 0
     lead = []
@@ -113,6 +114,11 @@ for c in CELLS:
             lead.extend(((b["end"] - ad[m]) * 1e3).tolist())
     print("    %-14s sent %4d; answered >50 ms before the end %d, >20 ms %d, >10 ms %d; answer time before the burst end: median %.1f ms, max %.1f ms" % (
         cell_name(c), n, e50, e20, e10, np.median(lead), max(lead)))
+    if "otlp" not in cell_name(c):
+        f9_sent += n
+        f9_e20 += e20
+print("    no-sink and statsd cells together: sent %s; answered more than 20 ms before the burst end: %d" % (
+    "{:,}".format(f9_sent), f9_e20))
 
 print()
 print("F13. REQUESTS THAT WAITED FOR THEIR OWN CONNECTION, in the window (primary set)")
