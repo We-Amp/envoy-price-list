@@ -829,5 +829,55 @@ class UHiTest(unittest.TestCase):
         self.assertTrue(any(p.startswith("missing") for p in SV.check(sm, {"legs": ok[:-1]})))
 
 
+class StatsAccessLogSettingTest(unittest.TestCase):
+    def hcm(self, settings):
+        b = envoy_config.bootstrap([{"name": "s", "path": "/s", "kind": "proxied", "body_bytes": 16}],
+                                   dict({"listener_port": 10110, "admin_port": 9921}, **settings), 8092)
+        return b["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"]
+
+    def test_default_has_no_access_log(self):
+        self.assertNotIn("access_log", self.hcm({}))
+        self.assertIn("stats_access_log", envoy_config.SETTINGS)
+        # every arm of the existing runs renders without the logger
+        for fn in ("u.json", "u-hi.json", "u-hitm.json", "smoke-u.json"):
+            exp = experiment.load(os.path.join(MT, "bench-x86_64", fn))
+            for a in exp["arms"]:
+                t = envoy_config.bootstrap_text(exp["shapes"], experiment.arm_envoy(exp, a, "/r"), 8092)
+                self.assertNotIn("access_log", t)
+                self.assertNotIn("dose", t)
+
+    def test_rendered_shape(self):
+        al = self.hcm({"stats_access_log": {"counters": 3, "tag": "%DOWNSTREAM_REMOTE_PORT%"}})["access_log"]
+        self.assertEqual(al, [{"name": "envoy.access_loggers.stats", "typed_config": {
+            "@type": "type.googleapis.com/envoy.extensions.access_loggers.stats.v3.Config",
+            "stats_scope": {"prefix": "dose"},
+            "counters": [{"stat": {"name": n, "tags": [{"name": "port", "value_format": "%DOWNSTREAM_REMOTE_PORT%"}]},
+                          "value_fixed": 1} for n in ("c000", "c001", "c002")]}}])
+        tc = al[0]["typed_config"]
+        # exactly one of stat_prefix and stats_scope (the factory throws otherwise); no limit, no eviction
+        self.assertNotIn("stat_prefix", tc)
+        self.assertEqual(tc["stats_scope"], {"prefix": "dose"})
+        for c in tc["counters"]:
+            self.assertNotIn("value_format", c)  # value_fixed and value_format together are rejected
+        # the two arms differ in the tag value only, and both values have the same length in the name
+        own = self.hcm({"stats_access_log": {"counters": 64, "tag": "%DOWNSTREAM_REMOTE_PORT%"}})
+        sh = self.hcm({"stats_access_log": {"counters": 64, "tag": "%DOWNSTREAM_LOCAL_PORT%"}})
+        self.assertEqual(json.loads(json.dumps(own).replace("REMOTE", "LOCAL")), sh)
+        self.assertEqual(len(own["access_log"][0]["typed_config"]["counters"]), 64)
+        # beside a file access log, the stats logger is a second entry
+        both = self.hcm({"access_log": {"path": "/r/a.log"}, "stats_access_log": {
+            "counters": 1, "tag": "%DOWNSTREAM_LOCAL_PORT%"}})["access_log"]
+        self.assertEqual([x["name"] for x in both], ["envoy.access_loggers.file", "envoy.access_loggers.stats"])
+
+    def test_bad_setting(self):
+        for bad in ({"counters": 0, "tag": "%DOWNSTREAM_LOCAL_PORT%"}, {"counters": 64},
+                    {"counters": 64, "tag": "%REQ(X)%"}, {"counters": "64", "tag": "%DOWNSTREAM_LOCAL_PORT%"},
+                    {"counters": True, "tag": "%DOWNSTREAM_LOCAL_PORT%"},
+                    {"counters": 2000, "tag": "%DOWNSTREAM_LOCAL_PORT%"},
+                    {"counters": 64, "tag": "%DOWNSTREAM_LOCAL_PORT%", "max_counters": 10}):
+            with self.assertRaises(ValueError, msg=bad):
+                envoy_config.stats_access_log(bad)
+
+
 if __name__ == "__main__":
     unittest.main()

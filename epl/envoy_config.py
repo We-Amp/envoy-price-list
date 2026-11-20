@@ -35,6 +35,7 @@ DTLS = "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Downstream
 EXT_AUTHZ = "type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz"
 OTEL = "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
 FILE_LOG = "type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog"
+STATS_LOG = "type.googleapis.com/envoy.extensions.access_loggers.stats.v3.Config"
 UPSTREAM_HTTP = "type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 JWT_AUTHN = "type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication"
 LOCAL_RL = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
@@ -74,6 +75,17 @@ STATS_WORDS = ["accounts", "billing", "catalog", "checkout", "delivery", "direct
                "gateway", "identity", "inventory", "ledger", "loyalty", "media", "messaging", "metrics",
                "notifications", "orders", "payments", "pricing", "profile", "ratings", "recommend", "refunds",
                "reporting", "returns", "search", "sessions", "shipping", "storage", "telemetry", "wallet"]
+
+# The stats access logger of the dose run: K counters, each incremented by 1 per request, in
+# their own scope, with one tag whose value is a command operator. The tag value decides how
+# many counter objects exist: the listener port is the same for every request (one object per
+# counter, shared by all workers); the client's port is one value per downstream connection
+# (one object per counter and connection, and a connection belongs to one worker). Both values
+# are five digits here, so the flat names have the same length: dose.c000.port.<port>.
+STATS_LOG_SCOPE = "dose"
+STATS_LOG_TAG = "port"
+STATS_LOG_TAG_VALUES = ("%DOWNSTREAM_LOCAL_PORT%", "%DOWNSTREAM_REMOTE_PORT%")
+STATS_LOG_MAX_COUNTERS = 1024
 
 # Settings an arm may change, with what each one does. All are generic Envoy
 # settings; none is off by default in the sense of costing work.
@@ -118,6 +130,10 @@ SETTINGS = {
     "stats_sink": "one stats sink: {kind: statsd | dog_statsd, prefix, max_bytes_per_datagram (dog_statsd)} "
                   "to the harness's UDP discard sink, or {kind: otlp, max_data_points_per_request} over "
                   "envoy_grpc to the collector; the harness sets ports",
+    "stats_access_log": "stats access logger on the HCM (envoy.access_loggers.stats): {counters: K, tag: "
+                        "%DOWNSTREAM_LOCAL_PORT% (one counter object per counter) | %DOWNSTREAM_REMOTE_PORT% (one "
+                        "per counter and downstream connection)}: K counters dose.c000.. each incremented by 1 "
+                        "per request, tag `port`; no scope limit, no eviction",
     "stats_reject_all": "true: stats_config.stats_matcher.reject_all (every stat becomes a null object)",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
@@ -300,6 +316,35 @@ def stats_clusters(sc, origin_port):
     return out
 
 
+def stats_access_log_names(count):
+    """The counter names of the stats access logger, without scope and tag: c000, c001, ..."""
+    return ["c%03d" % i for i in range(int(count))]
+
+
+def stats_access_log_flat(i, tag_value):
+    """The flat stat name of counter i for one tag value (scope, name, tag name, tag value)."""
+    return "%s.%s.%s.%s" % (STATS_LOG_SCOPE, stats_access_log_names(i + 1)[i], STATS_LOG_TAG, tag_value)
+
+
+def stats_access_log(sl):
+    """The HCM access-log entry of the `stats_access_log` setting. Shape from
+    api/envoy/extensions/access_loggers/stats/v3/stats.proto at v1.40.2: exactly one of the
+    deprecated stat_prefix and stats_scope must be set (stats_scope here, with only its prefix:
+    max_counters unset means no limit, enable_eviction false); a counter needs value_format or
+    value_fixed (value_fixed 1 here: no formatter runs for the value)."""
+    if not isinstance(sl, dict) or set(sl) != {"counters", "tag"}:
+        raise ValueError("stats_access_log takes {counters, tag}")
+    n = sl["counters"]
+    if isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= STATS_LOG_MAX_COUNTERS:
+        raise ValueError("stats_access_log.counters must be an integer from 1 to %d" % STATS_LOG_MAX_COUNTERS)
+    if sl["tag"] not in STATS_LOG_TAG_VALUES:
+        raise ValueError("stats_access_log.tag must be one of %s" % (STATS_LOG_TAG_VALUES,))
+    return {"name": "envoy.access_loggers.stats", "typed_config": {
+        "@type": STATS_LOG, "stats_scope": {"prefix": STATS_LOG_SCOPE},
+        "counters": [{"stat": {"name": name, "tags": [{"name": STATS_LOG_TAG, "value_format": sl["tag"]}]},
+                      "value_fixed": 1} for name in stats_access_log_names(n)]}}
+
+
 def stats_sink(sk, envoy_cfg):
     kind = sk.get("kind")
     if kind in ("statsd", "dog_statsd"):
@@ -447,6 +492,8 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         elif al.get("format", "text") != "text":
             raise ValueError("access_log.format must be text or json")
         hcm["access_log"] = [{"name": "envoy.access_loggers.file", "typed_config": fl}]
+    if envoy_cfg.get("stats_access_log"):
+        hcm.setdefault("access_log", []).append(stats_access_log(envoy_cfg["stats_access_log"]))
     az = envoy_cfg.get("ext_authz")
     if az:
         if az not in (True, "http", "grpc"):
