@@ -160,6 +160,11 @@
     256
    ],
    "placeholder_counters": 128,
+   "connections_choices": [
+    4,
+    16
+   ],
+   "placeholder_connections": 16,
    "extra_rungs": [
     {
      "name": "7w-one",
@@ -216,13 +221,22 @@
     "D",
     "A"
    ],
-   "pilot_cells": [
-    "A",
-    "C"
-   ],
-   "pilot_mid_cells": [
-    "D"
-   ],
+   "pilot": {
+    "k_cell": "A",
+    "mid": 128,
+    "connections": [
+     16,
+     4
+    ],
+    "connection_cells": [
+     "A",
+     "D"
+    ],
+    "loopback_cell": "A",
+    "exploratory_cells": [
+     "C"
+    ]
+   },
    "pilot_rule": {
     "cell": "A",
     "cycles_per_transfer": 100,
@@ -231,8 +245,20 @@
      1.0,
      1.4
     ],
-    "instructions_tol": 0.005
+    "instructions_tol": 0.005,
+    "k_rule": "the smallest K with h x K x cycles_per_transfer / own worker cycles per request >= min_share in the cell",
+    "connections_rule": "the connection count with the smaller |clean L3 hits per update, own - shared| at the middle K in the cell, provided every leg at that count is valid in the connection cells; else the other count if its legs are valid"
    },
+   "listener_address": "0.0.0.0",
+   "listener_note": "every dose arm listens on the wildcard address: Envoy then reads each accepted connection's local address into its own object, where a loopback listener gives every connection of every worker the listener's one address object (the address formatter copies its shared pointer once per counter); the client still targets 127.0.0.1; the admin port stays on loopback",
+   "sum_tol_abs": 0.5,
+   "avoid_utc": [
+    {
+     "from": "00:00",
+     "to": "00:10",
+     "leg_s": 120
+    }
+   ],
    "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
    "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
    "flush_interval_s": 240,
@@ -240,7 +266,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "root": "~/epl/bins/stats/r5",

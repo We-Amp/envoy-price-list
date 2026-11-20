@@ -162,6 +162,11 @@
     256
    ],
    "placeholder_counters": 128,
+   "connections_choices": [
+    4,
+    16
+   ],
+   "placeholder_connections": 16,
    "extra_rungs": [
     {
      "name": "7w-one",
@@ -218,13 +223,22 @@
     "D",
     "A"
    ],
-   "pilot_cells": [
-    "A",
-    "C"
-   ],
-   "pilot_mid_cells": [
-    "D"
-   ],
+   "pilot": {
+    "k_cell": "A",
+    "mid": 128,
+    "connections": [
+     16,
+     4
+    ],
+    "connection_cells": [
+     "A",
+     "D"
+    ],
+    "loopback_cell": "A",
+    "exploratory_cells": [
+     "C"
+    ]
+   },
    "pilot_rule": {
     "cell": "A",
     "cycles_per_transfer": 100,
@@ -233,8 +247,20 @@
      1.0,
      1.4
     ],
-    "instructions_tol": 0.005
+    "instructions_tol": 0.005,
+    "k_rule": "the smallest K with h x K x cycles_per_transfer / own worker cycles per request >= min_share in the cell",
+    "connections_rule": "the connection count with the smaller |clean L3 hits per update, own - shared| at the middle K in the cell, provided every leg at that count is valid in the connection cells; else the other count if its legs are valid"
    },
+   "listener_address": "0.0.0.0",
+   "listener_note": "every dose arm listens on the wildcard address: Envoy then reads each accepted connection's local address into its own object, where a loopback listener gives every connection of every worker the listener's one address object (the address formatter copies its shared pointer once per counter); the client still targets 127.0.0.1; the admin port stays on loopback",
+   "sum_tol_abs": 0.5,
+   "avoid_utc": [
+    {
+     "from": "00:00",
+     "to": "00:10",
+     "leg_s": 120
+    }
+   ],
    "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
    "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
    "flush_interval_s": 240,
@@ -242,7 +268,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "envoy": {
@@ -341,8 +367,7 @@
     }
    ],
    "shapes": [
-    "mt-14w-one",
-    "mt-7w-one"
+    "mt-14w-one"
    ]
   },
   {
@@ -361,7 +386,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -377,20 +403,21 @@
      "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
      "stat": "stat_count.start_n",
      "scope": "field",
      "min": 14336,
      "max": 28672,
      "shape": "mt-14w-one",
      "label": "64 dose counters per connection (224 connections; the warm-up client's stay)"
-    },
-    {
-     "stat": "stat_count.start_n",
-     "scope": "field",
-     "min": 7168,
-     "max": 14336,
-     "shape": "mt-7w-one",
-     "label": "64 dose counters per connection (112 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -406,16 +433,22 @@
      "label": "no counter object shared by the workers"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 62.72,
-     "max": 65.28,
-     "label": "64 increments per request over all dose counters"
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one",
-    "mt-7w-one"
+    "mt-14w-one"
    ]
   },
   {
@@ -434,7 +467,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -448,6 +482,15 @@
      "scope": "config",
      "equals": "240s",
      "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
     },
     {
      "stat": "stat_count.start_n",
@@ -471,16 +514,22 @@
      "label": "one increment per request on a shared counter"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 62.72,
-     "max": 65.28,
-     "label": "64 increments per request over all dose counters"
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one",
-    "mt-7w-one"
+    "mt-14w-one"
    ]
   },
   {
@@ -499,7 +548,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -515,6 +565,15 @@
      "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
      "stat": "stat_count.start_n",
      "scope": "field",
      "min": 28672,
@@ -525,18 +584,34 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
+     "min": 57344,
+     "max": 114688,
+     "shape": "mt-28w",
+     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 7168,
+     "max": 14336,
+     "shape": "mt-14w-one-c4",
+     "label": "128 dose counters per connection (56 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
      "min": 14336,
      "max": 28672,
-     "shape": "mt-7w-one",
+     "shape": "mt-28w-c4",
      "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 57344,
-     "max": 114688,
-     "shape": "mt-28w",
-     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
+     "min": 14336,
+     "max": 28672,
+     "shape": "mt-7w-one",
+     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -552,11 +627,18 @@
      "label": "no counter object shared by the workers"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 125.44,
-     "max": 130.56,
-     "label": "128 increments per request over all dose counters"
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
     }
    ]
   },
@@ -576,7 +658,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -590,6 +673,15 @@
      "scope": "config",
      "equals": "240s",
      "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
     },
     {
      "stat": "stat_count.start_n",
@@ -613,11 +705,18 @@
      "label": "one increment per request on a shared counter"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 125.44,
-     "max": 130.56,
-     "label": "128 increments per request over all dose counters"
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
     }
    ]
   },
@@ -637,7 +736,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -653,20 +753,21 @@
      "label": "stats flush interval 240 s (no flush during the leg)"
     },
     {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
      "stat": "stat_count.start_n",
      "scope": "field",
      "min": 57344,
      "max": 114688,
      "shape": "mt-14w-one",
      "label": "256 dose counters per connection (224 connections; the warm-up client's stay)"
-    },
-    {
-     "stat": "stat_count.start_n",
-     "scope": "field",
-     "min": 28672,
-     "max": 57344,
-     "shape": "mt-7w-one",
-     "label": "256 dose counters per connection (112 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -682,16 +783,22 @@
      "label": "no counter object shared by the workers"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 250.88,
-     "max": 261.12,
-     "label": "256 increments per request over all dose counters"
+     "min": 255.5,
+     "max": 256.5,
+     "label": "256 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one",
-    "mt-7w-one"
+    "mt-14w-one"
    ]
   },
   {
@@ -710,7 +817,8 @@
     },
     "stats_flush": {
      "interval_s": 240
-    }
+    },
+    "listener_address": "0.0.0.0"
    },
    "evidence": [
     {
@@ -724,6 +832,15 @@
      "scope": "config",
      "equals": "240s",
      "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
     },
     {
      "stat": "stat_count.start_n",
@@ -747,17 +864,187 @@
      "label": "one increment per request on a shared counter"
     },
     {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 250.88,
-     "max": 261.12,
-     "label": "256 increments per request over all dose counters"
+     "min": 255.5,
+     "max": 256.5,
+     "label": "256 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one",
-    "mt-7w-one"
+    "mt-14w-one"
    ]
+  },
+  {
+   "name": "own-128-lo",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "127.0.0.1"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "127.0.0.1",
+     "label": "listener address 127.0.0.1 (one local-address object for every connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-one",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ],
+   "exploratory": true
+  },
+  {
+   "name": "shared-128-lo",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "127.0.0.1"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "127.0.0.1",
+     "label": "listener address 127.0.0.1 (one local-address object for every connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "one increment per request on a shared counter"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ],
+   "exploratory": true
   }
  ],
  "shapes": [
@@ -778,26 +1065,8 @@
    ],
    "lead_in_s": 3,
    "admin_timeout_s": 30,
-   "cell": "A"
-  },
-  {
-   "name": "mt-7w-one",
-   "path": "/s",
-   "kind": "proxied",
-   "body_bytes": 4096,
-   "rps": 21000,
-   "workers": 7,
-   "worker_cpus": "0-6",
-   "main_cpu": 19,
-   "client_concurrency": 14,
-   "client_connections_per_worker": 8,
-   "client_extra_args": [
-    "--rate-limiter-plugin-config",
-    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
-   ],
-   "lead_in_s": 3,
-   "admin_timeout_s": 30,
-   "cell": "C"
+   "cell": "A",
+   "connections_per_worker": 16
   },
   {
    "name": "mt-28w",
@@ -816,23 +1085,101 @@
    ],
    "lead_in_s": 3,
    "admin_timeout_s": 30,
-   "cell": "D"
+   "cell": "D",
+   "connections_per_worker": 16
+  },
+  {
+   "name": "mt-14w-one-c4",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 14,
+   "worker_cpus": "0-13",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 4,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "A",
+   "connections_per_worker": 4
+  },
+  {
+   "name": "mt-28w-c4",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 42000,
+   "workers": 28,
+   "worker_cpus": "0-13,20-33",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 8,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "D",
+   "connections_per_worker": 4
+  },
+  {
+   "name": "mt-7w-one",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 7,
+   "worker_cpus": "0-6",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 8,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "C",
+   "connections_per_worker": 16
   }
  ],
  "rounds": 1,
  "rounds_block": 1,
  "rounds_max": 1,
  "adaptive": false,
- "k": 16,
  "box_specific": true,
+ "avoid_utc": [
+  {
+   "from": "00:00",
+   "to": "00:10",
+   "leg_s": 120
+  }
+ ],
  "smoke": true,
  "evidence_mode": "record",
  "dose": {
-  "counters": null,
-  "reference": null,
-  "shared": null,
-  "aa": null,
   "rates_key": "bench-x86_64-dose-1",
+  "counters_choices": [
+   64,
+   128,
+   256
+  ],
+  "connections_choices": [
+   4,
+   16
+  ],
+  "mid": 128,
+  "k_cell": "A",
+  "connection_cells": [
+   "A",
+   "D"
+  ],
   "cells": [
    {
     "cell": "A",
@@ -841,7 +1188,38 @@
     "role": "reference",
     "sockets": 1,
     "workers": 14,
-    "rate_per_worker": 1500
+    "rate_per_worker": 1500,
+    "connections": 16
+   },
+   {
+    "cell": "D",
+    "shape": "mt-28w",
+    "rung": "28w",
+    "role": "workers",
+    "sockets": 2,
+    "workers": 28,
+    "rate_per_worker": 1500,
+    "connections": 16
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one-c4",
+    "rung": "14w-one",
+    "role": "reference",
+    "sockets": 1,
+    "workers": 14,
+    "rate_per_worker": 1500,
+    "connections": 4
+   },
+   {
+    "cell": "D",
+    "shape": "mt-28w-c4",
+    "rung": "28w",
+    "role": "workers",
+    "sockets": 2,
+    "workers": 28,
+    "rate_per_worker": 1500,
+    "connections": 4
    },
    {
     "cell": "C",
@@ -851,34 +1229,94 @@
     "sockets": 1,
     "workers": 7,
     "rate_per_worker": 3000,
+    "connections": 16,
+    "exploratory": true
+   }
+  ],
+  "pairs": [
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "connections": 16,
+    "k": 64,
+    "own": "own-64",
+    "shared": "shared-64",
+    "address": "0.0.0.0",
+    "role": "k"
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "connections": 16,
+    "k": 128,
+    "own": "own-128",
+    "shared": "shared-128",
+    "address": "0.0.0.0",
+    "role": "k"
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "connections": 16,
+    "k": 256,
+    "own": "own-256",
+    "shared": "shared-256",
+    "address": "0.0.0.0",
+    "role": "k"
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "connections": 16,
+    "k": 128,
+    "own": "own-128-lo",
+    "shared": "shared-128-lo",
+    "address": "127.0.0.1",
+    "role": "loopback",
     "exploratory": true
    },
    {
     "cell": "D",
     "shape": "mt-28w",
-    "rung": "28w",
-    "role": "workers",
-    "sockets": 2,
-    "workers": 28,
-    "rate_per_worker": 1500
+    "connections": 16,
+    "k": 128,
+    "own": "own-128",
+    "shared": "shared-128",
+    "address": "0.0.0.0",
+    "role": "connections"
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one-c4",
+    "connections": 4,
+    "k": 128,
+    "own": "own-128",
+    "shared": "shared-128",
+    "address": "0.0.0.0",
+    "role": "connections"
+   },
+   {
+    "cell": "D",
+    "shape": "mt-28w-c4",
+    "connections": 4,
+    "k": 128,
+    "own": "own-128",
+    "shared": "shared-128",
+    "address": "0.0.0.0",
+    "role": "connections"
+   },
+   {
+    "cell": "C",
+    "shape": "mt-7w-one",
+    "connections": 16,
+    "k": 128,
+    "own": "own-128",
+    "shared": "shared-128",
+    "address": "0.0.0.0",
+    "role": "load",
+    "exploratory": true
    }
   ],
-  "socket": [
-   "B",
-   "A"
-  ],
-  "workers": [
-   "D",
-   "A"
-  ],
-  "low": null,
-  "flush_interval_s": 240,
-  "counters_choices": [
-   64,
-   128,
-   256
-  ],
-  "mid": 128,
   "pilot_rule": {
    "cell": "A",
    "cycles_per_transfer": 100,
@@ -887,7 +1325,11 @@
     1.0,
     1.4
    ],
-   "instructions_tol": 0.005
-  }
+   "instructions_tol": 0.005,
+   "k_rule": "the smallest K with h x K x cycles_per_transfer / own worker cycles per request >= min_share in the cell",
+   "connections_rule": "the connection count with the smaller |clean L3 hits per update, own - shared| at the middle K in the cell, provided every leg at that count is valid in the connection cells; else the other count if its legs are valid"
+  },
+  "flush_interval_s": 240,
+  "listener_address": "0.0.0.0"
  }
 }

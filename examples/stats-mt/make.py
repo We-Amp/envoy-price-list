@@ -54,22 +54,26 @@ a spare core.
                  the tag value is the client's port; a connection belongs to one worker), and a
                  second copy of own-K (own-K-A2) for the A/A. Same code path, formatter and name
                  length in both. Every dose arm sets a stats flush interval longer than a leg.
+                 Every dose arm listens on the wildcard address (a local-address object per
+                 connection; the client still targets loopback).
                  Cells are rungs with their own per-worker rate (the box's dose.cells); the slot
-                 runs dose.slot_cells, and in dose.low.cell also own and shared at K / 4. K
-                 comes from the pilot through RATES_JSON, key dose.rates_key: {"counters": K};
-                 without it dose.json, smoke-dose.json and dose-evidence.json carry a
-                 placeholder K and are marked uncalibrated.
+                 runs dose.slot_cells, and in dose.low.cell also own and shared at K / 4. K and
+                 the client connections per worker come from the pilot through RATES_JSON, key
+                 dose.rates_key: {"counters": K, "connections": c}; without both dose.json,
+                 smoke-dose.json and dose-evidence.json carry placeholders and are marked
+                 uncalibrated. A shape at other than 16 connections per worker is mt-<rung>-c<c>.
                    dose-pilot.json     one round: base and own/shared at every K of
-                                       dose.counters_choices on the pilot cells (the load
-                                       cell is exploratory), own/shared at the middle K on
-                                       the slot's other cells; the HITM events
-                                       (dose_pilot.py prints the pilot's answers)
+                                       dose.counters_choices in cell A; a loopback pair at the
+                                       middle K; own/shared at the middle K at 16 and 4
+                                       connections per worker in cells A and D; the load cell
+                                       (exploratory); the HITM events (dose_pilot.py prints the
+                                       answers and writes the record the queue checks)
                    smoke-dose.json     one round of dose.json (evidence recorded)
                    dose.json           15 fixed rounds, 11 legs per round
                    dose-evidence.json  evidence legs outside the timed run: base,
                                        stats-reject, own-K, shared-K, 4 rounds per slot cell,
                                        HITM events counted in user mode, store-stat operations
-                 Tables from u_table.py (statements S1-S6 and the model row).
+                 Tables from u_table.py (statements S1-S5 and the model row).
 
 Shape mt-s: the 4 KB proxied request to one cluster with one upstream host, one listener,
 one route, HTTP/1.1, round robin, no decision reader of stats (`audit: mt-s`).
@@ -356,23 +360,28 @@ def u_hi_configs(box, rates, arms):
 DOSE_SCOPE = "dose"
 DOSE_TAG = "port"
 DOSE_TAG_VALUES = {"shared": "%DOWNSTREAM_LOCAL_PORT%", "own": "%DOWNSTREAM_REMOTE_PORT%"}
-DOSE_ROUNDS = 15           # the cell rotation (period 3) and the arm rotation (period 3) both balance
+DOSE_ROUNDS = 15           # the cell rotation (period 3) and the arm rotations (5 and 3 arms) all balance
 DOSE_EVIDENCE_ROUNDS = 4   # the arm rotation of the evidence legs (4 arms) balances once
-DOSE_SUM_TOL = (0.98, 1.02)
+DOSE_LOOPBACK = "127.0.0.1"
 
 
-def dose_shapes(box, k, cells=None):
-    """One shape per cell of the box's dose section: the cell's rung at the cell's own
-    per-worker rate, k client connections per worker. A cell's rung may be one of the dose
-    run's own (dose.extra_rungs)."""
+def dose_shape_name(rung, k):
+    """A cell's shape: mt-<rung> at the default connections per worker, else mt-<rung>-c<k>."""
+    return "mt-%s%s" % (rung, "" if k == DEFAULT_K else "-c%d" % k)
+
+
+def dose_shapes(box, cells, k):
+    """One shape per cell: the cell's rung at the cell's own per-worker rate, k client
+    connections per worker. A cell's rung may be one of the dose run's own (dose.extra_rungs)."""
     d = box["dose"]
     rungs = {r["name"]: r for r in box["rungs"] + d.get("extra_rungs", [])}
-    out = []
     by = {c["cell"]: c for c in d["cells"]}
-    for c in [by[x] for x in (cells if cells is not None else [c["cell"] for c in d["cells"]])]:
+    out = []
+    for c in [by[x] for x in cells]:
         s = rung_shapes(dict(box, rungs=[rungs[c["rung"]]]), int(c["rate_per_worker"]), k)[0]
         # the own arms hold K counters per connection: a full admin stats read takes longer
-        s.update(admin_timeout_s=d["admin_timeout_s"], cell=c["cell"])
+        s.update(name=dose_shape_name(c["rung"], k), admin_timeout_s=d["admin_timeout_s"], cell=c["cell"],
+                 connections_per_worker=k)
         out.append(s)
     return out
 
@@ -382,17 +391,24 @@ def dose_shared_counter(port):
     return "%s.c000.%s.%d" % (DOSE_SCOPE, DOSE_TAG, port)
 
 
-def dose_evidence(kind, K, port, shapes, k):
-    """Fail-closed evidence of a dose arm. shared: exactly K dose counters before and after the
-    window and one increment per request on one of them. own: K counters per downstream
-    connection (at least the measured client's connections, at most those plus the warm-up
-    client's, which stay in the store), none created during the window (a reconnect would), and
-    no shared object. Both: the tag value in /config_dump, and K increments per request summed
-    over every dose counter (a counter over a scope limit would be a null object and add
+def dose_evidence(kind, K, port, shapes, address, flush, sum_tol):
+    """Fail-closed evidence of a dose arm. Config: the tag value, the flush interval (no flush
+    during a leg) and the listener's address (the wildcard address gives every connection its
+    own local-address object). shared: exactly K dose counters before and after the window and
+    one increment per request on one of them. own: K counters per downstream connection (at
+    least the measured client's connections, at most those plus the warm-up client's, which stay
+    in the store), none created during the window, and no shared object. Both: no downstream
+    connection opened inside the window, and K increments per request summed over every dose
+    counter, within sum_tol of K (a counter over a scope limit would be a null object and add
     nothing)."""
-    lo, hi = DOSE_SUM_TOL
     ev = [{"stat": "value_format", "scope": "config", "equals": DOSE_TAG_VALUES[kind],
-           "label": "tag value %s" % DOSE_TAG_VALUES[kind]}]
+           "label": "tag value %s" % DOSE_TAG_VALUES[kind]},
+          {"stat": "stats_flush_interval", "scope": "config", "equals": "%ds" % flush,
+           "label": "stats flush interval %d s (no flush during the leg)" % flush},
+          {"stat": "address", "scope": "config", "where": {"port_value": port}, "equals": address,
+           "label": "listener address %s (%s)" % (address, "one local-address object for every connection"
+                                                  if address == DOSE_LOOPBACK else
+                                                  "a local-address object per connection")}]
     if kind == "shared":
         ev += [{"stat": "stat_count.start_n", "scope": "field", "equals": K, "tol_abs": 0,
                 "label": "%d dose counters before the window" % K},
@@ -402,7 +418,7 @@ def dose_evidence(kind, K, port, shapes, k):
                 "label": "one increment per request on a shared counter"}]
     else:
         for s in shapes:
-            conns = s["workers"] * k
+            conns = s["workers"] * s["connections_per_worker"]
             ev.append({"stat": "stat_count.start_n", "scope": "field", "min": K * conns, "max": 2 * K * conns,
                        "shape": s["name"],
                        "label": "%d dose counters per connection (%d connections; the warm-up client's stay)"
@@ -411,53 +427,60 @@ def dose_evidence(kind, K, port, shapes, k):
                 "label": "no dose counter created during the window (no reconnect)"},
                {"stat": dose_shared_counter(port), "scope": "window", "absent": True,
                 "label": "no counter object shared by the workers"}]
+    ev.append({"stat": "http.ingress_http.downstream_cx_total", "scope": "window", "equals": 0, "tol_abs": 0,
+               "label": "no downstream connection opened during the window"})
     # the sum and Envoy's completed-request counter come from the same two admin reads
-    ev.append({"stat": "stat_count.sum_per_request", "scope": "field", "min": lo * K, "max": hi * K,
-               "label": "%d increments per request over all dose counters" % K})
+    ev.append({"stat": "stat_count.sum_per_request", "scope": "field", "min": K - sum_tol, "max": K + sum_tol,
+               "label": "%d increments per request over all dose counters (within %g)" % (K, sum_tol)})
     return ev
 
 
-def dose_arm(box, kind, K, port, shapes, k, suffix="", only=None):
+def dose_arm(box, kind, K, port, shapes, suffix="", only=None, address=None):
     """One dose arm. Every dose arm sets the box's long stats flush interval, so the main
-    thread's flush does not latch the counters during a leg (the per-connection counters would
-    otherwise be written from a second core every 5 s). `only`: the shapes the arm runs in."""
-    flush = box["dose"]["flush_interval_s"]
+    thread's flush does not latch the counters during a leg, and listens on the box's dose
+    listener address (the wildcard address) unless `address` says otherwise (the pilot's
+    loopback pair). `only`: the shapes the arm runs in."""
+    d = box["dose"]
+    address = address or d["listener_address"]
     mine = [s for s in shapes if only is None or s["name"] in only]
-    ev = dose_evidence(kind, K, port, mine, k)
-    ev.insert(1, {"stat": "stats_flush_interval", "scope": "config", "equals": "%ds" % flush,
-                  "label": "stats flush interval %d s (no flush during the leg)" % flush})
     a = arm(box, "%s-%d%s" % (kind, K, suffix),
             {"stats_access_log": {"counters": K, "tag": DOSE_TAG_VALUES[kind]},
-             "stats_flush": {"interval_s": flush}}, ev)
+             "stats_flush": {"interval_s": d["flush_interval_s"]}, "listener_address": address},
+            dose_evidence(kind, K, port, mine, address, d["flush_interval_s"], d["sum_tol_abs"]))
     if only is not None:
         a["shapes"] = list(only)
     return a
 
 
 def dose_configs(box, rates):
-    """Run R1 ("dose", boxes with a `dose` section): {file:
-    config}. K is the pilot's choice (RATES_JSON key dose.rates_key: {"counters": K, "k":
-    connections per worker}); without it every config but the pilot's carries the placeholder K
-    and is marked uncalibrated."""
+    """Run R1 ("dose", boxes with a `dose` section):
+    {file: config}. K and the connections per worker are the pilot's choice (RATES_JSON key
+    dose.rates_key: {"counters": K, "connections": c}); without both every config but the
+    pilot's carries the placeholders and is marked uncalibrated."""
     d = box["dose"]
     rr = (rates or {}).get(d["rates_key"]) or {}
-    k = int(rr.get("k", DEFAULT_K))
-    calibrated = rr.get("counters") is not None
-    K = int(rr["counters"]) if calibrated else int(d["placeholder_counters"])
+    calibrated = rr.get("counters") is not None and rr.get("connections") is not None
+    K = int(rr["counters"]) if rr.get("counters") is not None else int(d["placeholder_counters"])
+    k = int(rr["connections"]) if rr.get("connections") is not None else int(d["placeholder_connections"])
     if K not in d["counters_choices"]:
         raise SystemExit("%s: dose counters %d is not one of %s" % (box["name"], K, d["counters_choices"]))
+    if k not in d["connections_choices"]:
+        raise SystemExit("%s: dose connections %d is not one of %s" % (box["name"], k, d["connections_choices"]))
     if K % d["low"]["divisor"]:
         raise SystemExit("%s: dose counters %d does not divide by %d" % (box["name"], K, d["low"]["divisor"]))
     Klow = K // d["low"]["divisor"]
-    shapes = dose_shapes(box, k, d["slot_cells"])
+    shapes = dose_shapes(box, d["slot_cells"], k)
     low_shapes = [s["name"] for s in shapes if s["cell"] == d["low"]["cell"]]
+    cells_by = {c["cell"]: c for c in d["cells"]}
     no_dose = {"stat": "stat_count.start_n", "scope": "field", "equals": 0, "tol_abs": 0, "label": "no dose counters"}
 
     def cfg(name, arms, base_arm, shp, rounds, **over):
         c = base_cfg(box, name)
         port = c["envoy"]["listener_port"]
         c.update(base_arm=base_arm, arms=json.loads(json.dumps(arms(port, shp))), shapes=json.loads(json.dumps(shp)),
-                 rounds=rounds, rounds_block=rounds, rounds_max=rounds, adaptive=False, k=k, box_specific=True)
+                 rounds=rounds, rounds_block=rounds, rounds_max=rounds, adaptive=False, box_specific=True,
+                 # no leg inside the daily window in which a timer runs on the box
+                 avoid_utc=json.loads(json.dumps(d["avoid_utc"])))
         # the admin reads before the window (tens of thousands of counters in an own arm) come out
         # of the client run's slack: a longer client run, the same 20 s window
         c["client"]["duration_s"] = d["client_duration_s"]
@@ -467,29 +490,28 @@ def dose_configs(box, rates):
         c.update(over)
         return c
 
-    def block(counters, own, shared, aa, shp, low=None):
-        by = {s["cell"]: s for s in shp}
-        return {"counters": counters, "reference": own, "shared": shared, "aa": aa, "rates_key": d["rates_key"],
-                "cells": [dict({"cell": c["cell"], "shape": by[c["cell"]]["name"], "rung": c["rung"],
-                                "role": c["role"], "sockets": c["sockets"], "workers": by[c["cell"]]["workers"],
-                                "rate_per_worker": c["rate_per_worker"]},
-                               **({"exploratory": True} if c.get("exploratory") else {}))
-                          for c in [x for sh in shp for x in d["cells"] if x["cell"] == sh["cell"]]],
+    def cell(s, **more):
+        c = cells_by[s["cell"]]
+        return dict({"cell": c["cell"], "shape": s["name"], "rung": c["rung"], "role": c["role"],
+                     "sockets": c["sockets"], "workers": s["workers"], "rate_per_worker": c["rate_per_worker"],
+                     "connections": s["connections_per_worker"]}, **more)
+
+    def block(own, shared, aa, shp, low=None):
+        return {"counters": K, "connections": k, "reference": own, "shared": shared, "aa": aa,
+                "rates_key": d["rates_key"], "cells": [cell(s) for s in shp],
                 "socket": d["socket"], "workers": d["workers"], "low": low,
-                "flush_interval_s": d["flush_interval_s"]}
+                "flush_interval_s": d["flush_interval_s"], "listener_address": d["listener_address"]}
 
     out = {}
     own, shared, a2 = "own-%d" % K, "shared-%d" % K, "own-%d-A2" % K
     low = {"cell": d["low"]["cell"], "counters": Klow, "reference": "own-%d" % Klow, "shared": "shared-%d" % Klow}
-    # 11 legs per round: three arms in every cell, the low dose in its cell only. 15 rounds: the
-    # cell rotation (period 3) and the arm rotations (5 arms in the low dose's cell, 3 elsewhere)
-    # all balance
+    # 11 legs per round: three arms in every cell, the low dose in its cell only
     u = cfg("mt-dose-" + box["name"],
-            lambda port, shp: [dose_arm(box, "own", K, port, shp, k), dose_arm(box, "shared", K, port, shp, k),
-                               dose_arm(box, "own", K, port, shp, k, "-A2"),
-                               dose_arm(box, "own", Klow, port, shp, k, only=low_shapes),
-                               dose_arm(box, "shared", Klow, port, shp, k, only=low_shapes)],
-            own, shapes, DOSE_ROUNDS, dose=block(K, own, shared, [a2, own], shapes, low))
+            lambda port, shp: [dose_arm(box, "own", K, port, shp), dose_arm(box, "shared", K, port, shp),
+                               dose_arm(box, "own", K, port, shp, "-A2"),
+                               dose_arm(box, "own", Klow, port, shp, only=low_shapes),
+                               dose_arm(box, "shared", Klow, port, shp, only=low_shapes)],
+            own, shapes, DOSE_ROUNDS, k=k, dose=block(own, shared, [a2, own], shapes, low))
     if not calibrated:
         u["uncalibrated"] = True
     out["dose.json"] = u
@@ -498,38 +520,74 @@ def dose_configs(box, rates):
     sm.update(name="mt-smoke-dose-" + box["name"], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
               evidence_mode="record")
     out["smoke-dose.json"] = sm
-    # base and stats-reject keep the default flush interval (the plain config)
+    # base and stats-reject are the plain config: the default flush interval, the loopback listener
     ev = cfg("mt-dose-evidence-" + box["name"],
              lambda port, shp: [arm(box, "base", ev=BASE_EVIDENCE + [no_dose]),
                                 arm(box, "stats-reject", {"stats_reject_all": True}, REJECT_EVIDENCE),
-                                dose_arm(box, "own", K, port, shp, k), dose_arm(box, "shared", K, port, shp, k)],
-             "base", shapes, DOSE_EVIDENCE_ROUNDS, dose=block(K, own, shared, None, shapes))
+                                dose_arm(box, "own", K, port, shp), dose_arm(box, "shared", K, port, shp)],
+             "base", shapes, DOSE_EVIDENCE_ROUNDS, k=k, dose=block(own, shared, None, shapes))
     ev["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
     if not calibrated:
         ev["uncalibrated"] = True
     out["dose-evidence.json"] = ev
-    # the pilot: every K of the choice list on its cells (so it does not depend on the choice it
-    # informs), and own/shared at the middle K on the cells the slot adds (the 28-worker client
-    # gates and the admin read time of the larger counter set, seen before the smoke)
-    ks = d["counters_choices"]
-    mid = sorted(ks)[len(ks) // 2]
-    pshapes = dose_shapes(box, k, d["pilot_cells"] + d["pilot_mid_cells"])
-    full = [s["name"] for s in pshapes if s["cell"] in d["pilot_cells"]]
+    out["dose-pilot.json"] = dose_pilot_config(box, cfg, cell, no_dose)
+    return out
 
-    def pilot_arms(port, shp):
-        arms = [dict(arm(box, "base", ev=BASE_EVIDENCE + [no_dose]), shapes=full)]
+
+def dose_pilot_config(box, cfg, cell, no_dose):
+    """The pilot (it does not depend on the choices it informs). One round of:
+      base and own/shared at every K of the choice list in the K cell (wildcard listener, the
+        first connection count): the K rule;
+      one loopback own/shared pair at the middle K there (exploratory: the size of the shared
+        local-address object's effect);
+      own/shared at the middle K at every connection count in the connection cells (the
+        footprint of own; the 28-worker client gates);
+      own/shared at the middle K in the exploratory cells.
+    `pairs` names every own/shared pair with its cell, connection count, K and role."""
+    d = box["dose"]
+    p = d["pilot"]
+    ks, mid, c0 = d["counters_choices"], p["mid"], p["connections"][0]
+    shapes, seen = [], set()
+    for kc in p["connections"]:
+        for s in dose_shapes(box, p["connection_cells"], kc):
+            shapes.append(s)
+    shapes += dose_shapes(box, p["exploratory_cells"], c0)
+    name = {(s["cell"], s["connections_per_worker"]): s["name"] for s in shapes}
+    kshape = name[(p["k_cell"], c0)]
+    lshape = name[(p["loopback_cell"], c0)]
+
+    def arms(port, shp):
+        out = [dict(arm(box, "base", ev=BASE_EVIDENCE + [no_dose]), shapes=[kshape])]
         for n in ks:
             for kind in ("own", "shared"):
-                arms.append(dose_arm(box, kind, n, port, shp, k, only=None if n == mid else full))
-        return arms
-    pilot = cfg("mt-dose-pilot-" + box["name"], pilot_arms, "own-%d" % mid, pshapes, 1, smoke=True,
-                evidence_mode="record",
-                dose=dict(block(None, None, None, None, pshapes), counters_choices=ks, mid=mid,
-                          pilot_rule=d["pilot_rule"]))
+                out.append(dose_arm(box, kind, n, port, shp, only=None if n == mid else [kshape]))
+        for kind in ("own", "shared"):
+            out.append(dict(dose_arm(box, kind, mid, port, shp, "-lo", only=[lshape], address=DOSE_LOOPBACK),
+                            exploratory=True))
+        return out
+    pairs = []
+    for n in ks:
+        pairs.append({"cell": p["k_cell"], "shape": kshape, "connections": c0, "k": n, "own": "own-%d" % n,
+                      "shared": "shared-%d" % n, "address": d["listener_address"], "role": "k"})
+    pairs.append({"cell": p["loopback_cell"], "shape": lshape, "connections": c0, "k": mid, "own": "own-%d-lo" % mid,
+                  "shared": "shared-%d-lo" % mid, "address": DOSE_LOOPBACK, "role": "loopback", "exploratory": True})
+    for s in shapes:
+        if s["name"] == kshape:
+            continue
+        expl = s["cell"] in p["exploratory_cells"]
+        pairs.append(dict({"cell": s["cell"], "shape": s["name"], "connections": s["connections_per_worker"], "k": mid,
+                           "own": "own-%d" % mid, "shared": "shared-%d" % mid, "address": d["listener_address"],
+                           "role": "load" if expl else "connections"}, **({"exploratory": True} if expl else {})))
+    pilot = cfg("mt-dose-pilot-" + box["name"], arms, "own-%d" % mid, shapes, 1, smoke=True, evidence_mode="record",
+                dose={"rates_key": d["rates_key"], "counters_choices": ks, "connections_choices": d["connections_choices"],
+                      "mid": mid, "k_cell": p["k_cell"], "connection_cells": p["connection_cells"],
+                      "cells": [cell(s, **({"exploratory": True} if s["cell"] in p["exploratory_cells"] else {}))
+                                for s in shapes],
+                      "pairs": pairs, "pilot_rule": d["pilot_rule"], "flush_interval_s": d["flush_interval_s"],
+                      "listener_address": d["listener_address"]})
     # measured as the evidence legs will be: the HITM events, the store-stat operation probe
     pilot["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
-    out["dose-pilot.json"] = pilot
-    return out
+    return pilot
 
 
 def configs(box, rates=None):
