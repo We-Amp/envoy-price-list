@@ -18,6 +18,14 @@
 #                                     headroom allows at 28w) goes into RATES_JSON as "<box>-hi"
 #   run-u.sh hi-smoke [EPL_ARGS...]    one round of u-hi, then hi-check (calibration, evidence)
 #   run-u.sh hi-queue [EPL_ARGS...]    hi-check, then u-hi within HI_STOP_S (default 2 h 30 min)
+#   run-u.sh dose-pilot [EPL_ARGS...]  (boxes with a dose section) run R1's pilot: one round of base and
+#                                     own/shared at every K of the choice list on the pilot cells;
+#                                     dose_pilot.py prints the answers and the K to put into
+#                                     RATES_JSON as {"<dose.rates_key>": {"counters": K}}
+#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at the chosen K, then dose-check
+#   run-u.sh dose-check                K chosen, every smoke leg valid at that K, evidence
+#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json within DOSE_STOP_S (default 2 h
+#                                     30 min), then the evidence legs within DOSE_EV_STOP_S (1 h)
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -81,6 +89,29 @@ hi_check() {
 
 # the high-load attempt's directories: HI_TAG (for example -1500) keeps each attempt apart
 HI_TAG=${HI_TAG:-}
+# the dose run's directories: DOSE_TAG keeps each attempt apart
+DOSE_TAG=${DOSE_TAG:-}
+
+dose_check() {
+  local bad=0
+  if grep -q '"uncalibrated": true' "$C/dose.json"; then
+    log "dose.json is uncalibrated: set RATES_JSON (the box's dose.rates_key: {\"counters\": K}) from dose-pilot"
+    return 1
+  fi
+  # the queue starts only after a smoke whose every leg is valid, at the K and rates it will use
+  python3 "$S/smoke_valid.py" "$C/smoke-dose.json" "$R/smoke-dose$DOSE_TAG" > "$R/smoke-dose$DOSE_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-dose$DOSE_TAG.valid.txt"
+  if [ -f "$R/smoke-dose$DOSE_TAG/results.json" ] && ! python3 -c "import json,sys;a=json.load(open('$R/smoke-dose$DOSE_TAG/results.json'))['experiment'];b=json.load(open('$C/dose.json'));sys.exit(0 if a.get('dose')==b.get('dose') and [s['rps'] for s in a['shapes']]==[s['rps'] for s in b['shapes']] and a.get('k')==b.get('k') else 1)"; then
+    log "smoke-dose ran with another K, cell set or rate than dose.json: smoke again"
+    bad=1
+  fi
+  log "evidence-check dose against smoke-dose"
+  if ! $EPL evidence-check "$C/dose.json" "$R/smoke-dose$DOSE_TAG" >> "$R/queue.log" 2>&1; then
+    log "evidence-check dose FAILED (details in queue.log)"
+    bad=1
+  fi
+  return $bad
+}
 
 mode=${1:-}
 shift || true
@@ -163,6 +194,53 @@ case "$mode" in
     timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi$HI_TAG" \
       --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi$HI_TAG > $R/u-hi$HI_TAG.md"
+    ;;
+  dose-pilot)
+    [ -f "$C/dose-pilot.json" ] || { log "no dose-pilot.json for box $BOX"; exit 1; }
+    log "dose pilot start box $BOX harness $(cat "$H/VERSION" 2>/dev/null)"
+    rm -rf "$R/dose-pilot$DOSE_TAG"
+    $EPL run "$C/dose-pilot.json" --out "$R/dose-pilot$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose pilot rc=$?"
+    python3 "$S/dose_pilot.py" "$C/dose-pilot.json" "$R/dose-pilot$DOSE_TAG" --json "$R/dose-pilot$DOSE_TAG.json" \
+      2>&1 | tee -a "$R/queue.log"
+    rc=${PIPESTATUS[0]}
+    log "dose pilot rc=$rc; put the K into RATES_JSON under the box's dose.rates_key as {\"counters\": K}"
+    exit "$rc"
+    ;;
+  dose-smoke)
+    rewrite
+    if grep -q '"uncalibrated": true' "$C/dose.json"; then
+      log "dose.json is uncalibrated: set RATES_JSON (the box's dose.rates_key: {\"counters\": K}) from dose-pilot; no smoke"
+      exit 1
+    fi
+    log "dose smoke start box $BOX"
+    rm -rf "$R/smoke-dose$DOSE_TAG"
+    $EPL run "$C/smoke-dose.json" --out "$R/smoke-dose$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose smoke rc=$?"
+    dose_check
+    rc=$?
+    log "dose smoke done rc=$rc"
+    exit "$rc"
+    ;;
+  dose-check)
+    rewrite
+    dose_check
+    exit $?
+    ;;
+  dose-queue)
+    rewrite
+    dose_check || { log "dose not started (K, smoke or evidence; no override)"; exit 1; }
+    L=${DOSE_STOP_S:-9000}
+    log "start dose (${L}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose.json" --out "$R/dose$DOSE_TAG" \
+      --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose rc=$?"
+    # the evidence legs, outside the timed run (HITM events in user mode, store-stat operations)
+    L=${DOSE_EV_STOP_S:-3600}
+    log "start dose-evidence (${L}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose-evidence.json" \
+      --out "$R/dose-evidence$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose-evidence rc=$?; tables: python3 $S/u_table.py $R/dose$DOSE_TAG --evidence $R/dose-evidence$DOSE_TAG > $R/dose$DOSE_TAG.md"
     ;;
   codegen-smoke)
     # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker

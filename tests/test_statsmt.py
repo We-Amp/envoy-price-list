@@ -1324,5 +1324,138 @@ class DoseTableTest(unittest.TestCase):
         self.assertIn("contrasts", js)
 
 
+class DosePilotTest(unittest.TestCase):
+    DP = _mod("mt_dose_pilot", os.path.join(MT, "dose_pilot.py"))
+
+    def run_(self, h=1.2, base=540e3, ins_extra=0.0, mut=None):
+        cfg = MK.configs(box("bench-x86_64"))["dose-pilot.json"]
+        legs = []
+        for s in cfg["shapes"]:
+            conns = s["workers"] * 16
+            for a in cfg["arms"]:
+                n = a["name"]
+                k = int(n.split("-")[1]) if "-" in n else 0
+                sh = n.startswith("shared")
+                m = {"shape": s["name"], "arm": n, "round": 1, "verdict": {"valid": True},
+                     "workers_cycles_per_req": base, "responses": 420000, "sut_busy": 0.36, "client_headroom": 0.5,
+                     "client_pending_total": 14, "client_workers": 14, "sut_foreign_cpus": 0.01,
+                     "perf_min_running_pct": 100.0,
+                     "per_req": {"instructions_u": 200e3 + 300 * k + (ins_extra if sh else 0.0),
+                                 "events": {HITM_U[0]: 7.0 + (h * k if sh else 0.0), HITM_U[1]: 0.0}},
+                     "stat_ops": {"counter_incs": 25 * 420000, "histogram_samples": 4 * 420000},
+                     "stat_count": {"start_n": k if sh else 2 * k * conns, "end_n": k if sh else 2 * k * conns,
+                                    "new_in_window": 0, "sum_per_request": 1.002 * k, "start_read_s": 0.05,
+                                    "end_read_s": 0.05, "pre_window_s": 0.4},
+                     "evidence": {"ok": True, "failed": []}}
+                if mut:
+                    mut(m)
+                legs.append(m)
+        res = {"legs": legs, "metadata": {"bootstrap_validate": {a["name"]: {"ok": True} for a in cfg["arms"]}}}
+        return cfg, res
+
+    def test_answers(self):
+        cfg, res = self.run_()
+        rep = self.DP.answers(cfg, res, {a["name"]: [] for a in cfg["arms"]})
+        self.assertTrue(rep["ok"], rep["problems"])
+        # 1.2 x K x 100 / 540,000: 1.42% at 64, 2.84% at 128
+        self.assertEqual(rep["q4"]["k"], 128)
+        self.assertAlmostEqual(rep["q4"]["rows"][0]["share"], 1.2 * 64 * 100 / 540e3)
+        self.assertEqual([r["ok"] for r in rep["q4"]["rows"]], [False, True, True])
+        self.assertAlmostEqual(rep["q3"]["rows"][0]["h"], 1.2)
+        self.assertEqual(len(rep["q2"]["rows"]), 6)  # 3 K x 2 cells
+        self.assertAlmostEqual(rep["stat_ops"]["A"], 29.0)
+        self.assertEqual(rep["q6"]["counters"], [2 * 256 * 224, 2 * 256 * 112])
+        t = self.DP.text(rep, cfg)
+        for needle in ("1. bootstrap --mode validate: base OK", "-> K = 128", "pilot OK: K = 128", "h = 1.200",
+                       "load cell PASS", "own-256 held 114688, 57344 counters", "client slack 7.0 s"):
+            self.assertIn(needle, t)
+        self.assertNotIn("OVER HALF THE SLACK", t)
+
+        def slow(m):
+            m["stat_count"]["pre_window_s"] = 4.2
+        cfg, res = self.run_(mut=slow)
+        self.assertIn("OVER HALF THE SLACK", self.DP.text(self.DP.answers(cfg, res, {}), cfg))
+
+    def test_k_choice(self):
+        ov = lambda cfg: {a["name"]: [] for a in cfg["arms"]}  # noqa: E731
+        cfg, res = self.run_(h=1.4, base=300e3)   # 1.4 x 64 x 100 / 300,000 = 2.99%
+        self.assertEqual(self.DP.answers(cfg, res, ov(cfg))["q4"]["k"], 64)
+        cfg, res = self.run_(h=1.0, base=600e3)   # 2.13% at 128, 4.27% at 256
+        self.assertEqual(self.DP.answers(cfg, res, ov(cfg))["q4"]["k"], 256)
+        cfg, res = self.run_(h=0.2)               # under 2.5% even at 256
+        rep = self.DP.answers(cfg, res, ov(cfg))
+        self.assertIsNone(rep["q4"]["k"])
+        self.assertFalse(rep["ok"])
+        self.assertIn("NO K", self.DP.text(rep, cfg))
+        self.assertIn("outside the expected range", self.DP.text(rep, cfg))
+
+    def test_failures(self):
+        ov = lambda cfg: {a["name"]: [] for a in cfg["arms"]}  # noqa: E731
+        cfg, res = self.run_(ins_extra=3000.0)  # more than 0.5% more instructions in shared
+        rep = self.DP.answers(cfg, res, ov(cfg))
+        self.assertFalse(rep["q2"]["ok"] or rep["ok"])
+
+        def bad_load(m):
+            if m["shape"] == "mt-7w-one" and m["arm"] == "shared-256":
+                m["verdict"] = {"valid": False, "reasons": ["client headroom 12% under 25%"]}
+        cfg, res = self.run_(mut=bad_load)
+        rep = self.DP.answers(cfg, res, ov(cfg))
+        self.assertFalse(rep["q5"]["ok"] or rep["ok"])
+        self.assertTrue(any("client headroom" in p for p in rep["problems"]))
+
+        def limit(m):
+            if m["arm"] == "own-256":
+                m["evidence"] = {"ok": False, "failed": ["256 increments per request over all dose counters: short"]}
+        cfg, res = self.run_(mut=limit)
+        rep = self.DP.answers(cfg, res, ov(cfg))
+        self.assertFalse(rep["q1"]["ok"] or rep["q6"]["ok"] or rep["ok"])
+        cfg, res = self.run_()
+        o = ov(cfg)
+        o["own-256"] = ["server.stats_overflow.counter: 12"]
+        self.assertFalse(self.DP.answers(cfg, res, o)["q6"]["ok"])
+        self.assertFalse(self.DP.answers(cfg, res, None)["q6"]["ok"])  # no stat dumps read: not a pass
+        res["metadata"] = {}
+        self.assertFalse(self.DP.answers(cfg, res, ov(cfg))["q1"]["ok"])  # validate not recorded
+        res["legs"] = res["legs"][:-1]
+        self.assertTrue(any(p.startswith("missing leg") for p in self.DP.answers(cfg, res, ov(cfg))["problems"]))
+
+    def test_overflow_lines_and_script(self):
+        import gzip
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, "stats"))
+        with gzip.open(os.path.join(d, "stats", "own-64.txt.gz"), "wt") as f:
+            f.write("dose.c000.port.40000: 3\nserver.stats_overflow.counter: 2\n")
+        with gzip.open(os.path.join(d, "stats", "base.txt.gz"), "wt") as f:
+            f.write("server.uptime: 3\n")
+        self.assertEqual(self.DP.overflow_lines(d, ["base", "own-64", "shared-64"]),
+                         {"base": [], "own-64": ["server.stats_overflow.counter: 2"], "shared-64": None})
+        cfg, res = self.run_()
+        json.dump(res, open(os.path.join(d, "results.json"), "w"))
+        r = subprocess.run([sys.executable, os.path.join(MT, "dose_pilot.py"),
+                            os.path.join(MT, "bench-x86_64", "dose-pilot.json"), d, "--json", os.path.join(d, "o.json")],
+                           capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 1)  # an overflow stat and missing dumps: not clean
+        self.assertIn("pilot NOT clean", r.stdout)
+        self.assertFalse(json.load(open(os.path.join(d, "o.json")))["ok"])
+
+    def test_script_modes(self):
+        txt = open(os.path.join(MT, "run-u.sh")).read()
+        for m in ("dose-pilot)", "dose-smoke)", "dose-check)", "dose-queue)", "DOSE_STOP_S:-9000",
+                  "DOSE_EV_STOP_S:-3600", "dose_pilot.py", '--out "$R/dose$DOSE_TAG"',
+                  '--evidence $R/dose-evidence$DOSE_TAG', "dose not started (K, smoke or evidence; no override)"):
+            self.assertIn(m, txt)
+        # the smoke refuses an uncalibrated K before it runs anything; the queue runs only after dose_check
+        sm = txt[txt.index("  dose-smoke)"):txt.index("  dose-check)")]
+        self.assertLess(sm.index("uncalibrated"), sm.index("$EPL run"))
+        q = txt[txt.index("  dose-queue)"):txt.index("  codegen-smoke)")]
+        self.assertLess(q.index("dose_check ||"), q.index("$EPL run"))
+        self.assertLess(q.index('"$C/dose.json"'), q.index('"$C/dose-evidence.json"'))
+        chk = txt[txt.index("dose_check() {"):txt.index("mode=${1:-}")]
+        for m in ("smoke_valid.py", "evidence-check", "a.get('dose')==b.get('dose')"):
+            self.assertIn(m, chk)
+        r = subprocess.run(["bash", "-n", os.path.join(MT, "run-u.sh")], capture_output=True, timeout=30)
+        self.assertEqual(r.returncode, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
