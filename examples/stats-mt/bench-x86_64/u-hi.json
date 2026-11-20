@@ -212,9 +212,13 @@
     "B",
     "D"
    ],
+   "cell_counters": {
+    "D": 64
+   },
+   "cell_counters_note": "a cell's dose when it is not K: cell D runs at 64 because at 128 its own arm makes Envoy create about 57k counters when the measuring client starts, and the client gate fails on that stall (pilot attempt 2)",
    "low": {
     "cell": "A",
-    "divisor": 4
+    "counters": 64
    },
    "socket": [
     "B",
@@ -244,6 +248,10 @@
      {
       "harness": "bba256c",
       "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+     },
+     {
+      "harness": "9e63292",
+      "result": "2026-11-20, 17 legs, one round: every bootstrap validates, increments per request equal K, no counter created in a window, no overflow stat, instructions shared against own within 0.05%; h 0.23-0.38 (the K rule returns no K); 8 connections per worker fail the client pending gate; at 16 connections the legs whose own arm creates about 57k counters at client start fail the client gate (A own-256, D own-128); the choice was made by hand and is in the decision record: 16 connections, K = 128 in cells A and B, 64 in cell D and as cell A's second dose"
      }
     ]
    },
@@ -276,7 +284,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "envoy": {

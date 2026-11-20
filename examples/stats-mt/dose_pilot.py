@@ -41,7 +41,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import u_table  # noqa: E402
 
-L3_HIT = "mem_load_uops_retired.l3_hit"
 RUN_LEGS, EVIDENCE_LEGS = 165, 48
 
 
@@ -64,12 +63,7 @@ def _cyc(m):
     return (m or {}).get("workers_cycles_per_req") or ((m or {}).get("per_req") or {}).get("cycles_total")
 
 
-def clean_l3(m, k):
-    """L3 hits that are not local HITM loads, per request and counter update; None unless both
-    events were counted."""
-    e = ((m or {}).get("per_req") or {}).get("events") or {}
-    hit, hitm = u_table.ev_get(e, L3_HIT), u_table.ev_get(e, u_table.HITM[0])
-    return None if hit is None or hitm is None else (hit - hitm) / k
+clean_l3 = u_table.clean_l3
 
 
 def hitm_parts(m):

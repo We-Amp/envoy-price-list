@@ -212,9 +212,13 @@
     "B",
     "D"
    ],
+   "cell_counters": {
+    "D": 64
+   },
+   "cell_counters_note": "a cell's dose when it is not K: cell D runs at 64 because at 128 its own arm makes Envoy create about 57k counters when the measuring client starts, and the client gate fails on that stall (pilot attempt 2)",
    "low": {
     "cell": "A",
-    "divisor": 4
+    "counters": 64
    },
    "socket": [
     "B",
@@ -244,6 +248,10 @@
      {
       "harness": "bba256c",
       "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+     },
+     {
+      "harness": "9e63292",
+      "result": "2026-11-20, 17 legs, one round: every bootstrap validates, increments per request equal K, no counter created in a window, no overflow stat, instructions shared against own within 0.05%; h 0.23-0.38 (the K rule returns no K); 8 connections per worker fail the client pending gate; at 16 connections the legs whose own arm creates about 57k counters at client start fail the client gate (A own-256, D own-128); the choice was made by hand and is in the decision record: 16 connections, K = 128 in cells A and B, 64 in cell D and as cell A's second dose"
      }
     ]
    },
@@ -276,7 +284,7 @@
    "admin_timeout_s": 30,
    "client_duration_s": 30,
    "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
-   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A, B and D (run U's 28w rung) at 1,500 per worker, cell A also at K / 4; cell C (7 workers at 3,000, the dose run's own rung) in the pilot only, exploratory; rates_key holds the pilot's choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
   }
  },
  "envoy": {
@@ -340,7 +348,7 @@
  "shape_order": "latin",
  "order_seed": 41,
  "primary_metric": "workers_cycles_per_req",
- "comparisons": "base",
+ "comparisons": "all_pairs",
  "base_arm": "own-128",
  "arms": [
   {
@@ -401,14 +409,6 @@
      "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
     },
     {
-     "stat": "stat_count.start_n",
-     "scope": "field",
-     "min": 57344,
-     "max": 114688,
-     "shape": "mt-28w",
-     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
-    },
-    {
      "stat": "stat_count.new_in_window",
      "scope": "field",
      "equals": 0,
@@ -435,6 +435,10 @@
      "max": 128.5,
      "label": "128 increments per request over all dose counters (within 0.5)"
     }
+   ],
+   "shapes": [
+    "mt-14w-one",
+    "mt-14w-split"
    ]
   },
   {
@@ -513,6 +517,10 @@
      "max": 128.5,
      "label": "128 increments per request over all dose counters (within 0.5)"
     }
+   ],
+   "shapes": [
+    "mt-14w-one",
+    "mt-14w-split"
    ]
   },
   {
@@ -573,14 +581,6 @@
      "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
     },
     {
-     "stat": "stat_count.start_n",
-     "scope": "field",
-     "min": 57344,
-     "max": 114688,
-     "shape": "mt-28w",
-     "label": "128 dose counters per connection (448 connections; the warm-up client's stay)"
-    },
-    {
      "stat": "stat_count.new_in_window",
      "scope": "field",
      "equals": 0,
@@ -607,10 +607,14 @@
      "max": 128.5,
      "label": "128 increments per request over all dose counters (within 0.5)"
     }
+   ],
+   "shapes": [
+    "mt-14w-one",
+    "mt-14w-split"
    ]
   },
   {
-   "name": "own-32",
+   "name": "own-64",
    "binaries": {
     "x86_64": {
      "binary": "~/epl/bin/envoy-1.40.2",
@@ -620,7 +624,7 @@
    },
    "settings": {
     "stats_access_log": {
-     "counters": 32,
+     "counters": 64,
      "tag": "%DOWNSTREAM_REMOTE_PORT%"
     },
     "stats_flush": {
@@ -653,10 +657,18 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 7168,
-     "max": 14336,
+     "min": 14336,
+     "max": 28672,
      "shape": "mt-14w-one",
-     "label": "32 dose counters per connection (224 connections; the warm-up client's stay)"
+     "label": "64 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-28w",
+     "label": "64 dose counters per connection (448 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.new_in_window",
@@ -681,17 +693,18 @@
     {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 31.5,
-     "max": 32.5,
-     "label": "32 increments per request over all dose counters (within 0.5)"
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one"
+    "mt-14w-one",
+    "mt-28w"
    ]
   },
   {
-   "name": "shared-32",
+   "name": "shared-64",
    "binaries": {
     "x86_64": {
      "binary": "~/epl/bin/envoy-1.40.2",
@@ -701,7 +714,7 @@
    },
    "settings": {
     "stats_access_log": {
-     "counters": 32,
+     "counters": 64,
      "tag": "%DOWNSTREAM_LOCAL_PORT%"
     },
     "stats_flush": {
@@ -734,16 +747,16 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "equals": 32,
+     "equals": 64,
      "tol_abs": 0,
-     "label": "32 dose counters before the window"
+     "label": "64 dose counters before the window"
     },
     {
      "stat": "stat_count.end_n",
      "scope": "field",
-     "equals": 32,
+     "equals": 64,
      "tol_abs": 0,
-     "label": "32 dose counters after the window"
+     "label": "64 dose counters after the window"
     },
     {
      "stat": "dose.c000.port.10110",
@@ -762,13 +775,95 @@
     {
      "stat": "stat_count.sum_per_request",
      "scope": "field",
-     "min": 31.5,
-     "max": 32.5,
-     "label": "32 increments per request over all dose counters (within 0.5)"
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
     }
    ],
    "shapes": [
-    "mt-14w-one"
+    "mt-14w-one",
+    "mt-28w"
+   ]
+  },
+  {
+   "name": "own-64-A2",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 64,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-28w",
+     "label": "64 dose counters per connection (448 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-28w"
    ]
   }
  ],
@@ -850,12 +945,6 @@
  "dose": {
   "counters": 128,
   "connections": 16,
-  "reference": "own-128",
-  "shared": "shared-128",
-  "aa": [
-   "own-128-A2",
-   "own-128"
-  ],
   "rates_key": "bench-x86_64-dose-1",
   "cells": [
    {
@@ -866,7 +955,14 @@
     "sockets": 1,
     "workers": 14,
     "rate_per_worker": 1500,
-    "connections": 16
+    "connections": 16,
+    "counters": 128,
+    "reference": "own-128",
+    "shared": "shared-128",
+    "aa": [
+     "own-128-A2",
+     "own-128"
+    ]
    },
    {
     "cell": "B",
@@ -876,7 +972,14 @@
     "sockets": 2,
     "workers": 14,
     "rate_per_worker": 1500,
-    "connections": 16
+    "connections": 16,
+    "counters": 128,
+    "reference": "own-128",
+    "shared": "shared-128",
+    "aa": [
+     "own-128-A2",
+     "own-128"
+    ]
    },
    {
     "cell": "D",
@@ -886,7 +989,14 @@
     "sockets": 2,
     "workers": 28,
     "rate_per_worker": 1500,
-    "connections": 16
+    "connections": 16,
+    "counters": 64,
+    "reference": "own-64",
+    "shared": "shared-64",
+    "aa": [
+     "own-64-A2",
+     "own-64"
+    ]
    }
   ],
   "socket": [
@@ -899,9 +1009,9 @@
   ],
   "low": {
    "cell": "A",
-   "counters": 32,
-   "reference": "own-32",
-   "shared": "shared-32"
+   "counters": 64,
+   "reference": "own-64",
+   "shared": "shared-64"
   },
   "flush_interval_s": 240,
   "listener_address": "0.0.0.0"

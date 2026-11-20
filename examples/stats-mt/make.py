@@ -57,11 +57,13 @@ a spare core.
                  Every dose arm listens on the wildcard address (a local-address object per
                  connection; the client still targets loopback).
                  Cells are rungs with their own per-worker rate (the box's dose.cells); the slot
-                 runs dose.slot_cells, and in dose.low.cell also own and shared at K / 4. K and
-                 the client connections per worker come from the pilot through RATES_JSON, key
-                 dose.rates_key: {"counters": K, "connections": c}; without both dose.json,
-                 smoke-dose.json and dose-evidence.json carry placeholders and are marked
-                 uncalibrated. A shape at other than 16 connections per worker is mt-<rung>-c<c>.
+                 runs dose.slot_cells, each at K or at its own dose (dose.cell_counters), with
+                 own, shared and an A/A copy of own at that dose, and in dose.low.cell also own
+                 and shared at the second dose (dose.low.counters). K and the client connections
+                 per worker are the choice recorded in RATES_JSON, key dose.rates_key:
+                 {"counters": K, "connections": c}; without both dose.json, the smokes and
+                 dose-evidence.json carry placeholders and are marked uncalibrated. A shape at
+                 other than 16 connections per worker is mt-<rung>-c<c>.
                    dose-pilot.json     one round: base and own/shared at every K of
                                        dose.counters_choices in cell A; a loopback pair at the
                                        middle K; own/shared at the middle K at 16 and 8
@@ -70,9 +72,12 @@ a spare core.
                                        by invalid legs; the HITM events (dose_pilot.py prints
                                        the answers and writes the record the queue checks)
                    smoke-dose.json     one round of dose.json (evidence recorded)
+                   smoke-dose-evidence.json  one round of the evidence legs in the cells
+                                       that show every one of their arms
                    dose.json           15 fixed rounds, 11 legs per round
                    dose-evidence.json  evidence legs outside the timed run: base,
-                                       stats-reject, own-K, shared-K, 4 rounds per slot cell,
+                                       stats-reject, own and shared at the cell's dose, 4
+                                       rounds per slot cell,
                                        HITM events counted in user mode, store-stat operations
                  Tables from u_table.py (statements S1-S5 and the model row).
 
@@ -467,11 +472,14 @@ def dose_configs(box, rates):
         raise SystemExit("%s: dose counters %d is not one of %s" % (box["name"], K, d["counters_choices"]))
     if k not in d["connections_choices"]:
         raise SystemExit("%s: dose connections %d is not one of %s" % (box["name"], k, d["connections_choices"]))
-    if K % d["low"]["divisor"]:
-        raise SystemExit("%s: dose counters %d does not divide by %d" % (box["name"], K, d["low"]["divisor"]))
-    Klow = K // d["low"]["divisor"]
+    Klow = int(d["low"]["counters"])
+    if Klow == K:
+        raise SystemExit("%s: dose counters %d is also the second dose of cell %s" % (box["name"], K, d["low"]["cell"]))
     shapes = dose_shapes(box, d["slot_cells"], k)
-    low_shapes = [s["name"] for s in shapes if s["cell"] == d["low"]["cell"]]
+    shape_of = {s["cell"]: s["name"] for s in shapes}
+    # the dose of each cell: K, or the cell's own (dose.cell_counters)
+    dose_of = {c: int(d.get("cell_counters", {}).get(c, K)) for c in d["slot_cells"]}
+    doses = [K] + sorted({n for n in list(dose_of.values()) + [Klow] if n != K}, reverse=True)
     cells_by = {c["cell"]: c for c in d["cells"]}
     no_dose = {"stat": "stat_count.start_n", "scope": "field", "equals": 0, "tol_abs": 0, "label": "no dose counters"}
 
@@ -497,40 +505,81 @@ def dose_configs(box, rates):
                      "sockets": c["sockets"], "workers": s["workers"], "rate_per_worker": c["rate_per_worker"],
                      "connections": s["connections_per_worker"]}, **more)
 
-    def block(own, shared, aa, shp, low=None):
-        return {"counters": K, "connections": k, "reference": own, "shared": shared, "aa": aa,
-                "rates_key": d["rates_key"], "cells": [cell(s) for s in shp],
-                "socket": d["socket"], "workers": d["workers"], "low": low,
+    def slot_cell(s, aa):
+        # every cell names its own dose and arms: nothing downstream may assume one K for the run
+        n = dose_of[s["cell"]]
+        return cell(s, counters=n, reference="own-%d" % n, shared="shared-%d" % n,
+                    aa=["own-%d-A2" % n, "own-%d" % n] if aa else None)
+
+    def block(shp, aa, low=None):
+        return {"counters": K, "connections": k, "rates_key": d["rates_key"],
+                "cells": [slot_cell(s, aa) for s in shp], "socket": d["socket"], "workers": d["workers"], "low": low,
                 "flush_interval_s": d["flush_interval_s"], "listener_address": d["listener_address"]}
 
+    def only(cells, shp):
+        mine = [s["name"] for s in shp if s["cell"] in cells]
+        return None if len(mine) == len(shp) else mine
+
+    def slot_arms(port, shp):
+        # per dose: own and shared where a cell runs that dose or has it as its second dose; the
+        # A/A copy of own where it is the cell's own dose
+        out = []
+        for n in doses:
+            ref = [c for c in d["slot_cells"] if dose_of[c] == n]
+            pair = ref + ([d["low"]["cell"]] if n == Klow and d["low"]["cell"] not in ref else [])
+            out += [dose_arm(box, "own", n, port, shp, only=only(pair, shp)),
+                    dose_arm(box, "shared", n, port, shp, only=only(pair, shp))]
+            if ref:
+                out.append(dose_arm(box, "own", n, port, shp, "-A2", only=only(ref, shp)))
+        return out
+
+    def evidence_arms(port, shp):
+        out = [arm(box, "base", ev=BASE_EVIDENCE + [no_dose]),
+               arm(box, "stats-reject", {"stats_reject_all": True}, REJECT_EVIDENCE)]
+        for n in doses:
+            ref = [c for c in d["slot_cells"] if dose_of[c] == n and c in {s["cell"] for s in shp}]
+            if ref:
+                out += [dose_arm(box, "own", n, port, shp, only=only(ref, shp)),
+                        dose_arm(box, "shared", n, port, shp, only=only(ref, shp))]
+        return out
+
     out = {}
-    own, shared, a2 = "own-%d" % K, "shared-%d" % K, "own-%d-A2" % K
     low = {"cell": d["low"]["cell"], "counters": Klow, "reference": "own-%d" % Klow, "shared": "shared-%d" % Klow}
-    # 11 legs per round: three arms in every cell, the low dose in its cell only
-    u = cfg("mt-dose-" + box["name"],
-            lambda port, shp: [dose_arm(box, "own", K, port, shp), dose_arm(box, "shared", K, port, shp),
-                               dose_arm(box, "own", K, port, shp, "-A2"),
-                               dose_arm(box, "own", Klow, port, shp, only=low_shapes),
-                               dose_arm(box, "shared", Klow, port, shp, only=low_shapes)],
-            own, shapes, DOSE_ROUNDS, k=k, dose=block(own, shared, [a2, own], shapes, low))
+    # 11 legs per round: own, shared and the A/A copy at the cell's dose in every cell, and the
+    # second dose's pair in its cell. No arm runs in every cell, so the harness's own rows are
+    # between the arms of a cell (all_pairs); the statements are u_table's.
+    u = cfg("mt-dose-" + box["name"], slot_arms, "own-%d" % K, shapes, DOSE_ROUNDS, k=k, comparisons="all_pairs",
+            dose=block(shapes, True, low))
     if not calibrated:
         u["uncalibrated"] = True
     out["dose.json"] = u
     sm = json.loads(json.dumps(u))
-    # the smoke keeps the mark: no dose leg runs at a K the pilot did not choose
+    # the smoke keeps the mark: no dose leg runs at a choice nobody made
     sm.update(name="mt-smoke-dose-" + box["name"], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
               evidence_mode="record")
     out["smoke-dose.json"] = sm
-    # base and stats-reject are the plain config: the default flush interval, the loopback listener
-    ev = cfg("mt-dose-evidence-" + box["name"],
-             lambda port, shp: [arm(box, "base", ev=BASE_EVIDENCE + [no_dose]),
-                                arm(box, "stats-reject", {"stats_reject_all": True}, REJECT_EVIDENCE),
-                                dose_arm(box, "own", K, port, shp), dose_arm(box, "shared", K, port, shp)],
-             "base", shapes, DOSE_EVIDENCE_ROUNDS, k=k, dose=block(own, shared, None, shapes))
+    # the evidence legs: base and stats-reject (the plain config: the default flush interval, the
+    # loopback listener) and own and shared at the cell's dose, in every cell
+    ev = cfg("mt-dose-evidence-" + box["name"], evidence_arms, "base", shapes, DOSE_EVIDENCE_ROUNDS, k=k,
+             dose=block(shapes, False))
     ev["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
     if not calibrated:
         ev["uncalibrated"] = True
     out["dose-evidence.json"] = ev
+    # one round of the evidence legs in as few cells as show every arm once: the event list and
+    # the stat-operation probe are exercised before the slot
+    need, picked = {n for n in dose_of.values()}, []
+    for c in d["slot_cells"]:
+        if dose_of[c] in need:
+            picked.append(c)
+            need.discard(dose_of[c])
+    es = [s for s in shapes if s["cell"] in picked]
+    sme = cfg("mt-smoke-dose-evidence-" + box["name"], evidence_arms, "base", es, 1, k=k, smoke=True,
+              evidence_mode="record", dose=block(es, False))
+    sme["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
+    if not calibrated:
+        sme["uncalibrated"] = True
+    out["smoke-dose-evidence.json"] = sme
     out["dose-pilot.json"] = dose_pilot_config(box, cfg, cell, no_dose)
     return out
 

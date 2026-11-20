@@ -1,0 +1,842 @@
+{
+ "name": "mt-smoke-dose-evidence-bench-x86_64",
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; rungs of 1 to 28 workers, main thread on its own core",
+ "workdir": "~/epl/runs/stats-mt",
+ "box": {
+  "name": "bench-x86_64",
+  "arch": "x86_64",
+  "label": "bench-host",
+  "kind": "bare-metal",
+  "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; rungs of 1 to 28 workers, main thread on its own core",
+  "cpus": {
+   "sut": "0-13,19,20-33",
+   "client": "14-18,34-35,54-58,74-75",
+   "origin": "37-39,77-79",
+   "harness": "36,76"
+  },
+  "main_cpu": 19,
+  "rungs": [
+   {
+    "name": "1w",
+    "workers": 1,
+    "worker_cpus": "0",
+    "client_concurrency": 1
+   },
+   {
+    "name": "4w",
+    "workers": 4,
+    "worker_cpus": "0-3",
+    "client_concurrency": 4
+   },
+   {
+    "name": "14w-one",
+    "workers": 14,
+    "worker_cpus": "0-13",
+    "client_concurrency": 14
+   },
+   {
+    "name": "14w-split",
+    "workers": 14,
+    "worker_cpus": "0-6,20-26",
+    "client_concurrency": 14
+   },
+   {
+    "name": "28w",
+    "workers": 28,
+    "worker_cpus": "0-13,20-33",
+    "client_concurrency": 14
+   }
+  ],
+  "growth": [
+   [
+    "28w",
+    "1w"
+   ],
+   [
+    "14w-one",
+    "1w"
+   ]
+  ],
+  "cross_socket": [
+   [
+    "14w-split",
+    "14w-one"
+   ]
+  ],
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+  "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm,mem_load_uops_l3_miss_retired.remote_hitm,task-clock",
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "image_platform": "linux/amd64",
+  "binaries": {
+   "x86_64": {
+    "binary": "~/epl/bin/envoy-1.40.2",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+    "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+   }
+  },
+  "steal_gate": null,
+  "micro": {
+   "root": "~/epl/bins/stats/r5",
+   "rows": [
+    "model"
+   ],
+   "placement": "one-socket",
+   "cpus": "0-19",
+   "threads": [
+    1,
+    4,
+    19
+   ],
+   "histogram_workers": [
+    1,
+    19
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "frozen from the bare-metal smokes of 2026-11-18 (fix build, atomic_model, 0.2 s windows, no CPU isolation): 18:43:40Z 0-4 per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4); 18:45:23Z at most 6 (4 threads). The counter is summed over the threads; rule: per thread max(5, 25/s x window), times the threads (5 per thread at 0.2 s, 25 per thread at 1 s)"
+  },
+  "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core.",
+  "u_hi": {
+   "rungs": [
+    "14w-one",
+    "14w-split",
+    "28w"
+   ],
+   "target_busy": [
+    0.6,
+    0.7
+   ],
+   "placeholder_r_star": 2500,
+   "calibrate_rates_per_worker": [
+    1500,
+    1800,
+    2100,
+    2400,
+    2700
+   ],
+   "note": "run U at 1,000 per worker held the workers 25-28% busy; the client threads were 31% busy at 14 workers and 39% at 28 workers (14 client workers, 14 CPUs), so the 25% headroom gate bounds 28 workers near 1,900 per worker (about 50% worker busy) unless the client does better than linear; the calibration decides",
+   "growth": [
+    [
+     "28w",
+     "14w-one"
+    ]
+   ],
+   "cross_socket": [
+    [
+     "14w-split",
+     "14w-one"
+    ]
+   ],
+   "rates_key": "bench-x86_64-hi-1800",
+   "attempts": [
+    {
+     "rates_key": "bench-x86_64-hi-1500",
+     "r_star": 1500
+    },
+    {
+     "rates_key": "bench-x86_64-hi",
+     "r_star": 1800,
+     "result": "stopped 2026-11-19 15:55-16:32 CET: 8 of 15 28w legs invalid (6 other tasks on the SUT CPUs 0.053-0.071 against 0.05, 2 client pool overflow); 31 valid, 8 invalid; kept as a failed attempt"
+    }
+   ]
+  },
+  "dose": {
+   "rates_key": "bench-x86_64-dose-1",
+   "counters_choices": [
+    64,
+    128,
+    256
+   ],
+   "placeholder_counters": 128,
+   "connections_choices": [
+    8,
+    16
+   ],
+   "placeholder_connections": 16,
+   "extra_rungs": [
+    {
+     "name": "7w-one",
+     "workers": 7,
+     "worker_cpus": "0-6",
+     "client_concurrency": 14
+    }
+   ],
+   "cells": [
+    {
+     "cell": "A",
+     "rung": "14w-one",
+     "rate_per_worker": 1500,
+     "role": "reference",
+     "sockets": 1
+    },
+    {
+     "cell": "B",
+     "rung": "14w-split",
+     "rate_per_worker": 1500,
+     "role": "socket",
+     "sockets": 2
+    },
+    {
+     "cell": "D",
+     "rung": "28w",
+     "rate_per_worker": 1500,
+     "role": "workers",
+     "sockets": 2
+    },
+    {
+     "cell": "C",
+     "rung": "7w-one",
+     "rate_per_worker": 2200,
+     "role": "load",
+     "sockets": 1,
+     "exploratory": true,
+     "rate_note": "3,000 per worker ran the workers at 81% busy with the K = 128 logger (pilot attempt 1: about 706k worker cycles per request against 540k without it) and failed the client gates; 2,200 aims at 60-68% busy; the total is then 15,400, not the other cells' 21,000"
+    }
+   ],
+   "slot_cells": [
+    "A",
+    "B",
+    "D"
+   ],
+   "cell_counters": {
+    "D": 64
+   },
+   "cell_counters_note": "a cell's dose when it is not K: cell D runs at 64 because at 128 its own arm makes Envoy create about 57k counters when the measuring client starts, and the client gate fails on that stall (pilot attempt 2)",
+   "low": {
+    "cell": "A",
+    "counters": 64
+   },
+   "socket": [
+    "B",
+    "A"
+   ],
+   "workers": [
+    "D",
+    "A"
+   ],
+   "pilot": {
+    "k_cell": "A",
+    "mid": 128,
+    "connections": [
+     16,
+     8
+    ],
+    "connection_cells": [
+     "A",
+     "D"
+    ],
+    "loopback_cell": "A",
+    "exploratory_cells": [
+     "C"
+    ],
+    "order_note": "shapes in this order, arms as listed, no re-run of an invalid leg and no stop after consecutive invalid legs: the deciding 16-connection legs of cells A and D, then the other connection count, then the loopback pair, then the exploratory cell",
+    "attempts": [
+     {
+      "harness": "bba256c",
+      "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+     },
+     {
+      "harness": "9e63292",
+      "result": "2026-11-20, 17 legs, one round: every bootstrap validates, increments per request equal K, no counter created in a window, no overflow stat, instructions shared against own within 0.05%; h 0.23-0.38 (the K rule returns no K); 8 connections per worker fail the client pending gate; at 16 connections the legs whose own arm creates about 57k counters at client start fail the client gate (A own-256, D own-128); the choice was made by hand and is in the decision record: 16 connections, K = 128 in cells A and B, 64 in cell D and as cell A's second dose"
+     }
+    ]
+   },
+   "pilot_rule": {
+    "cell": "A",
+    "cycles_per_transfer": 100,
+    "min_share": 0.025,
+    "h_expected": [
+     1.0,
+     1.4
+    ],
+    "instructions_tol": 0.005,
+    "k_rule": "the smallest K with h x K x cycles_per_transfer / own worker cycles per request >= min_share in the cell",
+    "connections_rule": "the connection count with the smaller |clean L3 hits per update, own - shared| at the middle K in the cell, provided every leg at that count is valid in the connection cells; else the other count if its legs are valid"
+   },
+   "listener_address": "0.0.0.0",
+   "listener_note": "every dose arm listens on the wildcard address: Envoy then reads each accepted connection's local address into its own object, where a loopback listener gives every connection of every worker the listener's one address object (the address formatter copies its shared pointer once per counter); the client still targets 127.0.0.1; the admin port stays on loopback",
+   "sum_tol_abs": 0.5,
+   "avoid_utc": [
+    {
+     "from": "00:00",
+     "to": "00:10",
+     "leg_s": 120
+    }
+   ],
+   "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
+   "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+   "flush_interval_s": 240,
+   "flush_note": "every dose arm sets this stats flush interval: longer than a leg's Envoy lives (about a minute), under the 300 s the bootstrap accepts, so the main thread's flush does not latch the own arms' counters during the window; base and stats-reject keep the default 5 s",
+   "admin_timeout_s": 30,
+   "client_duration_s": 30,
+   "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
+  }
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true,
+  "nofile": 65536
+ },
+ "cpus": {
+  "sut": "0-13,19,20-33",
+  "client": "14-18,34-35,54-58,74-75",
+  "origin": "37-39,77-79",
+  "harness": "36,76"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 4,
+  "connections_per_worker": 16,
+  "warmup_s": 5,
+  "nofile": 65536,
+  "duration_s": 30,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
+  "per_thread": true,
+  "numastat": true,
+  "responses_from": "origin",
+  "stat_count_prefix": "dose.",
+  "stat_filter_extra": "^dose\\.c000\\.port\\.10110$",
+  "stat_ops_probe": true
+ },
+ "validity": {
+  "max_steal_share": null,
+  "max_non2xx": 0
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8,
+  "stub_status": true
+ },
+ "audit": "mt-s",
+ "order": "latin",
+ "shape_order": "latin",
+ "order_seed": 41,
+ "primary_metric": "workers_cycles_per_req",
+ "comparisons": "base",
+ "base_arm": "base",
+ "arms": [
+  {
+   "name": "base",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "absent": true,
+     "label": "no stats matcher"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "min": 1,
+     "label": "store stats present"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counters"
+    }
+   ]
+  },
+  {
+   "name": "stats-reject",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_reject_all": true
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "equals": true,
+     "label": "stats_matcher reject_all"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "absent": true,
+     "label": "store stats absent at the end of the leg (the read succeeded, the stat is not there)"
+    }
+   ]
+  },
+  {
+   "name": "own-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-one",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ]
+  },
+  {
+   "name": "shared-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "one increment per request on a shared counter"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 127.5,
+     "max": 128.5,
+     "label": "128 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-14w-one"
+   ]
+  },
+  {
+   "name": "own-64",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 64,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-28w",
+     "label": "64 dose counters per connection (448 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-28w"
+   ]
+  },
+  {
+   "name": "shared-64",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 64,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    },
+    "stats_flush": {
+     "interval_s": 240
+    },
+    "listener_address": "0.0.0.0"
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stats_flush_interval",
+     "scope": "config",
+     "equals": "240s",
+     "label": "stats flush interval 240 s (no flush during the leg)"
+    },
+    {
+     "stat": "address",
+     "scope": "config",
+     "where": {
+      "port_value": 10110
+     },
+     "equals": "0.0.0.0",
+     "label": "listener address 0.0.0.0 (a local-address object per connection)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 64,
+     "tol_abs": 0,
+     "label": "64 dose counters before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 64,
+     "tol_abs": 0,
+     "label": "64 dose counters after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "one increment per request on a shared counter"
+    },
+    {
+     "stat": "http.ingress_http.downstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no downstream connection opened during the window"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 63.5,
+     "max": 64.5,
+     "label": "64 increments per request over all dose counters (within 0.5)"
+    }
+   ],
+   "shapes": [
+    "mt-28w"
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "mt-14w-one",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 14,
+   "worker_cpus": "0-13",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "A",
+   "connections_per_worker": 16
+  },
+  {
+   "name": "mt-28w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 42000,
+   "workers": 28,
+   "worker_cpus": "0-13,20-33",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 32,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "D",
+   "connections_per_worker": 16
+  }
+ ],
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "adaptive": false,
+ "box_specific": true,
+ "avoid_utc": [
+  {
+   "from": "00:00",
+   "to": "00:10",
+   "leg_s": 120
+  }
+ ],
+ "k": 16,
+ "smoke": true,
+ "evidence_mode": "record",
+ "dose": {
+  "counters": 128,
+  "connections": 16,
+  "rates_key": "bench-x86_64-dose-1",
+  "cells": [
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "rung": "14w-one",
+    "role": "reference",
+    "sockets": 1,
+    "workers": 14,
+    "rate_per_worker": 1500,
+    "connections": 16,
+    "counters": 128,
+    "reference": "own-128",
+    "shared": "shared-128",
+    "aa": null
+   },
+   {
+    "cell": "D",
+    "shape": "mt-28w",
+    "rung": "28w",
+    "role": "workers",
+    "sockets": 2,
+    "workers": 28,
+    "rate_per_worker": 1500,
+    "connections": 16,
+    "counters": 64,
+    "reference": "own-64",
+    "shared": "shared-64",
+    "aa": null
+   }
+  ],
+  "socket": [
+   "B",
+   "A"
+  ],
+  "workers": [
+   "D",
+   "A"
+  ],
+  "low": null,
+  "flush_interval_s": 240,
+  "listener_address": "0.0.0.0"
+ },
+ "uncalibrated": true
+}

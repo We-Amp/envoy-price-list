@@ -19,35 +19,45 @@ apart flagged), worker busy share, steal share, memory per NUMA node, and from t
 evidence run the local and remote HITM loads per request.
 
 Run R1 ("dose", a run whose config has a `dose` block; statements pre-stated 2026-11-20, as
-amended twice the same day before any dose leg ran):
+amended three times the same day before any timed leg ran):
 
     python3 examples/stats-mt/u_table.py DOSE_DIR [--evidence DOSE_EVIDENCE_DIR] [--json OUT.json]
 
-Estimand per cell c: rho_c = the mean per-round 100 x ln(shared / own) of worker-only cycles per
-request (log points x 100, read as percent). A/A per cell: the second own arm against own;
-passes with a 95% half-width of at most 1% and unresolved (its raw p above 0.05). A cell needs
-12 valid rounds (own, shared and the A/A arm all valid) for a verdict; under that it is
-incomplete, and so is a contrast it is part of. Holm over the five statements:
-  S1-S3 (rho at K, one per cell). A cell whose A/A fails has no verdict. An interval entirely
-    below 0 is "comparison invalid (own slower than shared)". A finding when all hold: the
-    widened interval rho_c +/- 1.96 x sqrt(SE^2 + 0.34^2) excludes 0 (and the statement survives
-    Holm); the estimate is at least 1% and beyond the A/A's reach. A finding is called "line
-    transfer" only when instructions:u per request match within 0.5% between shared and own and
-    HITM:u (shared - own) per request is at least 0.5 x K (evidence legs). Otherwise the cell is
-    a bound, "rho_c <= the widened interval's upper end".
-  S4 (socket): rho_B - rho_A, paired by round, widened with 1.96 x sqrt(SE^2 + 2 x 0.34^2).
-    Predicted +2 to +4 points.
-  S5 (workers): rho_D - rho_A, same form. No directional prediction.
-Linearity is a description, not a statement: the price per update at K and at Klow in the low
-dose's cell, P = (exp(rho) - 1) x C / dose on the means (C that dose's own-arm cycles), and
-ln(P(K) / P(Klow)) with its unwidened interval (delta method, the two rho paired by round).
+Every cell has its own dose K_c (counters per request) and its own arms (the config's dose.cells:
+counters, reference, shared, aa); one cell also runs a second dose (dose.low). Estimand per
+cell c: rho_c = the mean per-round 100 x ln(shared / own) of worker-only cycles per request at
+K_c (log points x 100, read as percent). A/A per cell: the second own arm against own at K_c;
+passes with a 95% half-width of at most 1% and unresolved (its raw p above 0.05). The second
+dose's pair uses its cell's A/A. A cell needs 12 valid rounds (own, shared and the A/A arm all
+valid) for a verdict; under that it is incomplete, and so is a contrast it is part of. Holm over
+the five statements:
+  S1-S3 (rho at the cell's dose, one per cell). A cell whose A/A fails has no verdict. An
+    interval entirely below 0 is "comparison invalid (own slower than shared)". A finding when
+    all hold: the widened interval rho_c +/- 1.96 x sqrt(SE^2 + 0.34^2) excludes 0 (and the
+    statement survives Holm); the estimate is at least 1% and beyond the A/A's reach. A finding
+    is called "line transfer" only when instructions:u per request match within 0.5% between
+    shared and own and HITM:u (shared - own) per request is at least 0.15 x K_c (evidence
+    legs). Otherwise the cell is a bound, "rho_c <= the widened interval's upper end".
+  S4 (socket) and S5 (workers): the difference of two cells' rho at the same dose, paired by
+    round, widened with 1.96 x sqrt(SE^2 + 2 x 0.34^2). Where the two cells' own doses differ,
+    the contrast uses the second dose's pair of the cell that has one (rho_D(64) - rho_A(64)).
+    S4 predicted +2 to +4 points; S5 no directional prediction.
+Linearity is a description, not a statement: the price per update at the two doses of the cell
+that has both, P = (exp(rho) - 1) x C / dose on the means (C that dose's own-arm cycles), and
+ln(P(K) / P(second dose)) with its unwidened interval (delta method, paired by round).
+Prices: (shared - own) / dose in worker cycles, measured, and likely understating the sharing
+price (own pays extra L3 hits for its per-connection counter sets). Beside each, where the
+evidence legs have that pair, the footprint band P + d x 45 cycles, d = clean L3 hits per update
+(L3 hits minus local HITM loads), own minus shared: a modelled upper figure (45 cycles is an
+assumed L3 hit latency on this CPU, no overlap credited).
 Model row for the plain config, always labelled a model, per cell: contention <= T x P / C with
-P = (exp(the widened interval's upper end of rho) - 1) x own cycles / K (in the low dose's cell
-also at Klow, both quoted), T the upper 95% end of HITM:u (base - stats-reject) per request
-divided by h = HITM:u (shared - own) / K (beside it the store-stat operations per request, which
-T should not exceed), C base worker cycles per request. A cell without a verdict, or whose
-comparison is invalid, has no model row. The headline gives the one-socket and the two-socket
-cells separately.
+P = (exp(the widened interval's upper end of rho) - 1) x own cycles / dose (in the second dose's
+cell at both doses), T the store-stat operations per request of the plain config from the
+stat-operation probe (counter increments and histogram samples of base), C base worker cycles per
+request. Beside it, for comparison, the HITM-scaled figure: HITM:u (base - stats-reject) per
+request x P / h, h = HITM:u (shared - own) per update in the same cell. A cell without a
+verdict, or whose comparison is invalid, has no model row. The headline gives the one-socket and
+the two-socket cells separately.
 """
 
 import argparse
@@ -68,7 +78,9 @@ DOSE_Z = 1.96
 DOSE_SYS_PCT = 0.34            # the widening term of every dose interval (log points x 100)
 DOSE_MIN_EFFECT_PCT = 1.0      # a finding is at least this large
 DOSE_INSTR_TOL_PCT = 0.5       # "line transfer": instructions:u per request, shared against own
-DOSE_HITM_SHARE = 0.5          # "line transfer": HITM:u (shared - own) per request >= this x K
+DOSE_HITM_SHARE = 0.15         # "line transfer": HITM:u (shared - own) per request >= this x the cell's K
+DOSE_L3_HIT = "mem_load_uops_retired.l3_hit"
+DOSE_L3_CYCLES = 45.0          # assumed L3 hit latency on the bench CPU (the footprint band)
 DOSE_MIN_ROUNDS = 12           # valid rounds a cell needs for a verdict
 DOSE_AA_ALPHA = 0.05           # the A/A is unresolved when its raw p is above this
 DOSE_PREDICTED = {"socket": "+2 to +4 points", "workers": "no directional prediction"}
@@ -80,6 +92,14 @@ def ev_get(e, name):
     """An event's per-request value under either spelling (counted in user mode: NAME:u)."""
     v = e.get(name)
     return e.get(name + ":u") if v is None else v
+
+
+def clean_l3(m, k):
+    """L3 hits that are not local HITM loads, per request and counter update; None unless both
+    events were counted."""
+    e = ((m or {}).get("per_req") or {}).get("events") or {}
+    hit, hitm = ev_get(e, DOSE_L3_HIT), ev_get(e, HITM[0])
+    return None if hit is None or hitm is None else (hit - hitm) / k
 
 
 def hitm_per_req(m):
@@ -347,23 +367,29 @@ def model_price(w, own_cycles, dose):
     return math.expm1(w["hi"] / 100.0) * own_cycles / dose
 
 
-def dose_evidence_rows(ev, d, cells):
-    """Per cell, from the evidence legs: HITM:u per request per arm, h = (shared - own) / K, the
-    base - stats-reject difference, base worker cycles per request, the store-stat operations
-    per request of base (counter increments and histogram samples) and base's worker busy share."""
+def dose_evidence_rows(ev, cells):
+    """Per cell, from the evidence legs, at the cell's own dose and arms: HITM:u per request per
+    arm, h = (shared - own) / K_c, clean L3 hits per update own minus shared (the footprint), the
+    base - stats-reject difference, base worker cycles per request, the store-stat operations per
+    request of base (counter increments and histogram samples) and base's worker busy share."""
     by = usable(ev)
-    K, own, shared = d["counters"], d["reference"], d["shared"]
     out = {}
     for c in cells:
-        s = c["shape"]
+        s, K, own, shared = c["shape"], c["counters"], c["reference"], c["shared"]
         legs = lambda arm: [m for (x, a, r), m in by.items() if x == s and a == arm]  # noqa: E731
         hd = paired_rounds(by, s, shared, own, hitm_per_req)
         td = paired_rounds(by, s, "base", "stats-reject", hitm_per_req)
+        fd = paired_rounds(by, s, own, shared, lambda m: clean_l3(m, K))
         ops = [((m["stat_ops"]["counter_incs"] + m["stat_ops"]["histogram_samples"]) / m["responses"])
                for m in legs("base") if m.get("stat_ops") and m.get("responses")]
-        row = {"hitm": {a: mean([hitm_per_req(m) for m in legs(a)]) for a in ("base", "stats-reject", own, shared)},
+        row = {"counters": K, "own": own, "shared": shared,
+               "hitm": {"base": mean([hitm_per_req(m) for m in legs("base")]),
+                        "stats-reject": mean([hitm_per_req(m) for m in legs("stats-reject")]),
+                        "own": mean([hitm_per_req(m) for m in legs(own)]),
+                        "shared": mean([hitm_per_req(m) for m in legs(shared)])},
                "hitm_shared_minus_own": t_interval(list(hd.values())),
                "hitm_base_minus_reject": t_interval(list(td.values())),
+               "footprint": t_interval(list(fd.values())),
                "base_cycles": mean([val(m) or val(m, "cycles_total") for m in legs("base")]),
                "base_busy": mean([m.get("sut_busy") for m in legs("base")]),
                "stat_ops_per_req": mean(ops)}
@@ -373,107 +399,133 @@ def dose_evidence_rows(ev, d, cells):
     return out
 
 
+def dose_pair(by, shape, own, shared, K):
+    """One own/shared pair at one dose in one cell: per-round rho, its intervals, the price per
+    update and the own arm's level."""
+    rr = log_rounds(by, shape, shared, own)
+    price = paired_rounds(by, shape, shared, own, lambda m: None if val(m) is None else val(m) / K)
+    return {"shape": shape, "counters": K, "own": own, "shared": shared, "rho_rounds": rr,
+            "rho_t": t_interval(list(rr.values())), "rho": widened(list(rr.values())),
+            "instr_pct": mean(list(log_rounds(by, shape, shared, own, "instructions_u").values())),
+            "price_rounds": price, "price": t_interval(list(price.values())),
+            "own_k": mean([val(m) for (x, a, r), m in by.items() if x == shape and a == own]),
+            "busy": mean([m.get("sut_busy") for (x, a, r), m in by.items() if x == shape and a == own])}
+
+
 def dose_tables(res, evidence=None):
     exp = res["experiment"]
     d = exp["dose"]
     box = exp.get("box") or {}
-    K, own, shared, aa_arms = d["counters"], d["reference"], d["shared"], d["aa"]
     by = usable(res)
     md = res.get("metadata", {})
     inc = bool(md.get("incomplete"))
     cells = d["cells"]
     workers = {s["name"]: s.get("workers") for s in exp["shapes"]}
-    L, js = ["# Run R1 (dose): shared against worker-exclusive counters, K = %d (%s)\n" % (
-        K, box.get("label", exp["name"]))], {"counters": K}
-    L.append("Legs %d, invalid %d, complete rounds %s%s. Arms: %s (reference: one set of %d counters per downstream "
-             "connection), %s (the same %d counters as one object each, written by every worker), %s (A/A). "
-             "rho = mean per-round 100 x ln(%s / %s) of worker-only cycles per request.\n" % (
+    L, js = ["# Run R1 (dose): shared against worker-exclusive counters (%s)\n" % box.get("label", exp["name"])], {}
+    L.append("Legs %d, invalid %d, complete rounds %s%s. In each cell: own (the reference: one set of K counters per "
+             "downstream connection), shared (the same K counters as one object each, written by every worker) and a "
+             "second copy of own (A/A), at the cell's own K: %s. rho = mean per-round 100 x ln(shared / own) of "
+             "worker-only cycles per request.\n" % (
                  len(res["legs"]), sum(1 for m in res["legs"] if not (m.get("verdict") or {}).get("valid")),
-                 md.get("rounds_complete"), " (**incomplete, no verdict**)" if inc else "", own, K, shared, K,
-                 aa_arms[0], shared, own))
-    ev = dose_evidence_rows(evidence, d, cells) if evidence else {}
-    # per cell: rho, A/A, instructions, price per update
+                 md.get("rounds_complete"), " (**incomplete, no verdict**)" if inc else "",
+                 ", ".join("cell %s K = %d" % (c["cell"], c["counters"]) for c in cells)))
+    ev = dose_evidence_rows(evidence, cells) if evidence else {}
+    # per cell, at its own dose: rho, A/A, instructions, price per update
     cs = {}
     for c in cells:
-        s = c["shape"]
-        rr = log_rounds(by, s, shared, own)
-        p = paired_log(by, s, aa_arms[0], aa_arms[1])
+        x = dose_pair(by, c["shape"], c["reference"], c["shared"], c["counters"])
+        p = paired_log(by, c["shape"], c["aa"][0], c["aa"][1])
         aa = None
         if p.get("half_width_pct") is not None:
             aa = {"hw": p["half_width_pct"], "reach": max(abs(p["log_lo_pct"]), abs(p["log_hi_pct"])),
                   "t_p": p["t_p"], "n": p["n"], "lo": p["log_lo_pct"], "hi": p["log_hi_pct"]}
-        ins = log_rounds(by, s, shared, own, "instructions_u")
-        price = paired_rounds(by, s, shared, own, lambda m: None if val(m) is None else val(m) / K)
-        nv = len([r for r in rr if (s, aa_arms[0], r) in by])
-        cs[c["cell"]] = {"shape": s, "valid_rounds": nv, "enough": nv >= DOSE_MIN_ROUNDS,
-                         "rho_rounds": rr, "rho_t": t_interval(list(rr.values())),
-                         "rho": widened(list(rr.values())), "aa": aa,
-                         "instr_pct": mean(list(ins.values())), "price_rounds": price,
-                         "price": t_interval(list(price.values())),
-                         "own_k": mean([val(m) for (x, a, r), m in by.items() if x == s and a == own]),
-                         "busy": mean([m.get("sut_busy") for (x, a, r), m in by.items() if x == s and a == own])}
+        nv = len([r for r in x["rho_rounds"] if (c["shape"], c["aa"][0], r) in by])
+        x.update(aa=aa, valid_rounds=nv, enough=nv >= DOSE_MIN_ROUNDS)
+        if aa:
+            # unresolved: the raw p of the A/A difference (no Holm: a correction would make it easier to pass)
+            aa["ok"] = aa["hw"] <= AA_LIMIT_PCT and aa["t_p"] > DOSE_AA_ALPHA and not inc and x["enough"]
+        cs[c["cell"]] = x
+    by_cell = {c["cell"]: c for c in cells}
     low = d.get("low")
     lo = None
     if low and low["cell"] in cs:
-        s = cs[low["cell"]]["shape"]
-        lr = log_rounds(by, s, low["shared"], low["reference"])
-        lprice = paired_rounds(by, s, low["shared"], low["reference"],
-                               lambda m: None if val(m) is None else val(m) / low["counters"])
-        cl = mean([val(m) for (x, a, r), m in by.items() if x == s and a == low["reference"]])
-        lo = {"cell": low["cell"], "counters": low["counters"], "rho_rounds": lr, "rho_t": t_interval(list(lr.values())),
-              "price": t_interval(list(lprice.values())), "own_k": cl, "rho": widened(list(lr.values())),
-              "instr_pct": mean(list(log_rounds(by, s, low["shared"], low["reference"], "instructions_u").values())),
-              "lin": linearity(cs[low["cell"]]["rho_rounds"], lr, cs[low["cell"]]["own_k"], cl, K, low["counters"])}
+        k = low["cell"]
+        lo = dose_pair(by, cs[k]["shape"], low["reference"], low["shared"], low["counters"])
+        nv = len([r for r in lo["rho_rounds"] if r in cs[k]["rho_rounds"] and (cs[k]["shape"], by_cell[k]["aa"][0], r) in by])
+        lo.update(cell=k, valid_rounds=nv, enough=nv >= DOSE_MIN_ROUNDS,
+                  lin=linearity(cs[k]["rho_rounds"], lo["rho_rounds"], cs[k]["own_k"], lo["own_k"],
+                                cs[k]["counters"], low["counters"]))
     js["low"] = lo
-    for k in cs:
-        a = cs[k]["aa"]
-        if a:
-            # unresolved: the raw p of the A/A difference (no Holm: a correction would make it easier to pass)
-            a["ok"] = a["hw"] <= AA_LIMIT_PCT and a["t_p"] > DOSE_AA_ALPHA and not inc and cs[k]["enough"]
     aa_ok = lambda k: bool((cs.get(k, {}).get("aa") or {}).get("ok"))  # noqa: E731
     reach = lambda k: (cs.get(k, {}).get("aa") or {}).get("reach")  # noqa: E731
     L.append("## Cells (descriptive)\n")
-    L.append("| Cell | Rung | Workers | Rate per worker | Role | Own worker cycles/req (k) | rho % [95% t CI] | "
+    L.append("| Cell | Rung | Workers | Rate per worker | Role | K | Own worker cycles/req (k) | rho % [95% t CI] | "
              "Busy own | Valid rounds | A/A hw | A/A reach | A/A p | A/A pass | Instructions shared / own |\n"
-             "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
-    for c in cells:
-        x = cs[c["cell"]]
-        a = x["aa"] or {}
-        L.append("| %s | %s | %s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s |" % (
-            c["cell"], c["rung"], workers.get(c["shape"]), c["rate_per_worker"], c["role"],
-            "-" if x["own_k"] is None else "%.1f" % (x["own_k"] / 1e3), _ci(x["rho_t"]),
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+
+    def cell_row(c, x, a, second=False):
+        return "| %s | %s | %s | %s | %s | %d | %s | %s | %s | %d | %s | %s | %s | %s | %s |" % (
+            c["cell"] + (" (second dose)" if second else ""), c["rung"], workers.get(c["shape"]), c["rate_per_worker"],
+            c["role"], x["counters"], "-" if x["own_k"] is None else "%.1f" % (x["own_k"] / 1e3), _ci(x["rho_t"]),
             "-" if x["busy"] is None else "%.1f%%" % (100 * x["busy"]), x["valid_rounds"],
             "-" if not a else "%.2f" % a["hw"], "-" if not a else "%.2f" % a["reach"],
             "-" if not a else "%.3g" % a["t_p"], "-" if not a else ("yes" if a["ok"] else "no"),
-            "-" if x["instr_pct"] is None else "%+.3f%%" % x["instr_pct"]))
+            "-" if x["instr_pct"] is None else "%+.3f%%" % x["instr_pct"])
+    for c in cells:
+        L.append(cell_row(c, cs[c["cell"]], cs[c["cell"]]["aa"] or {}))
+        if lo and lo["cell"] == c["cell"]:
+            L.append(cell_row(c, lo, cs[c["cell"]]["aa"] or {}, True))
     L.append("")
+    if lo:
+        L.append("The second dose's pair in cell %s uses that cell's A/A (%s against %s).\n" % (
+            lo["cell"], by_cell[lo["cell"]]["aa"][0], by_cell[lo["cell"]]["aa"][1]))
     # statements
     rows = []
     for i, c in enumerate(cells):
-        rows.append({"id": "S%d" % (i + 1), "kind": "cell", "cell": c["cell"],
-                     "statement": "rho_%s (%s, %s)" % (c["cell"], c["rung"], c["role"]), "w": cs[c["cell"]]["rho"]})
+        rows.append({"id": "S%d" % (i + 1), "kind": "cell", "cell": c["cell"], "counters": c["counters"],
+                     "statement": "rho_%s at K = %d (%s, %s)" % (c["cell"], c["counters"], c["rung"], c["role"]),
+                     "w": cs[c["cell"]]["rho"]})
+
+    def at_dose(k, n):
+        """The pair of cell k at dose n: the cell's own, or its second dose's; None when it has neither."""
+        if cs[k]["counters"] == n:
+            return cs[k]
+        return lo if lo and lo["cell"] == k and lo["counters"] == n else None
     for kind, pair in (("socket", d.get("socket")), ("workers", d.get("workers"))):
         if not pair or pair[0] not in cs or pair[1] not in cs:
             continue
-        ra, rb = cs[pair[0]]["rho_rounds"], cs[pair[1]]["rho_rounds"]
-        common = sorted(set(ra) & set(rb))
-        rows.append({"id": "S%d" % (len(rows) + 1), "kind": kind, "cells": pair,
-                     "statement": "%s: rho_%s - rho_%s" % (kind, pair[0], pair[1]),
-                     "w": widened([ra[r] - rb[r] for r in common], terms=2)})
-    enough = lambda k: bool(cs.get(k, {}).get("enough"))  # noqa: E731
-    short = lambda k: "%s (cell %s: %d valid rounds of the %d a verdict needs)" % (  # noqa: E731
-        experiment.INCOMPLETE, k, cs[k]["valid_rounds"], DOSE_MIN_ROUNDS)
+        # the dose both cells have: the first cell's own dose, else the second's
+        n = next((n for n in (cs[pair[0]]["counters"], cs[pair[1]]["counters"])
+                  if at_dose(pair[0], n) and at_dose(pair[1], n)), None)
+        row = {"id": "S%d" % (len(rows) + 1), "kind": kind, "cells": pair, "counters": n}
+        if n is None:
+            row.update(statement="%s: rho_%s - rho_%s" % (kind, pair[0], pair[1]), w={"n": 0, "mean": None},
+                       no_dose="the two cells have no pair at the same dose")
+        else:
+            xa, xb = at_dose(pair[0], n), at_dose(pair[1], n)
+            common = sorted(set(xa["rho_rounds"]) & set(xb["rho_rounds"]))
+            row.update(statement="%s: rho_%s(%d) - rho_%s(%d)" % (kind, pair[0], n, pair[1], n), pairs=[xa, xb],
+                       w=widened([xa["rho_rounds"][r] - xb["rho_rounds"][r] for r in common], terms=2))
+        rows.append(row)
+    short = lambda k, nv: "%s (cell %s: %d valid rounds of the %d a verdict needs)" % (  # noqa: E731
+        experiment.INCOMPLETE, k, nv, DOSE_MIN_ROUNDS)
     aa_why = lambda k: "A/A failed" + ("" if not cs[k]["aa"] else ": half-width %.2f%%, reach %.2f%%, p %.3g" % (  # noqa: E731
         cs[k]["aa"]["hw"], cs[k]["aa"]["reach"], cs[k]["aa"]["t_p"]))
     for r, h in zip(rows, stats.holm([r["w"].get("p", 1.0) if r["w"].get("p") is not None else 1.0 for r in rows])):
         w = r["w"]
         r["holm_p"] = h
         mine = [r["cell"]] if r["kind"] == "cell" else r["cells"]
+        used = [cs[r["cell"]]] if r["kind"] == "cell" else r.pop("pairs", [])
         if inc:
             r["verdict"] = experiment.INCOMPLETE
             continue
-        if not all(enough(k) for k in mine):
-            r["verdict"] = short(next(k for k in mine if not enough(k)))
+        if r.get("no_dose"):
+            r["verdict"] = "no verdict: %s" % r["no_dose"]
+            continue
+        few = [(k, x["valid_rounds"]) for k, x in zip(mine, used) if not x["enough"]] + \
+            [(k, cs[k]["valid_rounds"]) for k in mine if not cs[k]["enough"]]
+        if few:
+            r["verdict"] = short(*few[0])
             continue
         if w.get("lo") is None:
             r["verdict"] = "no data"
@@ -484,7 +536,7 @@ def dose_tables(res, evidence=None):
             continue
         excl = not (w["lo"] <= 0 <= w["hi"])
         if r["kind"] == "cell":
-            k = r["cell"]
+            k, K = r["cell"], r["counters"]
             if w["hi"] < 0:
                 r["invalid"] = True
                 r["verdict"] = DOSE_INVALID
@@ -511,15 +563,16 @@ def dose_tables(res, evidence=None):
             if hd is None:
                 no.append("no HITM:u evidence for this cell")
             elif hd < DOSE_HITM_SHARE * K:
-                no.append("HITM:u (shared - own) %.1f per request under %.1f x K = %.0f" % (
+                no.append("HITM:u (shared - own) %.1f per request under %.2f x K = %.1f" % (
                     hd, DOSE_HITM_SHARE, DOSE_HITM_SHARE * K))
             r["line_transfer"] = not no
             r["verdict"] = ("finding: line transfer" if not no else
                             "finding, not called line transfer (%s)" % "; ".join(no))
             continue
-        bad = [x for x in rows if x["kind"] == "cell" and x["cell"] in mine and x.get("invalid")]
+        # a contrast: neither of its pairs may be an invalid comparison
+        bad = [k for k, x in zip(mine, used) if x["rho"].get("hi") is not None and x["rho"]["hi"] < 0]
         if bad:
-            r["verdict"] = "no verdict: cell %s %s" % (bad[0]["cell"], DOSE_INVALID)
+            r["verdict"] = "no verdict: cell %s at K = %d %s" % (bad[0], r["counters"], DOSE_INVALID)
             continue
         resolved = excl and h <= 0.05
         r["resolved"] = resolved
@@ -539,90 +592,110 @@ def dose_tables(res, evidence=None):
              "for a cell, 1.96 x sqrt(SE^2 + 2 x 0.34^2) for a difference of two cells. A cell that is not a finding "
              "is a bound on rho, not evidence of no cost.\n")
     L.append("A cell under %d valid rounds is incomplete; a cell whose A/A fails has no verdict (not a bound); an "
-             "interval entirely below 0 is an invalid comparison, not a negative price.\n" % DOSE_MIN_ROUNDS)
+             "interval entirely below 0 is an invalid comparison, not a negative price. rho is diluted by the logger's "
+             "own cost per update (it is in own and in shared alike); the price per update below is not.\n"
+             % DOSE_MIN_ROUNDS)
     js["statements"] = rows
-    # price per shared update (S5's secondary)
-    L.append("## Cycles per shared update (descriptive)\n")
-    L.append("| Cell | Counters | (shared - own) / counters, worker cycles [95% t CI] |\n|---|---|---|")
+    # prices, with the footprint band where the evidence legs have that pair
+    L.append("## Cycles per shared update\n")
+    L.append("| Cell | K | P: (shared - own) / K, worker cycles [95%% t CI] (measured) | d: clean L3 hits per update, own - "
+             "shared (evidence legs) | P + d x %.0f cycles (MODELLED upper figure) |\n|---|---|---|---|---|"
+             % DOSE_L3_CYCLES)
+    prices = []
     for c in cells:
-        L.append("| %s | %d | %s |" % (c["cell"], K, _ci(cs[c["cell"]]["price"], fmt="%+.1f")))
-        if lo and lo["cell"] == c["cell"]:
-            L.append("| %s | %d | %s |" % (c["cell"], lo["counters"], _ci(lo["price"], fmt="%+.1f")))
+        for x in [cs[c["cell"]]] + ([lo] if lo and lo["cell"] == c["cell"] else []):
+            e = ev.get(c["cell"]) or {}
+            dd = (e.get("footprint") or {}).get("mean") if e.get("counters") == x["counters"] else None
+            pm = x["price"].get("mean")
+            band = None if dd is None or pm is None else pm + dd * DOSE_L3_CYCLES
+            prices.append({"cell": c["cell"], "counters": x["counters"], "price": x["price"], "footprint_d": dd,
+                           "band": band})
+            L.append("| %s | %d | %s | %s | %s |" % (
+                c["cell"], x["counters"], _ci(x["price"], fmt="%+.1f"),
+                "-" if dd is None else "%+.2f" % dd, "-" if band is None else "%.1f" % band))
     L.append("")
+    js["prices"] = prices
+    L.append("P is measured and likely understates the sharing price: the own arm holds one counter set per "
+             "connection and pays extra L3 hits for them. The last column adds d L3 hits at an assumed %.0f cycles "
+             "each (no overlap credited): a modelled upper figure, not a measurement. No band where the evidence "
+             "legs do not run that pair.\n" % DOSE_L3_CYCLES)
     if lo:
         w = lo["lin"]
         if w.get("lo") is not None:
             L.append("Linearity in cell %s (a description, not a statement): on the means, P = (exp(rho) - 1) x C / "
-                     "dose is %.1f cycles per update at K = %d (rho %+.2f%%) and %.1f at Klow = %d (rho %+.2f%%); "
-                     "ln(P(K) / P(Klow)) = %+.1f [%+.1f, %+.1f] (log points x 100, unwidened, %d rounds). At Klow the "
-                     "effect is small and the footprint of the own arm differs, so this has little power.\n" % (
-                         lo["cell"], w["price_k"], K, w["rho_k"], w["price_low"], lo["counters"], w["rho_low"],
-                         w["mean"], w["lo"], w["hi"], w["n"]))
+                     "dose is %.1f cycles per update at K = %d (rho %+.2f%%) and %.1f at K = %d (rho %+.2f%%); "
+                     "ln(P(%d) / P(%d)) = %+.1f [%+.1f, %+.1f] (log points x 100, unwidened, %d rounds). At the "
+                     "smaller dose the effect is small and the footprint of the own arm differs, so this has little "
+                     "power.\n" % (lo["cell"], w["price_k"], cs[lo["cell"]]["counters"], w["rho_k"], w["price_low"],
+                                   lo["counters"], w["rho_low"], cs[lo["cell"]]["counters"], lo["counters"],
+                                   w["mean"], w["lo"], w["hi"], w["n"]))
         else:
             L.append("Linearity in cell %s (a description, not a statement): not computable (%s).\n" % (
                 lo["cell"], w.get("why") or "too few rounds"))
+    f = lambda v, fmt="%.2f": "-" if v is None else fmt % v  # noqa: E731
     if ev:
         L.append("## HITM:u loads per request (evidence legs, outside the timed run)\n")
-        L.append("| Cell | base | stats-reject | %s | %s | (shared - own) / K = h | base - stats-reject [95%% t CI] | "
-                 "Store-stat operations/req, base |\n|---|---|---|---|---|---|---|---|" % (own, shared))
-        f = lambda v, fmt="%.2f": "-" if v is None else fmt % v  # noqa: E731
+        L.append("| Cell | K | base | stats-reject | own | shared | (shared - own) / K = h | Line-transfer threshold "
+                 "%.2f x K | base - stats-reject [95%% t CI] | Store-stat operations/req, base |\n"
+                 "|---|---|---|---|---|---|---|---|---|---|" % DOSE_HITM_SHARE)
         for c in cells:
             e = ev[c["cell"]]
-            L.append("| %s | %s | %s | %s | %s | %s | %s | %s |" % (
-                c["cell"], f(e["hitm"]["base"]), f(e["hitm"]["stats-reject"]), f(e["hitm"][own]),
-                f(e["hitm"][shared]), f(e["h"], "%.3f"), _ci(e["hitm_base_minus_reject"]),
-                f(e["stat_ops_per_req"], "%.1f")))
+            L.append("| %s | %d | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                c["cell"], e["counters"], f(e["hitm"]["base"]), f(e["hitm"]["stats-reject"]), f(e["hitm"]["own"]),
+                f(e["hitm"]["shared"]), f(e["h"], "%.3f"), "%.1f per request" % (DOSE_HITM_SHARE * e["counters"]),
+                _ci(e["hitm_base_minus_reject"]), f(e["stat_ops_per_req"], "%.1f")))
         L.append("")
-        L.append("Gauge updates are not in the operation count (an increment and a decrement cancel in "
+        L.append("The HITM load event sees only a fraction of the transfers of locked updates (h well under 1 in the "
+                 "pilot). Gauge updates are not in the operation count (an increment and a decrement cancel in "
                  "snapshots).\n")
     # the model row
     L.append("## Model row for the plain config (a MODEL, not a measurement)\n")
     model = {"cells": {}}
     if not ev:
-        L.append("No evidence legs given (--evidence): the model row needs HITM:u of base, stats-reject, own and "
-                 "shared.\n")
+        L.append("No evidence legs given (--evidence): the model row needs the store-stat operations and base cycles "
+                 "of the plain config.\n")
     else:
-        L.append("| Cell | Sockets | Counters | P: price per update from the widened upper end of rho, cycles | T: upper end of HITM:u "
-                 "(base - reject) / h, updates/req | Store-stat operations/req | C: base worker cycles/req (k) | "
-                 "MODEL T x P / C |\n|---|---|---|---|---|---|---|---|")
+        L.append("| Cell | Sockets | K | P: price per update from the widened upper end of rho, cycles | T: store-stat "
+                 "operations/req of the plain config (probe) | C: base worker cycles/req (k) | MODEL T x P / C | For "
+                 "comparison, HITM-scaled: HITM:u (base - reject) x P / h, as a share of C |\n"
+                 "|---|---|---|---|---|---|---|---|")
         verdict = {r["cell"]: r for r in rows if r["kind"] == "cell"}
         entries = []
         for c in cells:
-            entries.append((c, K, cs[c["cell"]]["rho"], cs[c["cell"]]["own_k"]))
+            entries.append((c, cs[c["cell"]]))
             if lo and lo["cell"] == c["cell"]:
-                entries.append((c, lo["counters"], lo["rho"], lo["own_k"]))
-        for c, dose, w, own_c in entries:
-            k = c["cell"]
+                entries.append((c, lo))
+        for c, x in entries:
+            k, dose = c["cell"], x["counters"]
             e, v = ev[k], verdict.get(k, {})
-            P = model_price(w, own_c, dose)
-            th, h, C = e["hitm_base_minus_reject"].get("hi"), e["h"], e["base_cycles"]
+            P = model_price(x["rho"], x["own_k"], dose)
+            T, C = e["stat_ops_per_req"], e["base_cycles"]
             why = None
-            if inc or not enough(k):
+            if inc or not cs[k]["enough"] or not x["enough"]:
                 why = experiment.INCOMPLETE
             elif not aa_ok(k):
                 why = "the cell has no verdict (A/A failed)"
-            elif v.get("invalid"):
+            elif v.get("invalid") or (x["rho"].get("hi") is not None and x["rho"]["hi"] < 0):
                 why = DOSE_INVALID
             elif P is None:
                 why = "no price interval"
-            elif th is None:
-                why = "no base - stats-reject interval"
-            elif h is None or h <= 0:
-                why = "h is not positive"
+            elif T is None:
+                why = "no stat-operation probe of base"
             elif not C:
                 why = "no base cycles"
-            row = {"cell": k, "dose": dose, "P": P, "h": h, "C": C, "why": why, "sockets": c.get("sockets"),
-                   "stat_ops_per_req": e["stat_ops_per_req"]}
+            row = {"cell": k, "dose": dose, "P": P, "T": T, "C": C, "why": why, "sockets": c.get("sockets")}
+            hs = None
             if why is None:
-                row["T"] = th / h
-                row["x_pct"] = max(0.0, 100.0 * row["T"] * P / C)
-                row["T_above_ops"] = bool(e["stat_ops_per_req"] is not None and row["T"] > e["stat_ops_per_req"])
+                row["x_pct"] = max(0.0, 100.0 * T * P / C)
+                # the comparison figure uses the HITM evidence of the cell's own dose
+                th, h = e["hitm_base_minus_reject"].get("mean"), e["h"]
+                if th is not None and h and h > 0:
+                    hs = row["hitm_scaled_pct"] = 100.0 * th * P / h / C
             model["cells"].setdefault(k, []).append(row)
             L.append("| %s | %s | %d | %s | %s | %s | %s | %s |" % (
-                k, c.get("sockets", "-"), dose, "-" if P is None else "%.1f" % P, "-" if why else "%.1f%s" % (
-                    row["T"], " (above the operation count)" if row["T_above_ops"] else ""),
-                "-" if e["stat_ops_per_req"] is None else "%.1f" % e["stat_ops_per_req"],
-                "-" if not C else "%.1f" % (C / 1e3), why if why else "%.2f%%" % row["x_pct"]))
+                k, c.get("sockets", "-"), dose, "-" if P is None else "%.1f" % P, "-" if T is None else "%.1f" % T,
+                "-" if not C else "%.1f" % (C / 1e3), why if why else "%.2f%%" % row["x_pct"],
+                "-" if hs is None else "%.2f%%" % hs))
         L.append("")
         model["headline"] = {}
         for n, word in ((1, "one socket"), (2, "two sockets")):
@@ -648,12 +721,11 @@ def dose_tables(res, evidence=None):
                                    for c, r in got),
                          "".join(" Cell %s has no model row (%s)." % (c["cell"], model["cells"][c["cell"]][0]["why"])
                                  for c in mine if all(r.get("x_pct") is None for r in model["cells"][c["cell"]]))))
-        L.append("Expected: %s. P = (exp(the widened interval's upper end of rho) - 1) x own cycles / counters.\n"
-                 % DOSE_MODEL_EXPECTED)
-    L.append("The own arms hold one counter set per connection, so their updates hit a larger per-thread table and "
-             "colder lines than a single shared set would without sharing: this understates the price of sharing. "
-             "The K updates of a request arrive in one burst. R1 prices a shared update; the claim about "
-             "deployments is the model row only.\n")
+        L.append("Expected: %s. P = (exp(the widened interval's upper end of rho) - 1) x own cycles / counters; T "
+                 "counts every store-stat operation of the plain config as a shared update. The HITM-scaled column is "
+                 "printed for comparison only (means, not upper ends).\n" % DOSE_MODEL_EXPECTED)
+    L.append("R1 prices a shared update; the claim about deployments is the model row only. The K updates of a "
+             "request arrive in one burst.\n")
     js.update(cells=cs, evidence=ev, model=model)
     return "\n".join(L) + "\n", js
 

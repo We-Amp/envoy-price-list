@@ -22,9 +22,13 @@
 #                                     dose_pilot.py prints the answers and writes the pilot record
 #                                     with the recommended {"counters": K, "connections": c}, to
 #                                     put into RATES_JSON under the box's dose.rates_key
-#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at that choice (11 legs), then dose-check
-#   run-u.sh dose-check                the choice made, a clean pilot record that recommends it, every
-#                                     smoke leg valid with the run's own arm settings, evidence
+#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at that choice (11 legs) and one round of the
+#                                     evidence legs in the cells that show every arm (8 legs), then
+#                                     dose-check
+#   run-u.sh dose-check                the choice made; a clean pilot record that recommends it, or a
+#                                     decision record ($R/dose-decision$DOSE_PILOT_TAG.json)
+#                                     that the pilot record's checks 1, 2 and 6 support; every
+#                                     smoke leg valid with the run's own arm settings; evidence
 #   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json (165 legs) within DOSE_STOP_S (default
 #                                     3 h 30 min), then the evidence legs within DOSE_EV_STOP_S
 #                                     (default 1 h 15 min); no leg starts where it would overlap
@@ -125,12 +129,21 @@ dose_check() {
   tee -a "$R/queue.log" < "$R/smoke-dose$DOSE_TAG.valid.txt"
   # a clean pilot record that recommends the configured K and connections; the smoke's dose
   # block, shapes and arm settings equal the run's
-  python3 "$S/dose_gate.py" "$C/dose.json" "$R/smoke-dose$DOSE_TAG" "$R/dose-pilot$DOSE_PILOT_TAG.json" 2>&1 \
-    | tee -a "$R/queue.log"
+  python3 "$S/dose_gate.py" "$C/dose.json" "$R/smoke-dose$DOSE_TAG" "$R/dose-pilot$DOSE_PILOT_TAG.json" \
+    "$R/dose-decision$DOSE_PILOT_TAG.json" 2>&1 | tee -a "$R/queue.log"
   [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
   log "evidence-check dose against smoke-dose"
   if ! $EPL evidence-check "$C/dose.json" "$R/smoke-dose$DOSE_TAG" >> "$R/queue.log" 2>&1; then
     log "evidence-check dose FAILED (details in queue.log)"
+    bad=1
+  fi
+  # the evidence legs run after the timed run in the same chain: their smoke is checked now
+  python3 "$S/smoke_valid.py" "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" \
+    > "$R/smoke-dose-evidence$DOSE_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-dose-evidence$DOSE_TAG.valid.txt"
+  log "evidence-check dose-evidence against smoke-dose-evidence"
+  if ! $EPL evidence-check "$C/dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" >> "$R/queue.log" 2>&1; then
+    log "evidence-check dose-evidence FAILED (details in queue.log)"
     bad=1
   fi
   return $bad
@@ -234,9 +247,13 @@ case "$mode" in
     rewrite
     dose_uncalibrated && { log "no smoke"; exit 1; }
     dose_fresh "$R/smoke-dose$DOSE_TAG" || exit 1
+    dose_fresh "$R/smoke-dose-evidence$DOSE_TAG" || exit 1
     log "dose smoke start box $BOX"
     $EPL run "$C/smoke-dose.json" --out "$R/smoke-dose$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end dose smoke rc=$?"
+    $EPL run "$C/smoke-dose-evidence.json" --out "$R/smoke-dose-evidence$DOSE_TAG" --allow-short "$@" \
+      >> "$R/queue.log" 2>&1
+    log "end dose evidence smoke rc=$?"
     dose_check
     rc=$?
     log "dose smoke done rc=$rc"
