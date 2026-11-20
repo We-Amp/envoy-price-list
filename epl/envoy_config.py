@@ -130,6 +130,9 @@ SETTINGS = {
     "stats_sink": "one stats sink: {kind: statsd | dog_statsd, prefix, max_bytes_per_datagram (dog_statsd)} "
                   "to the harness's UDP discard sink, or {kind: otlp, max_data_points_per_request} over "
                   "envoy_grpc to the collector; the harness sets ports",
+    "listener_address": "the listener's address: 127.0.0.1 (the harness default: every accepted connection's local "
+                        "address is the listener's one address object) | 0.0.0.0 (the wildcard address: Envoy reads "
+                        "each accepted connection's local address into its own object); the client targets loopback",
     "stats_access_log": "stats access logger on the HCM (envoy.access_loggers.stats): {counters: K, tag: "
                         "%DOWNSTREAM_LOCAL_PORT% (one counter object per counter) | %DOWNSTREAM_REMOTE_PORT% (one "
                         "per counter and downstream connection)}: K counters dose.c000.. each incremented by 1 "

@@ -1731,5 +1731,54 @@ class ArmShapesTest(unittest.TestCase):
         self.assertEqual(len(js["statements"]), 6)
 
 
+class ConfigEvidenceHarnessTest(unittest.TestCase):
+    def test_config_evidence_where(self):
+        from epl import evidence
+        dump = {"configs": [{"listener": {"address": {"socket_address": {"address": "0.0.0.0", "port_value": 10110}}}},
+                            {"admin": {"address": {"socket_address": {"address": "127.0.0.1", "port_value": 9921}}}},
+                            {"cluster": {"socket_address": {"address": "127.0.0.1", "port_value": 8092}}}]}
+        self.assertEqual(evidence.config_values(dump, "address", {"port_value": 10110}), ["0.0.0.0"])
+        self.assertEqual(evidence.config_values(dump, "address", {"port_value": 9921}), ["127.0.0.1"])
+        self.assertEqual(len(evidence.config_values(dump, "address")), 5)  # the objects and the strings, as before
+        self.assertEqual(evidence.config_values(dump, "address", {"port_value": 1}), [])
+        it = {"stat": "address", "scope": "config", "where": {"port_value": 10110}, "equals": "0.0.0.0"}
+        self.assertEqual(evidence.validate_items([it]), [])
+        self.assertTrue(evidence.check_item({}, it, dump)["ok"])
+        self.assertFalse(evidence.check_item({}, dict(it, equals="127.0.0.1"), dump)["ok"])
+        self.assertFalse(evidence.check_item({}, dict(it, where={"port_value": 1}), dump)["ok"])  # none found: not a pass
+        self.assertTrue(any("where" in e for e in evidence.validate_items([dict(it, scope="window", tol=0)])))
+        self.assertTrue(any("where" in e for e in evidence.validate_items([dict(it, where={})])))
+
+    def test_quiet_window(self):
+        w = [{"from": "00:00", "to": "00:10", "leg_s": 120}]
+        day = 86400 * 20000
+        q = experiment.quiet_wait
+        self.assertEqual(q(w, day + 12 * 3600), 0)                 # midday
+        self.assertEqual(q(w, day + 300), 300)                     # inside: wait for its end
+        self.assertEqual(q(w, day + 1), 599)
+        self.assertEqual(q(w, day + 600), 0)                       # the window's end
+        self.assertEqual(q(w, day + 86400 - 60), 660)              # a leg started now would run into it
+        self.assertEqual(q(w, day + 86400 - 119), 719)
+        self.assertEqual(q(w, day + 86400 - 121), 0)               # it ends before the window opens
+        self.assertEqual(q([], day + 300), 0)
+        self.assertEqual(q(None, day + 300), 0)
+        self.assertEqual(q([{"from": "12:30", "to": "12:45", "leg_s": 0}], day + 12 * 3600 + 31 * 60), 14 * 60)
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "u-hi.json"))
+        exp.pop("uncalibrated", None)
+        exp["avoid_utc"] = w
+        self.assertEqual(experiment.validate(exp), [])
+        for bad in ([{"from": "00:10", "to": "00:00"}], [{"from": "x", "to": "00:10"}], [{"to": "00:10"}]):
+            exp["avoid_utc"] = bad
+            self.assertTrue(any("avoid_utc" in e for e in experiment.validate(exp)), bad)
+
+    def test_runner_waits_and_times_legs(self):
+        src = open(os.path.join(HERE, "epl", "experiment.py")).read()
+        i = src.index("    def _leg(self, legs, r, sh, a, bpath, attempt=0):")
+        body = src[i:src.index("    def _rerun_invalid", i)]
+        self.assertLess(body.index("quiet_wait(self.exp[\"avoid_utc\"], time.time())"), body.index("self.backend.run_leg("))
+        self.assertIn("not self._simulate", body)  # a dry run never sleeps
+        self.assertIn('m["wall_s"] = round(time.monotonic() - t_leg, 1)', body)
+
+
 if __name__ == "__main__":
     unittest.main()

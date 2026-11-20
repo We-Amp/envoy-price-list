@@ -426,6 +426,13 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env must be an object" % a.get("name"))
         if "hop2_env" in a and not arm_settings(a).get("two_hop"):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
+    for w in exp.get("avoid_utc") or []:
+        try:
+            ok = 0 <= _hm(w["from"]) < _hm(w["to"]) <= 86400 and float(w.get("leg_s", 0)) >= 0
+        except (KeyError, ValueError, TypeError, AttributeError):
+            ok = False
+        if not ok:
+            errs.append("avoid_utc entries are {from: HH:MM, to: HH:MM, leg_s} with from before to, got %r" % (w,))
     if restricted(exp):
         for a in arms:
             only = a.get("shapes")
@@ -534,6 +541,26 @@ def validate(exp, allow_short=False, check_rounds=True):
         if not 0.1 <= float(b.get("sample_s", 1.0)) <= 10:
             errs.append("measure.burst.sample_s must be in [0.1, 10]")
     return errs
+
+
+def _hm(text):
+    h, _, m = str(text).partition(":")
+    return int(h) * 3600 + int(m or 0) * 60
+
+
+def quiet_wait(windows, now):
+    """Seconds to wait before starting a leg so that it does not overlap a daily UTC window in
+    which no leg may run (`avoid_utc`: [{"from": "HH:MM", "to": "HH:MM", "leg_s": the longest a
+    leg takes}]; a window may not cross midnight). A leg that would start inside a window, or
+    less than leg_s before it, waits for the window's end. `now`: epoch seconds."""
+    t = now % 86400.0
+    wait = 0.0
+    for w in windows or []:
+        a, b, leg = _hm(w["from"]), _hm(w["to"]), float(w.get("leg_s", 0))
+        for start in (a, a + 86400):  # today's window, and tomorrow's for a leg started just before midnight
+            if start - leg < t < start + (b - a):
+                wait = max(wait, start + (b - a) - t)
+    return wait
 
 
 def _coin(seed, pair):
@@ -1090,6 +1117,7 @@ class Runner:
         self._logf = open(os.path.join(run_dir, "log.txt"), "a")
         self._stream = log_stream
         self.backend = backend_factory(exp, run_dir, self.log)
+        self._simulate = False
 
     def log(self, msg):
         line = sysprobe.scrub_text("%s %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), msg))
@@ -1113,8 +1141,15 @@ class Runner:
 
     def _leg(self, legs, r, sh, a, bpath, attempt=0):
         lid = leg_id(r, sh, a, attempt)
+        if self.exp.get("avoid_utc") and not self._simulate:
+            w = quiet_wait(self.exp["avoid_utc"], time.time())
+            if w > 0:
+                self.log("waiting %.0f s: %s would overlap a window in which no leg runs (avoid_utc)" % (w, lid))
+                time.sleep(w)
+        t_leg = time.monotonic()
         m = self.backend.run_leg(a, sh, r, bpath, lid)
         m["attempt"] = attempt
+        m["wall_s"] = round(time.monotonic() - t_leg, 1)
         legs.append(m)
         self._record(m)
         v = m["verdict"]
@@ -1158,6 +1193,7 @@ class Runner:
 
     def run(self, simulate=False):
         exp = self.exp
+        self._simulate = simulate
         self._invalid_streak = 0
         bpath, btexts, certs = prepare_bootstraps(exp, self.run_dir, self.log, make_certs=not simulate)
         btxt = btexts[exp["arms"][0]["name"]]
