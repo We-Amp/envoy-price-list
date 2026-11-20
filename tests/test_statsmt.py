@@ -1132,5 +1132,197 @@ class DoseConfigTest(unittest.TestCase):
                        "label": "no dose counters"}, base)
 
 
+HITM_U = ("mem_load_uops_l3_hit_retired.xsnp_hitm:u", "mem_load_uops_l3_miss_retired.remote_hitm:u")
+
+
+def _dose_run(rho, rounds=15, aa_noise=0.003, ins_shared=200.2e3, seed=5):
+    """A synthetic dose run: per cell (shape name) the true ln(shared / own)."""
+    import random
+    rng = random.Random(seed)
+    exp = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
+    legs = []
+    for r in range(1, rounds + 1):
+        for s in exp["shapes"]:
+            b = 540e3 * rng.gauss(1, 0.004)
+            for arm, v, ins in (("own-128", b, 200e3), ("own-128-A2", b * rng.gauss(1, aa_noise), 200e3),
+                                ("shared-128", b * math.exp(rho[s["name"]]) * rng.gauss(1, 0.003), ins_shared)):
+                legs.append({"leg_id": "r%02d-%s-%s" % (r, s["name"], arm), "round": r, "shape": s["name"], "arm": arm,
+                             "verdict": {"valid": True}, "workers_cycles_per_req": v,
+                             "per_req": {"instructions_u": ins}, "sut_busy": 0.4})
+    return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": rounds, "incomplete": False}}
+
+
+def _dose_evidence(h=1.2, events=HITM_U, seed=6):
+    import random
+    rng = random.Random(seed)
+    exp = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose-evidence.json"]
+    per = {"base": 7.0, "stats-reject": 0.5, "own-128": 8.0, "shared-128": 8.0 + h * 128}
+    legs = []
+    for r in range(1, 5):
+        for s in exp["shapes"]:
+            for arm, x in per.items():
+                x = x * rng.gauss(1, 0.02)
+                legs.append({"leg_id": "e", "round": r, "shape": s["name"], "arm": arm, "verdict": {"valid": True},
+                             "workers_cycles_per_req": 540e3, "sut_busy": 0.68 if "7w" in s["name"] else 0.36,
+                             "responses": 420000,
+                             "stat_ops": {"counter_incs": 25 * 420000, "histogram_samples": 4 * 420000,
+                                          "counters_changed": []},
+                             "per_req": {"events": {events[0]: 0.7 * x, events[1]: 0.3 * x}}})
+    return {"experiment": exp, "legs": legs, "metadata": {"rounds_complete": 4, "incomplete": False}}
+
+
+RHO = {"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.022}
+
+
+class DoseTableTest(unittest.TestCase):
+    def rows(self, res, ev=None):
+        text, js = UT.render(res, None, ev)
+        return text, js, {r["id"]: r for r in js["statements"]}
+
+    def test_widened(self):
+        xs = [1.0, 2.0, 3.0, 2.0, 2.0]
+        se = (sum((x - 2.0) ** 2 for x in xs) / 4) ** 0.5 / 5 ** 0.5
+        w = UT.widened(xs)
+        self.assertAlmostEqual(w["hi"] - w["mean"], 1.96 * math.sqrt(se ** 2 + 0.34 ** 2))
+        w2 = UT.widened(xs, terms=2)
+        self.assertAlmostEqual(w2["mean"] - w2["lo"], 1.96 * math.sqrt(se ** 2 + 2 * 0.34 ** 2))
+        self.assertAlmostEqual(w["p"], math.erfc(2.0 / math.sqrt(se ** 2 + 0.34 ** 2) / math.sqrt(2)))
+        # with no spread at all the interval is still +/- 1.96 x 0.34
+        self.assertAlmostEqual(UT.widened([1.0, 1.0, 1.0])["lo"], 1.0 - 1.96 * 0.34)
+        self.assertEqual((UT.DOSE_SYS_PCT, UT.DOSE_Z, UT.AA_LIMIT_PCT, UT.DOSE_MIN_EFFECT_PCT,
+                          UT.DOSE_INSTR_TOL_PCT, UT.DOSE_HITM_SHARE), (0.34, 1.96, 1.0, 1.0, 0.5, 0.5))
+
+    def test_findings_and_line_transfer(self):
+        text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
+        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5"])
+        self.assertIn("Holm over 5", text)
+        for i, (cell, rho) in enumerate((("A", 2.0), ("B", 5.0), ("C", 2.2))):
+            r = st["S%d" % (i + 1)]
+            self.assertEqual((r["kind"], r["cell"]), ("cell", cell))
+            self.assertAlmostEqual(r["w"]["mean"], rho, delta=0.4)
+            self.assertEqual(r["verdict"], "finding: line transfer")
+            self.assertTrue(js["cells"][cell]["aa"]["ok"])
+        self.assertEqual((st["S4"]["kind"], st["S4"]["cells"]), ("socket", ["B", "A"]))
+        self.assertAlmostEqual(st["S4"]["w"]["mean"], 3.0, delta=0.5)
+        self.assertEqual(st["S4"]["verdict"], "resolved: higher across sockets")
+        self.assertIn("+2 to +4 points", text)
+        self.assertEqual((st["S5"]["kind"], st["S5"]["cells"]), ("load", ["C", "A"]))
+        self.assertTrue(st["S5"]["verdict"].startswith("not resolved"))
+        # S4 and S5 are paired by round and carry two widening terms
+        ra, rb = js["cells"]["A"]["rho_rounds"], js["cells"]["B"]["rho_rounds"]
+        d = [rb[r] - ra[r] for r in sorted(ra)]
+        self.assertAlmostEqual(st["S4"]["w"]["hi"], UT.widened(d, terms=2)["hi"])
+        self.assertAlmostEqual(st["S1"]["w"]["hi"], UT.widened(list(ra.values()))["hi"])
+        # Holm over the five statements
+        hp = UT.stats.holm([st[k]["w"]["p"] for k in st])
+        self.assertEqual([st[k]["holm_p"] for k in st], hp)
+        # cycles per shared update: about ln-ratio x cycles / K
+        self.assertAlmostEqual(js["cells"]["A"]["price"]["mean"], 540e3 * (math.exp(0.02) - 1) / 128, delta=8)
+        # either spelling of the HITM events
+        _, _, st2 = self.rows(_dose_run(RHO), _dose_evidence(events=UT.HITM))
+        self.assertEqual(st2["S1"]["verdict"], "finding: line transfer")
+
+    def test_not_called_line_transfer(self):
+        res = _dose_run(RHO)
+        _, _, st = self.rows(res)  # no evidence legs
+        self.assertTrue(st["S1"]["verdict"].startswith("finding, not called line transfer"))
+        self.assertIn("no HITM:u evidence", st["S1"]["verdict"])
+        _, _, st = self.rows(res, _dose_evidence(h=0.3))  # 38 HITM per request, under 0.5 x 128
+        self.assertIn("under 0.5 x K = 64", st["S1"]["verdict"])
+        self.assertFalse(st["S1"]["line_transfer"])
+        _, _, st = self.rows(_dose_run(RHO, ins_shared=202e3), _dose_evidence())  # 1% more instructions
+        self.assertIn("instructions:u per request differ", st["S2"]["verdict"])
+        self.assertTrue(st["S2"]["verdict"].startswith("finding, not called line transfer"))
+
+    def test_bounds(self):
+        # under 1%: a bound with the widened interval's upper end, never "no effect"
+        text, js, st = self.rows(_dose_run({"mt-14w-one": 0.004, "mt-14w-split": 0.02, "mt-7w-one": 0.0}),
+                                 _dose_evidence())
+        r = st["S1"]
+        self.assertEqual(r["verdict"].split(" (")[0], "bound: rho_A <= %+.2f%%" % r["w"]["hi"])
+        self.assertIn("under 1%", r["verdict"])
+        self.assertFalse(r["finding"])
+        self.assertIn("includes 0", st["S3"]["verdict"])
+        self.assertTrue(st["S3"]["verdict"].startswith("bound: rho_C <= "))
+        self.assertEqual(st["S2"]["verdict"], "finding: line transfer")
+        self.assertIn("is a bound on rho, not evidence of no cost", text)
+        # a failed A/A (half-width over 1%): the cell is a bound, its contrasts carry no verdict
+        _, js, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
+        self.assertFalse(js["cells"]["A"]["aa"]["ok"])
+        self.assertGreater(js["cells"]["A"]["aa"]["hw"], 1.0)
+        self.assertTrue(st["S1"]["verdict"].startswith("bound: rho_A <= "))
+        self.assertIn("A/A gate failed", st["S1"]["verdict"])
+        self.assertTrue(st["S4"]["verdict"].startswith("no verdict: an A/A of its cells failed"))
+        # an estimate over 1% but inside the A/A's reach is a bound too
+        res = _dose_run({"mt-14w-one": 0.012, "mt-14w-split": 0.05, "mt-7w-one": 0.02})
+        own = {m["round"]: m["workers_cycles_per_req"] for m in res["legs"]
+               if m["arm"] == "own-128" and m["shape"] == "mt-14w-one"}
+        for m in res["legs"]:
+            if m["arm"] == "own-128-A2" and m["shape"] == "mt-14w-one":
+                m["workers_cycles_per_req"] = own[m["round"]] * (1.005 + (0.016 if m["round"] % 2 else -0.016))
+        _, js, st = self.rows(res, _dose_evidence())
+        aa = js["cells"]["A"]["aa"]
+        self.assertTrue(aa["ok"] and aa["hw"] <= 1.0)
+        self.assertGreater(st["S1"]["w"]["mean"], 1.0)
+        self.assertGreater(aa["reach"], st["S1"]["w"]["mean"])
+        self.assertIn("within the A/A's reach", st["S1"]["verdict"])
+        self.assertTrue(st["S1"]["verdict"].startswith("bound: rho_A <= "))
+
+    def test_load_statement(self):
+        _, _, st = self.rows(_dose_run({"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.06}),
+                             _dose_evidence())
+        self.assertIn("refutes the \"no queueing\" reading", st["S5"]["verdict"])
+        self.assertIn("load ladder", st["S5"]["verdict"])
+        _, _, st = self.rows(_dose_run({"mt-14w-one": 0.02, "mt-14w-split": 0.05, "mt-7w-one": 0.02}),
+                             _dose_evidence())
+        self.assertFalse(st["S5"]["resolved"])
+        self.assertNotIn("refutes", st["S5"]["verdict"])
+
+    def test_incomplete(self):
+        res = _dose_run(RHO)
+        res["metadata"]["incomplete"] = True
+        text, js, st = self.rows(res, _dose_evidence())
+        self.assertEqual({r["verdict"] for r in st.values()}, {experiment.INCOMPLETE})
+        self.assertNotIn("x_pct", js["model"])
+        self.assertIn("no model row", text)
+
+    def test_model_row(self):
+        text, js, _ = self.rows(_dose_run(RHO), _dose_evidence())
+        self.assertIn("## Model row for the plain config (a MODEL, not a measurement)", text)
+        self.assertIn("**MODEL:** sharing store stats across 7-14 workers, one or two sockets, 36-68% busy, costs at "
+                      "most ", text)
+        self.assertIn("not measured in the plain config", text)
+        m, e, c = js["model"]["cells"]["B"], js["evidence"]["B"], js["cells"]["B"]
+        self.assertAlmostEqual(e["h"], 1.2, delta=0.05)
+        self.assertAlmostEqual(m["T"], e["hitm_base_minus_reject"]["hi"] / e["h"])
+        self.assertAlmostEqual(m["P"], c["price"]["hi"])
+        self.assertAlmostEqual(m["x_pct"], 100 * m["T"] * m["P"] / 540e3)
+        self.assertEqual(js["model"]["x_pct"], max(r["x_pct"] for r in js["model"]["cells"].values()))
+        self.assertFalse(m["T_above_ops"])
+        self.assertAlmostEqual(e["stat_ops_per_req"], 29.0)
+        # without the evidence legs there is no model row, and the text says what is missing
+        text, js, _ = self.rows(_dose_run(RHO))
+        self.assertIn("No evidence legs given", text)
+        self.assertEqual(js["model"], {"cells": {}})
+        self.assertNotIn("**MODEL:**", text)
+        # h not positive: no model
+        text, js, _ = self.rows(_dose_run(RHO), _dose_evidence(h=-0.1))
+        self.assertEqual(js["model"]["cells"]["A"]["why"], "h is not positive")
+        self.assertIn("no model row", text)
+
+    def test_hitm_needs_both_events(self):
+        self.assertIsNone(UT.hitm_per_req({"per_req": {"events": {HITM_U[0]: 3.0}}}))
+        self.assertEqual(UT.hitm_per_req({"per_req": {"events": {HITM_U[0]: 3.0, HITM_U[1]: 1.0}}}), 4.0)
+        self.assertEqual(UT.hitm_per_req({"per_req": {"events": {UT.HITM[0]: 3.0, UT.HITM[1]: 0.0}}}), 3.0)
+        self.assertIsNone(UT.hitm_per_req({}))
+
+    def test_run_u_table_unchanged_path(self):
+        # a run without a dose block still renders run U's tables
+        exp = json.load(open(os.path.join(MT, "bench-x86_64", "u-hi.json")))
+        text, js = UT.render({"experiment": exp, "legs": [], "metadata": {"rounds_complete": 0}})
+        self.assertTrue(text.startswith("# Run U:"))
+        self.assertIn("contrasts", js)
+
+
 if __name__ == "__main__":
     unittest.main()
