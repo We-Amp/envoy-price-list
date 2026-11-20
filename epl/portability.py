@@ -52,6 +52,8 @@ def box_literals(box):
     for k in ("perf_events", "hitm_events"):
         if box.get(k):
             out.add(box[k])
+    if (box.get("dose") or {}).get("hitm_events"):
+        out.add(box["dose"]["hitm_events"])  # the dose run's evidence events (user-mode HITM)
     for b in list((box.get("binaries") or {}).values()) + list((box.get("fix_binaries") or {}).values()):
         for k in ("binary", "source"):
             if b.get(k):

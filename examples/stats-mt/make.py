@@ -47,6 +47,26 @@ a spare core.
                  the 12-worker smoke fails the client or rate gates); 20 fixed rounds; tables
                  from codegen_table.py
 
+  dose*.json     (boxes with a `dose` section) run R1 ("dose"): K counter increments per request
+                 from the stats access logger, on counter objects shared by every worker
+                 (shared-K: the tag value is the listener port) against one set of objects per
+                 downstream connection (own-K, the reference: the tag value is the client's
+                 port; a connection belongs to one worker), and a second copy of own-K
+                 (own-K-A2) for the A/A. Same code path, formatter and name length in both.
+                 Cells are rungs with their own per-worker rate (the box's dose.cells). K comes
+                 from the pilot through RATES_JSON, key dose.rates_key: {"counters": K};
+                 without it dose.json, smoke-dose.json and dose-evidence.json carry a
+                 placeholder K and are marked uncalibrated.
+                   dose-pilot.json     one round of base and own/shared at every K of
+                                       dose.counters_choices on the pilot cells, with the HITM
+                                       events (dose_pilot.py prints the pilot's answers)
+                   smoke-dose.json     one round of dose.json (evidence recorded)
+                   dose.json           15 fixed rounds of the three arms in every cell
+                   dose-evidence.json  evidence legs outside the timed run: base,
+                                       stats-reject, own-K, shared-K, 4 rounds per cell, HITM
+                                       events counted in user mode, store-stat operations
+                 Tables from u_table.py (statements S1-S5 and the model row).
+
 Shape mt-s: the 4 KB proxied request to one cluster with one upstream host, one listener,
 one route, HTTP/1.1, round robin, no decision reader of stats (`audit: mt-s`).
 """
@@ -327,6 +347,152 @@ def u_hi_configs(box, rates, arms):
     return out
 
 
+# Run R1 ("dose"): the stats access logger's scope, tag and tag values (epl/envoy_config.py
+# renders them; the tests hold the two files to the same names)
+DOSE_SCOPE = "dose"
+DOSE_TAG = "port"
+DOSE_TAG_VALUES = {"shared": "%DOWNSTREAM_LOCAL_PORT%", "own": "%DOWNSTREAM_REMOTE_PORT%"}
+DOSE_ROUNDS = 15           # the cell rotation (period 3) and the arm rotation (period 3) both balance
+DOSE_EVIDENCE_ROUNDS = 4   # the arm rotation of the evidence legs (4 arms) balances once
+DOSE_SUM_TOL = (0.98, 1.02)
+
+
+def dose_shapes(box, k, cells=None):
+    """One shape per cell of the box's dose section: the cell's rung at the cell's own
+    per-worker rate, k client connections per worker. A cell's rung may be one of the dose
+    run's own (dose.extra_rungs)."""
+    d = box["dose"]
+    rungs = {r["name"]: r for r in box["rungs"] + d.get("extra_rungs", [])}
+    out = []
+    for c in d["cells"]:
+        if cells is not None and c["cell"] not in cells:
+            continue
+        s = rung_shapes(dict(box, rungs=[rungs[c["rung"]]]), int(c["rate_per_worker"]), k)[0]
+        # the own arms hold K counters per connection: a full admin stats read takes longer
+        s.update(admin_timeout_s=d["admin_timeout_s"], cell=c["cell"])
+        out.append(s)
+    return out
+
+
+def dose_shared_counter(port):
+    """The flat name of the first counter of a shared arm: one object, written by every worker."""
+    return "%s.c000.%s.%d" % (DOSE_SCOPE, DOSE_TAG, port)
+
+
+def dose_evidence(kind, K, port, shapes, k):
+    """Fail-closed evidence of a dose arm. shared: exactly K dose counters before and after the
+    window and one increment per request on one of them. own: K counters per downstream
+    connection (at least the measured client's connections, at most those plus the warm-up
+    client's, which stay in the store), none created during the window (a reconnect would), and
+    no shared object. Both: the tag value in /config_dump, and K increments per request summed
+    over every dose counter (a counter over a scope limit would be a null object and add
+    nothing)."""
+    lo, hi = DOSE_SUM_TOL
+    ev = [{"stat": "value_format", "scope": "config", "equals": DOSE_TAG_VALUES[kind],
+           "label": "tag value %s" % DOSE_TAG_VALUES[kind]}]
+    if kind == "shared":
+        ev += [{"stat": "stat_count.start_n", "scope": "field", "equals": K, "tol_abs": 0,
+                "label": "%d dose counters before the window" % K},
+               {"stat": "stat_count.end_n", "scope": "field", "equals": K, "tol_abs": 0,
+                "label": "%d dose counters after the window" % K},
+               {"stat": dose_shared_counter(port), "scope": "window", "per_request": 1.0, "tol": 0.01,
+                "label": "one increment per request on a shared counter"}]
+    else:
+        for s in shapes:
+            conns = s["workers"] * k
+            ev.append({"stat": "stat_count.start_n", "scope": "field", "min": K * conns, "max": 2 * K * conns,
+                       "shape": s["name"],
+                       "label": "%d dose counters per connection (%d connections; the warm-up client's stay)"
+                                % (K, conns)})
+        ev += [{"stat": "stat_count.new_in_window", "scope": "field", "equals": 0, "tol_abs": 0,
+                "label": "no dose counter created during the window (no reconnect)"},
+               {"stat": dose_shared_counter(port), "scope": "window", "absent": True,
+                "label": "no counter object shared by the workers"}]
+    # the sum and Envoy's completed-request counter come from the same two admin reads
+    ev.append({"stat": "stat_count.sum_per_request", "scope": "field", "min": lo * K, "max": hi * K,
+               "label": "%d increments per request over all dose counters" % K})
+    return ev
+
+
+def dose_arm(box, kind, K, port, shapes, k, suffix=""):
+    return arm(box, "%s-%d%s" % (kind, K, suffix),
+               {"stats_access_log": {"counters": K, "tag": DOSE_TAG_VALUES[kind]}},
+               dose_evidence(kind, K, port, shapes, k))
+
+
+def dose_configs(box, rates):
+    """Run R1 ("dose", boxes with a `dose` section): {file: config}. K is the pilot's choice
+    (RATES_JSON key dose.rates_key: {"counters": K, "k": connections per worker}); without it
+    every config but the pilot's carries the placeholder K and is marked uncalibrated."""
+    d = box["dose"]
+    rr = (rates or {}).get(d["rates_key"]) or {}
+    k = int(rr.get("k", DEFAULT_K))
+    calibrated = rr.get("counters") is not None
+    K = int(rr["counters"]) if calibrated else int(d["placeholder_counters"])
+    if K not in d["counters_choices"]:
+        raise SystemExit("%s: dose counters %d is not one of %s" % (box["name"], K, d["counters_choices"]))
+    shapes = dose_shapes(box, k)
+    no_dose = {"stat": "stat_count.start_n", "scope": "field", "equals": 0, "tol_abs": 0, "label": "no dose counters"}
+
+    def cfg(name, arms, base_arm, shp, rounds, **over):
+        c = base_cfg(box, name)
+        port = c["envoy"]["listener_port"]
+        c.update(base_arm=base_arm, arms=json.loads(json.dumps(arms(port, shp))), shapes=json.loads(json.dumps(shp)),
+                 rounds=rounds, rounds_block=rounds, rounds_max=rounds, adaptive=False, k=k, box_specific=True)
+        # the admin reads before the window (tens of thousands of counters in an own arm) come out
+        # of the client run's slack: a longer client run, the same 20 s window
+        c["client"]["duration_s"] = d["client_duration_s"]
+        # the dose counters around the window, and one shared counter in the window's snapshots
+        c["measure"].update(stat_count_prefix=DOSE_SCOPE + ".",
+                            stat_filter_extra="^" + dose_shared_counter(port).replace(".", "\\.") + "$")
+        c.update(over)
+        return c
+
+    def block(counters, own, shared, aa, shp):
+        by = {s["cell"]: s for s in shp}
+        return {"counters": counters, "reference": own, "shared": shared, "aa": aa, "rates_key": d["rates_key"],
+                "cells": [{"cell": c["cell"], "shape": by[c["cell"]]["name"], "rung": c["rung"], "role": c["role"],
+                           "workers": by[c["cell"]]["workers"], "rate_per_worker": c["rate_per_worker"]}
+                          for c in d["cells"] if c["cell"] in by],
+                "socket": d["socket"], "load": d["load"]}
+
+    out = {}
+    own, shared, a2 = "own-%d" % K, "shared-%d" % K, "own-%d-A2" % K
+    u = cfg("mt-dose-" + box["name"],
+            lambda port, shp: [dose_arm(box, "own", K, port, shp, k), dose_arm(box, "shared", K, port, shp, k),
+                               dose_arm(box, "own", K, port, shp, k, "-A2")],
+            own, shapes, DOSE_ROUNDS, dose=block(K, own, shared, [a2, own], shapes))
+    if not calibrated:
+        u["uncalibrated"] = True
+    out["dose.json"] = u
+    sm = json.loads(json.dumps(u))
+    # the smoke keeps the mark: no dose leg runs at a K the pilot did not choose
+    sm.update(name="mt-smoke-dose-" + box["name"], rounds=1, rounds_block=1, rounds_max=1, smoke=True,
+              evidence_mode="record")
+    out["smoke-dose.json"] = sm
+    ev = cfg("mt-dose-evidence-" + box["name"],
+             lambda port, shp: [arm(box, "base", ev=BASE_EVIDENCE + [no_dose]),
+                                arm(box, "stats-reject", {"stats_reject_all": True}, REJECT_EVIDENCE),
+                                dose_arm(box, "own", K, port, shp, k), dose_arm(box, "shared", K, port, shp, k)],
+             "base", shapes, DOSE_EVIDENCE_ROUNDS, dose=block(K, own, shared, None, shapes))
+    ev["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
+    if not calibrated:
+        ev["uncalibrated"] = True
+    out["dose-evidence.json"] = ev
+    # the pilot: every K of the choice list, so it does not depend on the choice it informs
+    pshapes = dose_shapes(box, k, d["pilot_cells"])
+    pilot = cfg("mt-dose-pilot-" + box["name"],
+                lambda port, shp: [arm(box, "base", ev=BASE_EVIDENCE + [no_dose])] + [
+                    dose_arm(box, kind, n, port, shp, k) for n in d["counters_choices"] for kind in ("own", "shared")],
+                "base", pshapes, 1, smoke=True, evidence_mode="record",
+                dose=dict(block(None, None, None, None, pshapes), counters_choices=d["counters_choices"],
+                          pilot_rule=d["pilot_rule"]))
+    # measured as the evidence legs will be: the HITM events, the store-stat operation probe
+    pilot["measure"].update(perf_events=d["hitm_events"], stat_ops_probe=True)
+    out["dose-pilot.json"] = pilot
+    return out
+
+
 def configs(box, rates=None):
     rr = (rates or {}).get(box["name"]) or {}
     r_star, k = int(rr.get("r_star", DEFAULT_R_STAR)), int(rr.get("k", DEFAULT_K))
@@ -355,6 +521,8 @@ def configs(box, rates=None):
         out["u-hitm.json"] = h
     if box.get("u_hi"):
         out.update(u_hi_configs(box, rates, arms))
+    if box.get("dose"):
+        out.update(dose_configs(box, rates))
     sl = os.path.join(HERE, "boxes", "sha256", box["name"] + ".txt")
     arms = (box.get("micro") or {}).get("arms") or MICRO_ARMS
     out["micro.json"] = micro_config(box, read_sha_list(sl, arms) if os.path.exists(sl) else None)

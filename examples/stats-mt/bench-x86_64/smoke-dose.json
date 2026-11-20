@@ -1,0 +1,588 @@
+{
+ "name": "mt-smoke-dose-bench-x86_64",
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; rungs of 1 to 28 workers, main thread on its own core",
+ "workdir": "~/epl/runs/stats-mt",
+ "box": {
+  "name": "bench-x86_64",
+  "arch": "x86_64",
+  "label": "bench-host",
+  "kind": "bare-metal",
+  "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; rungs of 1 to 28 workers, main thread on its own core",
+  "cpus": {
+   "sut": "0-13,19,20-33",
+   "client": "14-18,34-35,54-58,74-75",
+   "origin": "37-39,77-79",
+   "harness": "36,76"
+  },
+  "main_cpu": 19,
+  "rungs": [
+   {
+    "name": "1w",
+    "workers": 1,
+    "worker_cpus": "0",
+    "client_concurrency": 1
+   },
+   {
+    "name": "4w",
+    "workers": 4,
+    "worker_cpus": "0-3",
+    "client_concurrency": 4
+   },
+   {
+    "name": "14w-one",
+    "workers": 14,
+    "worker_cpus": "0-13",
+    "client_concurrency": 14
+   },
+   {
+    "name": "14w-split",
+    "workers": 14,
+    "worker_cpus": "0-6,20-26",
+    "client_concurrency": 14
+   },
+   {
+    "name": "28w",
+    "workers": 28,
+    "worker_cpus": "0-13,20-33",
+    "client_concurrency": 14
+   }
+  ],
+  "growth": [
+   [
+    "28w",
+    "1w"
+   ],
+   [
+    "14w-one",
+    "1w"
+   ]
+  ],
+  "cross_socket": [
+   [
+    "14w-split",
+    "14w-one"
+   ]
+  ],
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+  "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm,mem_load_uops_l3_miss_retired.remote_hitm,task-clock",
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "image_platform": "linux/amd64",
+  "binaries": {
+   "x86_64": {
+    "binary": "~/epl/bin/envoy-1.40.2",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+    "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+   }
+  },
+  "steal_gate": null,
+  "micro": {
+   "root": "~/epl/bins/stats/r5",
+   "rows": [
+    "model"
+   ],
+   "placement": "one-socket",
+   "cpus": "0-19",
+   "threads": [
+    1,
+    4,
+    19
+   ],
+   "histogram_workers": [
+    1,
+    19
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "frozen from the bare-metal smokes of 2026-11-18 (fix build, atomic_model, 0.2 s windows, no CPU isolation): 18:43:40Z 0-4 per repetition over 60 repetitions (26 x 0, 17 x 1, 10 x 2, 2 x 3, 5 x 4); 18:45:23Z at most 6 (4 threads). The counter is summed over the threads; rule: per thread max(5, 25/s x window), times the threads (5 per thread at 0.2 s, 25 per thread at 1 s)"
+  },
+  "note": "The bench box. CPU sets follow the plan's rung table; the client and origin share the cores outside the worker sets and the main thread's, siblings included; the harness itself gets one core.",
+  "u_hi": {
+   "rungs": [
+    "14w-one",
+    "14w-split",
+    "28w"
+   ],
+   "target_busy": [
+    0.6,
+    0.7
+   ],
+   "placeholder_r_star": 2500,
+   "calibrate_rates_per_worker": [
+    1500,
+    1800,
+    2100,
+    2400,
+    2700
+   ],
+   "note": "run U at 1,000 per worker held the workers 25-28% busy; the client threads were 31% busy at 14 workers and 39% at 28 workers (14 client workers, 14 CPUs), so the 25% headroom gate bounds 28 workers near 1,900 per worker (about 50% worker busy) unless the client does better than linear; the calibration decides",
+   "growth": [
+    [
+     "28w",
+     "14w-one"
+    ]
+   ],
+   "cross_socket": [
+    [
+     "14w-split",
+     "14w-one"
+    ]
+   ],
+   "rates_key": "bench-x86_64-hi-1800",
+   "attempts": [
+    {
+     "rates_key": "bench-x86_64-hi-1500",
+     "r_star": 1500
+    },
+    {
+     "rates_key": "bench-x86_64-hi",
+     "r_star": 1800,
+     "result": "stopped 2026-11-19 15:55-16:32 CET: 8 of 15 28w legs invalid (6 other tasks on the SUT CPUs 0.053-0.071 against 0.05, 2 client pool overflow); 31 valid, 8 invalid; kept as a failed attempt"
+    }
+   ]
+  },
+  "dose": {
+   "rates_key": "bench-x86_64-dose-1",
+   "counters_choices": [
+    64,
+    128,
+    256
+   ],
+   "placeholder_counters": 128,
+   "extra_rungs": [
+    {
+     "name": "7w-one",
+     "workers": 7,
+     "worker_cpus": "0-6",
+     "client_concurrency": 14
+    }
+   ],
+   "cells": [
+    {
+     "cell": "A",
+     "rung": "14w-one",
+     "rate_per_worker": 1500,
+     "role": "reference"
+    },
+    {
+     "cell": "B",
+     "rung": "14w-split",
+     "rate_per_worker": 1500,
+     "role": "socket"
+    },
+    {
+     "cell": "C",
+     "rung": "7w-one",
+     "rate_per_worker": 3000,
+     "role": "load"
+    }
+   ],
+   "socket": [
+    "B",
+    "A"
+   ],
+   "load": [
+    "C",
+    "A"
+   ],
+   "pilot_cells": [
+    "A",
+    "C"
+   ],
+   "pilot_rule": {
+    "cell": "A",
+    "cycles_per_transfer": 100,
+    "min_share": 0.025,
+    "h_expected": [
+     1.0,
+     1.4
+    ],
+    "instructions_tol": 0.005
+   },
+   "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
+   "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+   "admin_timeout_s": 30,
+   "client_duration_s": 30,
+   "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); cells A and B at the 1,500 per worker of the completed high-load attempt, cell C the same 21,000 total on 7 workers with the same 14 client threads; the 7w-one rung is the dose run's own (extra_rungs), so run U's rung set is unchanged; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
+  }
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true,
+  "nofile": 65536
+ },
+ "cpus": {
+  "sut": "0-13,19,20-33",
+  "client": "14-18,34-35,54-58,74-75",
+  "origin": "37-39,77-79",
+  "harness": "36,76"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 4,
+  "connections_per_worker": 16,
+  "warmup_s": 5,
+  "nofile": 65536,
+  "duration_s": 30,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+  "per_thread": true,
+  "numastat": true,
+  "responses_from": "origin",
+  "stat_count_prefix": "dose.",
+  "stat_filter_extra": "^dose\\.c000\\.port\\.10110$"
+ },
+ "validity": {
+  "max_steal_share": null,
+  "max_non2xx": 0
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8,
+  "stub_status": true
+ },
+ "audit": "mt-s",
+ "order": "latin",
+ "shape_order": "latin",
+ "order_seed": 41,
+ "primary_metric": "workers_cycles_per_req",
+ "comparisons": "base",
+ "base_arm": "own-128",
+ "arms": [
+  {
+   "name": "own-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-one",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-split",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 14336,
+     "max": 28672,
+     "shape": "mt-7w-one",
+     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 125.44,
+     "max": 130.56,
+     "label": "128 increments per request over all dose counters"
+    }
+   ]
+  },
+  {
+   "name": "shared-128",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_LOCAL_PORT%"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_LOCAL_PORT%",
+     "label": "tag value %DOWNSTREAM_LOCAL_PORT%"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters before the window"
+    },
+    {
+     "stat": "stat_count.end_n",
+     "scope": "field",
+     "equals": 128,
+     "tol_abs": 0,
+     "label": "128 dose counters after the window"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "one increment per request on a shared counter"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 125.44,
+     "max": 130.56,
+     "label": "128 increments per request over all dose counters"
+    }
+   ]
+  },
+  {
+   "name": "own-128-A2",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_access_log": {
+     "counters": 128,
+     "tag": "%DOWNSTREAM_REMOTE_PORT%"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "value_format",
+     "scope": "config",
+     "equals": "%DOWNSTREAM_REMOTE_PORT%",
+     "label": "tag value %DOWNSTREAM_REMOTE_PORT%"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-one",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-14w-split",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.start_n",
+     "scope": "field",
+     "min": 14336,
+     "max": 28672,
+     "shape": "mt-7w-one",
+     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
+    },
+    {
+     "stat": "stat_count.new_in_window",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no dose counter created during the window (no reconnect)"
+    },
+    {
+     "stat": "dose.c000.port.10110",
+     "scope": "window",
+     "absent": true,
+     "label": "no counter object shared by the workers"
+    },
+    {
+     "stat": "stat_count.sum_per_request",
+     "scope": "field",
+     "min": 125.44,
+     "max": 130.56,
+     "label": "128 increments per request over all dose counters"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "mt-14w-one",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 14,
+   "worker_cpus": "0-13",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "A"
+  },
+  {
+   "name": "mt-14w-split",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 14,
+   "worker_cpus": "0-6,20-26",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "B"
+  },
+  {
+   "name": "mt-7w-one",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 7,
+   "worker_cpus": "0-6",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 8,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "C"
+  }
+ ],
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "adaptive": false,
+ "k": 16,
+ "box_specific": true,
+ "dose": {
+  "counters": 128,
+  "reference": "own-128",
+  "shared": "shared-128",
+  "aa": [
+   "own-128-A2",
+   "own-128"
+  ],
+  "rates_key": "bench-x86_64-dose-1",
+  "cells": [
+   {
+    "cell": "A",
+    "shape": "mt-14w-one",
+    "rung": "14w-one",
+    "role": "reference",
+    "workers": 14,
+    "rate_per_worker": 1500
+   },
+   {
+    "cell": "B",
+    "shape": "mt-14w-split",
+    "rung": "14w-split",
+    "role": "socket",
+    "workers": 14,
+    "rate_per_worker": 1500
+   },
+   {
+    "cell": "C",
+    "shape": "mt-7w-one",
+    "rung": "7w-one",
+    "role": "load",
+    "workers": 7,
+    "rate_per_worker": 3000
+   }
+  ],
+  "socket": [
+   "B",
+   "A"
+  ],
+  "load": [
+   "C",
+   "A"
+  ]
+ },
+ "uncalibrated": true,
+ "smoke": true,
+ "evidence_mode": "record"
+}

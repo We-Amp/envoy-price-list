@@ -942,5 +942,195 @@ class DoseLegTest(unittest.TestCase):
         self.assertNotIn("apart_incs", r)
 
 
+DOSE_RATES = {"bench-x86_64-dose-1": {"counters": 128}}
+
+
+class DoseConfigTest(unittest.TestCase):
+    def test_bad_setting_in_a_config(self):
+        raw = json.load(open(os.path.join(MT, "bench-x86_64", "dose.json")))
+        raw["arms"][0]["settings"]["stats_access_log"]["tag"] = "%REQ(X)%"
+        d = tempfile.mkdtemp()
+        json.dump(raw, open(os.path.join(d, "d.json"), "w"))
+        errs = experiment.validate(experiment.load(os.path.join(d, "d.json")), allow_short=True)
+        self.assertTrue(any("stats_access_log.tag" in e for e in errs), errs)
+
+    def test_names_agree(self):
+        self.assertEqual((MK.DOSE_SCOPE, MK.DOSE_TAG), (envoy_config.STATS_LOG_SCOPE, envoy_config.STATS_LOG_TAG))
+        self.assertEqual(sorted(MK.DOSE_TAG_VALUES.values()), sorted(envoy_config.STATS_LOG_TAG_VALUES))
+        self.assertEqual(MK.dose_shared_counter(10110), envoy_config.stats_access_log_flat(0, 10110))
+        self.assertEqual(MK.dose_shared_counter(10110), "dose.c000.port.10110")
+        self.assertEqual(envoy_config.stats_access_log_names(3), ["c000", "c001", "c002"])
+
+    def test_box_and_existing_runs(self):
+        b = box("bench-x86_64")
+        self.assertNotIn("7w-one", [r["name"] for r in b["rungs"]])  # run U's rung set is unchanged
+        c = MK.configs(b)
+        self.assertEqual([s["name"] for s in c["u.json"]["shapes"]],
+                         ["mt-1w", "mt-4w", "mt-14w-one", "mt-14w-split", "mt-28w"])
+        for fn in ("u.json", "u-hi.json", "smoke-u.json", "u-hitm.json", "cal-u-hi.json"):
+            self.assertNotIn("stat_count_prefix", c[fn]["measure"], fn)
+            self.assertNotIn("dose", c[fn], fn)
+        for other in ("arm-vm", "x86-vm"):
+            self.assertFalse([fn for fn in MK.configs(box(other)) if "dose" in fn])
+        self.assertIn(":u", b["dose"]["hitm_events"])
+        self.assertIn(b["dose"]["hitm_events"], portability.box_literals(b))
+        ev = b["dose"]["hitm_events"].split(",")
+        self.assertEqual(len([e for e in ev if e.startswith("mem_load")]), 3)
+        self.assertTrue(all(e.endswith(":u") for e in ev if e.startswith("mem_load")))
+
+    def test_uncalibrated_without_k(self):
+        c = MK.configs(box("bench-x86_64"))
+        for fn in ("dose.json", "smoke-dose.json", "dose-evidence.json"):
+            self.assertTrue(c[fn].get("uncalibrated"), fn)
+            self.assertTrue(json.load(open(os.path.join(MT, "bench-x86_64", fn))).get("uncalibrated"), fn)
+        self.assertNotIn("uncalibrated", c["dose-pilot.json"])  # the pilot runs every K of the choice list
+        # another attempt's key, or run U's keys, do not calibrate the dose run
+        for rates in ({"bench-x86_64-dose": {"counters": 128}}, {"bench-x86_64": {"r_star": 1000, "k": 16}},
+                      {"bench-x86_64-hi-1800": {"r_star": 1800, "k": 16}}):
+            self.assertTrue(MK.configs(box("bench-x86_64"), rates)["dose.json"].get("uncalibrated"), rates)
+        with self.assertRaises(SystemExit):
+            MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": 100}})
+        # `epl run` refuses an uncalibrated config
+        r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "epl"), "run",
+                            os.path.join(MT, "bench-x86_64", "smoke-dose.json"), "--dry-run", "--allow-short",
+                            "--out", tempfile.mkdtemp()], capture_output=True, text=True, timeout=60)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("uncalibrated", r.stderr + r.stdout)
+
+    def test_calibrated(self):
+        for K in (64, 128, 256):
+            c = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": K}})
+            u = c["dose.json"]
+            self.assertNotIn("uncalibrated", u)
+            self.assertEqual([a["name"] for a in u["arms"]], ["own-%d" % K, "shared-%d" % K, "own-%d-A2" % K])
+            self.assertEqual(u["base_arm"], "own-%d" % K)
+            tags = [a["settings"]["stats_access_log"] for a in u["arms"]]
+            self.assertEqual(tags, [{"counters": K, "tag": "%DOWNSTREAM_REMOTE_PORT%"},
+                                    {"counters": K, "tag": "%DOWNSTREAM_LOCAL_PORT%"},
+                                    {"counters": K, "tag": "%DOWNSTREAM_REMOTE_PORT%"}])
+            self.assertEqual(u["arms"][0]["evidence"], u["arms"][2]["evidence"])  # the A/A arm is a copy
+            self.assertEqual(u["dose"]["counters"], K)
+            self.assertEqual((u["dose"]["reference"], u["dose"]["shared"], u["dose"]["aa"]),
+                             ("own-%d" % K, "shared-%d" % K, ["own-%d-A2" % K, "own-%d" % K]))
+            self.assertNotIn("uncalibrated", c["smoke-dose.json"])
+            self.assertEqual(c["smoke-dose.json"]["dose"], u["dose"])  # dose-check compares the two
+            self.assertEqual([a["name"] for a in c["dose-evidence.json"]["arms"]],
+                             ["base", "stats-reject", "own-%d" % K, "shared-%d" % K])
+            self.assertTrue(c["u.json"]["uncalibrated"])  # run U's key is separate
+        # the same configs whatever K is chosen
+        self.assertEqual(MK.configs(box("bench-x86_64"), DOSE_RATES)["dose-pilot.json"],
+                         MK.configs(box("bench-x86_64"))["dose-pilot.json"])
+
+    def test_cells(self):
+        u = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
+        got = [(s["cell"], s["name"], s["workers"], s["worker_cpus"], s["rps"], s["client_concurrency"],
+                s["client_connections_per_worker"]) for s in u["shapes"]]
+        self.assertEqual(got, [("A", "mt-14w-one", 14, "0-13", 21000, 14, 16),
+                               ("B", "mt-14w-split", 14, "0-6,20-26", 21000, 14, 16),
+                               ("C", "mt-7w-one", 7, "0-6", 21000, 14, 8)])
+        for s in u["shapes"]:
+            self.assertEqual(s["client_concurrency"] * s["client_connections_per_worker"], 16 * s["workers"])
+            self.assertEqual((s["main_cpu"], s["admin_timeout_s"], s["lead_in_s"]), (19, 30, 3))
+        self.assertEqual([(c["cell"], c["rate_per_worker"], c["role"]) for c in u["dose"]["cells"]],
+                         [("A", 1500, "reference"), ("B", 1500, "socket"), ("C", 3000, "load")])
+        self.assertEqual((u["dose"]["socket"], u["dose"]["load"]), (["B", "A"], ["C", "A"]))
+        self.assertEqual((u["rounds"], u["rounds_max"], u["adaptive"], u["order"], u["shape_order"]),
+                         (15, 15, False, "latin", "latin"))
+        self.assertEqual(u["primary_metric"], "workers_cycles_per_req")
+        self.assertEqual(u["measure"]["stat_count_prefix"], "dose.")
+        self.assertEqual(u["measure"]["stat_filter_extra"], "^dose\\.c000\\.port\\.10110$")
+        self.assertEqual(u["measure"]["perf_events"], box("bench-x86_64")["perf_events"])
+        # the same 20 s window as run U; the client runs longer, for the admin reads before the window
+        self.assertEqual((u["measure"]["window_s"], u["client"]["duration_s"]), (20, 30))
+        self.assertEqual(MK.configs(box("bench-x86_64"))["u-hi.json"]["client"]["duration_s"], 25)
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
+        self.assertEqual(experiment.validate(exp), [])
+        self.assertEqual(len(experiment.schedule(exp)), 135)  # 3 cells x 3 arms x 15 rounds
+        firsts = {experiment.shape_order(exp, r)[0]["name"] for r in range(1, 4)}
+        self.assertEqual(len(firsts), 3)
+        for a in exp["arms"]:
+            b = envoy_config.bootstrap(exp["shapes"], experiment.arm_envoy(exp, a, "/r"), 8092)
+            self.assertEqual(envoy_config.audit_mt_s(b), [], a["name"])
+
+    def test_pilot_smoke_evidence_configs(self):
+        c = MK.configs(box("bench-x86_64"), DOSE_RATES)
+        p = c["dose-pilot.json"]
+        self.assertEqual([a["name"] for a in p["arms"]],
+                         ["base", "own-64", "shared-64", "own-128", "shared-128", "own-256", "shared-256"])
+        self.assertEqual([s["cell"] for s in p["shapes"]], ["A", "C"])
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose-pilot.json"))
+        self.assertEqual(len(experiment.schedule(exp)), 14)  # within about 18 legs
+        self.assertTrue(p["smoke"])
+        self.assertEqual(p["evidence_mode"], "record")
+        self.assertEqual(p["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
+        self.assertTrue(p["measure"]["stat_ops_probe"] and p["measure"]["per_thread"])
+        self.assertEqual(p["dose"]["pilot_rule"], {"cell": "A", "cycles_per_transfer": 100, "min_share": 0.025,
+                                                   "h_expected": [1.0, 1.4], "instructions_tol": 0.005})
+        sm = c["smoke-dose.json"]
+        self.assertEqual((sm["rounds"], sm["smoke"], sm["evidence_mode"]), (1, True, "record"))
+        self.assertEqual(sm["arms"], c["dose.json"]["arms"])
+        ev = c["dose-evidence.json"]
+        self.assertEqual((ev["rounds"], ev["base_arm"]), (4, "base"))
+        self.assertEqual(len(experiment.schedule(experiment.load(os.path.join(MT, "bench-x86_64",
+                                                                             "dose-evidence.json")))), 48)
+        self.assertEqual(ev["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
+        self.assertTrue(ev["measure"]["stat_ops_probe"])
+        self.assertEqual(experiment.validate(experiment.load(os.path.join(MT, "bench-x86_64", "dose-evidence.json")),
+                                             allow_short=True), [])
+
+    def leg(self, arm, shape="mt-14w-one", **sc):
+        m = {"shape": shape, "arm": arm, "responses_raw": 420000,
+             "sut_stats_window": {"http.ingress_http.downstream_rq_2xx": 420000}, "sut_stats_window_ok": True,
+             "stat_count": dict({"start_n": 128, "end_n": 128, "new_in_window": 0, "sum_per_request": 128.4}, **sc)}
+        return m
+
+    def test_evidence_items(self):
+        from epl import evidence
+        u = MK.configs(box("bench-x86_64"), DOSE_RATES)["dose.json"]
+        arms = {a["name"]: a for a in u["arms"]}
+        for a in u["arms"]:
+            self.assertEqual(evidence.validate_items(a["evidence"], list(arms)), [], a["name"])
+        dump = lambda tag: {"x": [{"value_format": tag}] * 128}  # noqa: E731
+        sh, own = arms["shared-128"]["evidence"], arms["own-128"]["evidence"]
+        good = self.leg("shared-128")
+        good["sut_stats_window"]["dose.c000.port.10110"] = 420100
+        self.assertTrue(evidence.evaluate(good, sh, dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
+        # the other arm's tag, a counter set that grew, a missing or slow shared counter, no stat count
+        self.assertFalse(evidence.evaluate(good, sh, dump("%DOWNSTREAM_REMOTE_PORT%"))["ok"])
+        self.assertFalse(evidence.evaluate(dict(good, stat_count=dict(good["stat_count"], end_n=129)), sh,
+                                           dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
+        half = dict(good, sut_stats_window=dict(good["sut_stats_window"], **{"dose.c000.port.10110": 210000}))
+        self.assertFalse(evidence.evaluate(half, sh, dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
+        self.assertFalse(evidence.evaluate(self.leg("shared-128"), sh, dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
+        none = dict(good)
+        none.pop("stat_count")
+        self.assertFalse(evidence.evaluate(none, sh, dump("%DOWNSTREAM_LOCAL_PORT%"))["ok"])
+        # own: K per connection (224 connections at 14 workers, 112 at 7), with or without the warm-up client's
+        rd = dump("%DOWNSTREAM_REMOTE_PORT%")
+        for shape, conns in (("mt-14w-one", 224), ("mt-14w-split", 224), ("mt-7w-one", 112)):
+            for sets in (1, 2):
+                n = sets * 128 * conns
+                self.assertTrue(evidence.evaluate(self.leg("own-128", shape, start_n=n, end_n=n), own, rd)["ok"],
+                                (shape, sets))
+            n = 128 * conns
+            # fewer sets than connections; a reconnect inside the window; a shared object; a scope
+            # limit (null counters add nothing); the 7-worker count at a 14-worker cell
+            self.assertFalse(evidence.evaluate(self.leg("own-128", shape, start_n=n - 128, end_n=n - 128), own, rd)["ok"])
+            r = evidence.evaluate(self.leg("own-128", shape, start_n=n, end_n=n + 128, new_in_window=128), own, rd)
+            self.assertTrue(any("reconnect" in f for f in r["failed"]), r["failed"])
+            shared_obj = self.leg("own-128", shape, start_n=n, end_n=n)
+            shared_obj["sut_stats_window"]["dose.c000.port.10110"] = 5
+            self.assertFalse(evidence.evaluate(shared_obj, own, rd)["ok"])
+            self.assertFalse(evidence.evaluate(self.leg("own-128", shape, start_n=n, end_n=n, sum_per_request=64.0),
+                                               own, rd)["ok"])
+        self.assertFalse(evidence.evaluate(self.leg("own-128", "mt-14w-one", start_n=128 * 112 - 128, end_n=1), own,
+                                           rd)["ok"])
+        # the evidence legs' base arm: no dose counters at all
+        base = [a for a in MK.configs(box("bench-x86_64"), DOSE_RATES)["dose-evidence.json"]["arms"]
+                if a["name"] == "base"][0]["evidence"]
+        self.assertIn({"stat": "stat_count.start_n", "scope": "field", "equals": 0, "tol_abs": 0,
+                       "label": "no dose counters"}, base)
+
+
 if __name__ == "__main__":
     unittest.main()

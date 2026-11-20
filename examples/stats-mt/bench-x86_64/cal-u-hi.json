@@ -153,6 +153,71 @@
      "result": "stopped 2026-11-19 15:55-16:32 CET: 8 of 15 28w legs invalid (6 other tasks on the SUT CPUs 0.053-0.071 against 0.05, 2 client pool overflow); 31 valid, 8 invalid; kept as a failed attempt"
     }
    ]
+  },
+  "dose": {
+   "rates_key": "bench-x86_64-dose-1",
+   "counters_choices": [
+    64,
+    128,
+    256
+   ],
+   "placeholder_counters": 128,
+   "extra_rungs": [
+    {
+     "name": "7w-one",
+     "workers": 7,
+     "worker_cpus": "0-6",
+     "client_concurrency": 14
+    }
+   ],
+   "cells": [
+    {
+     "cell": "A",
+     "rung": "14w-one",
+     "rate_per_worker": 1500,
+     "role": "reference"
+    },
+    {
+     "cell": "B",
+     "rung": "14w-split",
+     "rate_per_worker": 1500,
+     "role": "socket"
+    },
+    {
+     "cell": "C",
+     "rung": "7w-one",
+     "rate_per_worker": 3000,
+     "role": "load"
+    }
+   ],
+   "socket": [
+    "B",
+    "A"
+   ],
+   "load": [
+    "C",
+    "A"
+   ],
+   "pilot_cells": [
+    "A",
+    "C"
+   ],
+   "pilot_rule": {
+    "cell": "A",
+    "cycles_per_transfer": 100,
+    "min_share": 0.025,
+    "h_expected": [
+     1.0,
+     1.4
+    ],
+    "instructions_tol": 0.005
+   },
+   "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
+   "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+   "admin_timeout_s": 30,
+   "client_duration_s": 30,
+   "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
+   "note": "run R1 (dose): K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port); cells A and B at the 1,500 per worker of the completed high-load attempt, cell C the same 21,000 total on 7 workers with the same 14 client threads; the 7w-one rung is the dose run's own (extra_rungs), so run U's rung set is unchanged; rates_key holds the pilot's K as {\"counters\": K}, one key per attempt"
   }
  },
  "envoy": {
