@@ -136,6 +136,159 @@
     "14w-split",
     "14w-one"
    ]
+  ],
+  "rates_key": "bench-x86_64-hi-1800",
+  "attempts": [
+   {
+    "rates_key": "bench-x86_64-hi-1500",
+    "r_star": 1500
+   },
+   {
+    "rates_key": "bench-x86_64-hi",
+    "r_star": 1800,
+    "result": "stopped 2026-11-19 15:55-16:32 CET: 8 of 15 28w legs invalid (6 other tasks on the SUT CPUs 0.053-0.071 against 0.05, 2 client pool overflow); 31 valid, 8 invalid; kept as a failed attempt"
+   }
   ]
+ },
+ "dose": {
+  "rates_key": "bench-x86_64-dose-1",
+  "counters_choices": [
+   64,
+   128,
+   256
+  ],
+  "placeholder_counters": 128,
+  "connections_choices": [
+   8,
+   16
+  ],
+  "placeholder_connections": 16,
+  "extra_rungs": [
+   {
+    "name": "7w-one",
+    "workers": 7,
+    "worker_cpus": "0-6",
+    "client_concurrency": 14
+   }
+  ],
+  "cells": [
+   {
+    "cell": "A",
+    "rung": "14w-one",
+    "rate_per_worker": 1500,
+    "role": "reference",
+    "sockets": 1
+   },
+   {
+    "cell": "B",
+    "rung": "14w-split",
+    "rate_per_worker": 1500,
+    "role": "socket",
+    "sockets": 2
+   },
+   {
+    "cell": "D",
+    "rung": "28w",
+    "rate_per_worker": 1500,
+    "role": "workers",
+    "sockets": 2
+   },
+   {
+    "cell": "C",
+    "rung": "7w-one",
+    "rate_per_worker": 2200,
+    "role": "load",
+    "sockets": 1,
+    "exploratory": true,
+    "rate_note": "3,000 per worker ran the workers at 81% busy with the K = 128 logger (pilot attempt 1: about 706k worker cycles per request against 540k without it) and failed the client gates; 2,200 aims at 60-68% busy; the total is then 15,400, not the other cells' 21,000"
+   }
+  ],
+  "slot_cells": [
+   "A",
+   "B",
+   "D"
+  ],
+  "cell_counters": {
+   "D": 64
+  },
+  "cell_counters_note": "a cell's dose when it is not K: cell D runs at 64 because at 128 its own arm makes Envoy create about 57k counters when the measuring client starts, and the client gate fails on that stall (pilot attempt 2)",
+  "low": {
+   "cell": "A",
+   "counters": 64
+  },
+  "hot": {
+   "cell": "A",
+   "counters": 128,
+   "note": "exploratory, outside the statements: the logger's counter list is 128 entries of the same counter, so one counter object takes 128 increments per request (about 2.7 million a second at 14 workers x 1,500) where the spread arms give 128 objects one each; the same lookups and adds per request"
+  },
+  "rounds": 6,
+  "evidence_rounds": 1,
+  "rotation_block": 3,
+  "short_run_note": "short run: 6 rounds instead of 15, 1 round of evidence legs per cell; the cell rotation and the 3-arm cells' arm rotations balance twice in 6 rounds; cell A has 7 arms, so each of its arms takes 6 of the 7 positions once",
+  "socket": [
+   "B",
+   "A"
+  ],
+  "workers": [
+   "D",
+   "A"
+  ],
+  "pilot": {
+   "k_cell": "A",
+   "mid": 128,
+   "connections": [
+    16,
+    8
+   ],
+   "connection_cells": [
+    "A",
+    "D"
+   ],
+   "loopback_cell": "A",
+   "exploratory_cells": [
+    "C"
+   ],
+   "order_note": "shapes in this order, arms as listed, no re-run of an invalid leg and no stop after consecutive invalid legs: the deciding 16-connection legs of cells A and D, then the other connection count, then the loopback pair, then the exploratory cell",
+   "attempts": [
+    {
+     "harness": "bba256c",
+     "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+    },
+    {
+     "harness": "9e63292",
+     "result": "2026-11-20, 17 legs, one round: every bootstrap validates, increments per request equal K, no counter created in a window, no overflow stat, instructions shared against own within 0.05%; h 0.23-0.38 (the K rule returns no K); 8 connections per worker fail the client pending gate; at 16 connections the legs whose own arm creates about 57k counters at client start fail the client gate (A own-256, D own-128); the choice was made by hand and is in the decision record: 16 connections, K = 128 in cells A and B, 64 in cell D and as cell A's second dose"
+    }
+   ]
+  },
+  "pilot_rule": {
+   "cell": "A",
+   "cycles_per_transfer": 100,
+   "min_share": 0.025,
+   "h_expected": [
+    1.0,
+    1.4
+   ],
+   "instructions_tol": 0.005,
+   "k_rule": "the smallest K with h x K x cycles_per_transfer / own worker cycles per request >= min_share in the cell",
+   "connections_rule": "the connection count with the smaller |clean L3 hits per update, own - shared| at the middle K in the cell, provided every leg at that count is valid in the connection cells; else the other count if its legs are valid"
+  },
+  "listener_address": "0.0.0.0",
+  "listener_note": "every dose arm listens on the wildcard address: Envoy then reads each accepted connection's local address into its own object, where a loopback listener gives every connection of every worker the listener's one address object (the address formatter copies its shared pointer once per counter); the client still targets 127.0.0.1; the admin port stays on loopback",
+  "sum_tol_abs": 0.5,
+  "avoid_utc": [
+   {
+    "from": "00:00",
+    "to": "00:10",
+    "leg_s": 120
+   }
+  ],
+  "hitm_events": "instructions:u,cycles,mem_load_uops_l3_hit_retired.xsnp_hitm:u,mem_load_uops_l3_miss_retired.remote_hitm:u,mem_load_uops_retired.l3_hit:u,task-clock",
+  "hitm_events_note": "cycles is user and kernel on one counter (as in hitm_events): with the three memory-load events the list then needs at most four programmable counters even when the fixed cycles counter is taken",
+  "flush_interval_s": 240,
+  "flush_note": "every dose arm sets this stats flush interval: longer than a leg's Envoy lives (about a minute), under the 300 s the bootstrap accepts, so the main thread's flush does not latch the own arms' counters during the window; base and stats-reject keep the default 5 s",
+  "admin_timeout_s": 30,
+  "client_duration_s": 30,
+  "client_duration_note": "run U's client runs 25 s for a 3 s lead-in and a 20 s window; the dose legs read tens of thousands of counters over the admin port before the window, which comes out of that slack, so their client runs 30 s; the window is the same 20 s",
+  "note": "run R1 (dose), a short run: K stats-access-logger counters per request, shared by all workers (tag = the listener port) against one set per downstream connection (tag = the client port), on a wildcard listener; slot cells A and B at K, cell D (run U's 28w rung) at 64, cell A also at 64, all at 1,500 per worker; cell C in the pilot only, exploratory; rates_key holds the choice as {\"counters\": K, \"connections\": connections per worker}, one key per attempt"
  }
 }

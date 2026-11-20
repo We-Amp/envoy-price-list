@@ -2,6 +2,7 @@
 
 import copy
 import json
+import math
 import os
 import platform
 import random
@@ -292,24 +293,79 @@ def effective_order(exp):
     return exp["order"]
 
 
-def cell_mode(exp):
-    """An arm may list the shapes it runs on (`shapes: [...]`): the experiment is then a set of
-    (shape, arm) cells, and the order rotates over the cells."""
+ARM_SHAPES_MODES = ("cells", "per_shape")
+
+
+def _arm_shapes(exp):
     return any(a.get("shapes") is not None for a in exp.get("arms", []))
+
+
+def arm_shapes_mode(exp):
+    """How an experiment whose arms list the shapes they run on (`shapes: [...]` on an arm) is
+    scheduled; None when no arm has `shapes`. Two schedules exist and each has runs behind it:
+
+    - "cells": the experiment is a set of (shape, arm) cells and one Latin order rotates over
+      all the cells (the flush latency study);
+    - "per_shape": shapes run one after the other as always, and the arm order rotates inside
+      each shape over that shape's own arms (the contention study).
+
+    `arm_shapes` names the schedule. Without it, an experiment with `measure.latency` runs as
+    cells and any other one per shape, which is what the configs written before the key
+    existed ran with."""
+    if not _arm_shapes(exp):
+        return None
+    mode = exp.get("arm_shapes")
+    if mode is not None:
+        return mode
+    return "cells" if (exp.get("measure") or {}).get("latency") is not None else "per_shape"
+
+
+def cell_mode(exp):
+    """The experiment is a set of (shape, arm) cells, and the order rotates over the cells."""
+    return arm_shapes_mode(exp) == "cells"
 
 
 def cells(exp):
     """[(shape, arm)] that have legs, shapes first: every pair, or with `shapes` on an arm only
     the pairs it lists."""
-    return [(sh, a) for sh in exp["shapes"] for a in exp["arms"]
-            if a.get("shapes") is None or sh["name"] in a["shapes"]]
+    return [(sh, a) for sh in exp["shapes"] for a in exp["arms"] if arm_in_shape(a, sh)]
+
+
+def arm_in_shape(arm, shape):
+    """An arm may run in some shapes only (`shapes`: their names); without it, in every shape."""
+    only = arm.get("shapes")
+    return only is None or shape["name"] in only
+
+
+def shape_arms(exp, shape):
+    return [a for a in exp["arms"] if arm_in_shape(a, shape)]
+
+
+def restricted(exp):
+    """Arms that run in some shapes only, scheduled per shape (not as cells)."""
+    return arm_shapes_mode(exp) == "per_shape"
 
 
 def order_period(exp):
-    """Rounds after which every arm has been in every position equally often."""
+    """Rounds after which every arm has been in every position equally often (with arms that
+    run in some shapes only, under a Latin order: in every shape, the least common multiple of
+    the shapes' arm counts)."""
     o = effective_order(exp)
     if cell_mode(exp):
         return len(cells(exp))
+    if exp.get("rotation_block"):
+        # a short run: fewer rounds than the full rotation takes. Rounds count as complete in
+        # blocks of this size; the arms of a shape with more arms than rounds then get distinct
+        # positions, not every position
+        return int(exp["rotation_block"])
+    if o == "fixed":
+        return 1
+    if o == "latin" and restricted(exp):
+        per = 1
+        for sh in exp.get("shapes", []):
+            n = len(shape_arms(exp, sh)) or 1
+            per = per * n // math.gcd(per, n)
+        return per
     return 2 if o == "abba" else len(exp["arms"]) if o == "latin" else 2 * len(exp["arms"])
 
 
@@ -328,8 +384,11 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm name %r must be [A-Za-z0-9._-]+" % n)
     if exp.get("base_arm", names[0] if names else None) not in names:
         errs.append("base_arm not among arms")
-    if exp["order"] not in ("auto", "abba", "rotate", "latin"):
-        errs.append("order must be auto, abba, rotate or latin")
+    if exp["order"] not in ("auto", "abba", "rotate", "latin", "fixed"):
+        errs.append("order must be auto, abba, rotate, latin or fixed")
+    elif exp["order"] == "fixed" and not exp.get("smoke"):
+        # arms in the configured order every round: nothing is balanced, so no comparison may rest on it
+        errs.append("order fixed is for a smoke (a pilot) only")
     elif exp["order"] == "abba" and len(arms) > 2:
         errs.append("abba with %d arms pins the middle arms to fixed positions; use rotate (or auto)" % len(arms))
     if exp["comparisons"] not in ("base", "all_pairs"):
@@ -339,6 +398,8 @@ def validate(exp, allow_short=False, check_rounds=True):
     if exp.get("smoke"):
         check_rounds = False  # a smoke runs each arm once or twice; it carries no comparison
     snames_all = [s.get("name") for s in exp.get("shapes", [])]
+    if exp.get("arm_shapes") is not None and exp["arm_shapes"] not in ARM_SHAPES_MODES:
+        errs.append("arm_shapes must be one of %s" % (ARM_SHAPES_MODES,))
     if cell_mode(exp):
         if exp["order"] != "latin":
             errs.append("arms with `shapes` (cells) need order latin (the rotation runs over the cells)")
@@ -429,6 +490,28 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env must be an object" % a.get("name"))
         if "hop2_env" in a and not arm_settings(a).get("two_hop"):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
+    rb = exp.get("rotation_block")
+    if rb is not None and (isinstance(rb, bool) or not isinstance(rb, int) or rb < 1):
+        errs.append("rotation_block must be a positive integer")
+    for w in exp.get("avoid_utc") or []:
+        try:
+            ok = 0 <= _hm(w["from"]) < _hm(w["to"]) <= 86400 and float(w.get("leg_s", 0)) >= 0
+        except (KeyError, ValueError, TypeError, AttributeError):
+            ok = False
+        if not ok:
+            errs.append("avoid_utc entries are {from: HH:MM, to: HH:MM, leg_s} with from before to, got %r" % (w,))
+    if restricted(exp):
+        for a in arms:
+            only = a.get("shapes")
+            if only is not None and (not isinstance(only, list) or not only or any(x not in snames for x in only)):
+                errs.append("arm %s: shapes must be a non-empty list of shape names" % a.get("name"))
+        base = exp.get("base_arm", names[0] if names else None)
+        if any(a.get("name") == base and a.get("shapes") is not None for a in arms) \
+                and exp["comparisons"] == "base":
+            errs.append("base_arm must run in every shape (comparisons are against it)")
+        for s in exp.get("shapes", []):
+            if len(shape_arms(exp, s)) < 2:
+                errs.append("shape %s: fewer than 2 arms run in it" % s.get("name"))
     if uses(exp, "two_hop") and "hop2" not in sets:
         errs.append("a two_hop arm needs cpus.hop2")
     if needs_collector(exp) and not exp["collector"].get("image"):
@@ -551,6 +634,26 @@ def validate(exp, allow_short=False, check_rounds=True):
     return errs
 
 
+def _hm(text):
+    h, _, m = str(text).partition(":")
+    return int(h) * 3600 + int(m or 0) * 60
+
+
+def quiet_wait(windows, now):
+    """Seconds to wait before starting a leg so that it does not overlap a daily UTC window in
+    which no leg may run (`avoid_utc`: [{"from": "HH:MM", "to": "HH:MM", "leg_s": the longest a
+    leg takes}]; a window may not cross midnight). A leg that would start inside a window, or
+    less than leg_s before it, waits for the window's end. `now`: epoch seconds."""
+    t = now % 86400.0
+    wait = 0.0
+    for w in windows or []:
+        a, b, leg = _hm(w["from"]), _hm(w["to"]), float(w.get("leg_s", 0))
+        for start in (a, a + 86400):  # today's window, and tomorrow's for a leg started just before midnight
+            if start - leg < t < start + (b - a):
+                wait = max(wait, start + (b - a) - t)
+    return wait
+
+
 def _coin(seed, pair):
     return random.Random("epl-order:%s:%d" % (seed, pair)).random() < 0.5
 
@@ -567,6 +670,9 @@ def round_order(exp, r):
     arms = exp["arms"]
     k = len(arms)
     pair = (r - 1) // 2
+    if effective_order(exp) == "fixed":
+        # the configured order, every round (a pilot that must reach its deciding legs first)
+        return list(arms)
     if effective_order(exp) == "latin":
         # one Latin square: round r starts at arm r-1 (mod k); k rounds put every arm in every
         # position once (a seeded rotation offset, no reversed rounds)
@@ -582,6 +688,21 @@ def round_order(exp, r):
     flip = _coin(exp.get("order_seed", 1), pair) if exp.get("order_seed") is not None else False
     forward = first != flip
     return fwd if forward else list(reversed(fwd))
+
+
+def shape_round_order(exp, r, shape):
+    """Arm order of round r in one shape. With every arm in the shape: round_order. With arms
+    that run in some shapes only, a Latin order rotates the shape's own arm list (so every arm
+    of the shape is in every position equally often there); the other orders keep the round's
+    order with the absent arms left out."""
+    mine = shape_arms(exp, shape)
+    if len(mine) == len(exp["arms"]):
+        return round_order(exp, r)
+    if effective_order(exp) == "latin" and mine:
+        off = random.Random("epl-latin:%s" % exp.get("order_seed", 1)).randrange(len(mine))
+        s = (r - 1 + off) % len(mine)
+        return mine[s:] + mine[:s]
+    return [a for a in round_order(exp, r) if arm_in_shape(a, shape)]
 
 
 def shape_order(exp, r):
@@ -614,9 +735,8 @@ def schedule(exp, first=1, last=None):
             out += [(r, sh, a) for sh, a in cell_order(exp, r)]
         return out
     for r in range(first, last + 1):
-        order = round_order(exp, r)
         for sh in shape_order(exp, r):
-            for a in order:
+            for a in shape_round_order(exp, r, sh):
                 out.append((r, sh, a))
     return out
 
@@ -924,7 +1044,12 @@ def analyse(exp, legs, floor=None):
             sres["arms"][an] = summ
         sres["confirmatory"] = []
         conf = [(p[0], p[1]) for p in exp.get("confirmatory") or [] if confirmatory_in_shape(p, s)]
+        # per shape: an arm that does not run in a shape has no row there. Cells keep every
+        # row, as the latency study's results were written
+        here = {a["name"] for a in (exp["arms"] if cell_mode(exp) else shape_arms(exp, sh))}
         for an, rn, kind in [(a, r, "row") for a, r in comparison_pairs(exp)] + [(a, r, "conf") for a, r in conf]:
+            if an not in here or rn not in here:
+                continue  # an arm that does not run in this shape has no row here
             rounds = sorted(r for (ss, aa, r) in by if ss == s and aa == an and (s, rn, r) in by)
             comp = {"arm": an, "ref": rn, "rounds_paired": rounds}
             for key, _, get in METRICS:
@@ -1101,6 +1226,7 @@ class Runner:
         self._logf = open(os.path.join(run_dir, "log.txt"), "a")
         self._stream = log_stream
         self.backend = backend_factory(exp, run_dir, self.log)
+        self._simulate = False
 
     def log(self, msg):
         line = sysprobe.scrub_text("%s %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), msg))
@@ -1124,8 +1250,15 @@ class Runner:
 
     def _leg(self, legs, r, sh, a, bpath, attempt=0):
         lid = leg_id(r, sh, a, attempt)
+        if self.exp.get("avoid_utc") and not self._simulate:
+            w = quiet_wait(self.exp["avoid_utc"], time.time())
+            if w > 0:
+                self.log("waiting %.0f s: %s would overlap a window in which no leg runs (avoid_utc)" % (w, lid))
+                time.sleep(w)
+        t_leg = time.monotonic()
         m = self.backend.run_leg(a, sh, r, bpath, lid)
         m["attempt"] = attempt
+        m["wall_s"] = round(time.monotonic() - t_leg, 1)
         legs.append(m)
         self._record(m)
         v = m["verdict"]
@@ -1166,7 +1299,7 @@ class Runner:
                 for m in cur:
                     m["superseded"] = True
                 self._record({"supersede": [m["leg_id"] for m in cur]})
-                for a in round_order(self.exp, r):
+                for a in shape_round_order(self.exp, r, sh):
                     self._leg(legs, r, sh, a, bpath, attempt)
 
     def _rerun_invalid_rounds(self, legs, first, last, bpath):
@@ -1199,6 +1332,7 @@ class Runner:
 
     def run(self, simulate=False):
         exp = self.exp
+        self._simulate = simulate
         self._invalid_streak = 0
         self._round_streak = 0
         bpath, btexts, certs = prepare_bootstraps(exp, self.run_dir, self.log, make_certs=not simulate)

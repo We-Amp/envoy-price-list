@@ -18,6 +18,24 @@
 #                                     headroom allows at 28w) goes into RATES_JSON as "<box>-hi"
 #   run-u.sh hi-smoke [EPL_ARGS...]    one round of u-hi, then hi-check (calibration, evidence)
 #   run-u.sh hi-queue [EPL_ARGS...]    hi-check, then u-hi within HI_STOP_S (default 2 h 30 min)
+#   run-u.sh dose-pilot [EPL_ARGS...]  (boxes with a dose section) run R1's pilot (17 legs, one round);
+#                                     dose_pilot.py prints the answers and writes the pilot record
+#                                     with the recommended {"counters": K, "connections": c}, to
+#                                     put into RATES_JSON under the box's dose.rates_key
+#   run-u.sh dose-smoke [EPL_ARGS...]  one round of dose.json at that choice (13 legs) and one round of the
+#                                     evidence legs in the first cell (4 legs), then dose-check
+#   run-u.sh dose-check                the choice made; a clean pilot record that recommends it, or a
+#                                     decision record ($R/dose-decision$DOSE_PILOT_TAG.json)
+#                                     that the pilot record's checks 1, 2 and 6 support; every
+#                                     smoke leg valid with the run's own arm settings; evidence
+#   run-u.sh dose-queue [EPL_ARGS...]  dose-check, then dose.json (a short run: 78 legs) within
+#                                     DOSE_STOP_S (default 1 h 45 min), then the evidence legs (12)
+#                                     within DOSE_EV_STOP_S (default 25 min), in one chain, then
+#                                     the tables; no leg starts where it would overlap
+#                                     00:00-00:10 UTC (the configs' avoid_utc)
+#                                     DOSE_TAG names an attempt's directories (a pilot or smoke
+#                                     never replaces an earlier one: pick a new tag);
+#                                     DOSE_PILOT_TAG (default DOSE_TAG) names the pilot it rests on
 #   run-u.sh micro-smoke [MICRO_ARGS...] the microbenchmark pre-flight (micro.py smoke; exits 1 loudly)
 #   run-u.sh micro [MICRO_ARGS...]     the microbenchmarks (micro.py run), after a passing smoke
 #
@@ -61,19 +79,71 @@ check() {
 hi_check() {
   local bad=0
   if grep -q '"uncalibrated": true' "$C/u-hi.json"; then
-    log "u-hi.json is uncalibrated: set RATES_JSON (\"$BOX-hi\") from hi-calibrate"
+    log "u-hi.json is uncalibrated: set RATES_JSON (the box's u_hi.rates_key) from hi-calibrate"
     bad=1
   fi
   # H2: the queue starts only after a smoke whose every leg is valid (at the chosen r*)
-  python3 "$S/smoke_valid.py" "$C/smoke-u-hi.json" "$R/smoke-u-hi" > "$R/smoke-u-hi.valid.txt" 2>&1 || bad=1
-  tee -a "$R/queue.log" < "$R/smoke-u-hi.valid.txt"
-  if [ -f "$R/smoke-u-hi/results.json" ] && ! python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/smoke-u-hi/results.json'))['experiment'].get('r_star')==json.load(open('$C/u-hi.json')).get('r_star') else 1)"; then
+  python3 "$S/smoke_valid.py" "$C/smoke-u-hi.json" "$R/smoke-u-hi$HI_TAG" > "$R/smoke-u-hi$HI_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-u-hi$HI_TAG.valid.txt"
+  if [ -f "$R/smoke-u-hi$HI_TAG/results.json" ] && ! python3 -c "import json,sys;sys.exit(0 if json.load(open('$R/smoke-u-hi$HI_TAG/results.json'))['experiment'].get('r_star')==json.load(open('$C/u-hi.json')).get('r_star') else 1)"; then
     log "smoke-u-hi ran at another r* than u-hi.json: smoke again"
     bad=1
   fi
   log "evidence-check u-hi against smoke-u-hi"
-  if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi" >> "$R/queue.log" 2>&1; then
+  if ! $EPL evidence-check "$C/u-hi.json" "$R/smoke-u-hi$HI_TAG" >> "$R/queue.log" 2>&1; then
     log "evidence-check u-hi FAILED (details in queue.log)"
+    bad=1
+  fi
+  return $bad
+}
+
+# the high-load attempt's directories: HI_TAG (for example -1500) keeps each attempt apart
+HI_TAG=${HI_TAG:-}
+# the dose run's directories: DOSE_TAG keeps each attempt apart; the pilot record the queue
+# rests on is the one of DOSE_PILOT_TAG (default: the same tag)
+DOSE_TAG=${DOSE_TAG:-}
+DOSE_PILOT_TAG=${DOSE_PILOT_TAG:-$DOSE_TAG}
+
+dose_uncalibrated() {
+  if grep -q '"uncalibrated": true' "$C/dose.json"; then
+    log "dose.json is uncalibrated: set RATES_JSON (the box's dose.rates_key: {\"counters\": K, \"connections\": c}) from dose-pilot"
+    return 0
+  fi
+  return 1
+}
+
+# an attempt's directory is never replaced: a second pilot or smoke takes a new DOSE_TAG
+dose_fresh() {
+  if [ -e "$1" ]; then
+    log "$1 exists: an earlier attempt is kept; set a new DOSE_TAG"
+    return 1
+  fi
+  return 0
+}
+
+dose_check() {
+  local bad=0
+  dose_uncalibrated && return 1
+  # the queue starts only after a smoke whose every leg is valid
+  python3 "$S/smoke_valid.py" "$C/smoke-dose.json" "$R/smoke-dose$DOSE_TAG" > "$R/smoke-dose$DOSE_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-dose$DOSE_TAG.valid.txt"
+  # a clean pilot record that recommends the configured K and connections; the smoke's dose
+  # block, shapes and arm settings equal the run's
+  python3 "$S/dose_gate.py" "$C/dose.json" "$R/smoke-dose$DOSE_TAG" "$R/dose-pilot$DOSE_PILOT_TAG.json" \
+    "$R/dose-decision$DOSE_PILOT_TAG.json" 2>&1 | tee -a "$R/queue.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || bad=1
+  log "evidence-check dose against smoke-dose"
+  if ! $EPL evidence-check "$C/dose.json" "$R/smoke-dose$DOSE_TAG" >> "$R/queue.log" 2>&1; then
+    log "evidence-check dose FAILED (details in queue.log)"
+    bad=1
+  fi
+  # the evidence legs run after the timed run in the same chain: their smoke is checked now
+  python3 "$S/smoke_valid.py" "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" \
+    > "$R/smoke-dose-evidence$DOSE_TAG.valid.txt" 2>&1 || bad=1
+  tee -a "$R/queue.log" < "$R/smoke-dose-evidence$DOSE_TAG.valid.txt"
+  log "evidence-check smoke-dose-evidence (its own arms; the evidence legs gate themselves)"
+  if ! $EPL evidence-check "$C/smoke-dose-evidence.json" "$R/smoke-dose-evidence$DOSE_TAG" >> "$R/queue.log" 2>&1; then
+    log "evidence-check smoke-dose-evidence FAILED (details in queue.log)"
     bad=1
   fi
   return $bad
@@ -136,13 +206,13 @@ case "$mode" in
         >> "$R/queue.log" 2>&1
       log "end u-hi calibrate $sh rc=$?"
     done
-    log "pick r* (worker busy 60-70% at both rungs with client headroom >= 25% at 28w; else the highest rate the headroom allows) into RATES_JSON as \"$BOX-hi\""
+    log "pick r* (worker busy 60-70% at both rungs with client headroom >= 25% at 28w; else the highest rate the headroom allows) into RATES_JSON under the box's u_hi.rates_key"
     ;;
   hi-smoke)
     rewrite
     log "u-hi smoke start box $BOX"
-    rm -rf "$R/smoke-u-hi"
-    $EPL run "$C/smoke-u-hi.json" --out "$R/smoke-u-hi" --allow-short "$@" >> "$R/queue.log" 2>&1
+    rm -rf "$R/smoke-u-hi$HI_TAG"
+    $EPL run "$C/smoke-u-hi.json" --out "$R/smoke-u-hi$HI_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
     log "end u-hi smoke rc=$?"
     hi_check
     log "u-hi smoke done rc=$?"
@@ -157,9 +227,60 @@ case "$mode" in
     hi_check || { log "u-hi not started (calibration or evidence; no override)"; exit 1; }
     L=${HI_STOP_S:-9000}
     log "start u-hi (${L}s stop)"
-    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi" \
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/u-hi.json" --out "$R/u-hi$HI_TAG" \
       --allow-short "$@" >> "$R/queue.log" 2>&1
-    log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi > $R/u-hi.md"
+    log "end u-hi rc=$?; tables: python3 $S/u_table.py $R/u-hi$HI_TAG > $R/u-hi$HI_TAG.md"
+    ;;
+  dose-pilot)
+    [ -f "$C/dose-pilot.json" ] || { log "no dose-pilot.json for box $BOX"; exit 1; }
+    dose_fresh "$R/dose-pilot$DOSE_TAG" || exit 1
+    log "dose pilot start box $BOX harness $(cat "$H/VERSION" 2>/dev/null)"
+    $EPL run "$C/dose-pilot.json" --out "$R/dose-pilot$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose pilot rc=$?"
+    python3 "$S/dose_pilot.py" "$C/dose-pilot.json" "$R/dose-pilot$DOSE_TAG" --json "$R/dose-pilot$DOSE_TAG.json" \
+      2>&1 | tee -a "$R/queue.log"
+    rc=${PIPESTATUS[0]}
+    log "dose pilot rc=$rc; record $R/dose-pilot$DOSE_TAG.json; put its recommendation into RATES_JSON under the box's dose.rates_key"
+    exit "$rc"
+    ;;
+  dose-smoke)
+    rewrite
+    dose_uncalibrated && { log "no smoke"; exit 1; }
+    dose_fresh "$R/smoke-dose$DOSE_TAG" || exit 1
+    dose_fresh "$R/smoke-dose-evidence$DOSE_TAG" || exit 1
+    log "dose smoke start box $BOX"
+    $EPL run "$C/smoke-dose.json" --out "$R/smoke-dose$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose smoke rc=$?"
+    $EPL run "$C/smoke-dose-evidence.json" --out "$R/smoke-dose-evidence$DOSE_TAG" --allow-short "$@" \
+      >> "$R/queue.log" 2>&1
+    log "end dose evidence smoke rc=$?"
+    dose_check
+    rc=$?
+    log "dose smoke done rc=$rc"
+    exit "$rc"
+    ;;
+  dose-check)
+    rewrite
+    dose_check
+    exit $?
+    ;;
+  dose-queue)
+    rewrite
+    dose_check || { log "dose not started (choice, pilot record, smoke or evidence; no override)"; exit 1; }
+    L=${DOSE_STOP_S:-6300}
+    log "start dose (${L}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose.json" --out "$R/dose$DOSE_TAG" \
+      --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose rc=$?"
+    # the evidence legs, outside the timed run (HITM events in user mode, store-stat operations)
+    L=${DOSE_EV_STOP_S:-1500}
+    log "start dose-evidence (${L}s stop)"
+    timeout --foreground --signal=TERM --kill-after=300 "$L" $EPL run "$C/dose-evidence.json" \
+      --out "$R/dose-evidence$DOSE_TAG" --allow-short "$@" >> "$R/queue.log" 2>&1
+    log "end dose-evidence rc=$?"
+    python3 "$S/u_table.py" "$R/dose$DOSE_TAG" --evidence "$R/dose-evidence$DOSE_TAG" --json "$R/dose$DOSE_TAG.table.json" \
+      > "$R/dose$DOSE_TAG.md" 2>> "$R/queue.log"
+    log "tables rc=$?: $R/dose$DOSE_TAG.md"
     ;;
   codegen-smoke)
     # 1. the premise from the binaries (fail closed); 2. the 12-worker smoke; 3. the 8-worker
