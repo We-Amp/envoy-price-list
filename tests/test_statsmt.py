@@ -1281,19 +1281,20 @@ class DoseTableTest(unittest.TestCase):
         self.assertAlmostEqual(w["p"], math.erfc(2.0 / math.sqrt(se ** 2 + 0.34 ** 2) / math.sqrt(2)))
         # with no spread at all the interval is still +/- 1.96 x 0.34
         self.assertAlmostEqual(UT.widened([1.0, 1.0, 1.0])["lo"], 1.0 - 1.96 * 0.34)
-        self.assertEqual((UT.DOSE_SYS_PCT, UT.DOSE_Z, UT.AA_LIMIT_PCT, UT.DOSE_MIN_EFFECT_PCT,
-                          UT.DOSE_INSTR_TOL_PCT, UT.DOSE_HITM_SHARE), (0.34, 1.96, 1.0, 1.0, 0.5, 0.5))
+        self.assertEqual((UT.DOSE_SYS_PCT, UT.DOSE_Z, UT.AA_LIMIT_PCT, UT.DOSE_MIN_EFFECT_PCT, UT.DOSE_INSTR_TOL_PCT,
+                          UT.DOSE_HITM_SHARE, UT.DOSE_MIN_ROUNDS, UT.DOSE_AA_ALPHA), (0.34, 1.96, 1.0, 1.0, 0.5, 0.5, 12, 0.05))
 
     def test_findings_and_line_transfer(self):
         text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
-        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5", "S6"])
-        self.assertIn("Holm over 6", text)
+        self.assertEqual(list(st), ["S1", "S2", "S3", "S4", "S5"])  # linearity is not a statement
+        self.assertIn("Holm over 5", text)
         for i, (cell, rho) in enumerate((("A", 2.0), ("B", 5.0), ("D", 4.5))):
             r = st["S%d" % (i + 1)]
             self.assertEqual((r["kind"], r["cell"]), ("cell", cell))
             self.assertAlmostEqual(r["w"]["mean"], rho, delta=0.4)
             self.assertEqual(r["verdict"], "finding: line transfer")
             self.assertTrue(js["cells"][cell]["aa"]["ok"])
+            self.assertEqual(js["cells"][cell]["valid_rounds"], 15)
         self.assertEqual((st["S4"]["kind"], st["S4"]["cells"]), ("socket", ["B", "A"]))
         self.assertAlmostEqual(st["S4"]["w"]["mean"], 3.0, delta=0.5)
         self.assertEqual(st["S4"]["verdict"], "resolved: higher across sockets")
@@ -1302,13 +1303,12 @@ class DoseTableTest(unittest.TestCase):
         self.assertAlmostEqual(st["S5"]["w"]["mean"], 2.5, delta=0.5)
         self.assertEqual(st["S5"]["verdict"], "resolved: higher at the larger worker count")
         self.assertIn("no directional prediction", text)
-        self.assertEqual((st["S6"]["kind"], st["S6"]["cell"]), ("linearity", "A"))
         # S4 and S5 are paired by round and carry two widening terms
         ra, rb = js["cells"]["A"]["rho_rounds"], js["cells"]["B"]["rho_rounds"]
         d = [rb[r] - ra[r] for r in sorted(ra)]
         self.assertAlmostEqual(st["S4"]["w"]["hi"], UT.widened(d, terms=2)["hi"])
         self.assertAlmostEqual(st["S1"]["w"]["hi"], UT.widened(list(ra.values()))["hi"])
-        # Holm over the six statements
+        # Holm over the five statements
         hp = UT.stats.holm([st[k]["w"]["p"] for k in st])
         self.assertEqual([st[k]["holm_p"] for k in st], hp)
         # cycles per shared update: about ln-ratio x cycles / K; the low dose has its own row
@@ -1318,17 +1318,77 @@ class DoseTableTest(unittest.TestCase):
         # either spelling of the HITM events
         _, _, st2 = self.rows(_dose_run(RHO), _dose_evidence(events=UT.HITM))
         self.assertEqual(st2["S1"]["verdict"], "finding: line transfer")
-        # no workers verdict when cell D's A/A fails
-        res = _dose_run(RHO)
-        for m in res["legs"]:
-            if m["arm"] == "own-128-A2" and m["shape"] == "mt-28w":
-                m["workers_cycles_per_req"] *= 1.0 + (0.04 if m["round"] % 2 else -0.04)
-        _, _, st3 = self.rows(res, _dose_evidence())
-        self.assertTrue(st3["S5"]["verdict"].startswith("no verdict: an A/A of its cells failed"))
-        self.assertEqual(st3["S4"]["verdict"], "resolved: higher across sockets")
 
-    def test_linearity(self):
-        # P(K) = (exp(rho_K) - 1) x C / K: equal prices give 0, a fourfold dose at the same rho gives ln(1/4)
+    def test_aa_gate(self):
+        # unresolved means the A/A's raw p above 0.05: a small, consistent offset fails it even
+        # with a half-width far under 1% (three cells would dilute it under Holm)
+        res = _dose_run(RHO)
+        own = {m["round"]: m["workers_cycles_per_req"] for m in res["legs"]
+               if m["arm"] == "own-128" and m["shape"] == "mt-14w-split"}
+        for m in res["legs"]:
+            if m["arm"] == "own-128-A2" and m["shape"] == "mt-14w-split":
+                m["workers_cycles_per_req"] = own[m["round"]] * (1.00095 + (0.0015 if m["round"] % 2 else -0.0015))
+        _, js, st = self.rows(res, _dose_evidence())
+        aa = js["cells"]["B"]["aa"]
+        self.assertLess(aa["hw"], 0.2)
+        self.assertTrue(0.05 / 3 < aa["t_p"] < 0.05, aa["t_p"])  # passes under Holm over three, fails raw
+        self.assertFalse(aa["ok"])
+        # a cell whose A/A fails has no verdict: never a bound, and neither have its contrasts
+        self.assertTrue(st["S2"]["verdict"].startswith("no verdict: cell B A/A failed: half-width "))
+        self.assertNotIn("bound", st["S2"]["verdict"])
+        self.assertTrue(st["S4"]["verdict"].startswith("no verdict: cell B A/A failed"))
+        self.assertNotIn("<=", st["S4"]["verdict"])
+        self.assertEqual(st["S1"]["verdict"], "finding: line transfer")
+        self.assertEqual(st["S5"]["verdict"], "resolved: higher at the larger worker count")
+        # a half-width over 1% fails it too
+        _, js, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
+        self.assertGreater(js["cells"]["A"]["aa"]["hw"], 1.0)
+        self.assertTrue(all(st[k]["verdict"].startswith("no verdict: cell ") for k in st))
+
+    def test_invalid_comparison(self):
+        # an interval entirely below 0: own slower than shared; not a bound, no negative price, no model
+        text, js, st = self.rows(_dose_run(dict(RHO, **{"mt-28w": -0.03})), _dose_evidence())
+        self.assertLess(st["S3"]["w"]["hi"], 0)
+        self.assertEqual(st["S3"]["verdict"], "comparison invalid (own slower than shared)")
+        self.assertEqual(st["S5"]["verdict"], "no verdict: cell D comparison invalid (own slower than shared)")
+        self.assertEqual(st["S4"]["verdict"], "resolved: higher across sockets")
+        self.assertEqual([r["why"] for r in js["model"]["cells"]["D"]], ["comparison invalid (own slower than shared)"])
+        self.assertNotIn("x_pct", js["model"]["cells"]["D"][0])
+        self.assertIn("Cell D has no model row (comparison invalid (own slower than shared))", text)
+        # the two-socket headline then rests on cell B alone
+        self.assertEqual(js["model"]["headline"]["two sockets"], js["model"]["cells"]["B"][0]["x_pct"])
+        # an interval that reaches 0 from below is a bound, not invalid
+        _, _, st = self.rows(_dose_run(dict(RHO, **{"mt-28w": -0.004})), _dose_evidence())
+        self.assertTrue(st["S3"]["verdict"].startswith("bound: rho_D <= "))
+
+    def test_minimum_rounds(self):
+        # 12 valid rounds of own, shared and the A/A arm in a cell for a verdict
+        res = _dose_run(RHO)
+        res["legs"] = [m for m in res["legs"] if not (m["shape"] == "mt-28w" and m["arm"] == "shared-128"
+                                                      and m["round"] > 11)]
+        text, js, st = self.rows(res, _dose_evidence())
+        self.assertEqual(js["cells"]["D"]["valid_rounds"], 11)
+        want = "incomplete, no verdict (cell D: 11 valid rounds of the 12 a verdict needs)"
+        self.assertEqual((st["S3"]["verdict"], st["S5"]["verdict"]), (want, want))
+        self.assertEqual(st["S1"]["verdict"], "finding: line transfer")
+        self.assertEqual(js["model"]["cells"]["D"][0]["why"], experiment.INCOMPLETE)
+        # the A/A arm counts: 12 pairs of own and shared are not enough when the A/A has 11
+        res = _dose_run(RHO)
+        res["legs"] = [m for m in res["legs"] if not (m["shape"] == "mt-14w-one" and m["arm"] == "own-128-A2"
+                                                      and m["round"] > 11)]
+        _, js, st = self.rows(res, _dose_evidence())
+        self.assertEqual((js["cells"]["A"]["valid_rounds"], len(js["cells"]["A"]["rho_rounds"])), (11, 15))
+        self.assertTrue(st["S1"]["verdict"].startswith("incomplete, no verdict (cell A"))
+        self.assertTrue(st["S4"]["verdict"].startswith("incomplete") and st["S5"]["verdict"].startswith("incomplete"))
+        # exactly 12 is enough
+        res = _dose_run(RHO)
+        res["legs"] = [m for m in res["legs"] if not (m["shape"] == "mt-28w" and m["round"] > 12)]
+        _, js, st = self.rows(res, _dose_evidence())
+        self.assertEqual(js["cells"]["D"]["valid_rounds"], 12)
+        self.assertEqual(st["S3"]["verdict"], "finding: line transfer")
+
+    def test_linearity_is_a_description(self):
+        # P(K) = (exp(rho_K) - 1) x C / K on the means; unwidened delta-method interval
         rk = {r: 2.0 + 0.1 * (r % 3 - 1) for r in range(1, 16)}
         rl = {r: 0.5 + 0.02 * (r % 5 - 2) for r in range(1, 16)}
         w = UT.linearity(rk, rl, 540e3, 530e3, 128, 32)
@@ -1342,41 +1402,24 @@ class DoseTableTest(unittest.TestCase):
         cov = sum((x - mk) * (y - ml) for x, y in zip(xs, ys)) / 14
         var = (a * a * UT.stats.stdev(xs) ** 2 + b * b * UT.stats.stdev(ys) ** 2 - 2 * a * b * cov) / 15
         self.assertAlmostEqual(w["se"], 100 * math.sqrt(var))
-        self.assertAlmostEqual(w["width"], 100 * math.sqrt(var + (a * a + b * b) * 0.0034 ** 2))
-        self.assertAlmostEqual(w["hi"] - w["mean"], 1.96 * w["width"])
-        self.assertAlmostEqual(w["hi_unwidened"] - w["mean"], 1.96 * w["se"])
+        self.assertAlmostEqual(w["hi"] - w["mean"], 1.96 * w["se"])  # no widening term
+        self.assertNotIn("p", w)
         same = UT.linearity({r: 2.0 for r in range(1, 16)}, {r: 2.0 for r in range(1, 16)}, 500e3, 500e3, 128, 32)
         self.assertAlmostEqual(same["mean"], 100 * math.log(0.25))
-        # a price that is not positive: no verdict, never a logarithm of a negative number
         neg = UT.linearity(rk, {r: -0.2 for r in rk}, 540e3, 530e3, 128, 32)
         self.assertEqual((neg["mean"], neg["why"]), (None, "the price is not positive at Klow"))
         self.assertIsNone(UT.linearity({1: 2.0}, {1: 0.5}, 1.0, 1.0, 128, 32)["mean"])
-        # in the table: linear when the widened interval contains 0
-        text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
-        w = st["S6"]["w"]
-        self.assertTrue(w["lo"] <= 0 <= w["hi"])
-        self.assertTrue(st["S6"]["linear"])
-        self.assertTrue(st["S6"]["verdict"].startswith("linear: the widened interval contains 0"))
-        self.assertIn("it fails to show a departure", text)
-        self.assertIn("every cell uses the price at K", text)
-        # a far cheaper update at the low dose (rho at K / 4 as large as at K): not linear,
-        # and the model row of the low dose's cell uses the Klow price and says so
+        # in the table: described, never a statement, whatever it shows
+        for rho_low, needle in ((0.005, "Linearity in cell A (a description, not a statement): on the means"),
+                                (-0.004, "not computable (the price is not positive at Klow)")):
+            text, js, st = self.rows(_dose_run(RHO, rho_low=rho_low), _dose_evidence())
+            self.assertIn(needle, text)
+            self.assertEqual(len(st), 5)
+            self.assertFalse([r for r in st.values() if r["kind"] == "linearity"])
         text, js, st = self.rows(_dose_run(dict(RHO, **{"mt-14w-one": 0.3}), rho_low=0.3), _dose_evidence())
-        self.assertFalse(st["S6"]["linear"])
-        self.assertTrue(st["S6"]["verdict"].startswith("not linear: P(K) / P(Klow) = 0.2"))
-        self.assertIn("the model row uses the Klow price", st["S6"]["verdict"])
-        m = js["model"]["cells"]
-        self.assertEqual(m["A"]["price_basis"], "Klow = 32 (not linear)")
-        self.assertAlmostEqual(m["A"]["P"], js["low"]["price"]["hi"])
-        self.assertEqual(m["B"]["price_basis"], "K = 128 (no Klow arm in this cell)")
-        self.assertAlmostEqual(m["B"]["P"], js["cells"]["B"]["price"]["hi"])
-        self.assertIn("the low dose's cell uses the Klow price", text)
-        # the Klow pair's A/A is the cell's own-K A/A
-        _, _, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
-        self.assertTrue(st["S6"]["verdict"].startswith("no verdict: the cell's A/A failed"))
-        # a low-dose price that is not positive
-        _, _, st = self.rows(_dose_run(RHO, rho_low=-0.004), _dose_evidence())
-        self.assertEqual(st["S6"]["verdict"], "no verdict: the price is not positive at Klow")
+        self.assertAlmostEqual(js["low"]["lin"]["price_k"] / js["low"]["lin"]["price_low"], 0.25 * 540 / 530, delta=0.02)
+        self.assertLess(js["low"]["lin"]["hi"], 0)  # far from linear, and still only described
+        self.assertEqual(st["S1"]["verdict"], "finding: line transfer")
 
     def test_not_called_line_transfer(self):
         res = _dose_run(RHO)
@@ -1402,13 +1445,6 @@ class DoseTableTest(unittest.TestCase):
         self.assertTrue(st["S3"]["verdict"].startswith("bound: rho_D <= "))
         self.assertEqual(st["S2"]["verdict"], "finding: line transfer")
         self.assertIn("is a bound on rho, not evidence of no cost", text)
-        # a failed A/A (half-width over 1%): the cell is a bound, its contrasts carry no verdict
-        _, js, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
-        self.assertFalse(js["cells"]["A"]["aa"]["ok"])
-        self.assertGreater(js["cells"]["A"]["aa"]["hw"], 1.0)
-        self.assertTrue(st["S1"]["verdict"].startswith("bound: rho_A <= "))
-        self.assertIn("A/A gate failed", st["S1"]["verdict"])
-        self.assertTrue(st["S4"]["verdict"].startswith("no verdict: an A/A of its cells failed"))
         # an estimate over 1% but inside the A/A's reach is a bound too
         res = _dose_run({"mt-14w-one": 0.012, "mt-14w-split": 0.05, "mt-28w": 0.02})
         own = {m["round"]: m["workers_cycles_per_req"] for m in res["legs"]
@@ -1418,7 +1454,7 @@ class DoseTableTest(unittest.TestCase):
                 m["workers_cycles_per_req"] = own[m["round"]] * (1.005 + (0.016 if m["round"] % 2 else -0.016))
         _, js, st = self.rows(res, _dose_evidence())
         aa = js["cells"]["A"]["aa"]
-        self.assertTrue(aa["ok"] and aa["hw"] <= 1.0)
+        self.assertTrue(aa["ok"] and aa["hw"] <= 1.0 and aa["t_p"] > 0.05)
         self.assertGreater(st["S1"]["w"]["mean"], 1.0)
         self.assertGreater(aa["reach"], st["S1"]["w"]["mean"])
         self.assertIn("within the A/A's reach", st["S1"]["verdict"])
@@ -1429,31 +1465,43 @@ class DoseTableTest(unittest.TestCase):
         res["metadata"]["incomplete"] = True
         text, js, st = self.rows(res, _dose_evidence())
         self.assertEqual({r["verdict"] for r in st.values()}, {experiment.INCOMPLETE})
-        self.assertEqual(len(st), 6)
-        self.assertNotIn("headline", js["model"])
+        self.assertEqual(len(st), 5)
+        self.assertEqual(js["model"]["headline"], {})
         self.assertIn("no model row", text)
 
     def test_model_row(self):
-        text, js, _ = self.rows(_dose_run(RHO), _dose_evidence())
+        text, js, st = self.rows(_dose_run(RHO), _dose_evidence())
         self.assertIn("## Model row for the plain config (a MODEL, not a measurement)", text)
+        # P from the widened interval's upper end of rho, times own cycles, over the counters
+        self.assertAlmostEqual(UT.model_price({"hi": 2.5}, 500e3, 128), math.expm1(0.025) * 500e3 / 128)
+        self.assertIsNone(UT.model_price({"n": 1, "mean": 2.0}, 500e3, 128))
+        self.assertIsNone(UT.model_price({"hi": 2.5}, None, 128))
+        for cell, i in (("A", "S1"), ("B", "S2"), ("D", "S3")):
+            m, e, c = js["model"]["cells"][cell][0], js["evidence"][cell], js["cells"][cell]
+            self.assertEqual(m["dose"], 128)
+            self.assertAlmostEqual(m["P"], math.expm1(st[i]["w"]["hi"] / 100.0) * c["own_k"] / 128)
+            self.assertGreater(m["P"], c["price"]["hi"])  # wider than the plain t interval of the price
+            self.assertAlmostEqual(m["T"], e["hitm_base_minus_reject"]["hi"] / e["h"])
+            self.assertAlmostEqual(m["x_pct"], 100 * m["T"] * m["P"] / 540e3)
+            self.assertFalse(m["T_above_ops"])
+        self.assertAlmostEqual(js["evidence"]["B"]["h"], 1.2, delta=0.05)
+        self.assertAlmostEqual(js["evidence"]["B"]["stat_ops_per_req"], 29.0)
+        # cell A quotes both prices: at K and at Klow
+        a = js["model"]["cells"]["A"]
+        self.assertEqual([r["dose"] for r in a], [128, 32])
+        self.assertAlmostEqual(a[1]["P"], math.expm1(js["low"]["rho"]["hi"] / 100.0) * js["low"]["own_k"] / 32)
+        self.assertEqual([len(js["model"]["cells"][c]) for c in ("B", "D")], [1, 1])
+        self.assertIn("cell A %.2f%% with the price at 128 counters; cell A %.2f%% with the price at 32 counters" % (
+            a[0]["x_pct"], a[1]["x_pct"]), text)
         # one-socket and two-socket figures apart, each marked a model
         self.assertIn("**MODEL, one socket:** sharing store stats across 14 workers (cell A), 36% busy, costs at "
                       "most ", text)
         self.assertIn("**MODEL, two sockets:** sharing store stats across 14 workers (cell B) and 28 workers (cell D), "
                       "36-38% busy, costs at most ", text)
         self.assertEqual(text.count("not measured in the plain config"), 2)
-        self.assertEqual(js["model"]["headline"]["one socket"], js["model"]["cells"]["A"]["x_pct"])
+        self.assertEqual(js["model"]["headline"]["one socket"], max(r["x_pct"] for r in a))
         self.assertEqual(js["model"]["headline"]["two sockets"],
-                         max(js["model"]["cells"][c]["x_pct"] for c in ("B", "D")))
-        self.assertEqual([js["model"]["cells"][c]["sockets"] for c in ("A", "B", "D")], [1, 2, 2])
-        m, e, c = js["model"]["cells"]["B"], js["evidence"]["B"], js["cells"]["B"]
-        self.assertAlmostEqual(e["h"], 1.2, delta=0.05)
-        self.assertAlmostEqual(m["T"], e["hitm_base_minus_reject"]["hi"] / e["h"])
-        self.assertAlmostEqual(m["P"], c["price"]["hi"])
-        self.assertAlmostEqual(m["x_pct"], 100 * m["T"] * m["P"] / 540e3)
-        self.assertEqual(m["price_basis"], "K = 128")
-        self.assertFalse(m["T_above_ops"])
-        self.assertAlmostEqual(e["stat_ops_per_req"], 29.0)
+                         max(js["model"]["cells"][c][0]["x_pct"] for c in ("B", "D")))
         # without the evidence legs there is no model row, and the text says what is missing
         text, js, _ = self.rows(_dose_run(RHO))
         self.assertIn("No evidence legs given", text)
@@ -1461,8 +1509,12 @@ class DoseTableTest(unittest.TestCase):
         self.assertNotIn("**MODEL", text)
         # h not positive: no model
         text, js, _ = self.rows(_dose_run(RHO), _dose_evidence(h=-0.1))
-        self.assertEqual(js["model"]["cells"]["A"]["why"], "h is not positive")
+        self.assertEqual(js["model"]["cells"]["A"][0]["why"], "h is not positive")
         self.assertIn("no model row", text)
+        # a cell without a verdict (its A/A failed) has no model row either
+        text, js, _ = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
+        self.assertEqual(js["model"]["cells"]["B"][0]["why"], "the cell has no verdict (A/A failed)")
+        self.assertEqual(js["model"]["headline"], {})
 
     def test_hitm_needs_both_events(self):
         self.assertIsNone(UT.hitm_per_req({"per_req": {"events": {HITM_U[0]: 3.0}}}))
@@ -1728,7 +1780,7 @@ class ArmShapesTest(unittest.TestCase):
         self.assertEqual(len(res["legs"]), 165)
         self.assertEqual((res["metadata"]["rounds_complete"], res["metadata"]["incomplete"]), (15, False))
         text, js = UT.render(res)
-        self.assertEqual(len(js["statements"]), 6)
+        self.assertEqual(len(js["statements"]), 5)
 
 
 class ConfigEvidenceHarnessTest(unittest.TestCase):
