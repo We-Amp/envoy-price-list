@@ -2517,5 +2517,53 @@ class PilotOrderTest(unittest.TestCase):
         self.assertTrue(any(".rr1" in m["leg_id"] for m in res["legs"]))
 
 
+class ShortRunAndHotCounterTest(unittest.TestCase):
+    """Short run: 6 rounds, and the exploratory pair whose K increments go to one counter."""
+
+    def rows(self, res, ev=None):
+        text, js = UT.render(res, None, ev)
+        return text, js, {r["id"]: r for r in js["statements"]}
+
+    def test_hot_logger_config(self):
+        hot = envoy_config.stats_access_log({"counters": 128, "tag": "%DOWNSTREAM_LOCAL_PORT%", "hot": True})
+        spread = envoy_config.stats_access_log({"counters": 128, "tag": "%DOWNSTREAM_LOCAL_PORT%"})
+        hc, sc = hot["typed_config"]["counters"], spread["typed_config"]["counters"]
+        # 128 entries of the same counter: the same name, tag and value in every entry
+        self.assertEqual(len(hc), 128)
+        self.assertEqual(hc, [sc[0]] * 128)
+        self.assertEqual(len({json.dumps(c, sort_keys=True) for c in sc}), 128)
+        # apart from the names the two configs are the same: scope, tag, value per entry, entry count
+        self.assertEqual(json.loads(json.dumps(hot).replace('"c000"', '"x"')),
+                         json.loads(__import__("re").sub(r'"c\d\d\d"', '"x"', json.dumps(spread))))
+        self.assertEqual(envoy_config.stats_access_log({"counters": 2, "tag": "%DOWNSTREAM_LOCAL_PORT%", "hot": False}),
+                         envoy_config.stats_access_log({"counters": 2, "tag": "%DOWNSTREAM_LOCAL_PORT%"}))
+        for bad in ({"counters": 2, "tag": "%DOWNSTREAM_LOCAL_PORT%", "hot": "yes"},
+                    {"counters": 2, "tag": "%DOWNSTREAM_LOCAL_PORT%", "hot": True, "x": 1}, {"counters": 2, "hot": True}):
+            with self.assertRaises(ValueError, msg=bad):
+                envoy_config.stats_access_log(bad)
+
+    def test_rotation_block(self):
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "u-hi.json"))
+        exp.pop("uncalibrated", None)
+        self.assertEqual(experiment.order_period(exp), 3)
+        exp.update(rounds=4, rounds_block=4, rounds_max=4)
+        self.assertTrue(any("multiple of 3" in e for e in experiment.validate(exp, allow_short=True)))
+        exp["rotation_block"] = 2
+        self.assertEqual(experiment.order_period(exp), 2)
+        self.assertEqual(experiment.validate(exp, allow_short=True), [])
+        for bad in (0, -1, 1.5, True, "3"):
+            exp["rotation_block"] = bad
+            self.assertTrue(any("rotation_block" in e for e in experiment.validate(exp, allow_short=True)), bad)
+        # rounds count as complete in blocks of that size
+        exp["rotation_block"] = 2
+        legs = [{"round": r, "shape": sh["name"], "arm": a["name"], "verdict": {"valid": True}}
+                for r, sh, a in experiment.schedule(exp)]
+        self.assertEqual(experiment.complete_rounds(exp, legs), 4)
+        self.assertEqual(experiment.complete_rounds(exp, [m for m in legs if m["round"] < 4]), 2)
+        # without it nothing changes for the existing runs
+        for fn in ("u.json", "u-hi.json", "u-hitm.json"):
+            self.assertNotIn("rotation_block", json.load(open(os.path.join(MT, "bench-x86_64", fn))))
+
+
 if __name__ == "__main__":
     unittest.main()

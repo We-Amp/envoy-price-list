@@ -136,7 +136,9 @@ SETTINGS = {
     "stats_access_log": "stats access logger on the HCM (envoy.access_loggers.stats): {counters: K, tag: "
                         "%DOWNSTREAM_LOCAL_PORT% (one counter object per counter) | %DOWNSTREAM_REMOTE_PORT% (one "
                         "per counter and downstream connection)}: K counters dose.c000.. each incremented by 1 "
-                        "per request, tag `port`; no scope limit, no eviction",
+                        "per request, tag `port`; no scope limit, no eviction. hot: true lists the one counter "
+                        "dose.c000 K times instead (the logger keeps every entry and looks up and adds once per "
+                        "entry): the same K lookups and adds per request, all on one counter object",
     "stats_reject_all": "true: stats_config.stats_matcher.reject_all (every stat becomes a null object)",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
@@ -335,8 +337,10 @@ def stats_access_log(sl):
     deprecated stat_prefix and stats_scope must be set (stats_scope here, with only its prefix:
     max_counters unset means no limit, enable_eviction false); a counter needs value_format or
     value_fixed (value_fixed 1 here: no formatter runs for the value)."""
-    if not isinstance(sl, dict) or set(sl) != {"counters", "tag"}:
-        raise ValueError("stats_access_log takes {counters, tag}")
+    if not isinstance(sl, dict) or not {"counters", "tag"} <= set(sl) <= {"counters", "tag", "hot"}:
+        raise ValueError("stats_access_log takes {counters, tag} and optionally hot")
+    if sl.get("hot", False) not in (True, False):
+        raise ValueError("stats_access_log.hot must be true or false")
     n = sl["counters"]
     if isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= STATS_LOG_MAX_COUNTERS:
         raise ValueError("stats_access_log.counters must be an integer from 1 to %d" % STATS_LOG_MAX_COUNTERS)
@@ -345,7 +349,11 @@ def stats_access_log(sl):
     return {"name": "envoy.access_loggers.stats", "typed_config": {
         "@type": STATS_LOG, "stats_scope": {"prefix": STATS_LOG_SCOPE},
         "counters": [{"stat": {"name": name, "tags": [{"name": STATS_LOG_TAG, "value_format": sl["tag"]}]},
-                      "value_fixed": 1} for name in stats_access_log_names(n)]}}
+                      "value_fixed": 1}
+                     # hot: the first counter, n times. The logger (stats.cc at v1.40.2) builds one
+                     # entry per configured counter with no check for repeats and, per request, walks
+                     # the entries: one tag format, one lookup and one add each.
+                     for name in ([stats_access_log_names(1)[0]] * n if sl.get("hot") else stats_access_log_names(n))]}}
 
 
 def stats_sink(sk, envoy_cfg):

@@ -312,6 +312,11 @@ def order_period(exp):
     run in some shapes only, under a Latin order: in every shape, the least common multiple of
     the shapes' arm counts)."""
     o = effective_order(exp)
+    if exp.get("rotation_block"):
+        # a short run: fewer rounds than the full rotation takes. Rounds count as complete in
+        # blocks of this size; the arms of a shape with more arms than rounds then get distinct
+        # positions, not every position
+        return int(exp["rotation_block"])
     if o == "fixed":
         return 1
     if o == "latin" and restricted(exp):
@@ -431,6 +436,9 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env must be an object" % a.get("name"))
         if "hop2_env" in a and not arm_settings(a).get("two_hop"):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
+    rb = exp.get("rotation_block")
+    if rb is not None and (isinstance(rb, bool) or not isinstance(rb, int) or rb < 1):
+        errs.append("rotation_block must be a positive integer")
     for w in exp.get("avoid_utc") or []:
         try:
             ok = 0 <= _hm(w["from"]) < _hm(w["to"]) <= 86400 and float(w.get("leg_s", 0)) >= 0
