@@ -64,10 +64,11 @@ a spare core.
                  uncalibrated. A shape at other than 16 connections per worker is mt-<rung>-c<c>.
                    dose-pilot.json     one round: base and own/shared at every K of
                                        dose.counters_choices in cell A; a loopback pair at the
-                                       middle K; own/shared at the middle K at 16 and 4
+                                       middle K; own/shared at the middle K at 16 and 8
                                        connections per worker in cells A and D; the load cell
-                                       (exploratory); the HITM events (dose_pilot.py prints the
-                                       answers and writes the record the queue checks)
+                                       (exploratory); the deciding legs first, never stopped
+                                       by invalid legs; the HITM events (dose_pilot.py prints
+                                       the answers and writes the record the queue checks)
                    smoke-dose.json     one round of dose.json (evidence recorded)
                    dose.json           15 fixed rounds, 11 legs per round
                    dose-evidence.json  evidence legs outside the timed run: base,
@@ -535,50 +536,64 @@ def dose_configs(box, rates):
 
 
 def dose_pilot_config(box, cfg, cell, no_dose):
-    """The pilot (it does not depend on the choices it informs). One round of:
-      base and own/shared at every K of the choice list in the K cell (wildcard listener, the
-        first connection count): the K rule;
-      one loopback own/shared pair at the middle K there (exploratory: the size of the shared
-        local-address object's effect);
-      own/shared at the middle K at every connection count in the connection cells (the
-        footprint of own; the 28-worker client gates);
-      own/shared at the middle K in the exploratory cells.
+    """The pilot (it does not depend on the choices it informs). One round, in this order, so
+    that the legs that decide run first whatever fails later:
+      1. the K cell at the first connection count, wildcard listener: base, then own/shared at
+         every K of the choice list (the K rule);
+      2. own/shared at the middle K in the other connection cells at that count (the 28-worker
+         client gates), then in every connection cell at the other count (the footprint of own);
+      3. one loopback own/shared pair at the middle K (exploratory: the size of the shared
+         local-address object's effect), in a shape of its own so that it runs here;
+      4. own/shared at the middle K in the exploratory cells.
+    Arms run in the listed order (order fixed), an invalid leg is not re-run and consecutive
+    invalid legs do not stop the run: a pilot is there to find out which shapes fail.
     `pairs` names every own/shared pair with its cell, connection count, K and role."""
     d = box["dose"]
     p = d["pilot"]
     ks, mid, c0 = d["counters_choices"], p["mid"], p["connections"][0]
-    shapes, seen = [], set()
+    shapes = []
     for kc in p["connections"]:
-        for s in dose_shapes(box, p["connection_cells"], kc):
-            shapes.append(s)
-    shapes += dose_shapes(box, p["exploratory_cells"], c0)
-    name = {(s["cell"], s["connections_per_worker"]): s["name"] for s in shapes}
-    kshape = name[(p["k_cell"], c0)]
-    lshape = name[(p["loopback_cell"], c0)]
+        shapes += dose_shapes(box, p["connection_cells"], kc)
+    first = [s for s in shapes if s["cell"] == p["k_cell"] and s["connections_per_worker"] == c0]
+    shapes = first + [s for s in shapes if s not in first]
+    kshape = first[0]["name"]
+    lo = dict(json.loads(json.dumps([s for s in shapes if s["cell"] == p["loopback_cell"]
+                                     and s["connections_per_worker"] == c0][0])))
+    lo.update(name=lo["name"] + "-lo", loopback=True)
+    expl = dose_shapes(box, p["exploratory_cells"], c0)
+    wild = [s["name"] for s in shapes + expl]
+    shapes = shapes + [lo] + expl
 
     def arms(port, shp):
         out = [dict(arm(box, "base", ev=BASE_EVIDENCE + [no_dose]), shapes=[kshape])]
         for n in ks:
             for kind in ("own", "shared"):
-                out.append(dose_arm(box, kind, n, port, shp, only=None if n == mid else [kshape]))
+                out.append(dose_arm(box, kind, n, port, shp, only=wild if n == mid else [kshape]))
         for kind in ("own", "shared"):
-            out.append(dict(dose_arm(box, kind, mid, port, shp, "-lo", only=[lshape], address=DOSE_LOOPBACK),
+            out.append(dict(dose_arm(box, kind, mid, port, shp, "-lo", only=[lo["name"]], address=DOSE_LOOPBACK),
                             exploratory=True))
         return out
     pairs = []
     for n in ks:
         pairs.append({"cell": p["k_cell"], "shape": kshape, "connections": c0, "k": n, "own": "own-%d" % n,
                       "shared": "shared-%d" % n, "address": d["listener_address"], "role": "k"})
-    pairs.append({"cell": p["loopback_cell"], "shape": lshape, "connections": c0, "k": mid, "own": "own-%d-lo" % mid,
-                  "shared": "shared-%d-lo" % mid, "address": DOSE_LOOPBACK, "role": "loopback", "exploratory": True})
     for s in shapes:
         if s["name"] == kshape:
             continue
-        expl = s["cell"] in p["exploratory_cells"]
+        if s.get("loopback"):
+            pairs.append({"cell": s["cell"], "shape": s["name"], "connections": c0, "k": mid, "own": "own-%d-lo" % mid,
+                          "shared": "shared-%d-lo" % mid, "address": DOSE_LOOPBACK, "role": "loopback",
+                          "exploratory": True})
+            continue
+        ex = s["cell"] in p["exploratory_cells"]
         pairs.append(dict({"cell": s["cell"], "shape": s["name"], "connections": s["connections_per_worker"], "k": mid,
                            "own": "own-%d" % mid, "shared": "shared-%d" % mid, "address": d["listener_address"],
-                           "role": "load" if expl else "connections"}, **({"exploratory": True} if expl else {})))
+                           "role": "load" if ex else "connections"}, **({"exploratory": True} if ex else {})))
     pilot = cfg("mt-dose-pilot-" + box["name"], arms, "own-%d" % mid, shapes, 1, smoke=True, evidence_mode="record",
+                # the listed order; every leg once; never stopped by invalid legs (17 legs)
+                order="fixed", shape_order="fixed", rerun_invalid=0, abort_after_invalid=1000,
+                # no arm runs in every shape (the loopback pair has its own): rows between the arms of a shape
+                comparisons="all_pairs",
                 dose={"rates_key": d["rates_key"], "counters_choices": ks, "connections_choices": d["connections_choices"],
                       "mid": mid, "k_cell": p["k_cell"], "connection_cells": p["connection_cells"],
                       "cells": [cell(s, **({"exploratory": True} if s["cell"] in p["exploratory_cells"] else {}))

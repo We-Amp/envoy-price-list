@@ -163,7 +163,7 @@
    ],
    "placeholder_counters": 128,
    "connections_choices": [
-    4,
+    8,
     16
    ],
    "placeholder_connections": 16,
@@ -200,10 +200,11 @@
     {
      "cell": "C",
      "rung": "7w-one",
-     "rate_per_worker": 3000,
+     "rate_per_worker": 2200,
      "role": "load",
      "sockets": 1,
-     "exploratory": true
+     "exploratory": true,
+     "rate_note": "3,000 per worker ran the workers at 81% busy with the K = 128 logger (pilot attempt 1: about 706k worker cycles per request against 540k without it) and failed the client gates; 2,200 aims at 60-68% busy; the total is then 15,400, not the other cells' 21,000"
     }
    ],
    "slot_cells": [
@@ -228,7 +229,7 @@
     "mid": 128,
     "connections": [
      16,
-     4
+     8
     ],
     "connection_cells": [
      "A",
@@ -237,6 +238,13 @@
     "loopback_cell": "A",
     "exploratory_cells": [
      "C"
+    ],
+    "order_note": "shapes in this order, arms as listed, no re-run of an invalid leg and no stop after consecutive invalid legs: the deciding 16-connection legs of cells A and D, then the other connection count, then the loopback pair, then the exploratory cell",
+    "attempts": [
+     {
+      "harness": "bba256c",
+      "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+     }
     ]
    },
    "pilot_rule": {
@@ -329,11 +337,11 @@
   "stub_status": true
  },
  "audit": "mt-s",
- "order": "latin",
- "shape_order": "latin",
+ "order": "fixed",
+ "shape_order": "fixed",
  "order_seed": 41,
  "primary_metric": "workers_cycles_per_req",
- "comparisons": "base",
+ "comparisons": "all_pairs",
  "base_arm": "own-128",
  "arms": [
   {
@@ -592,18 +600,18 @@
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 7168,
-     "max": 14336,
-     "shape": "mt-14w-one-c4",
-     "label": "128 dose counters per connection (56 connections; the warm-up client's stay)"
+     "min": 14336,
+     "max": 28672,
+     "shape": "mt-14w-one-c8",
+     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.start_n",
      "scope": "field",
-     "min": 14336,
-     "max": 28672,
-     "shape": "mt-28w-c4",
-     "label": "128 dose counters per connection (112 connections; the warm-up client's stay)"
+     "min": 28672,
+     "max": 57344,
+     "shape": "mt-28w-c8",
+     "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
     },
     {
      "stat": "stat_count.start_n",
@@ -640,6 +648,13 @@
      "max": 128.5,
      "label": "128 increments per request over all dose counters (within 0.5)"
     }
+   ],
+   "shapes": [
+    "mt-14w-one",
+    "mt-28w",
+    "mt-14w-one-c8",
+    "mt-28w-c8",
+    "mt-7w-one"
    ]
   },
   {
@@ -718,6 +733,13 @@
      "max": 128.5,
      "label": "128 increments per request over all dose counters (within 0.5)"
     }
+   ],
+   "shapes": [
+    "mt-14w-one",
+    "mt-28w",
+    "mt-14w-one-c8",
+    "mt-28w-c8",
+    "mt-7w-one"
    ]
   },
   {
@@ -928,7 +950,7 @@
      "scope": "field",
      "min": 28672,
      "max": 57344,
-     "shape": "mt-14w-one",
+     "shape": "mt-14w-one-lo",
      "label": "128 dose counters per connection (224 connections; the warm-up client's stay)"
     },
     {
@@ -960,7 +982,7 @@
     }
    ],
    "shapes": [
-    "mt-14w-one"
+    "mt-14w-one-lo"
    ],
    "exploratory": true
   },
@@ -1042,7 +1064,7 @@
     }
    ],
    "shapes": [
-    "mt-14w-one"
+    "mt-14w-one-lo"
    ],
    "exploratory": true
   }
@@ -1089,33 +1111,13 @@
    "connections_per_worker": 16
   },
   {
-   "name": "mt-14w-one-c4",
+   "name": "mt-14w-one-c8",
    "path": "/s",
    "kind": "proxied",
    "body_bytes": 4096,
    "rps": 21000,
    "workers": 14,
    "worker_cpus": "0-13",
-   "main_cpu": 19,
-   "client_concurrency": 14,
-   "client_connections_per_worker": 4,
-   "client_extra_args": [
-    "--rate-limiter-plugin-config",
-    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
-   ],
-   "lead_in_s": 3,
-   "admin_timeout_s": 30,
-   "cell": "A",
-   "connections_per_worker": 4
-  },
-  {
-   "name": "mt-28w-c4",
-   "path": "/s",
-   "kind": "proxied",
-   "body_bytes": 4096,
-   "rps": 42000,
-   "workers": 28,
-   "worker_cpus": "0-13,20-33",
    "main_cpu": 19,
    "client_concurrency": 14,
    "client_connections_per_worker": 8,
@@ -1125,15 +1127,56 @@
    ],
    "lead_in_s": 3,
    "admin_timeout_s": 30,
+   "cell": "A",
+   "connections_per_worker": 8
+  },
+  {
+   "name": "mt-28w-c8",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 42000,
+   "workers": 28,
+   "worker_cpus": "0-13,20-33",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
    "cell": "D",
-   "connections_per_worker": 4
+   "connections_per_worker": 8
+  },
+  {
+   "name": "mt-14w-one-lo",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 21000,
+   "workers": 14,
+   "worker_cpus": "0-13",
+   "main_cpu": 19,
+   "client_concurrency": 14,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3,
+   "admin_timeout_s": 30,
+   "cell": "A",
+   "connections_per_worker": 16,
+   "loopback": true
   },
   {
    "name": "mt-7w-one",
    "path": "/s",
    "kind": "proxied",
    "body_bytes": 4096,
-   "rps": 21000,
+   "rps": 15400,
    "workers": 7,
    "worker_cpus": "0-6",
    "main_cpu": 19,
@@ -1163,6 +1206,8 @@
  ],
  "smoke": true,
  "evidence_mode": "record",
+ "rerun_invalid": 0,
+ "abort_after_invalid": 1000,
  "dose": {
   "rates_key": "bench-x86_64-dose-1",
   "counters_choices": [
@@ -1171,7 +1216,7 @@
    256
   ],
   "connections_choices": [
-   4,
+   8,
    16
   ],
   "mid": 128,
@@ -1203,23 +1248,33 @@
    },
    {
     "cell": "A",
-    "shape": "mt-14w-one-c4",
+    "shape": "mt-14w-one-c8",
     "rung": "14w-one",
     "role": "reference",
     "sockets": 1,
     "workers": 14,
     "rate_per_worker": 1500,
-    "connections": 4
+    "connections": 8
    },
    {
     "cell": "D",
-    "shape": "mt-28w-c4",
+    "shape": "mt-28w-c8",
     "rung": "28w",
     "role": "workers",
     "sockets": 2,
     "workers": 28,
     "rate_per_worker": 1500,
-    "connections": 4
+    "connections": 8
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one-lo",
+    "rung": "14w-one",
+    "role": "reference",
+    "sockets": 1,
+    "workers": 14,
+    "rate_per_worker": 1500,
+    "connections": 16
    },
    {
     "cell": "C",
@@ -1228,7 +1283,7 @@
     "role": "load",
     "sockets": 1,
     "workers": 7,
-    "rate_per_worker": 3000,
+    "rate_per_worker": 2200,
     "connections": 16,
     "exploratory": true
    }
@@ -1265,17 +1320,6 @@
     "role": "k"
    },
    {
-    "cell": "A",
-    "shape": "mt-14w-one",
-    "connections": 16,
-    "k": 128,
-    "own": "own-128-lo",
-    "shared": "shared-128-lo",
-    "address": "127.0.0.1",
-    "role": "loopback",
-    "exploratory": true
-   },
-   {
     "cell": "D",
     "shape": "mt-28w",
     "connections": 16,
@@ -1287,8 +1331,8 @@
    },
    {
     "cell": "A",
-    "shape": "mt-14w-one-c4",
-    "connections": 4,
+    "shape": "mt-14w-one-c8",
+    "connections": 8,
     "k": 128,
     "own": "own-128",
     "shared": "shared-128",
@@ -1297,13 +1341,24 @@
    },
    {
     "cell": "D",
-    "shape": "mt-28w-c4",
-    "connections": 4,
+    "shape": "mt-28w-c8",
+    "connections": 8,
     "k": 128,
     "own": "own-128",
     "shared": "shared-128",
     "address": "0.0.0.0",
     "role": "connections"
+   },
+   {
+    "cell": "A",
+    "shape": "mt-14w-one-lo",
+    "connections": 16,
+    "k": 128,
+    "own": "own-128-lo",
+    "shared": "shared-128-lo",
+    "address": "127.0.0.1",
+    "role": "loopback",
+    "exploratory": true
    },
    {
     "cell": "C",

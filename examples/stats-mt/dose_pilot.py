@@ -14,7 +14,7 @@ marked exploratory (the loopback pair, the load cell) is printed and never decid
      (the legs' own evidence items decide).
   2. Per pair, one round each (labelled as such): instructions:u per request shared against own
      (equal within 0.5%); h = HITM:u (shared - own) per request / K (expected 1.0-1.4, not
-     gated); rho = 100 x ln(shared / own) of worker cycles per request; clean L3 hits per update
+     gated), with its parts: local and remote HITM loads per request of own and of shared; rho = 100 x ln(shared / own) of worker cycles per request; clean L3 hits per update
      (L3 hits minus local HITM loads, per request and counter), own minus shared: the footprint
      of the own arm's per-connection counter sets.
   3. K: the smallest of the choices with h x K x 100 cycles / own worker cycles per request
@@ -70,6 +70,13 @@ def clean_l3(m, k):
     e = ((m or {}).get("per_req") or {}).get("events") or {}
     hit, hitm = u_table.ev_get(e, L3_HIT), u_table.ev_get(e, u_table.HITM[0])
     return None if hit is None or hitm is None else (hit - hitm) / k
+
+
+def hitm_parts(m):
+    """(local, remote) HITM loads per request of a leg, either event spelling; None where an
+    event was not counted."""
+    e = ((m or {}).get("per_req") or {}).get("events") or {}
+    return u_table.ev_get(e, u_table.HITM[0]), u_table.ev_get(e, u_table.HITM[1])
 
 
 def runs_in(arm, shape):
@@ -161,7 +168,9 @@ def answers(cfg, res, overflow=None):
         io, ish, co, cs_ = _ins(own), _ins(sh), _cyc(own), _cyc(sh)
         ho, hs = u_table.hitm_per_req(own or {}), u_table.hitm_per_req(sh or {})
         lo, ls = clean_l3(own, p["k"]), clean_l3(sh, p["k"])
-        row = dict(p, own_cycles=co,
+        row = dict(p, own_cycles=co, shared_cycles=cs_, own_instructions=io,
+                   hitm_own=dict(zip(("local", "remote"), hitm_parts(own))),
+                   hitm_shared=dict(zip(("local", "remote"), hitm_parts(sh))),
                    instr_pct=100.0 * math.log(ish / io) if io and ish else None,
                    h=(hs - ho) / p["k"] if ho is not None and hs is not None else None,
                    rho_pct=100.0 * math.log(cs_ / co) if co and cs_ else None,
@@ -185,7 +194,7 @@ def answers(cfg, res, overflow=None):
     kp = [r for r in pairs if r["role"] == "k"]
     hs = [r["h"] for r in kp if r["h"] is not None]
     hm = sum(hs) / len(hs) if kp and len(hs) == len(kp) else None
-    rows = [{"k": r["k"], "own_cycles": r["own_cycles"],
+    rows = [{"k": r["k"], "own_cycles": r["own_cycles"], "rho_pct": r["rho_pct"],
              "share": hm * r["k"] * rule["cycles_per_transfer"] / r["own_cycles"] if hm is not None and r["own_cycles"]
              else None,
              "share_own_h": r["h"] * r["k"] * rule["cycles_per_transfer"] / r["own_cycles"]
@@ -255,6 +264,15 @@ def text(rep, cfg):
             "" if r["h_expected"] in (True, None) else " (outside the expected range)", _f(r["rho_pct"], "%+.2f"),
             _f(r["clean_l3_own"], "%.4f"), _f(r["clean_l3_shared"], "%.4f"), _f(r["footprint"], "%+.4f"),
             " (exploratory)" if r.get("exploratory") else ""))
+        L.append("         h's parts, HITM:u loads per request: own local %s remote %s, shared local %s remote %s; "
+                 "(shared - own) local %s remote %s; worker cycles own %s shared %s, instructions:u own %s" % (
+                     _f(r["hitm_own"]["local"], "%.2f"), _f(r["hitm_own"]["remote"], "%.2f"),
+                     _f(r["hitm_shared"]["local"], "%.2f"), _f(r["hitm_shared"]["remote"], "%.2f"),
+                     _f(None if r["hitm_own"]["local"] is None or r["hitm_shared"]["local"] is None
+                        else r["hitm_shared"]["local"] - r["hitm_own"]["local"], "%+.2f"),
+                     _f(None if r["hitm_own"]["remote"] is None or r["hitm_shared"]["remote"] is None
+                        else r["hitm_shared"]["remote"] - r["hitm_own"]["remote"], "%+.2f"),
+                     _f(r["own_cycles"], "%.0f"), _f(r["shared_cycles"], "%.0f"), _f(r["own_instructions"], "%.0f")))
     lb = [r for r in rep["pairs"] if r["role"] == "loopback"]
     wc = [r for r in rep["pairs"] if r["role"] == "k" and lb and r["k"] == lb[0]["k"]]
     if lb and wc and lb[0]["h"] is not None and wc[0]["h"] is not None:
@@ -268,10 +286,11 @@ def text(rep, cfg):
     L.append("3. K: h x K x %d cycles / own worker cycles per request >= %.1f%% in cell %s (mean h %s):" % (
         rule["cycles_per_transfer"], 100 * rule["min_share"], q3["cell"], _f(q3["h_mean"])))
     for r in q3["rows"]:
-        L.append("   K=%-4d own %s cycles  %s (with this K's own h: %s)  %s" % (
+        L.append("   K=%-4d own %s cycles  %s (with this K's own h: %s; this pair's one-round rho %s)  %s" % (
             r["k"], _f(r["own_cycles"], "%.0f"), _f(r["share"] and 100 * r["share"], "%.2f%%"),
-            _f(r["share_own_h"] and 100 * r["share_own_h"], "%.2f%%"),
+            _f(r["share_own_h"] and 100 * r["share_own_h"], "%.2f%%"), _f(r["rho_pct"], "%+.2f"),
             "reaches it" if r["share"] is not None and r["share"] >= rule["min_share"] else "under"))
+    L.append("   own cycles grow with K (the logger's own cost per update), so the share rises more slowly than K")
     L.append("   -> %s" % ("K = %d" % q3["k"] if q3["k"] else "NO K"))
     q4 = rep["q4"]
     L.append("4. connections per worker: |clean L3 hits per update, own - shared| at K = %d in cell %s, and the gates "

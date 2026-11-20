@@ -161,7 +161,7 @@
    ],
    "placeholder_counters": 128,
    "connections_choices": [
-    4,
+    8,
     16
    ],
    "placeholder_connections": 16,
@@ -198,10 +198,11 @@
     {
      "cell": "C",
      "rung": "7w-one",
-     "rate_per_worker": 3000,
+     "rate_per_worker": 2200,
      "role": "load",
      "sockets": 1,
-     "exploratory": true
+     "exploratory": true,
+     "rate_note": "3,000 per worker ran the workers at 81% busy with the K = 128 logger (pilot attempt 1: about 706k worker cycles per request against 540k without it) and failed the client gates; 2,200 aims at 60-68% busy; the total is then 15,400, not the other cells' 21,000"
     }
    ],
    "slot_cells": [
@@ -226,7 +227,7 @@
     "mid": 128,
     "connections": [
      16,
-     4
+     8
     ],
     "connection_cells": [
      "A",
@@ -235,6 +236,13 @@
     "loopback_cell": "A",
     "exploratory_cells": [
      "C"
+    ],
+    "order_note": "shapes in this order, arms as listed, no re-run of an invalid leg and no stop after consecutive invalid legs: the deciding 16-connection legs of cells A and D, then the other connection count, then the loopback pair, then the exploratory cell",
+    "attempts": [
+     {
+      "harness": "bba256c",
+      "result": "2026-11-20 09:00-09:06 UTC: stopped after 6 legs, all invalid on the client gates (4 connections per worker at 14 and 28 workers: pool overflow and pending above the limit; 7 workers at 3,000 with 16 connections: 81% busy, overflow, pending); the run order put those shapes first and the six-invalid-legs rule stopped it before any 16-connection leg of cells A and D; 4 connections per worker cannot hold 1,500 per worker on the client side, so the alternative count is 8"
+     }
     ]
    },
    "pilot_rule": {

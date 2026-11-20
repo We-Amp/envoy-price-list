@@ -988,9 +988,9 @@ class DoseConfigTest(unittest.TestCase):
         for rates in ({"bench-x86_64-dose": {"counters": 128, "connections": 16}},
                       {"bench-x86_64": {"r_star": 1000, "k": 16}}, {"bench-x86_64-hi-1800": {"r_star": 1800, "k": 16}},
                       # the choice is K and the connection count together: one alone does not calibrate
-                      {"bench-x86_64-dose-1": {"counters": 128}}, {"bench-x86_64-dose-1": {"connections": 4}}):
+                      {"bench-x86_64-dose-1": {"counters": 128}}, {"bench-x86_64-dose-1": {"connections": 8}}):
             self.assertTrue(MK.configs(box("bench-x86_64"), rates)["dose.json"].get("uncalibrated"), rates)
-        for bad in ({"counters": 100, "connections": 16}, {"counters": 128, "connections": 8}):
+        for bad in ({"counters": 100, "connections": 16}, {"counters": 128, "connections": 4}):
             with self.assertRaises(SystemExit, msg=bad):
                 MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": bad})
         # `epl run` refuses an uncalibrated config
@@ -1030,21 +1030,21 @@ class DoseConfigTest(unittest.TestCase):
         # the pilot is the same whatever is chosen
         self.assertEqual(MK.configs(box("bench-x86_64"), DOSE_RATES)["dose-pilot.json"],
                          MK.configs(box("bench-x86_64"))["dose-pilot.json"])
-        # 4 connections per worker: its own shape names, connection counts and counter expectations
-        c4 = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": 128, "connections": 4}})
-        u = c4["dose.json"]
+        # 8 connections per worker: its own shape names, connection counts and counter expectations
+        c8 = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": {"counters": 128, "connections": 8}})
+        u = c8["dose.json"]
         self.assertNotIn("uncalibrated", u)
-        self.assertEqual((u["k"], u["dose"]["connections"]), (4, 4))
+        self.assertEqual((u["k"], u["dose"]["connections"]), (8, 8))
         self.assertEqual([(s["name"], s["client_concurrency"] * s["client_connections_per_worker"]) for s in u["shapes"]],
-                         [("mt-14w-one-c4", 56), ("mt-14w-split-c4", 56), ("mt-28w-c4", 112)])
+                         [("mt-14w-one-c8", 112), ("mt-14w-split-c8", 112), ("mt-28w-c8", 224)])
         self.assertEqual([c_["shape"] for c_ in u["dose"]["cells"]], [s["name"] for s in u["shapes"]])
-        self.assertEqual(u["arms"][3]["shapes"], ["mt-14w-one-c4"])
+        self.assertEqual(u["arms"][3]["shapes"], ["mt-14w-one-c8"])
         own = [i for i in u["arms"][0]["evidence"] if i["stat"] == "stat_count.start_n"]
         self.assertEqual([(i["shape"], i["min"], i["max"]) for i in own],
-                         [("mt-14w-one-c4", 128 * 56, 2 * 128 * 56), ("mt-14w-split-c4", 128 * 56, 2 * 128 * 56),
-                          ("mt-28w-c4", 128 * 112, 2 * 128 * 112)])
+                         [("mt-14w-one-c8", 128 * 112, 2 * 128 * 112), ("mt-14w-split-c8", 128 * 112, 2 * 128 * 112),
+                          ("mt-28w-c8", 128 * 224, 2 * 128 * 224)])
         self.assertEqual(experiment.validate(experiment.load(self.tmp(u))), [])
-        self.assertEqual([s["name"] for s in c4["dose-evidence.json"]["shapes"]], [s["name"] for s in u["shapes"]])
+        self.assertEqual([s["name"] for s in c8["dose-evidence.json"]["shapes"]], [s["name"] for s in u["shapes"]])
 
     def tmp(self, cfg):
         d = tempfile.mkdtemp()
@@ -1186,40 +1186,61 @@ class DoseConfigTest(unittest.TestCase):
         self.assertEqual([a["name"] for a in p["arms"]],
                          ["base", "own-64", "shared-64", "own-128", "shared-128", "own-256", "shared-256",
                           "own-128-lo", "shared-128-lo"])
-        self.assertEqual([(s["cell"], s["name"], s["connections_per_worker"]) for s in p["shapes"]],
-                         [("A", "mt-14w-one", 16), ("D", "mt-28w", 16), ("A", "mt-14w-one-c4", 4),
-                          ("D", "mt-28w-c4", 4), ("C", "mt-7w-one", 16)])
+        self.assertEqual([(s["cell"], s["name"], s["connections_per_worker"], s["rps"]) for s in p["shapes"]],
+                         [("A", "mt-14w-one", 16, 21000), ("D", "mt-28w", 16, 42000), ("A", "mt-14w-one-c8", 8, 21000),
+                          ("D", "mt-28w-c8", 8, 42000), ("A", "mt-14w-one-lo", 16, 21000), ("C", "mt-7w-one", 16, 15400)])
         self.assertEqual([s["client_concurrency"] * s["client_connections_per_worker"] for s in p["shapes"]],
-                         [224, 448, 56, 112, 112])
-        a16 = ["mt-14w-one"]
-        self.assertEqual([a.get("shapes") for a in p["arms"]], [a16, a16, a16, None, None, a16, a16, a16, a16])
+                         [224, 448, 112, 224, 224, 112])
+        # the loopback pair's shape is cell A's at 16 connections under another name
+        a16, lo = dict(p["shapes"][0]), dict(p["shapes"][4])
+        self.assertTrue(lo.pop("loopback"))
+        self.assertEqual(dict(lo, name="mt-14w-one"), a16)
+        wild = ["mt-14w-one", "mt-28w", "mt-14w-one-c8", "mt-28w-c8", "mt-7w-one"]
+        k = ["mt-14w-one"]
+        self.assertEqual([a.get("shapes") for a in p["arms"]], [k, k, k, wild, wild, k, k, ["mt-14w-one-lo"],
+                                                               ["mt-14w-one-lo"]])
         self.assertEqual([bool(a.get("exploratory")) for a in p["arms"]], [False] * 7 + [True, True])
         exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose-pilot.json"))
-        plan = experiment.schedule(exp)
-        self.assertEqual(len(plan), 17)  # near 24 legs
-        per = {}
-        for r, sh, a in plan:
-            per.setdefault(sh["name"], []).append(a["name"])
-        self.assertEqual({k: sorted(v) for k, v in per.items()},
-                         {"mt-14w-one": sorted(a["name"] for a in p["arms"]), "mt-28w": ["own-128", "shared-128"],
-                          "mt-14w-one-c4": ["own-128", "shared-128"], "mt-28w-c4": ["own-128", "shared-128"],
-                          "mt-7w-one": ["own-128", "shared-128"]})
         self.assertEqual(experiment.validate(exp, allow_short=True), [])
+        # the order of the legs: the deciding 16-connection legs of cells A and D, the other
+        # connection count, the loopback pair, the exploratory cell last
+        plan = [(sh["name"], a["name"]) for r, sh, a in experiment.schedule(exp)]
+        self.assertEqual(plan, [("mt-14w-one", n) for n in ("base", "own-64", "shared-64", "own-128", "shared-128",
+                                                             "own-256", "shared-256")]
+                         + [(s, n) for s in ("mt-28w", "mt-14w-one-c8", "mt-28w-c8") for n in ("own-128", "shared-128")]
+                         + [("mt-14w-one-lo", "own-128-lo"), ("mt-14w-one-lo", "shared-128-lo"),
+                            ("mt-7w-one", "own-128"), ("mt-7w-one", "shared-128")])
+        self.assertEqual(len(plan), 17)
+        per = {}
+        for sname, aname in plan:
+            per.setdefault(sname, []).append(aname)
+        # a pilot is not cut short by invalid legs, and does not re-run a shape for one
+        self.assertEqual((p["order"], p["shape_order"], p["rerun_invalid"]), ("fixed", "fixed", 0))
+        self.assertGreater(p["abort_after_invalid"], len(plan))
+        for fn in ("dose.json", "smoke-dose.json", "dose-evidence.json"):  # the timed runs keep the rule
+            self.assertNotIn("abort_after_invalid", c[fn])
+            self.assertEqual(experiment.load(os.path.join(MT, "bench-x86_64", fn))["abort_after_invalid"], 6)
+            self.assertEqual(c[fn]["order"], "latin")
         # the pairs the pilot report walks: every one names legs the config schedules
         pairs = p["dose"]["pairs"]
         self.assertEqual([(x["cell"], x["connections"], x["k"], x["address"], x["role"], bool(x.get("exploratory")))
                           for x in pairs],
                          [("A", 16, 64, "0.0.0.0", "k", False), ("A", 16, 128, "0.0.0.0", "k", False),
-                          ("A", 16, 256, "0.0.0.0", "k", False), ("A", 16, 128, "127.0.0.1", "loopback", True),
-                          ("D", 16, 128, "0.0.0.0", "connections", False), ("A", 4, 128, "0.0.0.0", "connections", False),
-                          ("D", 4, 128, "0.0.0.0", "connections", False), ("C", 16, 128, "0.0.0.0", "load", True)])
+                          ("A", 16, 256, "0.0.0.0", "k", False), ("D", 16, 128, "0.0.0.0", "connections", False),
+                          ("A", 8, 128, "0.0.0.0", "connections", False), ("D", 8, 128, "0.0.0.0", "connections", False),
+                          ("A", 16, 128, "127.0.0.1", "loopback", True), ("C", 16, 128, "0.0.0.0", "load", True)])
         for x in pairs:
             for n in (x["own"], x["shared"]):
                 self.assertIn(n, per[x["shape"]])
         self.assertEqual(sum(2 for _ in pairs) + 1, 17)  # every leg but base belongs to a pair
         self.assertEqual({c_["shape"]: c_.get("exploratory", False) for c_ in p["dose"]["cells"]},
-                         {"mt-14w-one": False, "mt-28w": False, "mt-14w-one-c4": False, "mt-28w-c4": False,
-                          "mt-7w-one": True})
+                         {"mt-14w-one": False, "mt-28w": False, "mt-14w-one-c8": False, "mt-28w-c8": False,
+                          "mt-14w-one-lo": False, "mt-7w-one": True})
+        self.assertEqual((p["dose"]["connections_choices"], box("bench-x86_64")["dose"]["pilot"]["connections"]),
+                         ([8, 16], [16, 8]))
+        # cell C at a rate the logger's cost leaves room for; the slot does not run it
+        self.assertEqual([c_["rate_per_worker"] for c_ in p["dose"]["cells"] if c_["cell"] == "C"], [2200])
+        self.assertNotIn("C", [c_["cell"] for c_ in c["dose.json"]["dose"]["cells"]])
         self.assertTrue(p["smoke"])
         self.assertEqual(p["evidence_mode"], "record")
         self.assertEqual(p["measure"]["perf_events"], box("bench-x86_64")["dose"]["hitm_events"])
@@ -1655,7 +1676,7 @@ class DosePilotTest(unittest.TestCase):
 
     def run_(self, h=1.2, base=540e3, ins_extra=0.0, mut=None, foot=None):
         """foot: {connections per worker: clean L3 hits per update the own arm has above shared}."""
-        foot = foot or {16: 0.30, 4: 0.05}
+        foot = foot or {16: 0.30, 8: 0.05}
         cfg = MK.configs(box("bench-x86_64"))["dose-pilot.json"]
         legs = []
         for s in cfg["shapes"]:
@@ -1705,17 +1726,22 @@ class DosePilotTest(unittest.TestCase):
         self.assertAlmostEqual(p["clean_l3_own"], 0.40)
         self.assertAlmostEqual(p["clean_l3_shared"], 0.10)
         self.assertAlmostEqual(p["footprint"], 0.30)
-        self.assertAlmostEqual(byp[("A", 4, 128, "connections")]["footprint"], 0.05)
+        self.assertAlmostEqual(byp[("A", 8, 128, "connections")]["footprint"], 0.05)
         self.assertAlmostEqual(self.DP.clean_l3({"per_req": {"events": {L3_U: 100.0, HITM_U[0]: 36.0}}}, 128), 0.5)
         self.assertIsNone(self.DP.clean_l3({"per_req": {"events": {L3_U: 100.0}}}, 128))
         # K: 1.2 x K x 100 / own cycles (540,000): 1.42% at 64, 2.84% at 128
         self.assertEqual(rep["q3"]["k"], 128)
         self.assertAlmostEqual(rep["q3"]["rows"][0]["share"], 1.2 * 64 * 100 / 540e3)
         # connections: the smaller footprint term, its gates passing
-        self.assertEqual(rep["q4"]["terms"], {4: byp[("A", 4, 128, "connections")]["footprint"], 16: p["footprint"]})
-        self.assertEqual(rep["q4"]["gates"], {4: True, 16: True})
-        self.assertEqual(rep["q4"]["connections"], 4)
-        self.assertEqual(rep["recommend"], {"counters": 128, "connections": 4})
+        self.assertEqual(rep["q4"]["terms"], {8: byp[("A", 8, 128, "connections")]["footprint"], 16: p["footprint"]})
+        self.assertEqual(rep["q4"]["gates"], {8: True, 16: True})
+        self.assertEqual(rep["q4"]["connections"], 8)
+        self.assertEqual(rep["recommend"], {"counters": 128, "connections": 8})
+        # h with its parts: local and remote HITM loads per request, own and shared apart
+        self.assertEqual(p["hitm_own"], {"local": 7.0, "remote": 0.0})
+        self.assertEqual(p["hitm_shared"], {"local": 7.0 + 1.2 * 128, "remote": 0.0})
+        self.assertEqual(self.DP.hitm_parts({"per_req": {"events": {UT.HITM[0]: 3.0, HITM_U[1]: 1.5}}}), (3.0, 1.5))
+        self.assertEqual(self.DP.hitm_parts({}), (None, None))
         self.assertEqual(rep["rates_key"], "bench-x86_64-dose-1")
         # seconds per leg and what that makes of the run
         self.assertEqual((rep["q5"]["mean_s"], rep["q5"]["max_s"]), (60.0, 60.0))
@@ -1723,11 +1749,13 @@ class DosePilotTest(unittest.TestCase):
         self.assertAlmostEqual(rep["q5"]["evidence_min"], 48.0)
         self.assertEqual(rep["q6"]["largest"]["start_n"], 2 * 128 * 448)
         t = self.DP.text(rep, cfg)
-        for needle in ("1. bootstrap --mode validate: base OK", "-> K = 128", "-> 4 connections per worker",
+        for needle in ("1. bootstrap --mode validate: base OK", "-> K = 128", "-> 8 connections per worker",
+                       "own local 7.00 remote 0.00, shared local 160.60 remote 0.00; (shared - own) local +153.60 remote "
+                       "+0.00",
                        "ONE ROUND each (not an estimate)", "loopback against wildcard listener at K = 128",
                        "seconds per leg: mean 60, max 60 over 17 legs; at the mean the 165-leg run takes 2.75 h and the "
                        "48 evidence legs 48 min", "client slack 7.0 s", "(exploratory)",
-                       'pilot OK: recommend {"bench-x86_64-dose-1": {"counters": 128, "connections": 4}}'):
+                       'pilot OK: recommend {"bench-x86_64-dose-1": {"counters": 128, "connections": 8}}'):
             self.assertIn(needle, t)
         self.assertNotIn("OVER HALF THE SLACK", t)
 
@@ -1778,17 +1806,17 @@ class DosePilotTest(unittest.TestCase):
         self.assertIsNone(ch({16: 0.30, 4: 0.05}, {16: False, 4: False}))
         self.assertIsNone(ch({16: 0.30, 4: None}, {16: True, 4: True}))      # no term: the rule cannot be applied
         self.assertEqual(ch({16: 0.05, 4: 0.05}, {16: True, 4: True}), 16)   # a tie keeps the larger count
-        cfg, res = self.run_(foot={16: 0.02, 4: 0.20})
+        cfg, res = self.run_(foot={16: 0.02, 8: 0.20})
         self.assertEqual(self.DP.answers(cfg, res, self.ov(cfg))["recommend"], {"counters": 128, "connections": 16})
 
-        # an invalid 28-worker leg at 4 connections: the 4-connection gates fail, 16 is chosen;
+        # an invalid 28-worker leg at 8 connections: the 8-connection gates fail, 16 is chosen;
         # the pilot is not clean (a deciding leg is invalid)
-        def bad_d4(m):
-            if m["shape"] == "mt-28w-c4" and m["arm"] == "shared-128":
+        def bad_d8(m):
+            if m["shape"] == "mt-28w-c8" and m["arm"] == "shared-128":
                 m["verdict"] = {"valid": False, "reasons": ["client pending total 40 above 14"]}
-        cfg, res = self.run_(mut=bad_d4)
+        cfg, res = self.run_(mut=bad_d8)
         rep = self.DP.answers(cfg, res, self.ov(cfg))
-        self.assertEqual(rep["q4"]["gates"], {4: False, 16: True})
+        self.assertEqual(rep["q4"]["gates"], {8: False, 16: True})
         self.assertEqual(rep["q4"]["connections"], 16)
         self.assertFalse(rep["ok"])
         self.assertTrue(any("client pending" in p for p in rep["problems"]))
@@ -1839,7 +1867,7 @@ class DosePilotTest(unittest.TestCase):
         self.assertFalse(self.DP.answers(cfg, res, None)["q6"]["ok"])  # no stat dumps read: not a pass
         res["metadata"] = {}
         self.assertFalse(self.DP.answers(cfg, res, self.ov(cfg))["q1"]["ok"])  # validate not recorded
-        res["legs"] = res["legs"][:-3]
+        res["legs"] = res["legs"][3:]
         probs = self.DP.answers(cfg, res, self.ov(cfg))["problems"]
         self.assertTrue(any(p.startswith("missing leg") for p in probs))
 
@@ -1869,14 +1897,14 @@ class DosePilotTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout[-400:])
         rec = json.load(open(os.path.join(d, "o.json")))
         self.assertEqual((rec["ok"], rec["recommend"], rec["rates_key"]),
-                         (True, {"counters": 128, "connections": 4}, "bench-x86_64-dose-1"))
+                         (True, {"counters": 128, "connections": 8}, "bench-x86_64-dose-1"))
 
     def gate_case(self, rec=None, rates=None):
-        rates = rates or {"counters": 128, "connections": 4}
+        rates = rates or {"counters": 128, "connections": 8}
         cfg = MK.configs(box("bench-x86_64"), {"bench-x86_64-dose-1": rates})["dose.json"]
         smoke = json.loads(json.dumps(cfg))
         record = {"ok": True, "problems": [], "rates_key": "bench-x86_64-dose-1",
-                  "recommend": {"counters": 128, "connections": 4}}
+                  "recommend": {"counters": 128, "connections": 8}}
         record.update(rec or {})
         return cfg, smoke, record
 
@@ -1888,14 +1916,14 @@ class DosePilotTest(unittest.TestCase):
         self.assertEqual(G(cfg, smoke, None), ["no pilot record"])
         self.assertTrue(any("not clean" in p for p in G(cfg, smoke, dict(record, ok=False, problems=["invalid leg: x"]))))
         self.assertTrue(any("rates key" in p for p in G(cfg, smoke, dict(record, rates_key="bench-x86_64-dose-0"))))
-        for other in ({"counters": 256, "connections": 4}, {"counters": 128, "connections": 16},
+        for other in ({"counters": 256, "connections": 8}, {"counters": 128, "connections": 16},
                       {"counters": None, "connections": None}, {}):
             p = G(cfg, smoke, dict(record, recommend=other))
             self.assertTrue(any("the pilot recommends" in x for x in p), other)
-        # configured against the recommendation (K 128 at 16 connections against 128 at 4)
+        # configured against the recommendation (K 128 at 16 connections against 128 at 8)
         cfg16, smoke16, _ = self.gate_case(rates={"counters": 128, "connections": 16})
         self.assertEqual(G(cfg16, smoke16, record),
-                         ["the pilot recommends K 128 and 4 connections per worker, the config has K 128 and 16"])
+                         ["the pilot recommends K 128 and 8 connections per worker, the config has K 128 and 16"])
         # the smoke: missing, another K or connection count, or an arm whose settings differ
         self.assertEqual(G(cfg, None, record), ["no smoke results"])
         p = G(cfg, smoke16, record)
@@ -1903,7 +1931,7 @@ class DosePilotTest(unittest.TestCase):
         for edit, needle in ((lambda a: a["settings"].update(listener_address="127.0.0.1"), "arm shared-128"),
                              (lambda a: a["settings"]["stats_flush"].update(interval_s=5), "arm shared-128"),
                              (lambda a: a["settings"]["stats_access_log"].update(counters=64), "arm shared-128"),
-                             (lambda a: a.update(shapes=["mt-14w-one-c4"]), "arm shared-128")):
+                             (lambda a: a.update(shapes=["mt-14w-one-c8"]), "arm shared-128")):
             sm = json.loads(json.dumps(cfg))
             edit(sm["arms"][1])
             self.assertEqual(G(cfg, sm, record), ["%s: the smoke's settings or cells differ from the config's" % needle])
@@ -2159,6 +2187,61 @@ class PilotOrderTest(unittest.TestCase):
         self.assertFalse([e for e in experiment.validate(u, allow_short=True) if "order" in e])
         u["order"] = "sorted"
         self.assertTrue(any("order must be" in e for e in experiment.validate(u, allow_short=True)))
+
+    def test_fixed_order_in_the_pilot(self):
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose-pilot.json"))
+        names = [a["name"] for a in exp["arms"]]
+        for r in (1, 2, 3):
+            self.assertEqual([a["name"] for a in experiment.round_order(exp, r)], names)
+            self.assertEqual([s["name"] for s in experiment.shape_order(exp, r)], [s["name"] for s in exp["shapes"]])
+            self.assertEqual([a["name"] for a in experiment.shape_round_order(exp, r, exp["shapes"][1])],
+                             ["own-128", "shared-128"])
+        self.assertEqual(experiment.order_period(exp), 1)
+
+    def dry(self, edit=None):
+        """A dry run of the pilot whose first eight legs fail a client gate, as attempt 1's first six did."""
+        cfg = MK.configs(box("bench-x86_64"))["dose-pilot.json"]
+        plan = [experiment.leg_id(r, sh, a) for r, sh, a in experiment.schedule(experiment.load(
+            os.path.join(MT, "bench-x86_64", "dose-pilot.json")))]
+        cfg["sim_faults"] = {lid: "overflow" for lid in plan[:8]}
+        if edit:
+            edit(cfg)
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "p.json"), "w") as f:
+            json.dump(cfg, f)
+        r = subprocess.run([sys.executable, os.path.join(HERE, "bin", "epl"), "run", os.path.join(d, "p.json"),
+                            "--dry-run", "--allow-short", "--out", os.path.join(d, "run")],
+                           capture_output=True, text=True, timeout=120)
+        with open(os.path.join(d, "run", "results.json")) as f:
+            return plan, json.load(f), r
+
+    def test_invalid_legs_do_not_cut_the_pilot_short(self):
+        plan, res, r = self.dry()
+        self.assertEqual(r.returncode, 0, r.stderr[-300:])
+        self.assertEqual([m["leg_id"] for m in res["legs"]], plan)  # all 17, in order, none re-run
+        self.assertEqual([m["verdict"]["valid"] for m in res["legs"]], [False] * 8 + [True] * 9)
+        self.assertNotIn("aborted", res["metadata"])
+        # the report then has every answer the valid legs give, and names the invalid ones
+        DP = _mod("mt_dose_pilot2", os.path.join(MT, "dose_pilot.py"))
+        cfg = json.load(open(os.path.join(MT, "bench-x86_64", "dose-pilot.json")))
+        rep = DP.answers(cfg, res, None)
+        self.assertEqual(len(rep["legs"]), 17)
+        self.assertEqual(len([p for p in rep["problems"] if p.startswith("invalid leg")]), 8)
+        # without the pilot's settings the runner's rule stops at six, and a shape with an
+        # invalid leg is run again: what a timed run does
+
+        def timed(cfg):
+            cfg.pop("abort_after_invalid")
+            cfg.pop("rerun_invalid")
+        plan, res, r = self.dry(timed)
+        self.assertEqual(len(res["legs"]), 6)
+        self.assertIn("6 consecutive invalid legs", res["metadata"]["aborted"])
+
+        def rerun_only(cfg):
+            cfg.pop("rerun_invalid")
+        plan, res, r = self.dry(rerun_only)
+        self.assertGreater(len(res["legs"]), 17)
+        self.assertTrue(any(".rr1" in m["leg_id"] for m in res["legs"]))
 
 
 if __name__ == "__main__":
