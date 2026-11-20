@@ -56,6 +56,7 @@ F9. ADMIN probes sent from start + 20 ms to end - 100 ms: answered more than 50 
     own/otlp       sent  577; answered >50 ms before the end 334, >20 ms 577, >10 ms 577; answer time before the burst end: median 52.8 ms, max 61.9 ms
     shared/nosink  sent  128; answered >50 ms before the end 0, >20 ms 0, >10 ms 0; answer time before the burst end: median 1.6 ms, max 4.2 ms
     shared/statsd  sent 1661; answered >50 ms before the end 0, >20 ms 0, >10 ms 6; answer time before the burst end: median 4.1 ms, max 10.3 ms
+    no-sink and statsd cells together: sent 2,946; answered more than 20 ms before the burst end: 0
 
 F13. REQUESTS THAT WAITED FOR THEIR OWN CONNECTION, in the window (primary set)
     own/nosink     1

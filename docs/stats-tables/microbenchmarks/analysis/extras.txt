@@ -1,0 +1,46 @@
+1. Histogram sample, record only: cycles per sample, fix-relaxed against fix
+   x86 VM   1 worker(s): 149.9 to 142.0 cycles per sample; -5.3% [-5.5, -5.1]  (-5.30% [-5.51, -5.10], 5 rounds)
+   x86 VM   7 worker(s): 162.5 to 143.8 cycles per sample; -10.8% [-25.2, +6.4]  (-10.80% [-25.21, +6.39], 5 rounds)
+   Arm VM   1 worker(s): 125.7 to 124.7 cycles per sample; -0.8% [-1.0, -0.6]  (-0.80% [-1.04, -0.57], 5 rounds)
+   Arm VM  15 worker(s): 137.6 to 125.7 cycles per sample; -8.4% [-17.0, +1.1]  (-8.39% [-16.97, +1.07], 5 rounds)
+
+2. Counter increment: instructions per operation (level; the same value in every round)
+   x86 VM             fix            1 thread: spaced 53.44, shared 53.44
+   x86 VM             fix-relaxed    1 thread: spaced 53.44, shared 53.44
+   x86 VM             fix-relaxed-p1 1 thread: spaced 55.44, shared 55.44
+   Arm VM             fix            1 thread: spaced 50.38, shared 50.39  (descriptive: rejected processes)
+   Arm VM             fix-relaxed    1 thread: spaced 50.38, shared 50.39  (descriptive: rejected processes)
+   Arm VM             fix-relaxed-p1 1 thread: spaced 47.38, shared 47.39  (descriptive: rejected processes)
+   Arm VM, second set fix            1 thread: spaced 50.38, shared 50.39
+   Arm VM, second set fix-relaxed    1 thread: spaced 50.38, shared 50.39  (descriptive: rejected processes)
+   Arm VM, second set fix-relaxed-p1 1 thread: spaced 47.38, shared 47.39  (descriptive: rejected processes)
+
+3. Model counter with the current ordering, bare-metal server: cycles per operation
+   spaced  1 thread(s): median over the 5 rounds 70.8, mean 70.8  (70.8 / 70.8)
+   spaced  4 thread(s): median over the 5 rounds 70.8, mean 70.8  (70.8 / 70.8)
+   spaced 19 thread(s): median over the 5 rounds 70.8, mean 70.8  (70.8 / 70.8)
+   shared  1 thread(s): median over the 5 rounds 70.8, mean 70.8  (70.8 / 70.8)
+   shared  4 thread(s): median over the 5 rounds 634, mean 658  (633.9 / 658.1)
+   shared 19 thread(s): median over the 5 rounds 3,152, mean 3,142  (3152.5 / 3142.0)
+   shared at 4 over spaced at 1, paired log ratio over the rounds: 9.28 [8.49, 10.13] times. This is a mean over rounds; the median level above over the spaced level is 8.95 times
+   shared at 19 over spaced at 1, paired log ratio over the rounds: 44.37 [43.38, 45.38] times. This is a mean over rounds; the median level above over the spaced level is 44.52 times
+
+4. Relaxed against current ordering, shared model counter, 4 threads: x86 VM minus Arm VM, log-percent
+   x86 VM: mean log ratio +0.01 over 5 rounds
+   Arm VM: fewer than 2 accepted rounds
+   Arm VM, second set: mean log ratio -0.42 over 5 rounds; x86 minus Arm: +0.44 [-4.13, +5.00] (Welch, 4.2 degrees of freedom)
+
+5. End-to-end model (a prediction by arithmetic): saved cycles per operation x operations per request / cycles per request
+   inputs: 12.6 counter increments per request (a proxy from a profile, not in the data); 14.03 counted on the Arm VM in the codegen run's pre-run check
+   inputs: cycles per request, worker threads only: x86 572.1k (run U, base, 28 workers); Arm VM 348.6k (codegen run, release, 12 workers)
+   test the used flag before setting it (fix-relaxed-p1 against fix-relaxed; model: RelaxedTestFlag against Relaxed), 1 thread, spaced:
+   server, model counter                                saved: 28.5 cycles x 12.60 = 359 cycles, 0.063% (0.06%) of the cycles per request
+   x86 VM, real counter                                 saved: 17.0 cycles x 12.60 = 214 cycles, 0.037% (0.04%) of the cycles per request
+   Arm VM (second set), model counter                   saved: 19.6 cycles x 12.60 = 247 cycles, 0.071% (0.07%) of the cycles per request
+   Arm VM (second set), model counter, counted increments saved: 19.6 cycles x 14.03 = 275 cycles, 0.079% (0.08%) of the cycles per request
+   Arm VM (second set), real counter, descriptive       saved: 23.7 cycles x 14.03 = 332 cycles, 0.095% (0.10%) of the cycles per request
+   relaxed ordering (model: Relaxed against Current; real counter: fix-relaxed against fix):
+   server, model counter, 1 thread, spaced              saved: 0.0 cycles x 12.60 = 0 cycles, 0.000% (0.00%) of the cycles per request
+   server, model counter, shared by 19 (the most it can be) saved, median levels: 20.0 cycles x 12.60 = 252 cycles, 0.044% (0.04%) of the cycles per request
+   x86 VM, real counter, 1 thread, spaced, interval edge saved at most: 0.0 cycles x 12.60 = 0 cycles, 0.000% (0.00%) of the cycles per request
+   Arm VM (second set), model counter, 1 thread, spaced saved: 0.0 cycles x 14.03 = 0 cycles, 0.000% (0.00%) of the cycles per request

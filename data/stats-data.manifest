@@ -1,7 +1,8 @@
 # every file of the release assets of tag stats-2026-11: sha256, size in bytes, study (the asset
 # stats-2026-11-data-<study>.tar.gz), path inside the asset. Written by tools/build-stats-data.py.
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  arm-codegen  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  arm-codegen  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  arm-codegen  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  arm-codegen  WHAT-WAS-CHANGED.md
+a570dd19057cfe7f9120feea41da0027e0c23823bc863faa6e8eb7683de023b5  524  arm-codegen  arm-codegen/arm-vm/analysis/extras.txt
 a8a435a4a01a58cdd19cfc6a0f1ec7707786a455b417b2a71fe1aab289822b63  2301  arm-codegen  arm-codegen/arm-vm/codegen-atomics.json
 7a79418f10a722b61b91fc18f54c78442cd205fd294db4e00a2dcc68213e0165  1221  arm-codegen  arm-codegen/arm-vm/codegen-smoke.out
 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b  1  arm-codegen  arm-codegen/arm-vm/codegen.choice
@@ -487,8 +488,8 @@ ae21a900f2b653bdd80db40cb0395d80af951a3989043daa853ad8daebe0a76b  3507  arm-code
 0f2ef56849ca1cf976a85e5193ba25b7fccb4d8b0f7ad08e1733008312f57823  142  arm-codegen  arm-codegen/arm-vm/smoke-codegen/status.json
 01a1c45d97a373134f012c6e794525c005d5e7b760a5457234ccfff513bd46be  4601  arm-codegen  arm-codegen/arm-vm/smoke-codegen/summary.md
 c71749d65baf6fb69e496e445ddfebce104a7b34776ada933e3610e42d23e8e9  1903  arm-codegen  arm-codegen/codegen.md
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  arm-lse-llsc  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  arm-lse-llsc  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  arm-lse-llsc  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  arm-lse-llsc  WHAT-WAS-CHANGED.md
 fc670fe579cb67b31d830a1d1b4dd877d6e963070ccd0faae5b1ce01445a9d7c  97182  arm-lse-llsc  arm-lse-llsc/analysis/analysis.json
 a012e9f137c53a6ef3043f01eaf05236b75d7c55a62b95c1f6e3441d8f7cb09e  32322  arm-lse-llsc  arm-lse-llsc/analysis/analysis.txt
 0bac85023432c7fda9ec4de28f6c7082299e3570d0505048d4f12c1401b8bf59  1428  arm-lse-llsc  arm-lse-llsc/build-record.txt
@@ -541,8 +542,8 @@ a351b7d5c81c79e4887d024481cc11fa0e8934b35e883d7ad875f84ac837308f  281858  arm-ls
 cd6bdf7e29bd7e96f5c5b4e0d17df49f6a0e9468beec8d10250f17aac87c4659  68474  arm-lse-llsc  arm-lse-llsc/micro-lse/runs.jsonl
 9c012bf865fb40d38c2cabadeff7a1b7a402125362767f527d9aeb1ec8cd3eed  84143  arm-lse-llsc  arm-lse-llsc/micro-lse/table.json
 bed8a12d5c472aa88f5afa9683dc79157509e063c2ba0bdd88fac72f14b2ce29  37239  arm-lse-llsc  arm-lse-llsc/micro-lse/table.md
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  contention  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  contention  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  contention  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  contention  WHAT-WAS-CHANGED.md
 20ec974eb6737ea305d9fa7e4de6f93d948bc0625c4dd81df7b7de016b8ce484  7180  contention  contention/analysis/aa_and_split.txt
 98e200bb448bdae545365b97e9060d487acbcee579c1e7c98ed39678af1ffd8a  7140  contention  contention/analysis/cells.txt
 46ec1a879c69ee3dd9aa750ade4736108b68040d86e4960cbdf5c4497b2588d4  5781  contention  contention/analysis/evidence.txt
@@ -795,7 +796,7 @@ c7981505e37bb9e48e7741ace142b12e5983bf3cc624f3749e1693621cd1dc98  3557  contenti
 d85a95dd2e8d28dc30de6d5c2a3b3171d30325aa5017c2d2f30d25779600e643  3568  contention  contention/dose-2/stats/shared-64.txt.gz
 540d8b9a5189b7015342997852040ec3e3518e087f2446ec0e3f36dcb237c7fd  146  contention  contention/dose-2/status.json
 a8fb92ad53328faf509f3dd59dd43ea4f4f084d6d4c2507c1ed2cc9a11b3a53b  36924  contention  contention/dose-2/summary.md
-9bbaf678ba4fac72c6923f145cd70663f2ed0a048f64226eaf101c85d1567784  269  contention  contention/dose-decision-2.json
+e5551860279cbae10cb17bb706c6a1ee9152e6a71cf4e28cd16e59c7747ee0ac  253  contention  contention/dose-decision-2.json
 c72617306a1f1dd269dfec45f734c1d25f092fc00083e1717ffb7bb534527ee0  10277  contention  contention/dose-evidence-2/config_dump/base.json.gz
 6c50b0e51bf842cde637902347d7fadadbe2e82310c3d4ddb36986fdefa70397  12274  contention  contention/dose-evidence-2/config_dump/own-128.json.gz
 ee8aaa4d5ba12f9691eba2ad879eccab31e3d412f204eb7477f3d25db0ffb3b9  11240  contention  contention/dose-evidence-2/config_dump/own-64.json.gz
@@ -916,14 +917,14 @@ f2ffa7bc85d7cdfd2b6ff73a40a3ac8843b9b34fd53a288a6656d7fc05d61714  3565  contenti
 c0766c0d176f3c811e2cc900794fd55551dc953ad06f1d9842871193b1c94e64  3353  contention  contention/dose-pilot-2/stats/shared-64.txt.gz
 a728d34ca260e803f8ade31d22a88068bdee549382a66b22f567b8f28cdbb423  145  contention  contention/dose-pilot-2/status.json
 6706759ab06a56443b6d35ed5401435400eb98a3d73dd8a472ed12b5a4459239  21742  contention  contention/dose-pilot-2/summary.md
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  flush-latency  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  flush-latency  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  flush-latency  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  flush-latency  WHAT-WAS-CHANGED.md
 f0c72e1ba508270dc53b938fdd3a04c916911abaeb512859e245dce40c315d58  104639  flush-latency  flush-latency/analysis/analysis.txt
 c0bfd1462d9e9c83e7c3ce9ab423257ca116d4d1f747264fc6e4798232d92add  3077  flush-latency  flush-latency/analysis/extra.json
 d09a1c4e3ed823389388bd5f3a7f2d656dafe0004df10f7db4111755171c547c  13310  flush-latency  flush-latency/analysis/extra.txt
 1d1d2223500408e762a1486c2e0a69fe0205e71ef63857c9aaa3e54d2b9bf9a2  774897  flush-latency  flush-latency/analysis/perleg.json
 b8c676f32c15be3e9eb9eba11a1df97bb60de4b7d24f4f4043e3fbf71bda4d45  108757  flush-latency  flush-latency/analysis/results.json
-af18fc1856e7366e8741a2bb5e262a2094e7b57bf2cf63247fa5ebed770cc96b  15551  flush-latency  flush-latency/analysis/review-fixes.txt
+030ff664909f6b4665e192b53aa315f3e6039458a61c4220b1b1fa5367cd1181  15651  flush-latency  flush-latency/analysis/review-fixes.txt
 9ea0a8c4ac15dea51f6fea80134b7178db78b2a3c76fbebc68462e1e7ed88577  251  flush-latency  flush-latency/lat-check.json
 cae3d96ce00ccf25178f5db71bd7ec7b054c169d85ad78411eef815dbb0f2475  732  flush-latency  flush-latency/lat-queue.console
 bd46ac4306ab365328fbebb04093bffdf3f398d5697c072ff3ea6798344cfec3  200  flush-latency  flush-latency/lat-smoke.console
@@ -1253,8 +1254,9 @@ a5d18e0cea5aede6ea3ffe56dfa451d4a318ecd16c9cb5109e003d21ea5b0298  144  flush-lat
 86ff3d0f7052f88e0c47324673ab6f79e8fe68b4fed93e73558eb0faba683089  29  flush-latency  flush-latency/smoke/smoke-lat/udpsink/r01-shared-statsd.json.ready
 7e874ab970a3fb029bd3d9e6fa7c06fece013a65c596e07e0b0b50d0319958b0  372  flush-latency  flush-latency/sysctl-guard.log
 866ba72a55fc1ff44d5e0d64a14fe6c376ddf8a33a8704c9ad520da3d686ffa9  141  flush-latency  flush-latency/sysctl-session.json
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  microbenchmarks  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  microbenchmarks  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  microbenchmarks  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  microbenchmarks  WHAT-WAS-CHANGED.md
+ab2c83877a3b97075fb9e8a2098187c8add5e6ac651f5ffe7e60abfaa883256f  4625  microbenchmarks  microbenchmarks/analysis/extras.txt
 8f3794f6bb47cb284ef5cb1c3c5259fe51a0c6b7daf472064a5aaab28e646196  3297  microbenchmarks  microbenchmarks/arm-vm-b/micro-r5b/meta.json
 3bb2ae6b8867613e1576a555b1c2e8a216e63f4ba5013c7fcd9d755b1987edff  8334  microbenchmarks  microbenchmarks/arm-vm-b/micro-r5b/micro-r5b.log
 fc975d50a7ec5e578f0d128d6d62c49178aa322ee66fde0c9ece9143222700ed  13401  microbenchmarks  microbenchmarks/arm-vm-b/micro-r5b/micro.json.used
@@ -1489,8 +1491,8 @@ cc1810b88c466b7d0521df9f9145851cd1ccd8ec49b41ae899e81eb8fb808bda  223242  microb
 2f9ce08a1984de9440d647c1ca2dd87c32f086274713029f2053a0fc830e09b9  11337  microbenchmarks  microbenchmarks/x86-vm/smoke/r01-2-histogram_record-vm-fix.json
 97c312b395b6671b1314d8417cd1bb2f4048434577255aac6e22d2d676c565a5  1900  microbenchmarks  microbenchmarks/x86-vm/smoke/runs.jsonl
 c045f173551028ff6ae7706389b8a586d0d4e93099b013ef7723cf877b350434  2713  microbenchmarks  microbenchmarks/x86-vm/x86-vm.json
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  microbenchmarks-flush-overlap  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  microbenchmarks-flush-overlap  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  microbenchmarks-flush-overlap  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  microbenchmarks-flush-overlap  WHAT-WAS-CHANGED.md
 35afd7a946639a92ddde39aa67fa6576eb4a397c2a26f5940b1b378945046bf8  7021  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/arm-vm/meta.json
 d2dc2249b16db048ca2647e58f4a6dbd65814afaff5b4110cacdc57faabe5fa9  16706  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/arm-vm/micro-run.log
 bfc62367ff507f11bfa85874d18ad3d75096cfb6b9dbe1aacab14a918f26fc62  27592  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/arm-vm/micro.md
@@ -1546,8 +1548,8 @@ e28c6c61a64e9e49a496d05bbc00c13face7d1e2f371f0cf3c1591f330f87e89  123865  microb
 e94b87733dd0f46a5c4d98b44840375e487e79abc010b7295fb1f2047b478013  123905  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/x86-vm/r05-4-server_stats_flush_contended-vm-fix-relaxed.json
 ad6f14d26173d03e0197e8c1e930069667647278ae9c9d56de07e24d9fbe2a4c  123904  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/x86-vm/r05-4-server_stats_flush_contended-vm-fix.json
 981ebc2a77e9e410aec6b68bc4c4b347f77b2381bf0c4da6ad276babc03c78a3  671936  microbenchmarks-flush-overlap  microbenchmarks-flush-overlap/x86-vm/runs.jsonl
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  multi-worker  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  multi-worker  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  multi-worker  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  multi-worker  WHAT-WAS-CHANGED.md
 8f4abe03fa32c5f26a8ed2bde9cba6537d0eed47898a4b85ca313b9d063da3c6  1934  multi-worker  multi-worker/analysis/extras.txt
 6f744a248f078f07e00bb25f3d86e804fe621d4279b1cb35cba3d38cc1a4aeb3  103241  multi-worker  multi-worker/cal-1w/calibrate-legs.jsonl
 8b9b336c54406a0136a2b097dcf992f14bdb872b88954f422bf4627ae1b5c2ea  6104  multi-worker  multi-worker/cal-1w/calibrate.json
@@ -2173,8 +2175,8 @@ c6b0467588fc167a0a603b4669b56266ecc15b0e526a18bf2a1403ccc819ddbf  3555  multi-wo
 f98bd1a3a3671da5892970feddc03cdcda4834681eb8f1ed62e588a01e9a800c  42  multi-worker  multi-worker/u/stats/stats-reject.txt.gz
 f0dafa19d2a9ccdd98a31075168c64a0037d9432780ba7b75d920b87ec52b8d2  147  multi-worker  multi-worker/u/status.json
 090070462e4270954b0485302deeeaa9f2fdbd5ff1baa66999ea29bb7554ceda  18448  multi-worker  multi-worker/u/summary.md
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  multi-worker-high-load  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  multi-worker-high-load  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  multi-worker-high-load  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  multi-worker-high-load  WHAT-WAS-CHANGED.md
 28eea71c9782c26cc9fb15bda8308aae2f773a94fc4bb705e7f6b0f546e23769  94751  multi-worker-high-load  multi-worker-high-load/analysis/results.json
 39e6d6ac091121f87ae5f275367d85506b842696a1f6348da34d4126226eee72  8315  multi-worker-high-load  multi-worker-high-load/analysis/review-checks.txt
 1c0311981c31fe04235b4b11742fbe1369f8ba63d346a6ce13355493b5a67f82  45261  multi-worker-high-load  multi-worker-high-load/analysis/tables.txt
@@ -2561,8 +2563,9 @@ e62aecccc56599d72cc8bb41d0496bf3280375fc8ad45f801438610f188f1b23  7642740  multi
 b582194e8b8e07d307e86473d3822cb287f4e5e1a87388249ffbd199198325c6  12840  multi-worker-high-load  multi-worker-high-load/u-hi-1500/summary.md
 a6e244ff6f0bea908d6a04ccdd9a6ed43653944d9c5bce202ec383142175fe12  3577  multi-worker-high-load  multi-worker-high-load/u-hi.json
 d62c8ad8d42c010c80771f14aeceb2a6a7dcb63612a7b7e62fc4fb9c5ad9ac1a  1659  multi-worker-high-load  multi-worker-high-load/u-hi.md
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  sink-flush-cost  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  sink-flush-cost  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  sink-flush-cost  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  sink-flush-cost  WHAT-WAS-CHANGED.md
+998db6c10a18827a10ad40247e1230885e342b5a9160bb72b5f104592c616454  808  sink-flush-cost  sink-flush-cost/analysis/widened.txt
 958481f89f2258c11c91080bcb116180ea7460bc5d5517c7a6d761340041320c  17125  sink-flush-cost  sink-flush-cost/cal/100k-nosink/calibrate-legs.jsonl
 c784923367ea3c22d985bdd0161cde1a9035ccae95421fa183b99223f5b04184  986  sink-flush-cost  sink-flush-cost/cal/100k-nosink/calibrate.json
 0bdf14f2ff2320b8756d730617af4da47d09d648b6da68e69e4298c5faac7ed3  47510  sink-flush-cost  sink-flush-cost/cal/100k-nosink/config_dump/nosink.json.gz
@@ -3600,8 +3603,8 @@ e20ff23e2a05116ff73ebb214cd134303d812bfe829181b4fd84bbb8bc222b8d  145  sink-flus
 86ff3d0f7052f88e0c47324673ab6f79e8fe68b4fed93e73558eb0faba683089  29  sink-flush-cost  sink-flush-cost/w/udpsink/r07-s-statsd.json.ready
 08b8fcf7fa45b062019ac5e5b8356ea8c226e85338f6a274e07c63db8d4092ab  449  sink-flush-cost  sink-flush-cost/w/udpsink/r08-s-statsd.json
 86ff3d0f7052f88e0c47324673ab6f79e8fe68b4fed93e73558eb0faba683089  29  sink-flush-cost  sink-flush-cost/w/udpsink/r08-s-statsd.json.ready
-138093e9e27ca0074c7389237cc1e20f652b7488ed11133f3118214fd855a7ed  14139  sink-types  README.md
-acb430c3f9d202c67362ca934eb9396aaf24e892309b55be65718fac202ee599  2704  sink-types  WHAT-WAS-CHANGED.md
+bdfe10aece8c79de7b90ee19951dfa1f28a60951af3b1643cfb79bd34c74a5f3  19378  sink-types  README.md
+66e72cb206ad49b9aaa315c980db2f2eac06474fff6f60d4c7b424fd0d9738cc  4389  sink-types  WHAT-WAS-CHANGED.md
 110a9ef8562215c578901f49d8e5996580dcff9e3b9696a5e93edc34dd0ffcb6  34686  sink-types  sink-types/analysis/analysis.txt
 1e711acc3cff023fe9f4ca9d9fc8f60062fd8817085470fd2ffbfaa5cd423da8  11192  sink-types  sink-types/analysis/extra.txt
 0d09f0c4905e04ff03353c9b0f0e26f2f150a1f46cd7229159f33913d8ccb662  1197  sink-types  sink-types/analysis/holm9.txt

@@ -1,11 +1,11 @@
 # sha256 of the release assets of tag stats-2026-11 (tools/build-stats-data.py)
-4f334071eff64c2ac4f05c91cbbf47e2d0cb117bbc498826577821e591f04bf5  stats-2026-11-data-arm-codegen.tar.gz
-76cb7775406228c5a09ba81270db4cbe6a527917ab0c5a249e16df48b16f9e01  stats-2026-11-data-arm-lse-llsc.tar.gz
-f2cbbdcef18707aa53002808594dfc962d81d34f1398d7e2b7749cd1488ac224  stats-2026-11-data-contention.tar.gz
-7733d677aa7c45ee07399eb418e468e6dad846cd9af232020d854293be2bee8c  stats-2026-11-data-flush-latency.tar.gz
-afebb320fb363356dd9d435003492536906dd1cf5726ecebb3abfb6626ed0e98  stats-2026-11-data-microbenchmarks.tar.gz
-500bce5bfa1905fd4e41930ce313a92d2b2fe8beaf8c07c9d82ea965b26237ea  stats-2026-11-data-microbenchmarks-flush-overlap.tar.gz
-f7c22566fa989281b3a40b687b67fd38a646d6c0410f896eec3445c4f074f1e7  stats-2026-11-data-multi-worker.tar.gz
-4a1590d67e685216202b9d2cf89bf4cfaa724ba947fbde0c8ddce42b7e28278c  stats-2026-11-data-multi-worker-high-load.tar.gz
-716383bf639e463332b52f098e0f6636bcca57f1dd01d76c9cfdf6e7900d0646  stats-2026-11-data-sink-flush-cost.tar.gz
-d77ca25fc0b8a61a1ad63f7055861107aa8b6ddd35739e54d9523cf618cf3aee  stats-2026-11-data-sink-types.tar.gz
+a0bda86aad1ea82b8f97043dc4a9ec57a3688c1b8f6a4003d354550527dc770b  stats-2026-11-data-arm-codegen.tar.gz
+19b3e29bb5a4a28a18cbd208a7cc32a6c352fd9e830a47366430fde8b5dbf94e  stats-2026-11-data-arm-lse-llsc.tar.gz
+6269e8075a33141b003cd297ddb812d9c110e5f0d9117d00994f500d483fba54  stats-2026-11-data-contention.tar.gz
+07063f6a0bfdfc958bf380e69f6dbc2a6adbb06a2881bfeb8dd6d5f2c7964a7d  stats-2026-11-data-flush-latency.tar.gz
+3725342d19774b0554d54db04e0e09196fbd04cb65945a74ee0a178342517fa0  stats-2026-11-data-microbenchmarks.tar.gz
+d2ffb642d8d0c39e11ff11464cdc4d23c80592ae4f8959c2cb09a542cde49461  stats-2026-11-data-microbenchmarks-flush-overlap.tar.gz
+412b8d0d046c6e7aeb1c1d9b7a744cbbfb492f77d626ab4b490d7123f7f218ef  stats-2026-11-data-multi-worker.tar.gz
+c20fb877019c13f4d807ec579c309021b6fe66f018805af6b47001ebd514a8b2  stats-2026-11-data-multi-worker-high-load.tar.gz
+dfe3b5561d661303cb58d3a34cc96fdafdd8347edb4db72d03bb3d04808512e1  stats-2026-11-data-sink-flush-cost.tar.gz
+0de7c01127b9f56fd203ce05fd0511437b5ad3650bd0318d758ebc4828b64e0d  stats-2026-11-data-sink-types.tar.gz
