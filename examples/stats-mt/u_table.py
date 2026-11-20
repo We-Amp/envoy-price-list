@@ -397,11 +397,41 @@ def dose_evidence_rows(ev, cells):
                "footprint": t_interval(list(fd.values())),
                "base_cycles": mean([val(m) or val(m, "cycles_total") for m in legs("base")]),
                "base_busy": mean([m.get("sut_busy") for m in legs("base")]),
-               "stat_ops_per_req": mean(ops)}
+               "stat_ops_per_req": mean(ops), "rounds": max(len(hd), len(td), len(fd), len(ops))}
         hm = row["hitm_shared_minus_own"].get("mean")
         row["h"] = None if hm is None else hm / K
         out[c["cell"]] = row
     return out
+
+
+def run_positions(res):
+    """{(shape, round): [arm, ...]} in the order the legs ran: the legs as recorded (run order),
+    the latest attempt of each round and shape (a re-run repeats every arm of the round)."""
+    last = {}
+    for m in res.get("legs", []):
+        if m.get("superseded") or "round" not in m:
+            continue
+        key = (m.get("shape"), m["round"])
+        att = int(m.get("attempt", 0))
+        if key not in last or att > last[key][0]:
+            last[key] = (att, [])
+        if att == last[key][0]:
+            last[key][1].append(m.get("arm"))
+    return {k: v[1] for k, v in last.items()}
+
+
+def order_stats(pos, shape, later, earlier):
+    """How two arms of a cell were placed against each other over the rounds both ran in: the
+    mean position difference (later - earlier, in slots; 0 for a balanced pair) and in how many
+    rounds `later` ran directly after `earlier`."""
+    diffs = []
+    for (s, r), arms in sorted(pos.items(), key=lambda kv: (str(kv[0][0]), kv[0][1])):
+        if s == shape and later in arms and earlier in arms:
+            diffs.append(arms.index(later) - arms.index(earlier))
+    if not diffs:
+        return None
+    return {"rounds": len(diffs), "mean_diff": sum(diffs) / float(len(diffs)),
+            "directly_after": sum(1 for x in diffs if x == 1)}
 
 
 def dose_pair(by, shape, own, shared, K):
@@ -439,6 +469,9 @@ def dose_tables(res, evidence=None):
                  md.get("rounds_complete"), " (**incomplete, no verdict**)" if inc else "",
                  ", ".join("cell %s K = %d" % (c["cell"], c["counters"]) for c in cells)))
     ev = dose_evidence_rows(evidence, cells) if evidence else {}
+    # one round of evidence legs: means only; everything that rests on them says so
+    one_round = bool(ev) and max(e["rounds"] for e in ev.values()) <= 1
+    ONE = " (one round, no interval)" if one_round else ""
     # per cell, at its own dose: rho, A/A, instructions, price per update
     cs = {}
     for c in cells:
@@ -505,7 +538,7 @@ def dose_tables(res, evidence=None):
     for i, c in enumerate(cells):
         rows.append({"id": "S%d" % (i + 1), "kind": "cell", "cell": c["cell"], "counters": c["counters"],
                      "statement": "rho_%s at K = %d (%s, %s)" % (c["cell"], c["counters"], c["rung"], c["role"]),
-                     "w": cs[c["cell"]]["rho"]})
+                     "w": cs[c["cell"]]["rho"], "t": cs[c["cell"]]["rho_t"]})
 
     def at_dose(k, n):
         """The pair of cell k at dose n: the cell's own, or its second dose's; None when it has neither."""
@@ -521,12 +554,23 @@ def dose_tables(res, evidence=None):
         row = {"id": "S%d" % (len(rows) + 1), "kind": kind, "cells": pair, "counters": n}
         if n is None:
             row.update(statement="%s: rho_%s - rho_%s" % (kind, pair[0], pair[1]), w={"n": 0, "mean": None},
-                       no_dose="the two cells have no pair at the same dose")
+                       t={"n": 0, "mean": None}, no_dose="the two cells have no pair at the same dose")
         else:
             xa, xb = at_dose(pair[0], n), at_dose(pair[1], n)
             common = sorted(set(xa["rho_rounds"]) & set(xb["rho_rounds"]))
+            diffs = [xa["rho_rounds"][r] - xb["rho_rounds"][r] for r in common]
             row.update(statement="%s: rho_%s(%d) - rho_%s(%d)" % (kind, pair[0], n, pair[1], n), pairs=[xa, xb],
-                       w=widened([xa["rho_rounds"][r] - xb["rho_rounds"][r] for r in common], terms=2))
+                       w=widened(diffs, terms=2), t=t_interval(diffs))
+            if kind == "workers":
+                # what the two cells differ in: said in the statement, so the contrast is not read
+                # as the worker count alone
+                ca, cb = by_cell[pair[0]], by_cell[pair[1]]
+                sock = lambda c: "one socket" if c.get("sockets") == 1 else "two sockets"  # noqa: E731
+                row["what"] = "%s workers on %s against %s on %s" % (
+                    workers.get(ca["shape"]), sock(ca), workers.get(cb["shape"]), sock(cb))
+                row["confounded"] = ca.get("sockets") != cb.get("sockets")
+                row["statement"] += ": %s%s" % (row["what"], " (confounded with the socket split)"
+                                                 if row["confounded"] else "")
         rows.append(row)
     short = lambda k, nv: "%s (cell %s: %d valid rounds of the %d a verdict needs)" % (  # noqa: E731
         experiment.INCOMPLETE, k, nv, need)
@@ -588,8 +632,9 @@ def dose_tables(res, evidence=None):
                 no.append("HITM:u (shared - own) %.1f per request under %.2f x K = %.1f" % (
                     hd, DOSE_HITM_SHARE, DOSE_HITM_SHARE * K))
             r["line_transfer"] = not no
-            r["verdict"] = ("finding: line transfer" if not no else
-                            "finding, not called line transfer (%s)" % "; ".join(no))
+            one = " (HITM evidence: one round, no interval)" if e.get("rounds") == 1 else ""
+            r["verdict"] = ("finding: line transfer" + one if not no else
+                            "finding, not called line transfer (%s)%s" % ("; ".join(no), one if hd is not None else ""))
             continue
         # a contrast: neither of its pairs may be an invalid comparison
         bad = [k for k, x in zip(mine, used) if x["rho"].get("hi") is not None and x["rho"]["hi"] < 0]
@@ -598,19 +643,26 @@ def dose_tables(res, evidence=None):
             continue
         resolved = excl and h <= 0.05
         r["resolved"] = resolved
-        what = "across sockets" if r["kind"] == "socket" else "at the larger worker count"
+        what = "across sockets" if r["kind"] == "socket" else "at %s%s" % (
+            r.get("what") or "the larger worker count",
+            "; the worker count and the socket split are not separated" if r.get("confounded") else "")
         r["verdict"] = ("resolved: %s %s" % ("higher" if w["mean"] > 0 else "lower", what) if resolved else
                         "not resolved in a short run, under %+.2f points" % w["hi"] if short_run else
                         "not resolved: <= %+.2f points" % w["hi"])
     L.append("## Statements (pre-stated 2026-11-20; Holm over %d)\n" % len(rows))
-    L.append("| # | Statement | Estimate, widened 95% interval | Rounds | Holm p | Predicted | Verdict |\n"
-             "|---|---|---|---|---|---|---|")
+    L.append("| # | Statement | Estimate, widened 95% interval | Plain 95% t interval | Rounds | Holm p | Predicted | "
+             "Verdict |\n|---|---|---|---|---|---|---|---|")
     for r in rows:
         w = r["w"]
-        L.append("| %s | %s | %s | %d | %s | %s | %s |" % (
-            r["id"], r["statement"], _ci(w), w["n"], "%.3g" % r["holm_p"],
+        L.append("| %s | %s | %s | %s | %d | %s | %s | %s |" % (
+            r["id"], r["statement"], _ci(w), _ci(r["t"]), w["n"], "%.3g" % r["holm_p"],
             DOSE_PREDICTED.get(r["kind"], "-"), r["verdict"]))
     L.append("")
+    nmax = max([r["w"]["n"] for r in rows] or [0])
+    if nmax >= 2:
+        L.append("%d rounds give %d degrees of freedom: the plain t interval (quantile %.2f) is printed beside the "
+                 "widened one (1.96 with the 0.34 term), and the reader should take the wider of the two. The verdicts "
+                 "use the widened interval, as pre-stated.\n" % (nmax, nmax - 1, stats.t_ppf(0.975, nmax - 1)))
     L.append("Estimates are log points x 100 (percent; S4 and S5 in points). Widened: 1.96 x sqrt(SE^2 + 0.34^2) "
              "for a cell, 1.96 x sqrt(SE^2 + 2 x 0.34^2) for a difference of two cells. A cell that is not a finding "
              "is a bound on rho, not evidence of no cost.\n")
@@ -621,11 +673,34 @@ def dose_tables(res, evidence=None):
                 "widened interval's upper end" if short_run else
                 "A cell under %d valid rounds is incomplete" % DOSE_MIN_ROUNDS))
     js["statements"] = rows
+    # how the arms were placed against each other, from the legs as they ran
+    pos = run_positions(res)
+    order = []
+    for c in cells:
+        pairs = [("shared / own at K = %d" % c["counters"], c["shared"], c["reference"]),
+                 ("A/A", c["aa"][0], c["aa"][1])]
+        if lo and lo["cell"] == c["cell"]:
+            pairs.append(("shared / own at K = %d" % lo["counters"], lo["shared"], lo["own"]))
+        if hot and hot["cell"] == c["cell"]:
+            pairs.append(("hot shared / own", hot["shared"], hot["own"]))
+        for label, later, earlier in pairs:
+            o = order_stats(pos, c["shape"], later, earlier)
+            if o:
+                order.append(dict(o, cell=c["cell"], pair=label, later=later, earlier=earlier,
+                                  arms=max(len(v) for (sh, r), v in pos.items() if sh == c["shape"])))
+    js["order"] = order
+    if order:
+        L.append("Order (from the legs as they ran): %s. A mean position difference other than 0, or one arm "
+                 "mostly directly after the other, means a carry-over from the leg before is not averaged out of "
+                 "that pair.\n" % "; ".join(
+                     "cell %s (%d arms, %d rounds) %s: %s ran %+.2f slots from %s on average and directly after it in "
+                     "%d of %d rounds" % (o["cell"], o["arms"], o["rounds"], o["pair"], o["later"], o["mean_diff"],
+                                          o["earlier"], o["directly_after"], o["rounds"]) for o in order))
     # prices, with the footprint band where the evidence legs have that pair
     L.append("## Cycles per shared update\n")
     L.append("| Cell | K | P: (shared - own) / K, worker cycles [95%% t CI] (measured) | d: clean L3 hits per update, own - "
-             "shared (evidence legs) | P + d x %.0f cycles (MODELLED upper figure) |\n|---|---|---|---|---|"
-             % DOSE_L3_CYCLES)
+             "shared (evidence legs)%s | P + d x %.0f cycles (MODELLED upper figure)%s |\n|---|---|---|---|---|"
+             % (ONE, DOSE_L3_CYCLES, ONE))
     prices = []
     for c in cells:
         for x in [cs[c["cell"]]] + ([lo] if lo and lo["cell"] == c["cell"] else []):
@@ -645,15 +720,23 @@ def dose_tables(res, evidence=None):
     js["prices"] = prices
     if hot:
         sp, hp = cs[hot["cell"]]["price"].get("mean"), hot["price"].get("mean")
+        band = next((x["band"] for x in prices if x["cell"] == hot["cell"]
+                     and x["counters"] == cs[hot["cell"]]["counters"]), None)
+        hot["spread_price"], hot["spread_band"] = sp, band
+        hot["ratio_to_band"] = hp / band if hp is not None and band and band > 0 else None
         L.append("Hot counter in cell %s (EXPLORATORY, outside the statements, %d rounds): one counter takes the %d "
                  "increments of a request, so the write rate on its line is %d times a spread counter's. rho %s%% "
-                 "(widened %s), price %s cycles per update against %s for the spread pair at K = %d%s. A hot price "
-                 "clearly above the spread price is the sign of writers queuing on a line; own's hot counter stays in "
-                 "its worker's cache, so the two pairs' own arms differ.\n" % (
+                 "(widened %s), price %s cycles per update. The spread pair at K = %d: P %s, footprint band P + d x "
+                 "%.0f = %s%s; the hot price is %s the band. Only a hot price above the band is a sign of writers "
+                 "queuing on a line: hot-own has no footprint penalty (its one counter stays in its worker's cache) "
+                 "while the spread own arm has, so the spread P understates the price the hot pair is compared "
+                 "with. At this box's rates the hot line is occupied only an estimated 12-20%% of the time, so a hot "
+                 "price at or below the band does not show the absence of queuing on wider machines.\n" % (
                      hot["cell"], hot["valid_rounds"], hot["counters"], hot["counters"], _ci(hot["rho_t"]),
-                     _ci(hot["rho"]), "-" if hp is None else "%+.1f" % hp, "-" if sp is None else "%+.1f" % sp,
-                     cs[hot["cell"]]["counters"],
-                     "" if not sp or hp is None or sp <= 0 else " (%.2f times)" % (hp / sp)))
+                     _ci(hot["rho"]), "-" if hp is None else "%+.1f" % hp, cs[hot["cell"]]["counters"],
+                     "-" if sp is None else "%+.1f" % sp, DOSE_L3_CYCLES, "-" if band is None else "%.1f" % band, ONE,
+                     "not comparable to (no band)" if hot["ratio_to_band"] is None
+                     else "%.2f times" % hot["ratio_to_band"]))
     L.append("P is measured and likely understates the sharing price: the own arm holds one counter set per "
              "connection and pays extra L3 hits for them. The last column adds d L3 hits at an assumed %.0f cycles "
              "each (no overlap credited): a modelled upper figure, not a measurement. No band where the evidence "
@@ -675,8 +758,8 @@ def dose_tables(res, evidence=None):
     if ev:
         L.append("## HITM:u loads per request (evidence legs, outside the timed run)\n")
         L.append("| Cell | K | base | stats-reject | own | shared | (shared - own) / K = h | Line-transfer threshold "
-                 "%.2f x K | base - stats-reject [95%% t CI] | Store-stat operations/req, base |\n"
-                 "|---|---|---|---|---|---|---|---|---|---|" % DOSE_HITM_SHARE)
+                 "%.2f x K | base - stats-reject%s | Store-stat operations/req, base |\n"
+                 "|---|---|---|---|---|---|---|---|---|---|" % (DOSE_HITM_SHARE, ONE or " [95% t CI]"))
         for c in cells:
             e = ev[c["cell"]]
             L.append("| %s | %d | %s | %s | %s | %s | %s | %s | %s | %s |" % (
@@ -684,6 +767,9 @@ def dose_tables(res, evidence=None):
                 f(e["hitm"]["shared"]), f(e["h"], "%.3f"), "%.1f per request" % (DOSE_HITM_SHARE * e["counters"]),
                 _ci(e["hitm_base_minus_reject"]), f(e["stat_ops_per_req"], "%.1f")))
         L.append("")
+        if one_round:
+            L.append("ONE ROUND, NO INTERVAL: the evidence legs ran once per cell, so h, d, T, the footprint band and "
+                     "the line-transfer label all rest on one leg per arm and cell.\n")
         L.append("The HITM load event sees only a fraction of the transfers of locked updates (h well under 1 in the "
                  "pilot). Gauge updates are not in the operation count (an increment and a decrement cancel in "
                  "snapshots).\n")
@@ -695,9 +781,10 @@ def dose_tables(res, evidence=None):
                  "of the plain config.\n")
     else:
         L.append("| Cell | Sockets | K | P: price per update from the widened upper end of rho, cycles | T: store-stat "
-                 "operations/req of the plain config (probe) | C: base worker cycles/req (k) | MODEL T x P / C | For "
-                 "comparison, HITM-scaled: HITM:u (base - reject) x P / h, as a share of C |\n"
-                 "|---|---|---|---|---|---|---|---|")
+                 "operations/req of the plain config (probe)%s | C: base worker cycles/req (k) | MODEL T x P / C | "
+                 "MODEL with the footprint band, T x (P + d x %.0f) / C%s | For comparison, HITM-scaled: HITM:u (base - "
+                 "reject) x P / h, as a share of C%s |\n|---|---|---|---|---|---|---|---|---|"
+                 % (ONE, DOSE_L3_CYCLES, ONE, ONE))
         verdict = {r["cell"]: r for r in rows if r["kind"] == "cell"}
         entries = []
         for c in cells:
@@ -723,18 +810,22 @@ def dose_tables(res, evidence=None):
             elif not C:
                 why = "no base cycles"
             row = {"cell": k, "dose": dose, "P": P, "T": T, "C": C, "why": why, "sockets": c.get("sockets")}
-            hs = None
+            hs = xb = None
             if why is None:
                 row["x_pct"] = max(0.0, 100.0 * T * P / C)
+                dd = (e.get("footprint") or {}).get("mean") if e.get("counters") == dose else None
+                if dd is not None:
+                    row["footprint_d"] = dd
+                    xb = row["x_band_pct"] = max(0.0, 100.0 * T * (P + dd * DOSE_L3_CYCLES) / C)
                 # the comparison figure uses the HITM evidence of the cell's own dose
                 th, h = e["hitm_base_minus_reject"].get("mean"), e["h"]
                 if th is not None and h and h > 0:
                     hs = row["hitm_scaled_pct"] = 100.0 * th * P / h / C
             model["cells"].setdefault(k, []).append(row)
-            L.append("| %s | %s | %d | %s | %s | %s | %s | %s |" % (
+            L.append("| %s | %s | %d | %s | %s | %s | %s | %s | %s |" % (
                 k, c.get("sockets", "-"), dose, "-" if P is None else "%.1f" % P, "-" if T is None else "%.1f" % T,
                 "-" if not C else "%.1f" % (C / 1e3), why if why else "%.2f%%" % row["x_pct"],
-                "-" if hs is None else "%.2f%%" % hs))
+                "-" if xb is None else "%.2f%%" % xb, "-" if hs is None else "%.2f%%" % hs))
         L.append("")
         model["headline"] = {}
         for n, word in ((1, "one socket"), (2, "two sockets")):
@@ -748,21 +839,30 @@ def dose_tables(res, evidence=None):
                 continue
             x = max(r["x_pct"] for c, r in got)
             model["headline"][word] = x
+            bands = [r["x_band_pct"] for c, r in got if r.get("x_band_pct") is not None]
+            y = max(bands) if bands else None
+            model.setdefault("headline_band", {})[word] = y
             busy = sorted(100 * ev[c["cell"]]["base_busy"] for c in mine if ev[c["cell"]]["base_busy"] is not None)
-            L.append("**MODEL, %s:** sharing store stats across %s, %s busy, costs at most %.2f%% of worker cycles "
-                     "per request (%s; modelled as T x P / C from this run's price per shared update, not "
-                     "measured in the plain config).%s\n" % (
+            L.append("**MODEL, %s:** sharing store stats across %s, %s busy, costs about %.2f%% of worker cycles "
+                     "per request in the measured-price model, %s (%s; modelled as T x P / C from this run's price "
+                     "per shared update, not measured in the plain config).%s\n" % (
                          word, " and ".join("%d workers (cell %s)" % (workers.get(c["shape"]), c["cell"])
                                             for c in mine),
                          ("%.0f%%" % busy[0] if round(busy[0]) == round(busy[-1]) else "%.0f-%.0f%%" % (
                              busy[0], busy[-1])) if busy else "unknown", x,
-                         "; ".join("cell %s %.2f%% with the price at %d counters" % (c["cell"], r["x_pct"], r["dose"])
+                         "no footprint band for these cells" if y is None else
+                         "up to %.2f%% with the footprint band%s" % (y, ONE),
+                         "; ".join("cell %s %.2f%% with the price at %d counters%s" % (
+                             c["cell"], r["x_pct"], r["dose"],
+                             "" if r.get("x_band_pct") is None else " (%.2f%% with the band)" % r["x_band_pct"])
                                    for c, r in got),
                          "".join(" Cell %s has no model row (%s)." % (c["cell"], model["cells"][c["cell"]][0]["why"])
                                  for c in mine if all(r.get("x_pct") is None for r in model["cells"][c["cell"]]))))
         L.append("Expected: %s. P = (exp(the widened interval's upper end of rho) - 1) x own cycles / counters; T "
-                 "counts every store-stat operation of the plain config as a shared update. The HITM-scaled column is "
-                 "printed for comparison only (means, not upper ends).\n" % DOSE_MODEL_EXPECTED)
+                 "counts every store-stat operation of the plain config as a shared update%s. P likely understates "
+                 "the sharing price, so the P-based figure is not an upper bound; the band column adds d L3 hits at "
+                 "%.0f cycles to P. The HITM-scaled column is printed for comparison only (means, not upper "
+                 "ends).\n" % (DOSE_MODEL_EXPECTED, ONE, DOSE_L3_CYCLES))
     L.append("R1 prices a shared update; the claim about deployments is the model row only. The K updates of a "
              "request arrive in one burst.\n")
     js.update(cells=cs, evidence=ev, model=model)

@@ -1550,7 +1550,8 @@ class DoseTableTest(unittest.TestCase):
                           ("workers", ["D", "A"], 64)])
         self.assertEqual([st[k]["statement"] for k in ("S3", "S4", "S5")],
                          ["rho_D at K = 64 (28w, workers)", "socket: rho_B(128) - rho_A(128)",
-                          "workers: rho_D(64) - rho_A(64)"])
+                          "workers: rho_D(64) - rho_A(64): 28 workers on two sockets against 14 on one socket "
+                          "(confounded with the socket split)"])
         for k, rho in (("S1", 2.0), ("S2", 5.0), ("S3", 2.5)):
             self.assertAlmostEqual(st[k]["w"]["mean"], rho, delta=0.4)
             self.assertEqual(st[k]["verdict"], "finding: line transfer")
@@ -1579,7 +1580,7 @@ class DoseTableTest(unittest.TestCase):
         self.assertAlmostEqual(st["S5"]["w"]["mean"], want["mean"])
         self.assertAlmostEqual(st["S5"]["w"]["hi"], want["hi"])
         self.assertAlmostEqual(st["S5"]["w"]["mean"], 1.5, delta=0.4)   # 2.5 - 1.0, not 2.5 - 2.0
-        self.assertEqual(st["S5"]["verdict"], "resolved: higher at the larger worker count")
+        self.assertEqual(st["S5"]["verdict"], "resolved: higher at 28 workers on two sockets against 14 on one socket; the worker count and the socket split are not separated")
         self.assertEqual((js["low"]["counters"], js["low"]["own"], js["low"]["cell"]), (64, "own-64", "A"))
         self.assertAlmostEqual(js["low"]["price"]["mean"], sum((as_[r] - ao[r]) / 64 for r in ao) / 15)
         hp = UT.stats.holm([st[k]["w"]["p"] for k in st])
@@ -1643,7 +1644,7 @@ class DoseTableTest(unittest.TestCase):
         self.assertTrue(st["S4"]["verdict"].startswith("no verdict: cell B A/A failed"))
         self.assertNotIn("<=", st["S4"]["verdict"])
         self.assertEqual(st["S1"]["verdict"], "finding: line transfer")
-        self.assertEqual(st["S5"]["verdict"], "resolved: higher at the larger worker count")
+        self.assertEqual(st["S5"]["verdict"], "resolved: higher at 28 workers on two sockets against 14 on one socket; the worker count and the socket split are not separated")
         # a half-width over 1% fails it too
         _, js, st = self.rows(_dose_run(RHO, aa_noise=0.03), _dose_evidence())
         self.assertGreater(js["cells"]["A"]["aa"]["hw"], 1.0)
@@ -1845,13 +1846,30 @@ class DoseTableTest(unittest.TestCase):
         self.assertEqual([r["dose"] for r in a], [128, 64])
         self.assertAlmostEqual(a[1]["P"], math.expm1(js["low"]["rho"]["hi"] / 100.0) * js["low"]["own_k"] / 64)
         self.assertEqual([len(js["model"]["cells"][c]) for c in ("B", "D")], [1, 1])
-        self.assertIn("cell A %.2f%% with the price at 128 counters; cell A %.2f%% with the price at 64 counters" % (
-            a[0]["x_pct"], a[1]["x_pct"]), text)
+        self.assertIn("cell A %.2f%% with the price at 128 counters (%.2f%% with the band); cell A %.2f%% with the "
+                      "price at 64 counters" % (a[0]["x_pct"], a[0]["x_band_pct"], a[1]["x_pct"]), text)
         # one-socket and two-socket figures apart, each marked a model
-        self.assertIn("**MODEL, one socket:** sharing store stats across 14 workers (cell A), 36% busy, costs at "
-                      "most ", text)
+        self.assertIn("**MODEL, one socket:** sharing store stats across 14 workers (cell A), 36% busy, costs about ",
+                      text)
         self.assertIn("**MODEL, two sockets:** sharing store stats across 14 workers (cell B) and 28 workers (cell D), "
-                      "36-38% busy, costs at most ", text)
+                      "36-38% busy, costs about ", text)
+        # no "at most" on the P-based figure; the band figure is the "up to"
+        self.assertNotIn("at most", text[text.index("## Model row"):])
+        for word in ("one socket", "two sockets"):
+            x, y = js["model"]["headline"][word], js["model"]["headline_band"][word]
+            self.assertIn("costs about %.2f%% of worker cycles per request in the measured-price model, up to %.2f%% "
+                          "with the footprint band" % (x, y), text)
+            self.assertGreater(y, x)
+        # the band column: T x (P + d x 45) / C, d from the evidence legs of that cell and dose
+        for cell in ("A", "B", "D"):
+            m = js["model"]["cells"][cell][0]
+            dd = js["evidence"][cell]["footprint"]["mean"]
+            self.assertAlmostEqual(m["footprint_d"], dd)
+            self.assertAlmostEqual(m["x_band_pct"], 100 * m["T"] * (m["P"] + dd * 45.0) / m["C"])
+        self.assertNotIn("x_band_pct", a[1])  # no evidence legs at cell A's 64: no band figure, none invented
+        self.assertEqual(js["model"]["headline_band"]["two sockets"],
+                         max(js["model"]["cells"][c][0]["x_band_pct"] for c in ("B", "D")))
+        self.assertIn("MODEL with the footprint band, T x (P + d x 45) / C", text)
         self.assertEqual(text.count("not measured in the plain config"), 2)
         self.assertEqual(js["model"]["headline"]["one socket"], max(r["x_pct"] for r in a))
         self.assertEqual(js["model"]["headline"]["two sockets"],
@@ -2687,7 +2705,31 @@ class ShortRunAndHotCounterTest(unittest.TestCase):
         self.assertEqual((e["hitm_shared_minus_own"]["n"], e["footprint"]["n"]), (1, 1))
         self.assertNotIn("lo", e["hitm_shared_minus_own"])
         self.assertAlmostEqual(e["h"], 0.3, delta=0.05)
-        self.assertEqual(st["S2"]["verdict"], "finding: line transfer")
+        self.assertEqual(e["rounds"], 1)
+        # everything resting on the one round says so, and carries no interval header
+        self.assertEqual(st["S2"]["verdict"], "finding: line transfer (HITM evidence: one round, no interval)")
+        self.assertIn("ONE ROUND, NO INTERVAL: the evidence legs ran once per cell, so h, d, T, the footprint band and "
+                      "the line-transfer label all rest on one leg per arm and cell.", text)
+        hitm_head = [ln for ln in text.splitlines() if ln.startswith("| Cell | K | base | stats-reject")][0]
+        self.assertIn("base - stats-reject (one round, no interval)", hitm_head)
+        self.assertNotIn("95% t CI", hitm_head)
+        price_head = [ln for ln in text.splitlines() if ln.startswith("| Cell | K | P: (shared - own)")][0]
+        self.assertEqual(price_head.count("(one round, no interval)"), 2)   # d and the band; P keeps its interval
+        self.assertIn("worker cycles [95% t CI] (measured)", price_head)
+        model_head = [ln for ln in text.splitlines() if ln.startswith("| Cell | Sockets | K | P: price")][0]
+        self.assertEqual(model_head.count("(one round, no interval)"), 3)   # T, the band column, the HITM-scaled column
+        self.assertIn("with the footprint band (one round, no interval)", text)
+        ev4 = _dose_evidence(h=0.1)
+        ev4["legs"] = [m for m in ev4["legs"] if m["round"] == 1]
+        ev4["metadata"]["rounds_complete"] = 1
+        _, _, st4 = self.rows(_dose_run(RHO, rounds=6), ev4)
+        self.assertTrue(st4["S2"]["verdict"].endswith("(HITM evidence: one round, no interval)"))
+        self.assertTrue(st4["S2"]["verdict"].startswith("finding, not called line transfer"))
+        # four rounds of evidence: intervals, and no such label anywhere
+        text4, js4, st4 = self.rows(_dose_run(RHO, rounds=6), _dose_evidence())
+        self.assertNotIn("one round, no interval", text4.lower())
+        self.assertIn("base - stats-reject [95% t CI]", text4)
+        self.assertEqual(st4["S2"]["verdict"], "finding: line transfer")
         p = {(x["cell"], x["counters"]): x for x in js["prices"]}[("B", 128)]
         self.assertAlmostEqual(p["band"], p["price"]["mean"] + p["footprint_d"] * 45.0)
         m = js["model"]["cells"]["B"][0]
@@ -2720,12 +2762,150 @@ class ShortRunAndHotCounterTest(unittest.TestCase):
         self.assertIn("| A, HOT COUNTER (exploratory) | 128 on one counter |", text)
         ratio = hot["price"]["mean"] / js["cells"]["A"]["price"]["mean"]
         self.assertIn("Hot counter in cell A (EXPLORATORY, outside the statements, 6 rounds)", text)
-        self.assertIn("(%.2f times)" % ratio, text)
         self.assertGreater(ratio, 2.0)
+        # the hot price is set against the footprint band of cell A's K = 128 pair, not against its P
+        band = {(x["cell"], x["counters"]): x for x in js["prices"]}[("A", 128)]["band"]
+        self.assertAlmostEqual(band, js["cells"]["A"]["price"]["mean"] + js["evidence"]["A"]["footprint"]["mean"] * 45.0)
+        self.assertAlmostEqual(hot["ratio_to_band"], hot["price"]["mean"] / band)
+        self.assertEqual((hot["spread_band"], hot["spread_price"]), (band, js["cells"]["A"]["price"]["mean"]))
+        self.assertIn("the hot price is %.2f times the band" % hot["ratio_to_band"], text)
+        self.assertNotIn("(%.2f times)" % ratio, text)
+        for needle in ("Only a hot price above the band is a sign of writers queuing on a line",
+                       "hot-own has no footprint penalty", "while the spread own arm has",
+                       "occupied only an estimated 12-20% of the time",
+                       "does not show the absence of queuing on wider machines"):
+            self.assertIn(needle, text)
+        # a hot price under the band is printed as such, and without evidence legs there is no band to compare with
+        _, js3, _ = self.rows(_dose_run(RHO, rounds=6, rho_hot=0.01), _dose_evidence())
+        self.assertLess(js3["hot"]["ratio_to_band"], 1.0)
+        text4, js4, _ = self.rows(res)
+        self.assertIsNone(js4["hot"]["ratio_to_band"])
+        self.assertIn("the hot price is not comparable to (no band) the band", text4)
         # no model row and no footprint band rest on it
         self.assertNotIn("hot", json.dumps(js["model"]))
         self.assertFalse([p for p in js["prices"] if "hot" in json.dumps(p["cell"])])
         self.assertEqual(len(js["prices"]), 4)
+
+
+class DoseTableReviewTest(unittest.TestCase):
+    """The re-review's table fixes that have no test above: both intervals, the order caveat."""
+
+    def rows(self, res, ev=None):
+        text, js = UT.render(res, None, ev)
+        return text, js, {r["id"]: r for r in js["statements"]}
+
+    def test_plain_t_beside_widened(self):
+        res = _dose_run(RHO, rounds=6)
+        text, js, st = self.rows(res, _dose_evidence())
+        head = [ln for ln in text.splitlines() if ln.startswith("| # | Statement")][0]
+        self.assertIn("| Estimate, widened 95% interval | Plain 95% t interval |", head)
+        t5 = UT.stats.t_ppf(0.975, 5)
+        self.assertAlmostEqual(t5, 2.5706, places=3)
+        for k in ("S1", "S2", "S3"):
+            d = list(js["cells"][st[k]["cell"]]["rho_rounds"].values())
+            mu = sum(d) / 6
+            se = UT.stats.stdev(d) / math.sqrt(6)
+            self.assertAlmostEqual(st[k]["t"]["hi"], mu + t5 * se)
+            self.assertAlmostEqual(st[k]["w"]["hi"], mu + 1.96 * math.sqrt(se ** 2 + 0.34 ** 2))
+        # the contrasts too: the plain t interval of the paired differences
+        ra, rb = js["cells"]["A"]["rho_rounds"], js["cells"]["B"]["rho_rounds"]
+        d = [rb[r] - ra[r] for r in sorted(ra)]
+        self.assertAlmostEqual(st["S4"]["t"]["hi"], sum(d) / 6 + t5 * UT.stats.stdev(d) / math.sqrt(6))
+        dl = [js["cells"]["D"]["rho_rounds"][r] - js["low"]["rho_rounds"][r] for r in sorted(ra)]
+        self.assertAlmostEqual(st["S5"]["t"]["lo"], sum(dl) / 6 - t5 * UT.stats.stdev(dl) / math.sqrt(6))
+        # both intervals are in every statement's row
+        for k, r in st.items():
+            row = [ln for ln in text.splitlines() if ln.startswith("| %s |" % k)][0]
+            self.assertIn("%+.2f [%+.2f, %+.2f]" % (r["w"]["mean"], r["w"]["lo"], r["w"]["hi"]), row)
+            self.assertIn("%+.2f [%+.2f, %+.2f]" % (r["t"]["mean"], r["t"]["lo"], r["t"]["hi"]), row)
+        self.assertIn("6 rounds give 5 degrees of freedom: the plain t interval (quantile 2.57) is printed beside the "
+                      "widened one", text)
+        self.assertIn("the reader should take the wider of the two", text)
+        # with a small spread the widened one is the wider; with a large spread the plain t one is
+        self.assertGreater(st["S1"]["w"]["hi"] - st["S1"]["w"]["lo"], st["S1"]["t"]["hi"] - st["S1"]["t"]["lo"])
+        noisy = _dose_run(RHO, rounds=6)
+        for m in noisy["legs"]:
+            if m["arm"] == "shared-128" and m["shape"] == "mt-14w-one":
+                m["workers_cycles_per_req"] *= 1.0 + (0.02 if m["round"] % 2 else -0.02)
+        _, _, st2 = self.rows(noisy, _dose_evidence())
+        self.assertGreater(st2["S1"]["t"]["hi"] - st2["S1"]["t"]["lo"], st2["S1"]["w"]["hi"] - st2["S1"]["w"]["lo"])
+        # 15 rounds: 14 degrees of freedom
+        text15, _, _ = self.rows(_dose_run(RHO), _dose_evidence())
+        self.assertIn("15 rounds give 14 degrees of freedom", text15)
+
+    def scheduled(self, mutate=None):
+        """A synthetic run whose legs are recorded in the order the real config schedules them."""
+        res = _dose_run(RHO, rounds=6)
+        exp = experiment.load(os.path.join(MT, "bench-x86_64", "dose.json"))
+        by = {(m["round"], m["shape"], m["arm"]): m for m in res["legs"]}
+        res["legs"] = [by[(r, sh["name"], a["name"])] for r, sh, a in experiment.schedule(exp)]
+        self.assertEqual(len(res["legs"]), 78)
+        if mutate:
+            mutate(res)
+        return res, exp
+
+    def test_order_caveat_from_the_run(self):
+        res, exp = self.scheduled()
+        text, js, st = self.rows(res, _dose_evidence())
+        o = {(x["cell"], x["pair"]): x for x in js["order"]}
+        self.assertEqual(sorted(o), [("A", "A/A"), ("A", "hot shared / own"), ("A", "shared / own at K = 128"),
+                                     ("A", "shared / own at K = 64"), ("B", "A/A"), ("B", "shared / own at K = 128"),
+                                     ("D", "A/A"), ("D", "shared / own at K = 64")])
+        # recomputed by hand from the schedule: positions of each arm per round and cell
+        want = {}
+        for r in range(1, 7):
+            for sh in exp["shapes"]:
+                names = [a["name"] for a in experiment.shape_round_order(exp, r, sh)]
+                for later, earlier in (("shared-128", "own-128"), ("own-128-A2", "own-128"), ("shared-64", "own-64"),
+                                       ("own-64-A2", "own-64"), ("hot-shared-128", "hot-own-128")):
+                    if later in names and earlier in names:
+                        want.setdefault((sh["cell"], later, earlier), []).append(names.index(later) - names.index(earlier))
+        for x in js["order"]:
+            d = want[(x["cell"], x["later"], x["earlier"])]
+            self.assertEqual((x["rounds"], x["directly_after"]), (6, d.count(1)), x)
+            self.assertAlmostEqual(x["mean_diff"], sum(d) / 6.0)
+        # what the schedule of this run gives: 7 arms in 6 rounds in cell A
+        a = o[("A", "shared / own at K = 128")]
+        self.assertEqual((a["arms"], a["rounds"], a["directly_after"]), (7, 6, 5))
+        self.assertAlmostEqual(a["mean_diff"], -1 / 6.0)
+        self.assertAlmostEqual(o[("A", "shared / own at K = 64")]["mean_diff"], -1 / 6.0)
+        self.assertAlmostEqual(o[("A", "A/A")]["mean_diff"], -2 / 6.0)
+        self.assertEqual([o[(c, p)]["directly_after"] for c, p in (("B", "shared / own at K = 128"),
+                                                                  ("D", "shared / own at K = 64"))], [4, 4])
+        self.assertEqual(o[("B", "shared / own at K = 128")]["arms"], 3)
+        self.assertIn("Order (from the legs as they ran): cell A (7 arms, 6 rounds) shared / own at K = 128: "
+                      "shared-128 ran -0.17 slots from own-128 on average and directly after it in 5 of 6 rounds", text)
+        self.assertIn("cell A (7 arms, 6 rounds) A/A: own-128-A2 ran -0.33 slots from own-128", text)
+        self.assertIn("directly after it in 4 of 6 rounds", text)
+        self.assertIn("a carry-over from the leg before is not averaged out", text)
+
+    def test_order_follows_the_legs_not_the_config(self):
+        # computed from the legs in the run directory: another run order gives other numbers
+        def reverse_cell_a(res):
+            for r in range(1, 7):
+                idx = [i for i, m in enumerate(res["legs"]) if m["round"] == r and m["shape"] == "mt-14w-one"]
+                legs = [res["legs"][i] for i in idx][::-1]
+                for i, m in zip(idx, legs):
+                    res["legs"][i] = m
+        res, _ = self.scheduled(reverse_cell_a)
+        _, js, _ = self.rows(res, _dose_evidence())
+        o = {(x["cell"], x["pair"]): x for x in js["order"]}
+        self.assertAlmostEqual(o[("A", "shared / own at K = 128")]["mean_diff"], 1 / 6.0)
+        self.assertEqual(o[("A", "shared / own at K = 128")]["directly_after"], 0)
+        self.assertEqual(o[("B", "shared / own at K = 128")]["directly_after"], 4)   # cell B untouched
+        # a re-run of a round and cell replaces its first attempt; superseded legs do not count
+        res, _ = self.scheduled()
+        first = [m for m in res["legs"] if m["round"] == 2 and m["shape"] == "mt-14w-split"]
+        rerun = [dict(m, attempt=1, leg_id=m["leg_id"] + ".rr1") for m in first][::-1]
+        for m in first:
+            m["superseded"] = True
+        res["legs"] += rerun
+        pos = UT.run_positions(res)
+        self.assertEqual(pos[("mt-14w-split", 2)], [m["arm"] for m in rerun])
+        self.assertEqual(len(pos), 18)
+        self.assertEqual(UT.order_stats(pos, "mt-14w-split", "nobody", "own-128"), None)
+        self.assertEqual(UT.order_stats({("s", 1): ["a", "b"], ("s", 2): ["b", "x", "a"]}, "s", "b", "a"),
+                         {"rounds": 2, "mean_diff": -0.5, "directly_after": 1})
 
 
 if __name__ == "__main__":
