@@ -1,0 +1,40 @@
+per-arm mean/sd% (current valid):
+   14w-one hot-own-128 n5 mean 680.4k sd 1.09% min 672.7 max 690.3
+   14w-one hot-shared-128 n6 mean 702.1k sd 0.87% min 695.0 max 710.1
+   14w-one own-128 n5 mean 696.8k sd 0.86% min 692.0 max 707.2
+   14w-one own-128-A2 n6 mean 693.0k sd 0.60% min 688.4 max 700.6
+   14w-one own-64 n6 mean 620.0k sd 0.40% min 617.7 max 623.4
+   14w-one shared-128 n6 mean 696.8k sd 1.52% min 685.4 max 708.2
+   14w-one shared-64 n6 mean 623.3k sd 0.54% min 619.5 max 627.3
+   14w-split own-128 n6 mean 698.6k sd 0.38% min 694.6 max 701.8
+   14w-split own-128-A2 n6 mean 693.4k sd 1.19% min 684.9 max 703.9
+   14w-split shared-128 n6 mean 698.9k sd 0.97% min 690.1 max 707.3
+   28w own-64 n6 mean 619.5k sd 0.91% min 613.7 max 627.2
+   28w own-64-A2 n6 mean 614.7k sd 1.00% min 605.2 max 621.4
+   28w shared-64 n6 mean 621.4k sd 0.76% min 615.2 max 626.5
+residual % by (cell group, arm kind, predecessor kind):
+   ('A', 'hot-own', 'START') n1 mean +1.44 +1.4
+   ('A', 'hot-own', 'shared') n4 mean -0.37 -1.1 +0.4 +0.4 -1.1
+   ('A', 'hot-shared', 'START') n1 mean +0.45 +0.5
+   ('A', 'hot-shared', 'hot-own') n5 mean -0.09 -0.8 -1.0 +1.1 -0.4 +0.6
+   ('A', 'own', 'START') n2 mean +0.48 +1.1 -0.1
+   ('A', 'own', 'hot-shared') n4 mean +0.03 -0.5 -0.1 -0.7 +1.5
+   ('A', 'own', 'own') n6 mean -0.00 -0.4 +0.2 +0.3 +0.5 -0.4 -0.3
+   ('A', 'own', 'shared') n5 mean -0.22 -0.0 -0.1 +0.1 -0.7 -0.4
+   ('A', 'shared', 'START') n2 mean -1.13 -0.6 -1.6
+   ('A', 'shared', 'own') n10 mean +0.22 +1.6 -0.6 +0.6 +0.7 -1.4 -1.0 +0.5 +1.6 -0.1 +0.1
+   ('BD', 'own', 'START') n8 mean -0.38 -1.0 -0.6 -0.9 +0.1 -0.5 +1.1 -0.5 -0.6
+   ('BD', 'own', 'own') n8 mean +0.24 +0.5 +0.4 +0.3 +0.7 -0.3 -0.9 +0.1 +1.2
+   ('BD', 'own', 'shared') n8 mean +0.13 +0.3 +1.5 +1.4 -1.5 -0.2 -0.1 -1.2 +1.0
+   ('BD', 'shared', 'START') n4 mean -0.13 -0.6 +0.5 -1.3 +0.8
+   ('BD', 'shared', 'own') n8 mean +0.06 -0.3 -0.6 -0.5 -0.2 +1.2 +0.7 -1.0 +1.1
+A64 P on rounds 2-6: +69.4 [+32.5,+106.2]
+A128 17 updates: point 0.046%  t-upper 0.495%
+A64 17 updates: point 0.161%  t-upper 0.331%
+B128 17 updates: point 0.007%  t-upper 0.240%
+D64 17 updates: point 0.095%  t-upper 0.400%
+hot 17 updates: point 0.490%  t-upper 0.798%
+A128 wid-up 0.385%
+A64 0.403%
+B 0.220%
+D 0.409%

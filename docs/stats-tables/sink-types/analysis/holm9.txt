@@ -1,0 +1,12 @@
+Holm over 9 rows (alpha 0.05)
+run              arm            reference    n     effect         95% t interval      raw p     Holm p
+s-100k           statsd         nosink      10  +1898.94% [ +1847.77,  +1951.45]   8.97e-19   7.18e-18
+s-100k           dogstatsd-buf  nosink      10   +553.36% [  +542.28,   +564.64]   1.42e-18   9.97e-18
+s-100k           otlp           nosink      10   +837.11% [  +823.21,   +851.22]   8.67e-20   7.81e-19
+s-1m             statsd         nosink-5s    8   +815.72% [  +793.44,   +838.55]   1.34e-14   6.72e-14
+s-1m             dogstatsd-buf  nosink-5s    8   +250.86% [  +243.61,   +258.26]   2.24e-13   6.73e-13
+s-1m-otlp-rerun  otlp           nosink-20s   9   +380.06% [  +371.24,   +389.04]   5.32e-16   3.19e-15
+sw               statsd         nosink      10    +19.69% [   +19.00,    +20.39]   1.23e-13   4.92e-13
+sw               dogstatsd-buf  nosink      10    +17.78% [   +16.81,    +18.75]   6.74e-12   1.35e-11
+sw               otlp           nosink      10     +1.66% [    +0.85,     +2.48]   1.19e-03   1.19e-03
+log-scale effect over the A/A reach at the reference interval (log-%): re-run otlp 156.9 / 4.02 = 39; 1M dogstatsd-buf 125.5 / 4.29 = 29

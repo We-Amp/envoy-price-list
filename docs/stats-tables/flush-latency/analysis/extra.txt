@@ -1,0 +1,71 @@
+A. FLUSH START: worker run time and probe latency around the main-thread burst start (primary set)
+   worker run time per 5 ms sample, mean over 4 workers and the cell's 24 flushes, minus the cell's out-of-flush mean (ms of CPU per 5 ms):
+   own/nosink     -40:-0.01 -35:+0.01 -30:-0.01 -25:+0.01 -20:+0.00 -15:+0.00 -10:+0.01 -5:-0.02 +0:+0.18 +5:+0.53 +10:-0.00 +15:-0.00 +20:+0.00 +25:-0.02 +30:-0.04 +35:-0.02 +40:-0.01
+                  extra worker CPU in [-20, +10) ms around the burst start: mean 0.70 ms per worker per flush (SD 1.78, n 96 worker-flushes)
+                  probe latency by intended time since the burst start, 1 ms bins (n, share over 1 ms, max us):
+        -15: n=24 0% max 559 | -14: n=18 0% max 564 | -13: n=18 0% max 713 | -12: n=12 0% max 580 | -11: n=24 0% max 510 | -10: n=24 0% max 614 | -9: n=18 0% max 523 | -8: n=18 0% max 640 | -7: n=12 0% max 690 | -6: n=24 0% max 753 | -5: n=24 0% max 578 | -4: n=18 0% max 649 | -3: n=18 6% max 2874 | -2: n=12 8% max 2634 | -1: n=24 8% max 1875 | +0: n=24 8% max 3049 | +1: n=18 6% max 1830 | +2: n=18 6% max 1364 | +3: n=12 0% max 941 | +4: n=24 0% max 559 | +5: n=24 0% max 738 | +6: n=18 0% max 562 | +7: n=18 0% max 547 | +8: n=12 0% max 649 | +9: n=24 0% max 478 | +10: n=24 0% max 544 | +11: n=18 0% max 660
+   own/statsd     -40:+0.03 -35:-0.04 -30:+0.02 -25:+0.02 -20:-0.02 -15:+0.00 -10:-0.00 -5:+0.03 +0:+0.29 +5:+0.57 +10:-0.01 +15:-0.01 +20:-0.01 +25:+0.01 +30:+0.01 +35:+0.01 +40:+0.01
+                  extra worker CPU in [-20, +10) ms around the burst start: mean 0.86 ms per worker per flush (SD 1.85, n 96 worker-flushes)
+                  probe latency by intended time since the burst start, 1 ms bins (n, share over 1 ms, max us):
+        -15: n=18 0% max 676 | -14: n=18 0% max 719 | -13: n=24 0% max 881 | -12: n=18 0% max 612 | -11: n=18 0% max 584 | -10: n=18 0% max 728 | -9: n=18 0% max 629 | -8: n=24 0% max 830 | -7: n=18 0% max 948 | -6: n=18 0% max 721 | -5: n=18 0% max 762 | -4: n=18 6% max 2813 | -3: n=24 17% max 2918 | -2: n=18 17% max 2203 | -1: n=18 22% max 3380 | +0: n=18 11% max 2721 | +1: n=18 11% max 1917 | +2: n=24 8% max 1053 | +3: n=18 0% max 860 | +4: n=18 0% max 651 | +5: n=18 0% max 688 | +6: n=18 0% max 849 | +7: n=24 0% max 701 | +8: n=18 0% max 788 | +9: n=18 0% max 667 | +10: n=18 0% max 751 | +11: n=18 0% max 900
+   own/otlp       -40:+0.01 -35:+0.00 -30:+0.00 -25:-0.00 -20:-0.01 -15:+0.00 -10:-0.01 -5:-0.01 +0:+0.46 +5:+0.62 +10:+0.03 +15:-0.02 +20:-0.02 +25:-0.02 +30:-0.01 +35:+0.01 +40:+0.00
+                  extra worker CPU in [-20, +10) ms around the burst start: mean 1.05 ms per worker per flush (SD 2.39, n 96 worker-flushes)
+                  probe latency by intended time since the burst start, 1 ms bins (n, share over 1 ms, max us):
+        -15: n=18 0% max 594 | -14: n=18 0% max 678 | -13: n=24 0% max 541 | -12: n=12 0% max 511 | -11: n=24 0% max 715 | -10: n=18 0% max 624 | -9: n=18 0% max 526 | -8: n=24 0% max 532 | -7: n=12 0% max 606 | -6: n=24 4% max 11732 | -5: n=18 6% max 1832 | -4: n=18 11% max 3252 | -3: n=24 12% max 3479 | -2: n=12 33% max 2838 | -1: n=24 12% max 6082 | +0: n=18 6% max 1262 | +1: n=18 11% max 2223 | +2: n=24 12% max 1898 | +3: n=12 17% max 7569 | +4: n=24 4% max 2177 | +5: n=18 0% max 514 | +6: n=18 0% max 490 | +7: n=24 0% max 490 | +8: n=12 8% max 2613 | +9: n=24 0% max 584 | +10: n=18 0% max 589 | +11: n=18 0% max 535
+   shared/nosink  -40:-0.01 -35:-0.01 -30:-0.02 -25:-0.03 -20:-0.04 -15:+0.02 -10:-0.03 -5:+0.04 +0:+0.26 +5:+0.43 +10:+0.04 +15:-0.05 +20:-0.02 +25:-0.02 +30:-0.02 +35:-0.01 +40:+0.00
+                  extra worker CPU in [-20, +10) ms around the burst start: mean 0.68 ms per worker per flush (SD 1.45, n 72 worker-flushes); workers 1-3 only
+                  probe latency by intended time since the burst start, 1 ms bins (n, share over 1 ms, max us); workers 1-3 only:
+        -15: n=18 0% max 631 | -14: n=18 0% max 555 | -13: n=18 0% max 458 | -12: n=6 0% max 546 | -11: n=12 0% max 705 | -10: n=18 0% max 800 | -9: n=18 0% max 535 | -8: n=18 0% max 612 | -7: n=6 0% max 632 | -6: n=12 0% max 682 | -5: n=18 0% max 599 | -4: n=18 0% max 532 | -3: n=18 11% max 2140 | -2: n=6 17% max 1634 | -1: n=12 17% max 1078 | +0: n=18 6% max 2765 | +1: n=18 6% max 2072 | +2: n=18 6% max 1357 | +3: n=6 0% max 447 | +4: n=12 0% max 557 | +5: n=18 0% max 642 | +6: n=18 0% max 592 | +7: n=18 0% max 534 | +8: n=6 0% max 500 | +9: n=12 0% max 524 | +10: n=18 0% max 464 | +11: n=18 0% max 530
+   shared/statsd  -40:-0.07 -35:+0.03 -30:-0.06 -25:-0.01 -20:-0.02 -15:-0.03 -10:-0.10 -5:-0.12 +0:+0.27 +5:+0.78 +10:+0.03 +15:+0.00 +20:-0.01 +25:+0.03 +30:+0.04 +35:+0.05 +40:+0.03
+                  extra worker CPU in [-20, +10) ms around the burst start: mean 0.78 ms per worker per flush (SD 1.81, n 72 worker-flushes); workers 1-3 only
+                  probe latency by intended time since the burst start, 1 ms bins (n, share over 1 ms, max us); workers 1-3 only:
+        -15: n=12 0% max 643 | -14: n=6 0% max 592 | -13: n=12 0% max 708 | -12: n=24 0% max 712 | -11: n=18 0% max 814 | -10: n=12 0% max 701 | -9: n=6 0% max 607 | -8: n=12 0% max 609 | -7: n=24 0% max 553 | -6: n=18 0% max 571 | -5: n=12 0% max 619 | -4: n=6 17% max 1636 | -3: n=12 8% max 2338 | -2: n=24 17% max 3201 | -1: n=18 22% max 2821 | +0: n=12 25% max 1871 | +1: n=6 0% max 810 | +2: n=12 25% max 2162 | +3: n=24 4% max 2019 | +4: n=18 0% max 612 | +5: n=12 0% max 696 | +6: n=6 0% max 665 | +7: n=12 0% max 728 | +8: n=24 0% max 778 | +9: n=18 0% max 733 | +10: n=12 0% max 635 | +11: n=6 0% max 455
+
+B. FLUSH-START SPIKE PER FLUSH against sham windows (exploratory; window [start - 15 ms, start + 10 ms), 20 probes)
+   per flush: largest probe latency in the window; a 'spike' = at least one probe over 1.5 ms
+   own/nosink     real flushes 24: with a spike 4 (17%); largest latency in the window: median 0.73 ms, p90 2.41, max 3.05; probes over 1.5 ms per flush mean 0.25 | sham windows 385: with a spike 0 (0.0%); median 0.59 ms, p90 0.69, max 0.95
+   own/statsd     real flushes 24: with a spike 9 (38%); largest latency in the window: median 0.87 ms, p90 2.66, max 3.38; probes over 1.5 ms per flush mean 0.58 | sham windows 200: with a spike 0 (0.0%); median 0.72 ms, p90 0.87, max 1.15
+   own/otlp       real flushes 24: with a spike 9 (38%); largest latency in the window: median 1.20 ms, p90 3.13, max 11.73; probes over 1.5 ms per flush mean 0.71 | sham windows 291: with a spike 0 (0.0%); median 0.59 ms, p90 0.71, max 0.97
+   shared/nosink  (workers 1-3) real flushes 24: with a spike 2 (8%); largest latency in the window: median 0.69 ms, p90 1.39, max 2.77; probes over 1.5 ms per flush mean 0.17 | sham windows 388: with a spike 1 (0.3%); median 0.59 ms, p90 0.70, max 2.13
+   shared/statsd  (workers 1-3) real flushes 24: with a spike 12 (50%); largest latency in the window: median 1.41 ms, p90 2.70, max 3.20; probes over 1.5 ms per flush mean 0.58 | sham windows 108: with a spike 0 (0.0%); median 0.70 ms, p90 0.88, max 1.05
+   own core, three arms pooled, per round: share of flushes with a spike minus the share of sham windows with one, points: +27.8, +33.3, +38.9, +22.2; mean +30.6 [+19.1, +42.0], n 4, p 0.0034 (exploratory, not in the Holm family)
+
+C. SLOW-PROBE EVENTS (all 36 legs): a group of probes over 5 ms on one worker's connections within 25 ms
+   exposure: seconds inside whole flushes (IN zone incl. guard) and outside all flush zones, per cell
+   own/nosink     events 27 (in 2, out 25, post or partial 0); exposure in 13 s, out 390 s; rate in 0.1594/s, out 0.0641/s (per worker-leg-second x workers); expected in by exposure 0.8; binomial p 0.21; peak ms median 8.8 max 25.5; with another worker slow at the same time: 0
+   own/statsd     events 19 (in 8, out 10, post or partial 1); exposure in 99 s, out 302 s; rate in 0.0805/s, out 0.0331/s (per worker-leg-second x workers); expected in by exposure 4.5; binomial p 0.10; peak ms median 9.1 max 30.8; with another worker slow at the same time: 4
+   own/otlp       events 24 (in 5, out 19, post or partial 0); exposure in 56 s, out 347 s; rate in 0.0892/s, out 0.0548/s (per worker-leg-second x workers); expected in by exposure 3.3; binomial p 0.37; peak ms median 8.4 max 25.7; with another worker slow at the same time: 2
+   shared/nosink  (workers 1-3) events 14 (in 2, out 12, post or partial 0); exposure in 17 s, out 385 s; rate in 0.1157/s, out 0.0311/s (per worker-leg-second x workers); expected in by exposure 0.6; binomial p 0.12; peak ms median 9.3 max 20.7; with another worker slow at the same time: 0
+   shared/statsd  (workers 1-3) events 21 (in 10, out 11, post or partial 0); exposure in 173 s, out 287 s; rate in 0.0577/s, out 0.0383/s (per worker-leg-second x workers); expected in by exposure 7.9; binomial p 0.37; peak ms median 7.9 max 27.7; with another worker slow at the same time: 6
+   all cells: in 27, out 77; worker-seconds in 1244, out 6173; rate per worker-hour in 78.1, out 44.9; binomial p 0.02
+   without the events within 50 ms of a flush start (the start spike of section A): in 23, out 77; expected in by exposure 16.8; binomial p 0.11; rate per worker-hour in 66.6, out 44.9
+   in-flush events: time since the flush start (ms): [-5, -1, 4, 30, 150, 175, 225, 235, 245, 267, 278, 372, 583, 645, 759, 914, 973, 1362, 1639, 1647, 1780, 1789, 2264, 2398, 2484, 3183, 3348]
+   all 105 events by what the worker thread's scheduler counters show in the 55 ms around the event: {'run-queue wait of 5 ms or more': 31, 'worker ran flat out (3 samples at 4.5 ms or more of 5)': 2, 'neither': 72}; wait in the first kind: median 12.1 ms, max 36.4 ms
+   the 10 largest events and what that worker's thread did in the 5 ms samples around it (run ms / run-queue wait ms per 5 ms sample):
+     r01-own-statsd.rr1       worker CPU 3 peak  30.8 ms probes 7 in           +245 ms from flush start | 1.4/3.6 0.7/0.0 0.0/0.0 2.0/12.2 1.0/0.0 0.0/0.0 0.0/0.0 4.2/14.8 2.2/0.0 1.0/0.0 2.5/0.0 | main thread ran 50.0 ms in those 50 ms
+     r02-shared-statsd        worker CPU 2 peak  27.7 ms probes 7 in           +2484 ms from flush start | 2.2/0.0 0.5/0.0 0.5/6.3 2.1/0.0 0.0/0.0 0.0/0.0 0.0/17.0 3.0/0.0 0.0/0.0 3.6/8.6 3.8/0.0 | main thread ran 37.3 ms in those 50 ms
+     r02-own-otlp             worker CPU 2 peak  25.7 ms probes 8 out          | 2.2/0.0 0.7/0.0 0.5/6.5 1.5/0.0 0.0/0.0 3.0/8.2 0.0/0.0 0.0/0.0 0.0/0.0 0.0/0.0 4.2/21.8 | main thread ran 0.3 ms in those 50 ms
+     r03-own-nosink           worker CPU 2 peak  25.5 ms probes 5 out          | 2.0/3.4 0.0/0.0 0.0/12.0 3.0/0.0 0.0/0.0 0.4/11.5 4.3/0.0 1.6/0.0 1.8/0.0 1.5/0.0 1.5/0.0 | main thread ran 0.3 ms in those 50 ms
+     r03-own-otlp             worker CPU 0 peak  25.4 ms probes 6 out          | 1.4/0.0 0.7/2.3 1.0/3.6 1.7/0.0 0.0/0.0 0.0/0.0 3.0/15.2 0.0/0.0 2.5/7.3 0.6/0.0 0.7/0.0 | main thread ran 0.2 ms in those 50 ms
+     r01-shared-statsd        worker CPU 2 peak  21.0 ms probes 4 in           +3183 ms from flush start | 0.0/5.7 2.8/0.0 0.0/0.0 2.3/9.1 0.0/0.0 1.0/9.6 4.5/0.0 1.8/0.0 1.0/0.0 1.4/0.0 1.4/0.0 | main thread ran 34.9 ms in those 50 ms
+     r01-shared-nosink        worker CPU 1 peak  20.7 ms probes 5 out          | 0.6/5.0 0.7/0.0 0.4/5.2 1.9/3.6 0.0/0.0 0.0/0.0 0.0/0.0 4.8/17.3 1.4/0.0 1.2/0.0 1.8/0.0 | main thread ran 0.2 ms in those 50 ms
+     r02-own-otlp             worker CPU 2 peak  14.9 ms probes 2 out          | 0.0/0.0 1.7/5.9 0.0/0.0 0.0/12.3 3.5/0.0 1.4/0.0 0.7/0.0 1.1/0.0 2.1/0.0 0.6/0.0 2.5/0.0 | main thread ran 0.2 ms in those 50 ms
+     r01-shared-nosink.rr1    worker CPU 2 peak  13.1 ms probes 2 out          | 2.0/0.0 0.2/0.0 5.0/0.0 5.0/0.0 4.6/0.0 1.0/0.0 1.2/0.0 1.2/0.0 0.9/0.0 1.0/0.0 1.0/0.0 | main thread ran 0.2 ms in those 50 ms
+     r01-own-statsd.rr1       worker CPU 3 peak  12.4 ms probes 2 out          | 1.6/2.4 0.0/0.0 0.0/0.0 3.1/11.1 1.1/0.0 2.4/0.0 2.1/0.0 2.3/0.0 3.0/0.0 1.1/0.0 2.1/0.0 | main thread ran 0.3 ms in those 50 ms
+
+D. OTLP: admin probes sent inside the burst, by tenth of the burst (primary set): n, median wait ms, share answered within 20 ms
+   00-10%: n=64 median 1199 ms, answered within 20 ms: 0%
+   10-20%: n=57 median 1069 ms, answered within 20 ms: 0%
+   20-30%: n=69 median 944 ms, answered within 20 ms: 0%
+   30-40%: n=63 median 804 ms, answered within 20 ms: 0%
+   40-50%: n=61 median 673 ms, answered within 20 ms: 0%
+   50-60%: n=62 median 551 ms, answered within 20 ms: 0%
+   60-70%: n=69 median 406 ms, answered within 20 ms: 0%
+   70-80%: n=60 median 275 ms, answered within 20 ms: 0%
+   80-90%: n=61 median 152 ms, answered within 20 ms: 0%
+   90-100%: n=65 median 22 ms, answered within 20 ms: 46%
+   first answer to a probe sent 20-200 ms after the burst start comes 1268 ms after the start (median; min 1191, max 1367); burst wall median 1323 ms -> blocking part about 96% of the burst
+   own/nosink     same figure: first answer 260 ms after the start (median); burst wall median 265 ms -> 99%
+   own/statsd     same figure: first answer 2385 ms after the start (median); burst wall median 2387 ms -> 100%
+   shared/nosink  same figure: first answer 372 ms after the start (median); burst wall median 373 ms -> 100%
+   shared/statsd  same figure: first answer 3588 ms after the start (median); burst wall median 3593 ms -> 100%

@@ -1,0 +1,81 @@
+== run order (index time shape round.att: arms; * invalid)
+11:35:28 14w-split r1.0 own-128-A2 own-128 shared-128
+11:37:51 28w r1.0 own-64-A2 own-64 shared-64
+11:41:18 14w-one r1.0 shared-64 hot-own-128 hot-shared-128 own-128 shared-128* own-128-A2* own-64
+11:47:59 28w r2.0 own-64 shared-64 own-64-A2
+11:51:17 14w-one r2.0 hot-own-128 hot-shared-128 own-128 shared-128 own-128-A2 own-64 shared-64
+11:57:52 14w-split r2.0 own-128 shared-128 own-128-A2
+12:00:33 14w-one r3.0 hot-shared-128 own-128* shared-128 own-128-A2 own-64 shared-64 hot-own-128
+12:06:42 14w-split r3.0 shared-128 own-128-A2 own-128
+12:09:23 28w r3.0 shared-64 own-64-A2 own-64
+12:12:47 14w-split r4.0 own-128-A2 own-128 shared-128
+12:15:47 28w r4.0 own-64-A2 own-64 shared-64
+12:19:11 14w-one r4.0 own-128 shared-128 own-128-A2* own-64 shared-64 hot-own-128* hot-shared-128
+12:25:52 28w r5.0 own-64 shared-64 own-64-A2
+12:29:05 14w-one r5.0 shared-128 own-128-A2 own-64 shared-64 hot-own-128 hot-shared-128* own-128
+12:35:45 14w-split r5.0 own-128 shared-128 own-128-A2
+12:38:32 14w-one r6.0 own-128-A2 own-64 shared-64 hot-own-128 hot-shared-128 own-128 shared-128
+12:44:48 14w-split r6.0 shared-128 own-128-A2 own-128
+12:47:34 28w r6.0 shared-64 own-64-A2 own-64
+12:50:47 14w-one r1.1 shared-64 hot-own-128* hot-shared-128 own-128* shared-128 own-128-A2 own-64
+12:57:33 14w-one r3.1 hot-shared-128 own-128 shared-128 own-128-A2 own-64 shared-64 hot-own-128
+13:03:43 14w-one r4.1 own-128 shared-128 own-128-A2 own-64 shared-64 hot-own-128 hot-shared-128
+13:09:52 14w-one r5.1 shared-128 own-128-A2 own-64 shared-64 hot-own-128 hot-shared-128 own-128
+
+== shared vs the A2 copy, and vs mean(own,A2)
+A shared-128 / own-128-A2 r1 -0.76 r2 +2.20 r3 -0.52 r4 +2.83 r5 -0.73 r6 +0.17 n=6 mean +0.53 sd 1.58 t[-1.13,+2.19] wid[-0.90,+1.96]
+   vs geo-mean of both own copies +2.17 -0.40 +2.29 -1.93 +0.51 n=5 mean +0.53 sd 1.78 t[-1.69,+2.74] wid[-1.17,+2.22]
+B shared-128 / own-128-A2 r1 +1.50 r2 -0.90 r3 -1.15 r4 +2.53 r5 +2.03 r6 +0.76 n=6 mean +0.79 sd 1.53 t[-0.81,+2.40] wid[-0.60,+2.19]
+   vs geo-mean of both own copies +0.40 -0.56 -0.97 +2.03 +1.87 -0.28 n=6 mean +0.42 sd 1.27 t[-0.92,+1.75] wid[-0.80,+1.63]
+D shared-64 / own-64-A2 r1 +1.17 r2 +0.37 r3 +3.10 r4 +0.70 r5 +0.23 r6 +0.92 n=6 mean +1.08 sd 1.05 t[-0.02,+2.18] wid[+0.01,+2.15]
+   vs geo-mean of both own copies +0.25 +0.57 +1.61 +1.32 +0.02 +0.40 n=6 mean +0.69 sd 0.63 t[+0.03,+1.36] wid[-0.14,+1.53]
+A/A A [(2, 4, 2, '-0.05'), (3, 3, 1, '+0.24'), (4, 2, 0, '-1.08'), (5, 1, 6, '-2.40'), (6, 0, 5, '+0.68')] (round,posA2,posOwn,rho)
+A/A B [(1, 0, 1, '-2.20'), (2, 2, 0, '+0.69'), (3, 1, 2, '+0.38'), (4, 0, 1, '-1.00'), (5, 2, 0, '-0.31'), (6, 1, 2, '-2.07')] (round,posA2,posOwn,rho)
+A/A D [(1, 0, 1, '-1.85'), (2, 2, 0, '+0.40'), (3, 1, 2, '-2.99'), (4, 0, 1, '+1.26'), (5, 2, 0, '-0.43'), (6, 1, 2, '-1.05')] (round,posA2,posOwn,rho)
+pooled A/A n=17 mean -0.69 sd 1.26 t[-1.34,-0.04] wid[-1.59,+0.20] neg 11 of 17
+
+== residual (100*ln(leg/arm mean in cell)) by position in block, current valid legs
+A p0 +0.10(n6) p1 -0.02(n5) p2 -0.11(n6) p3 +0.07(n5) p4 -0.52(n6) p5 +0.16(n6) p6 +0.31(n6)
+B p0 -0.65(n6) p1 +0.20(n6) p2 +0.43(n6)
+D p0 +0.05(n6) p1 -0.42(n6) p2 +0.36(n6)
+pooled first-in-block -0.16 (n18) other +0.05 (n58)
+
+== drift: mean residual by round, per cell; and freq/busy
+A r1 -0.14 r2 +0.11 r3 +0.05 r4 +0.05 r5 -0.19 r6 +0.06
+B r1 -0.28 r2 +0.46 r3 +0.36 r4 +0.12 r5 +0.12 r6 -0.80
+D r1 -0.25 r2 -0.37 r3 -0.14 r4 +0.28 r5 -0.55 r6 +1.01
+  eff_ghz A min 2.218 mean 2.229 max 2.238;  eff_ghz B min 2.232 mean 2.236 max 2.241;  eff_ghz D min 2.225 mean 2.228 max 2.23;
+  freq_ratio A min 0.9999 mean 0.9999 max 0.9999;  freq_ratio B min 0.9999 mean 0.9999 max 0.9999;  freq_ratio D min 0.9998 mean 0.9999 max 0.9999;
+  sut_foreign_cpus A min 0.0019 mean 0.02334 max 0.0638;  sut_foreign_cpus B min 0.0009 mean 0.01295 max 0.0268;  sut_foreign_cpus D min 0.012 mean 0.02724 max 0.0447;
+  sut_sibling_cpus A min 0.0005 mean 0.003251 max 0.0206;  sut_sibling_cpus B min 0.0003 mean 0.003111 max 0.0187;  sut_sibling_cpus D min 0.0011 mean 0.005844 max 0.023;
+  sut_busy A min 0.4106 mean 0.4534 max 0.4829;  sut_busy B min 0.459 mean 0.4678 max 0.475;  sut_busy D min 0.4077 mean 0.4168 max 0.4232;
+  client_rate_2xx A min 2.065e+04 mean 2.065e+04 max 2.065e+04;  client_rate_2xx B min 2.065e+04 mean 2.065e+04 max 2.065e+04;  client_rate_2xx D min 4.13e+04 mean 4.13e+04 max 4.13e+04;
+  idle_wait_s A min 1.3 mean 13.53 max 32.6;  idle_wait_s B min 1.3 mean 12.41 max 32.6;  idle_wait_s D min 7.5 mean 24.59 max 32.6;
+foreign cpus sorted cell A: [0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.004, 0.004, 0.004, 0.004, 0.004, 0.004, 0.007, 0.008, 0.008, 0.008, 0.009, 0.009, 0.011, 0.011, 0.012, 0.013, 0.014, 0.015, 0.016, 0.016, 0.017, 0.017, 0.018, 0.018, 0.018, 0.018, 0.018, 0.018, 0.018, 0.019, 0.019, 0.02, 0.02, 0.02, 0.021, 0.026, 0.028, 0.028, 0.029, 0.029, 0.031, 0.034, 0.039, 0.041, 0.041, 0.042, 0.045, 0.045, 0.045, 0.047, 0.048, 0.048, 0.049, 0.051, 0.052, 0.053, 0.053, 0.056, 0.062, 0.063, 0.064]
+foreign cpus sorted B,D: [0.001, 0.003, 0.007, 0.009, 0.01, 0.011, 0.011, 0.011, 0.012, 0.012, 0.012, 0.014, 0.014, 0.014, 0.016, 0.016, 0.016, 0.017, 0.017, 0.019, 0.021, 0.022, 0.023, 0.025, 0.026, 0.027, 0.028, 0.03, 0.031, 0.032, 0.032, 0.032, 0.035, 0.035, 0.039, 0.045]
+  invalid r01-mt-14w-one-shared-128 +0.55% vs arm mean foreign 0.0619
+  invalid r01-mt-14w-one-own-128-A2 +0.89% vs arm mean foreign 0.0524
+  invalid r03-mt-14w-one-own-128 +0.09% vs arm mean foreign 0.0529
+  invalid r04-mt-14w-one-own-128-A2 +1.57% vs arm mean foreign 0.0638
+  invalid r04-mt-14w-one-hot-own-128 -0.08% vs arm mean foreign 0.0561
+  invalid r05-mt-14w-one-hot-shared-128 -0.30% vs arm mean foreign 0.0631
+  invalid r01-mt-14w-one-hot-own-128.rr1 -0.14% vs arm mean foreign 0.0507
+  invalid r01-mt-14w-one-own-128.rr1 +1.53% vs arm mean foreign 0.053
+cell A corr(foreign cpus, residual)=0.27 n=70
+
+== increments per request per arm (min,max)
+  ('14w-one', 'hot-own-128') 127.999-128.001 new_in_window max 0 counters [402, 448]
+  ('14w-one', 'hot-shared-128') 128.000-128.000 new_in_window max 0 counters [1]
+  ('14w-one', 'own-128') 127.996-128.001 new_in_window max 0 counters [52864, 56960, 57344]
+  ('14w-one', 'own-128-A2') 127.997-128.000 new_in_window max 0 counters [57344]
+  ('14w-one', 'own-64') 63.999-64.001 new_in_window max 0 counters [28672]
+  ('14w-one', 'shared-128') 127.999-128.001 new_in_window max 0 counters [128]
+  ('14w-one', 'shared-64') 64.000-64.000 new_in_window max 0 counters [64]
+  ('14w-split', 'own-128') 127.997-128.004 new_in_window max 0 counters [57344]
+  ('14w-split', 'own-128-A2') 127.994-128.001 new_in_window max 0 counters [54912, 57344]
+  ('14w-split', 'shared-128') 128.000-128.001 new_in_window max 0 counters [128]
+  ('28w', 'own-64') 63.999-64.002 new_in_window max 0 counters [52864, 57344]
+  ('28w', 'own-64-A2') 63.999-64.001 new_in_window max 0 counters [51456, 54400, 57344]
+  ('28w', 'shared-64') 64.000-64.000 new_in_window max 0 counters [64]
+
+TABLE keys ['short_run', 'low', 'hot', 'statements', 'order', 'prices', 'cells', 'evidence', 'model']

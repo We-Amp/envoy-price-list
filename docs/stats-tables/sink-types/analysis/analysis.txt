@@ -1,0 +1,360 @@
+
+====================================================================================================
+RUN s-100k: 55 leg records, 5 superseded, 50 current; arms ['nosink-A2', 'statsd', 'dogstatsd-buf', 'otlp', 'nosink']
+
+-- legs per arm: current valid / current invalid / superseded (valid, invalid)
+   nosink-A2      10 / 0 / 1 (1 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]   interval [1.0] s
+   statsd         10 / 0 / 1 (1 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]   interval [1.0] s
+   dogstatsd-buf  10 / 0 / 1 (1 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]   interval [1.0] s
+   otlp           10 / 0 / 1 (0 valid, 1 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]   interval [1.0] s
+   nosink         10 / 0 / 1 (1 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]   interval [1.0] s
+   INVALID r02-idle-100k-otlp attempt 0: ['evidence: field:span_flushes.partial: 1, expected 0 +/- 0']
+   superseded r02-idle-100k-statsd           valid=True span n=20 partial=0 ms/flush=216.144
+   superseded r02-idle-100k-dogstatsd-buf    valid=True span n=20 partial=0 ms/flush=71.994
+   superseded r02-idle-100k-otlp             valid=False span n=20 partial=1 ms/flush=103.578
+   superseded r02-idle-100k-nosink           valid=True span n=20 partial=0 ms/flush=10.968
+   superseded r02-idle-100k-nosink-A2        valid=True span n=20 partial=0 ms/flush=11.338
+
+-- order: position of each arm within its round (by start time), counts per position
+   nosink-A2      [2, 2, 2, 2, 2]
+   statsd         [2, 2, 2, 2, 2]
+   dogstatsd-buf  [2, 2, 2, 2, 2]
+   otlp           [2, 2, 2, 2, 2]
+   nosink         [2, 2, 2, 2, 2]
+   run window: 2026-11-19T11:46:15Z to 2026-11-19T12:14:58Z
+
+-- per arm: main-thread ms per flush, three estimators (mean [95% t interval] over rounds)
+   (a) span: burst run time between quiescent points / whole flushes (burst list re-summed)
+   (b) window: own burst detector on the raw series, run time per whole period (includes non-flush run time)
+   (c) perf: M cycles per interval (cycles/s x interval), kernel share of main-thread cycles
+   nosink-A2      n=10 (a) 11.20 [10.98, 11.43]         (b) 14.15 [13.99, 14.31]         (c) 30.6 [30.3, 31.0]            kernel  6.7%  flushes/span [20]  period 1.002 s
+                  stall max 40 ms (median of leg maxima 40); /ready max 1 ms; other threads 2.39 ms/s; VmHWM 162 MiB; watchdog miss/mega per leg [0]/[0]
+   statsd         n=10 (a) 220.71 [217.35, 224.06]      (b) 223.29 [219.93, 226.64]      (c) 510.4 [502.7, 518.1]         kernel 71.7%  flushes/span [20]  period 1.001 s
+                  stall max 260 ms (median of leg maxima 240); /ready max 212 ms; other threads 2.33 ms/s; VmHWM 162 MiB; watchdog miss/mega per leg [1, 2, 3]/[0]
+   dogstatsd-buf  n=10 (a) 72.13 [71.76, 72.50]         (b) 75.29 [74.99, 75.58]         (c) 171.3 [170.6, 172.0]         kernel 22.3%  flushes/span [20]  period 1.001 s
+                  stall max 100 ms (median of leg maxima 100); /ready max 1 ms; other threads 2.38 ms/s; VmHWM 162 MiB; watchdog miss/mega per leg [0]/[0]
+   otlp           n=10 (a) 103.45 [102.74, 104.17]      (b) 106.57 [105.74, 107.41]      (c) 241.9 [240.2, 243.6]         kernel  5.7%  flushes/span [20, 21]  period 1.002 s
+                  stall max 140 ms (median of leg maxima 140); /ready max 123 ms; other threads 2.36 ms/s; VmHWM 179 MiB; watchdog miss/mega per leg [0]/[0]
+   nosink         n=10 (a) 11.04 [10.89, 11.19]         (b) 14.09 [13.98, 14.21]         (c) 30.4 [30.2, 30.6]            kernel  6.8%  flushes/span [20]  period 1.002 s
+                  stall max 40 ms (median of leg maxima 40); /ready max 2 ms; other threads 2.42 ms/s; VmHWM 162 MiB; watchdog miss/mega per leg [0]/[0]
+
+-- A/A (paired log ratio per round), span (a) and window (b)
+   nosink-A2    vs nosink     span   n=10  +1.43% [-0.85, +3.77]  half-width 2.28  reach 3.70  p 0.191
+   nosink-A2    vs nosink     diff   +0.16 [-0.09, +0.41] ms per flush
+   nosink-A2    vs nosink     window n=10  +0.39% [-0.93, +1.72]  half-width 1.32  reach 1.71  p 0.523
+
+-- sink minus reference at the same interval (paired by round)
+   statsd         vs nosink     n=10 interval 1 s
+       delta (a) span   +209.7 [+206.2, +213.1] ms per flush
+       delta (b) window +209.2 [+205.8, +212.6] ms per flush
+       delta (c) perf   +480.0 [+472.2, +487.8] M cycles per flush  (= 208.7 ms at 2.3 GHz)
+       ratio (a) +1898.9% [+1847.8, +1951.5]; widened [+1847.8, +1951.5]; SE 1.15 log-%; raw p 8.97e-19
+   dogstatsd-buf  vs nosink     n=10 interval 1 s
+       delta (a) span   +61.1 [+60.6, +61.6] ms per flush
+       delta (b) window +61.2 [+60.9, +61.5] ms per flush
+       delta (c) perf   +140.9 [+140.2, +141.6] M cycles per flush  (= 61.3 ms at 2.3 GHz)
+       ratio (a) +553.4% [+542.3, +564.6]; widened [+542.3, +564.6]; SE 0.76 log-%; raw p 1.42e-18
+   otlp           vs nosink     n=10 interval 1 s
+       delta (a) span   +92.4 [+91.7, +93.1] ms per flush
+       delta (b) window +92.5 [+91.6, +93.3] ms per flush
+       delta (c) perf   +211.5 [+209.7, +213.3] M cycles per flush  (= 92.0 ms at 2.3 GHz)
+       ratio (a) +837.1% [+823.2, +851.2]; widened [+823.2, +851.2]; SE 0.66 log-%; raw p 8.67e-20
+
+-- receiver evidence per sink leg (current legs)
+   statsd         datagrams per flush 31112.2 .. 31112.2 (mean 31112.2); dropped total 0; rcvbuf_errors 0; socket_drops 0; in_errors 0; used counter+gauge lines [31096]; rcvbuf granted [536870912]
+                  fit residual max 0.0104 of a flush; fit n = span n on every leg: True
+   dogstatsd-buf  datagrams per flush 2308.0 .. 2312.0 (mean 2309.9); dropped total 0; rcvbuf_errors 0; socket_drops 0; in_errors 0; used counter+gauge lines [31094]; rcvbuf granted [536870912]
+                  span fit n_error max 0; sink process lifetime: bytes/datagram 1259, newlines/datagram 11.38
+   otlp: per leg  round  points/flush  basis  fit n  span n  residual  refused  used_total  used_cg  histograms(used)  rq_total  rq_2xx  h2 rx_reset  tx MB  uptime s
+         r01     36141.0      1     20      20   0.00000        0       36141    31129              5012       115     115       None   180.4  30
+         r02     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r03     36141.0      1     21      20   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r04     36141.0      1     21      20   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r05     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  29
+         r06     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r07     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r08     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r09     36141.0      1     21      21   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+         r10     36141.0      1     21      20   0.00000        0       36141    31129              5012       116     116       None   182.6  30
+   otlp: request-chunk model (order gauges, counters, histograms; 10,000 points per request):
+         r01 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r02 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r03 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r04 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r05 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r06 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r07 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r08 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r09 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+         r10 cg=31129 hist=5012: 4 requests per flush; if requests with >= 9,000 histogram points are rejected: 0 rejected [], accepted 36141 (collector recorded 36141)
+
+-- drift across rounds: span ms per flush by round, and slope (%% per round, least squares on log)
+   nosink-A2      10.9 11.4 11.6 11.5 11.1 11.0 11.5 10.7 11.0 11.4  slope -0.16%/round (p 0.64)  CV 2.80%
+   statsd         221.9 222.9 216.6 219.0 217.4 218.6 218.9 220.1 232.9 218.7  slope +0.16%/round (p 0.52)  CV 2.13%
+   dogstatsd-buf  71.2 72.0 71.5 72.3 72.4 72.2 72.7 72.1 72.9 72.1  slope +0.16%/round (p 0.03)  CV 0.72%
+   otlp           105.5 103.0 102.8 102.0 103.2 103.3 104.6 103.0 104.2 103.0  slope -0.03%/round (p 0.82)  CV 0.97%
+   nosink         11.2 10.8 11.3 11.0 10.9 10.9 11.1 11.2 10.7 11.3  slope -0.02%/round (p 0.93)  CV 1.87%
+
+-- common gates over current legs (count of legs failing each)
+   main_tid_ok                  0 failing []
+   perf_ok / no multiplexing    0 failing []
+   pinning_ok                   0 failing []
+   idle_ok                      0 failing []
+   cpuidle_unchanged            0 failing []
+   envoy_exit 0                 0 failing []
+   dropped_stat_flushes 0       0 failing []
+   sampler_missing 0            0 failing []
+   span partial 0               0 failing []
+   quiescent before+after       0 failing []
+   evidence ok                  0 failing []
+   stats_total exact            0 failing []
+   prime all 200                0 failing []
+   burst_count_error 0          0 failing []
+   stats_total by arm: {'nosink-A2': [118396], 'statsd': [118396], 'dogstatsd-buf': [118396], 'otlp': [118543], 'nosink': [118396]}
+   used_total by arm: {'nosink-A2': [36103], 'statsd': [36105], 'dogstatsd-buf': [36103], 'otlp': [36141], 'nosink': [36102, 36103]}
+   uptime error s max by arm: {'nosink-A2': 0.713, 'statsd': 0.889, 'dogstatsd-buf': 0.737, 'otlp': 0.591, 'nosink': 0.712}
+   sut_foreign_cpus max 0.0019, sut_sibling_cpus max 0.0019, load1 max 1.68
+
+====================================================================================================
+RUN s-1m: 64 leg records, 0 superseded, 64 current; arms ['statsd', 'dogstatsd-buf', 'otlp', 'nosink-5s', 'nosink-5s-A2', 'nosink-20s', 'nosink', 'nosink-A2']
+
+-- legs per arm: current valid / current invalid / superseded (valid, invalid)
+   statsd          8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [5.0] s
+   dogstatsd-buf   8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [5.0] s
+   otlp            8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [20.0] s
+   nosink-5s       8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [5.0] s
+   nosink-5s-A2    8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [5.0] s
+   nosink-20s      8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [20.0] s
+   nosink          8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [1.0] s
+   nosink-A2       8 / 0 / 0 (0 valid, 0 invalid)   rounds [1, 2, 3, 4, 5, 6, 7, 8]   interval [1.0] s
+
+-- order: position of each arm within its round (by start time), counts per position
+   statsd         [1, 1, 1, 1, 1, 1, 1, 1]
+   dogstatsd-buf  [1, 1, 1, 1, 1, 1, 1, 1]
+   otlp           [1, 1, 1, 1, 1, 1, 1, 1]
+   nosink-5s      [1, 1, 1, 1, 1, 1, 1, 1]
+   nosink-5s-A2   [1, 1, 1, 1, 1, 1, 1, 1]
+   nosink-20s     [1, 1, 1, 1, 1, 1, 1, 1]
+   nosink         [1, 1, 1, 1, 1, 1, 1, 1]
+   nosink-A2      [1, 1, 1, 1, 1, 1, 1, 1]
+   run window: 2026-11-19T12:16:28Z to 2026-11-19T13:31:42Z
+
+-- per arm: main-thread ms per flush, three estimators (mean [95% t interval] over rounds)
+   (a) span: burst run time between quiescent points / whole flushes (burst list re-summed)
+   (b) window: own burst detector on the raw series, run time per whole period (includes non-flush run time)
+   (c) perf: M cycles per interval (cycles/s x interval), kernel share of main-thread cycles
+   statsd         n= 8 (a) 2391.08 [2373.84, 2408.32]   (b) 2397.82 [2381.29, 2414.35]   (c) 5495.5 [5455.9, 5535.1]      kernel 66.3%  flushes/span [4]  period 5.002 s
+                  stall max 2440 ms (median of leg maxima 2420); /ready max 2414 ms; other threads 2.14 ms/s; VmHWM 878 MiB; watchdog miss/mega per leg [7]/[6]
+   dogstatsd-buf  n= 8 (a) 916.16 [908.01, 924.31]      (b) 926.37 [917.64, 935.10]      (c) 2121.0 [2102.3, 2139.7]      kernel 17.6%  flushes/span [4]  period 5.002 s
+                  stall max 940 ms (median of leg maxima 940); /ready max 841 ms; other threads 2.39 ms/s; VmHWM 878 MiB; watchdog miss/mega per leg [6, 7]/[0]
+   otlp           n= 8 (a) 1271.05 [1244.78, 1297.32]   (b) 1309.40 [1281.91, 1336.88]   (c) 2982.2 [2921.9, 3042.5]      kernel  5.6%  flushes/span [3]  period 20.000 s
+                  stall max 1360 ms (median of leg maxima 1320); /ready max 1225 ms; other threads 2.25 ms/s; VmHWM 945 MiB; watchdog miss/mega per leg [5]/[3, 4]
+   nosink-5s      n= 8 (a) 261.17 [256.18, 266.16]      (b) 272.65 [267.06, 278.24]      (c) 616.3 [604.5, 628.1]         kernel  3.4%  flushes/span [4]  period 5.002 s
+                  stall max 300 ms (median of leg maxima 280); /ready max 244 ms; other threads 2.47 ms/s; VmHWM 878 MiB; watchdog miss/mega per leg [1, 2, 3]/[0]
+   nosink-5s-A2   n= 8 (a) 265.53 [259.27, 271.79]      (b) 276.54 [269.37, 283.71]      (c) 626.0 [611.7, 640.3]         kernel  4.1%  flushes/span [4]  period 5.002 s
+                  stall max 340 ms (median of leg maxima 280); /ready max 231 ms; other threads 2.44 ms/s; VmHWM 878 MiB; watchdog miss/mega per leg [1, 2, 3, 4]/[0]
+   nosink-20s     n= 8 (a) 266.96 [261.55, 272.36]      (b) 313.44 [309.40, 317.48]      (c) 683.2 [671.5, 695.0]         kernel  7.2%  flushes/span [3]  period 20.000 s
+                  stall max 300 ms (median of leg maxima 280); /ready max 254 ms; other threads 2.26 ms/s; VmHWM 924 MiB; watchdog miss/mega per leg [3, 4]/[0]
+   nosink         n= 8 (a) 266.47 [261.63, 271.32]      (b) 268.49 [263.56, 273.43]      (c) 615.1 [604.0, 626.1]         kernel  1.0%  flushes/span [20]  period 1.002 s
+                  stall max 320 ms (median of leg maxima 300); /ready max 261 ms; other threads 3.51 ms/s; VmHWM 872 MiB; watchdog miss/mega per leg [5, 6, 10, 12, 14, 17, 19, 23]/[0]
+   nosink-A2      n= 8 (a) 264.86 [261.35, 268.37]      (b) 267.11 [263.58, 270.64]      (c) 611.4 [603.0, 619.7]         kernel  0.9%  flushes/span [20]  period 1.002 s
+                  stall max 320 ms (median of leg maxima 300); /ready max 242 ms; other threads 3.51 ms/s; VmHWM 872 MiB; watchdog miss/mega per leg [8, 9, 15, 18, 23]/[0]
+
+-- A/A (paired log ratio per round), span (a) and window (b)
+   nosink-A2    vs nosink     span   n=8  -0.60% [-2.56, +1.41]  half-width 2.00  reach 2.60  p 0.503
+   nosink-A2    vs nosink     diff   -1.61 [-6.91, +3.69] ms per flush
+   nosink-A2    vs nosink     window n=8  -0.51% [-2.47, +1.50]  half-width 2.00  reach 2.50  p 0.568
+   nosink-5s-A2 vs nosink-5s  span   n=8  +1.66% [-0.99, +4.38]  half-width 2.64  reach 4.29  p 0.184
+   nosink-5s-A2 vs nosink-5s  diff   +4.36 [-2.54, +11.27] ms per flush
+   nosink-5s-A2 vs nosink-5s  window n=8  +1.41% [-1.92, +4.85]  half-width 3.34  reach 4.74  p 0.354
+   interval check nosink-5s  vs nosink     span n=8 -1.99% [-4.92, +1.03] p 0.161
+   interval check nosink-20s vs nosink     span n=8 +0.18% [-1.81, +2.20] p 0.842
+   interval check nosink-20s vs nosink-5s  span n=8 +2.21% [-0.80, +5.31] p 0.127
+
+-- sink minus reference at the same interval (paired by round)
+   statsd         vs nosink-5s  n=8 interval 5 s
+       delta (a) span   +2129.9 [+2109.0, +2150.8] ms per flush
+       delta (b) window +2125.2 [+2104.9, +2145.5] ms per flush
+       delta (c) perf   +4879.2 [+4831.2, +4927.2] M cycles per flush  (= 2121.4 ms at 2.3 GHz)
+       ratio (a) +815.7% [+793.4, +838.6]; widened [+793.4, +838.6]; SE 1.04 log-%; raw p 1.34e-14
+   dogstatsd-buf  vs nosink-5s  n=8 interval 5 s
+       delta (a) span   +655.0 [+645.7, +664.3] ms per flush
+       delta (b) window +653.7 [+643.4, +664.0] ms per flush
+       delta (c) perf   +1504.7 [+1482.4, +1527.0] M cycles per flush  (= 654.2 ms at 2.3 GHz)
+       ratio (a) +250.9% [+243.6, +258.3]; widened [+243.6, +258.3]; SE 0.88 log-%; raw p 2.24e-13
+   otlp           vs nosink-20s n=8 interval 20 s
+       delta (a) span   +1004.1 [+975.8, +1032.4] ms per flush
+       delta (b) window +996.0 [+967.2, +1024.7] ms per flush
+       delta (c) perf   +2298.9 [+2234.3, +2363.6] M cycles per flush  (= 999.5 ms at 2.3 GHz)
+       ratio (a) +376.1% [+360.6, +392.2]; widened [+360.6, +392.2]; SE 1.40 log-%; raw p 1.24e-12
+
+-- receiver evidence per sink leg (current legs)
+   statsd         datagrams per flush 310151.0 .. 310154.0 (mean 310152.4); dropped total 0; rcvbuf_errors 0; socket_drops 0; in_errors 0; used counter+gauge lines [310098]; rcvbuf granted [536870912]
+                  fit residual max 0.0007 of a flush; fit n = span n on every leg: True
+   dogstatsd-buf  datagrams per flush 22926.0 .. 22937.0 (mean 22932.0); dropped total 0; rcvbuf_errors 0; socket_drops 0; in_errors 0; used counter+gauge lines [310098, 310103]; rcvbuf granted [536870912]
+                  span fit n_error max 0; sink process lifetime: bytes/datagram 1103, newlines/datagram 9.85
+   otlp: per leg  round  points/flush  basis  fit n  span n  residual  refused  used_total  used_cg  histograms(used)  rq_total  rq_2xx  h2 rx_reset  tx MB  uptime s
+         r01    310146.0      2      3       3   0.00011        0      360147   310135             50012       148     148         17   214.8  89
+         r02    310146.3      2      3       3   0.00011        0      360147   310135             50012       148     148         13   215.7  89
+         r03    310147.0      2      3       3   0.00012        0      360147   310135             50012       148     148         13   232.6  89
+         r04    310146.3      2      3       3   0.00011        0      360147   310135             50012       148     148         20   202.9  89
+         r05    310146.3      2      3       3   0.00011        0      360147   310135             50012       148     148         18   202.3  89
+         r06    310146.0      2      3       3   0.00012        0      360146   310134             50012       148     148         20   210.6  89
+         r07    310146.0      2      3       3   0.00012        0      360146   310134             50012       148     148         20   196.5  88
+         r08    310146.0      2      3       3   0.00012        0      360146   310134             50012       148     148         20   213.0  89
+   otlp: request-chunk model (order gauges, counters, histograms; 10,000 points per request):
+         r01 cg=310135 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(135, 9865), (0, 10000)], accepted 310147 (collector recorded 310146)
+         r01 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r02 cg=310135 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(135, 9865), (0, 10000)], accepted 310147 (collector recorded 310146)
+         r02 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r03 cg=310135 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(135, 9865), (0, 10000)], accepted 310147 (collector recorded 310147)
+         r04 cg=310135 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(135, 9865), (0, 10000)], accepted 310147 (collector recorded 310146)
+         r04 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r05 cg=310135 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(135, 9865), (0, 10000)], accepted 310147 (collector recorded 310146)
+         r05 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r06 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r07 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+         r08 cg=310134 hist=50012: 37 requests per flush; if requests with >= 9,000 histogram points are rejected: 5 rejected [(134, 9866), (0, 10000)], accepted 310146 (collector recorded 310146)
+
+-- drift across rounds: span ms per flush by round, and slope (%% per round, least squares on log)
+   statsd         2384.9 2396.5 2389.0 2359.2 2369.5 2424.0 2408.4 2397.1  slope +0.13%/round (p 0.37)  CV 0.86%
+   dogstatsd-buf  924.9 908.0 914.2 926.7 918.0 912.2 899.2 926.1  slope -0.07%/round (p 0.72)  CV 1.06%
+   otlp           1300.3 1300.0 1281.0 1230.2 1270.6 1240.5 1308.3 1237.5  slope -0.45%/round (p 0.27)  CV 2.47%
+   nosink-5s      266.4 261.9 264.2 266.6 265.0 255.4 260.2 249.6  slope -0.71%/round (p 0.03)  CV 2.29%
+   nosink-5s-A2   277.9 260.8 268.3 259.8 272.7 265.1 254.3 265.4  slope -0.52%/round (p 0.26)  CV 2.82%
+   nosink-20s     268.4 258.2 256.7 273.4 268.7 265.4 273.7 271.1  slope +0.53%/round (p 0.18)  CV 2.42%
+   nosink         257.0 261.2 263.9 274.8 269.6 268.9 265.0 271.3  slope +0.58%/round (p 0.08)  CV 2.18%
+   nosink-A2      261.6 268.9 260.3 269.5 259.9 269.1 267.2 262.4  slope +0.06%/round (p 0.82)  CV 1.58%
+
+-- common gates over current legs (count of legs failing each)
+   main_tid_ok                  0 failing []
+   perf_ok / no multiplexing    0 failing []
+   pinning_ok                   0 failing []
+   idle_ok                      0 failing []
+   cpuidle_unchanged            0 failing []
+   envoy_exit 0                 0 failing []
+   dropped_stat_flushes 0       0 failing []
+   sampler_missing 0            0 failing []
+   span partial 0               0 failing []
+   quiescent before+after       0 failing []
+   evidence ok                  0 failing []
+   stats_total exact            0 failing []
+   prime all 200                0 failing []
+   burst_count_error 0          0 failing []
+   stats_total by arm: {'statsd': [1180396], 'dogstatsd-buf': [1180396], 'otlp': [1180503], 'nosink-5s': [1180396], 'nosink-5s-A2': [1180396], 'nosink-20s': [1180396], 'nosink': [1180396], 'nosink-A2': [1180396]}
+   used_total by arm: {'statsd': [360107], 'dogstatsd-buf': [360107, 360112], 'otlp': [360146, 360147], 'nosink-5s': [360107, 360109], 'nosink-5s-A2': [360107, 360111], 'nosink-20s': [360107], 'nosink': [360107, 360111], 'nosink-A2': [360107]}
+   uptime error s max by arm: {'statsd': 2.255, 'dogstatsd-buf': 4.517, 'otlp': 10.873, 'nosink-5s': 4.001, 'nosink-5s-A2': 3.901, 'nosink-20s': 11.934, 'nosink': 0.741, 'nosink-A2': 0.873}
+   sut_foreign_cpus max 0.0073, sut_sibling_cpus max 0.0010, load1 max 1.54
+
+====================================================================================================
+RUN sw (loaded): 50 leg records, 0 superseded, 50 current; arms ['nosink-A2', 'statsd', 'dogstatsd-buf', 'otlp', 'nosink']
+   nosink-A2      valid 10 / invalid 0   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+   statsd         valid 10 / invalid 0   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+   dogstatsd-buf  valid 10 / invalid 0   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+   otlp           valid 10 / invalid 0   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+   nosink         valid 10 / invalid 0   rounds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+-- order positions per arm: {'nosink-A2': [2, 2, 2, 2, 2], 'statsd': [2, 2, 2, 2, 2], 'dogstatsd-buf': [2, 2, 2, 2, 2], 'otlp': [2, 2, 2, 2, 2], 'nosink': [2, 2, 2, 2, 2]}
+   run window: 2026-11-19T13:33:00Z to 2026-11-19T14:12:54Z
+-- per arm (means over rounds; p50 and p99 are medians of the leg values)
+   nosink-A2      cycles/req 518110  workers 516073  busy 30.6%  rate 5180..5181  p50 393 us  p99 606 us  flushes in window [4]  main ms/5 s period 24.8  non2xx 0  perf running min 100%
+   statsd         cycles/req 621057  workers 600994  busy 36.2%  rate 5178..5181  p50 444 us  p99 766 us  flushes in window [4]  main ms/5 s period 228.0  non2xx 0  perf running min 100%
+   dogstatsd-buf  cycles/req 611116  workers 603699  busy 35.7%  rate 5180..5181  p50 447 us  p99 805 us  flushes in window [4]  main ms/5 s period 86.0  non2xx 0  perf running min 100%
+   otlp           cycles/req 527516  workers 517105  busy 31.2%  rate 5180..5181  p50 391 us  p99 611 us  flushes in window [4]  main ms/5 s period 120.1  non2xx 0  perf running min 100%
+   nosink         cycles/req 518889  workers 516947  busy 30.7%  rate 5180..5181  p50 401 us  p99 610 us  flushes in window [4]  main ms/5 s period 24.4  non2xx 0  perf running min 100%
+-- effects against nosink (paired log ratio by round)
+   nosink-A2      total cycles/req -0.15% [-0.80, +0.51]; widened [-1.02, +0.73]; SE 0.290; p 0.623; n=10
+        worker cycles/req          -0.17% [-0.81, +0.48]
+        kernel cycles/req          -0.67% [-2.52, +1.22]
+        user instructions/req      -0.02% [-0.07, +0.03]
+        p50                        -0.44% [-2.80, +1.98]
+        p99                        +0.08% [-1.72, +1.91]
+        main-thread ms per period  +1.29% [-6.55, +9.79]
+        A/A reach (far end of the t interval) 0.81%; half-width 0.66%
+   statsd         total cycles/req +19.69% [+19.00, +20.39]; widened [+18.70, +20.69]; SE 0.256; p 1.23e-13; n=10
+        worker cycles/req          +16.26% [+15.60, +16.92]
+        kernel cycles/req          +38.74% [+37.12, +40.37]
+        user instructions/req      +17.05% [+17.00, +17.10]
+        p50                        +12.70% [+9.86, +15.62]
+        p99                        +25.68% [+17.30, +34.66]
+        main-thread ms per period  +836.63% [+808.23, +865.92]
+   dogstatsd-buf  total cycles/req +17.78% [+16.81, +18.75]; widened [+16.63, +18.93]; SE 0.364; p 6.74e-12; n=10
+        worker cycles/req          +16.78% [+15.84, +17.74]
+        kernel cycles/req          +31.38% [+28.67, +34.13]
+        user instructions/req      +19.64% [+19.58, +19.71]
+        p50                        +13.64% [+10.82, +16.53]
+        p99                        +32.40% [+19.34, +46.90]
+        main-thread ms per period  +253.40% [+242.92, +264.21]
+   otlp           total cycles/req +1.66% [+0.85, +2.48]; widened [+0.69, +2.65]; SE 0.354; p 0.00119; n=10
+        worker cycles/req          +0.03% [-0.77, +0.84]
+        kernel cycles/req          -0.18% [-2.12, +1.80]
+        user instructions/req      +11.11% [+11.05, +11.16]
+        p50                        -0.44% [-3.10, +2.29]
+        p99                        -0.16% [-2.94, +2.69]
+        main-thread ms per period  +393.30% [+375.11, +412.19]
+-- receiver evidence
+   statsd         datagrams/request 4.211 .. 4.213; datagrams per 5 s 109281; dropped 0; rcvbuf_errors 0; in_errors 0
+   dogstatsd-buf  datagrams/request 3.100 .. 3.100; datagrams per 5 s 80456; dropped 0; rcvbuf_errors 0; in_errors 0
+   otlp r01 accepted points (collector delta) 345419 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r02 accepted points (collector delta) 335418 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r03 accepted points (collector delta) 335419 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r04 accepted points (collector delta) 325419 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r05 accepted points (collector delta) 325420 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r06 accepted points (collector delta) 335420 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r07 accepted points (collector delta) 325419 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r08 accepted points (collector delta) 335420 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r09 accepted points (collector delta) 335420 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+   otlp r10 accepted points (collector delta) 335418 refused 0; window: requests 16, tx MB 25.4; leg end: rq_total 36 rq_2xx 36 rx_reset None
+-- drift: nosink cycles/req by round: 525037 511892 518138 514412 516234 513140 520594 525113 520786 523545
+   nosink-A2      slope -0.057%/round (p 0.45)
+   statsd         slope +0.150%/round (p 0.09)
+   dogstatsd-buf  slope -0.048%/round (p 0.61)
+   otlp           slope -0.023%/round (p 0.83)
+   nosink         slope +0.116%/round (p 0.29)
+   gate evidence ok                      0 failing []
+   gate perf_ok                          0 failing []
+   gate pinning_ok                       0 failing []
+   gate idle_ok                          0 failing []
+   gate cpuidle_unchanged                0 failing []
+   gate sut_non2xx 0                     0 failing []
+   gate client rate within 0.5% of 5200  0 failing []
+   gate prime ok                         0 failing []
+
+====================================================================================================
+HOLM over the 9 sink rows (3 sinks x 100k, 1M, loaded)
+   s-100k  statsd         vs nosink     n=10   +1898.94% [+1847.77, +1951.45]  widened [+1847.77, +1951.45]  raw p 8.97e-19  Holm p 7.18e-18  A/A reach 3.70%  -> finding
+   s-100k  dogstatsd-buf  vs nosink     n=10    +553.36% [+542.28, +564.64]  widened [+542.28, +564.64]  raw p 1.42e-18  Holm p 9.97e-18  A/A reach 3.70%  -> finding
+   s-100k  otlp           vs nosink     n=10    +837.11% [+823.21, +851.22]  widened [+823.21, +851.22]  raw p 8.67e-20  Holm p 7.81e-19  A/A reach 3.70%  -> finding
+   s-1m    statsd         vs nosink-5s  n= 8    +815.72% [+793.44, +838.55]  widened [+793.44, +838.55]  raw p 1.34e-14  Holm p 8.07e-14  A/A reach 4.29%  -> finding
+   s-1m    dogstatsd-buf  vs nosink-5s  n= 8    +250.86% [+243.61, +258.26]  widened [+243.61, +258.26]  raw p 2.24e-13  Holm p 8.97e-13  A/A reach 4.29%  -> finding
+   s-1m    otlp           vs nosink-20s n= 8    +376.12% [+360.62, +392.15]  widened [+360.62, +392.15]  raw p 1.24e-12  Holm p 3.71e-12  A/A reach 4.29%  -> finding
+   sw      statsd         vs nosink     n=10     +19.69% [+19.00, +20.39]  widened [+18.70, +20.69]  raw p 1.23e-13  Holm p 6.15e-13  A/A reach 0.81%  -> finding
+   sw      dogstatsd-buf  vs nosink     n=10     +17.78% [+16.81, +18.75]  widened [+16.63, +18.93]  raw p 6.74e-12  Holm p 1.35e-11  A/A reach 0.81%  -> finding
+   sw      otlp           vs nosink     n=10      +1.66% [+0.85, +2.48]  widened [+0.69, +2.65]  raw p 1.19e-03  Holm p 1.19e-03  A/A reach 0.81%  -> finding
+
+HOLM over the 8 rows left when the 1M OTLP row is excluded (invalid: the collector rejected part of every flush)
+   s-100k  statsd         Holm p 6.28e-18 -> finding
+   s-100k  dogstatsd-buf  Holm p 8.54e-18 -> finding
+   s-100k  otlp           Holm p 6.94e-19 -> finding
+   s-1m    statsd         Holm p 6.72e-14 -> finding
+   s-1m    dogstatsd-buf  Holm p 6.73e-13 -> finding
+   sw      statsd         Holm p 4.92e-13 -> finding
+   sw      dogstatsd-buf  Holm p 1.35e-11 -> finding
+   sw      otlp           Holm p 1.19e-03 -> finding
+
+====================================================================================================
+PER LINE / PER POINT (sink-minus-reference ms per flush over the unit count)
+   s-100k  statsd        +209.7 ms / 31112 lines (= datagrams) = 6.74 us per line [6.63, 6.85]
+   s-100k  dogstatsd-buf +61.1 ms / 31112 lines (statsd's line count; not counted per window for this sink) = 1.96 us per line; 2310 datagrams per flush = 13.5 lines per datagram, 26.4 us per datagram
+   s-100k  otlp          +92.4 ms; per accepted point (36141) 2.56 us; per used stat (36141) 2.56 us; per used counter+gauge (31129) 2.97 us; used histograms 5012
+   s-1m    statsd        +2129.9 ms / 310152 lines (= datagrams) = 6.87 us per line [6.80, 6.93]
+   s-1m    dogstatsd-buf +655.0 ms / 310152 lines (statsd's line count; not counted per window for this sink) = 2.11 us per line; 22932 datagrams per flush = 13.5 lines per datagram, 28.6 us per datagram
+   s-1m    otlp          +1004.1 ms; per accepted point (310146) 3.24 us; per used stat (360147) 2.79 us; per used counter+gauge (310135) 3.24 us; used histograms 50012
+
+no-sink flush, us per stat (span ms per flush / N):
+   s-100k  nosink       11.04 ms = 0.093 us per stat
+   s-100k  nosink-A2    11.20 ms = 0.095 us per stat
+   s-1m    nosink       266.47 ms = 0.226 us per stat
+   s-1m    nosink-A2    264.86 ms = 0.224 us per stat
+   s-1m    nosink-5s    261.17 ms = 0.221 us per stat
+   s-1m    nosink-5s-A2 265.53 ms = 0.225 us per stat
+   s-1m    nosink-20s   266.96 ms = 0.226 us per stat

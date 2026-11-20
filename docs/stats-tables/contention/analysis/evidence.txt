@@ -1,0 +1,35 @@
+r01-mt-14w-split-base 13:16:23 valid True sup None att 0 []
+r01-mt-14w-split-stats-reject 13:17:06 valid True sup None att 0 []
+r01-mt-14w-split-own-128 13:17:55 valid True sup None att 0 []
+r01-mt-14w-split-shared-128 13:18:45 valid True sup None att 0 []
+r01-mt-28w-base 13:19:34 valid True sup None att 0 []
+r01-mt-28w-stats-reject 13:20:29 valid True sup None att 0 []
+r01-mt-28w-own-64 13:21:44 valid True sup None att 0 []
+r01-mt-28w-shared-64 13:22:53 valid True sup None att 0 []
+r01-mt-14w-one-base 13:24:07 valid True sup None att 0 []
+r01-mt-14w-one-stats-reject 13:25:21 valid True sup None att 0 []
+r01-mt-14w-one-own-128 13:26:17 valid True sup None att 0 []
+r01-mt-14w-one-shared-128 13:27:12 valid True sup None att 0 []
+['mem_load_uops_l3_hit_retired.xsnp_hitm:u', 'mem_load_uops_l3_miss_retired.remote_hitm:u', 'mem_load_uops_retired.l3_hit:u']
+
+ A HITM/req base 16.20 (loc 16.20 rem 0.00) stats-reject 7.66 (loc 7.63 rem 0.04) own-128 27.85 (loc 27.85 rem 0.00) shared-128 55.45 (loc 55.41 rem 0.04)
+   h=0.216  thr 19.2  base-reject +8.53  d=(cleanL3 own-shared)/K +1.64  [l3 own 2187.2 shared 2004.5]  d with remote hitm also removed: n/a
+   stat ops/req base: counters 14.04 hist 2.96 total 17.01 ; responses 420201
+   wc:  base 542.5k stats-reject 525.0k own-128 696.4k shared-128 681.3k | cycles_total 542.6k 525.1k 696.4k 681.4k | one-round shared-own: -2.19%, -117.7 cyc/update
+   hitm (shared-own) vs cycles:  27.594196512574204
+
+ B HITM/req base 19.18 (loc 8.94 rem 10.24) stats-reject 9.25 (loc 3.76 rem 5.49) own-128 32.26 (loc 12.03 rem 20.23) shared-128 73.14 (loc 31.48 rem 41.66)
+   h=0.319  thr 19.2  base-reject +9.93  d=(cleanL3 own-shared)/K +1.70  [l3 own 2180.5 shared 1982.8]  d with remote hitm also removed: n/a
+   stat ops/req base: counters 14.04 hist 2.97 total 17.01 ; responses 420198
+   wc:  base 533.8k stats-reject 537.3k own-128 690.1k shared-128 703.2k | cycles_total 533.8k 537.3k 690.2k 703.3k | one-round shared-own: +1.88%, +102.4 cyc/update
+   hitm (shared-own) vs cycles:  40.87809255886652
+
+ D HITM/req base 19.35 (loc 11.29 rem 8.07) stats-reject 9.82 (loc 4.48 rem 5.34) own-64 25.08 (loc 12.72 rem 12.36) shared-64 52.04 (loc 31.55 rem 20.48)
+   h=0.421  thr 9.6  base-reject +9.53  d=(cleanL3 own-shared)/K +1.70  [l3 own 1990.4 shared 1900.5]  d with remote hitm also removed: n/a
+   stat ops/req base: counters 14.05 hist 2.96 total 17.01 ; responses 840704
+   wc:  base 528.6k stats-reject 513.3k own-64 606.9k shared-64 624.0k | cycles_total 528.6k 513.4k 607.0k 624.0k | one-round shared-own: +2.78%, +267.0 cyc/update
+   hitm (shared-own) vs cycles:  26.954218055318417
+{"A": {"counters": 128, "own": "own-128", "shared": "shared-128", "hitm": {"base": 16.196763752847342, "stats-reject": 7.663996331044318, "own": 27.852136450594077, "shared": 55.44633296316828}, "hitm_shared_minus_own": {"n": 1, "mean": 27.594196512574204}, "hitm_base_minus_reject": {"n": 1, "mean": 8.532767421803024}, "footprint": {"n": 1, "mean": 1.642855621449522}, "base_cycles": 542506.8647057083, "base_busy": 0.3677041428571428, "stat_ops_per_req": 17.006815766520315, "rounds": 1, "h": 0.21557966025448597}, "B": {"counters": 128, "own": "own-128", "shared": "shared-128", "hitm": {"base": 19.180720537227707, "stats-reject": 9.249729355486881, "own": 32.264641342934404, "shared": 73.14273390180092}, "hitm_shared_minus_own": {"n": 1, "mean": 40.87809255886652}, "hitm_base_minus_reject": {"n": 1, "mean": 9.930991181740826}, "footprint": {"n": 1, "mean": 1.6965886784576671}, "base_cycles": 533775.9263971358, "base_busy": 0.36146089285714295, "stat_ops_per_req": 17.01294794647126, "rounds": 1, "h": 0.3193600981161447}, "D": {"counters": 64, "own": "own-64", "shared": "shared-64", "hitm": {"base": 19.352273336971063, "stats-reject": 9.818840880131916, "own": 25.081483034454, "shared": 52.03570108977242}, "hitm_shared_minus_own": {"n": 1, "mean": 26.954218055318417}, "hitm_base_minus_reject": {"n": 1, "mean": 9.533432456839147}, "footprint": {"n": 1, "mean": 1.6979471020623897}, "base_cycles": 528554.6320979449, "base_busy": 0.35781098214285717, "stat_ops_per_req": 17.01237968586776, "rounds": 1, "h": 0.42115965711435027}}
+{"cells": {"A": [{"cell": "A", "dose": 128, "P": 123.02572253575737, "T": 17.006815766520315, "C": 542506.8647057083, "why": "the cell has no verdict (A/A failed)", "sockets": 1}, {"cell": "A", "dose": 64, "P": 128.5320318338125, "T": 17.006815766520315, "C": 542506.8647057083, "why": "the cell has no verdict (A/A failed)", "sockets": 1}], "B": [{"cell": "B", "dose": 128, "P": 69.10314772847771, "T": 17.01294794647126, "C": 533775.9263971358, "why": "the cell has no verdict (A/A failed)", "sockets": 2}], "D": [{"cell": "D", "dose": 64, "P": 127.24247881089116, "T": 17.01237968586776, "C": 528554.6320979449, "why": "the cell has no verdict (A/A failed)", "sockets": 2}]}, "headline": {}}
+{"n": 5, "mean": -156.66806242085318, "rho_k": 0.2656845137618155, "rho_low": 0.7136408620135095, "se": 364.3501034069738, "lo": -870.7942650985219, "hi": 557.4581402568155, "price_k": 14.483165544946592, "price_low": 69.38478465932778} 5 {'n': 6, 'mean': 0.5276086816572649, 'lo': -0.02977167650407131, 'hi': 1.084989039818601, 't_p': 0.05914130874833412} ['1', '2', '3', '4', '5', '6']
+[('A', 5, 5, {'hw': 1.5316292943540526, 'reach': 2.0530609356237433, 't_p': 0.39806807992577475, 'n': 5, 'lo': -2.0530609356237433, 'hi': 1.010197653084362, 'ok': False}), ('B', 6, 6, {'hw': 1.2805684310443655, 'reach': 2.033894596085172, 't_p': 0.19088626913070628, 'n': 6, 'lo': -2.033894596085172, 'hi': 0.5272422660035588, 'ok': False}), ('D', 6, 6, {'hw': 1.609377306324668, 'reach': 2.3880756650317037, 't_p': 0.2687129874189824, 'n': 6, 'lo': -2.3880756650317037, 'hi': 0.8306789476176321, 'ok': False})]
