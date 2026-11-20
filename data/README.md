@@ -193,6 +193,7 @@ python3 tools/fetch-stats-data.py        # downloads, verifies and unpacks into 
 
 In git: `stats-data.manifest` (every file of every archive with its size and SHA-256), `stats-data.SHA256SUMS`
 (the archives), the index with the conditions of every run ([`../docs/stats-data/README.md`](../docs/stats-data/README.md)),
-what was changed in the raw records ([`../docs/stats-data/WHAT-WAS-CHANGED.md`](../docs/stats-data/WHAT-WAS-CHANGED.md))
-and the rendered tables ([`../docs/stats-tables/`](../docs/stats-tables/)). How to run the study:
+what was changed in the raw records ([`../docs/stats-data/WHAT-WAS-CHANGED.md`](../docs/stats-data/WHAT-WAS-CHANGED.md)),
+the rendered tables ([`../docs/stats-tables/`](../docs/stats-tables/)), and the maps from the commit ids recorded in the data
+to the published commits ([harness](../docs/stats-data/harness-commit-map.md), [Envoy](../docs/stats-data/envoy-commit-map.md)). How to run the study:
 [`../docs/stats-study.md`](../docs/stats-study.md). The directories of the earlier studies above are in git as before.

@@ -30,6 +30,11 @@ of every archive). What was changed in the raw records before publication:
 text outputs of the analyses are small and are also in git: [`docs/stats-tables/`](stats-tables/),
 at the paths they have inside the archives.
 
+Commit ids in the data are those of the commits that were measured. The published history of this
+repository and of the Envoy fork are cleaned copies with other ids:
+[`docs/stats-data/harness-commit-map.md`](stats-data/harness-commit-map.md) and
+[`docs/stats-data/envoy-commit-map.md`](stats-data/envoy-commit-map.md) pair them and state what differs.
+
 The data directories of the earlier studies (`data/features/`, `data/route-table/` and the others
 listed in `data/README.md`) are in git as before.
 
