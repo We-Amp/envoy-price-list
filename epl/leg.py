@@ -26,8 +26,9 @@ import threading
 import time
 import urllib.parse
 
+from . import envoy_config
 from . import experiment as _exp
-from . import nighthawk, sysprobe, validity
+from . import nighthawk, statsrow, sysprobe, validity
 
 PERF_EVENTS = "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations"
 BASE_EVENT_NAMES = ("instructions:u", "cycles:u", "cycles:k", "instructions:k", "cycles", "task-clock",
@@ -120,8 +121,8 @@ DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_
 END_KEYS_RE = re.compile(r"(ssl\.(versions|ciphers|curves|sigalgs)\.|upstream_cx_active$|downstream_cx_active$)")
 
 
-def admin_stats(port):
-    st, body = admin_get(port, "/stats?filter=" + urllib.parse.quote(STAT_FILTER))
+def admin_stats(port, timeout=5.0):
+    st, body = admin_get(port, "/stats?filter=" + urllib.parse.quote(STAT_FILTER), timeout=timeout)
     if st != 200:
         raise RuntimeError("admin /stats returned %d" % st)
     out = {}
@@ -153,6 +154,42 @@ def wait_ready(port, timeout_s, proc):
 def parse_perf(text):
     """{event: value} from `perf stat -x ,`; events that did not count are left out."""
     return parse_perf_full(text)[0]
+
+
+def parse_perf_per_thread(text):
+    """{tid: {comm, event: value}} from `perf stat -x , --per-thread`: each line starts with
+    <comm>-<tid>, then the count, unit, event."""
+    out = {}
+    for line in text.splitlines():
+        f = line.split(",")
+        if len(f) < 4 or "-" not in f[0]:
+            continue
+        comm, _, tid = f[0].rpartition("-")
+        try:
+            tid, v = int(tid), float(f[1])
+        except ValueError:
+            continue
+        d = out.setdefault(tid, {"comm": comm})
+        d[f[3]] = v
+        if len(f) > 5:
+            try:
+                d.setdefault("_running_pct", {})[f[3]] = float(f[5])
+            except ValueError:
+                pass
+    return out
+
+
+def perf_totals(per_thread):
+    """({event: sum over threads}, {event: lowest running percent}) from parse_perf_per_thread."""
+    tot, run = {}, {}
+    for d in per_thread.values():
+        for k, v in d.items():
+            if k in ("comm", "_running_pct"):
+                continue
+            tot[k] = tot.get(k, 0.0) + v
+        for k, p in (d.get("_running_pct") or {}).items():
+            run[k] = min(run.get(k, 100.0), p)
+    return tot, run
 
 
 def parse_perf_full(text):
@@ -434,6 +471,35 @@ def _count_lines(path):
     return n, size
 
 
+def _nofile_preexec(soft):
+    def f():
+        import resource
+        cur_soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        want = soft if hard == resource.RLIM_INFINITY else min(soft, hard)
+        resource.setrlimit(resource.RLIMIT_NOFILE, (max(cur_soft, want), hard))
+    return f
+
+
+def _primes(arm, shape):
+    """Primed is the default; an arm or a shape with prime: false runs cold."""
+    return arm.get("prime", True) and shape.get("prime", True)
+
+
+def nofile_for(aenv, exp=None):
+    """Soft fd limit for an Envoy with generated clusters: 4 x clusters + 4,096 plus a margin,
+    or the configured envoy.nofile; None leaves the inherited limit."""
+    n = (exp or {}).get("envoy", {}).get("nofile")
+    if n:
+        return int(n)
+    sc = aenv.get("stats_clusters")
+    return 4 * int(sc["count"]) + 4096 + 1024 if sc else None
+
+
+IDLE_KEEP_RE = re.compile(r"^(server\.|cluster_manager\.|.*watchdog|http\.ingress_http\.|"
+                          r"cluster\.(origin|otel_collector)\.|stats\.|runtime\.)")
+EMFILE_RE = re.compile(r"(?i)(too many open files|EMFILE)")
+
+
 class RealBackend:
     def __init__(self, exp, run_dir, log):
         self.exp = exp
@@ -464,11 +530,11 @@ class RealBackend:
                 self.side.append(svc.side)
         self.collector = collector
 
-    def _save_config_dump(self, arm, port):
+    def _save_config_dump(self, arm, port, timeout=10.0):
         """/config_dump of the arm at its first start, kept gzipped in the run directory."""
         if arm in self.config_dumps:
             return
-        st, body = admin_get(port, "/config_dump", timeout=10.0)
+        st, body = admin_get(port, "/config_dump", timeout=timeout)
         if st != 200:
             raise RuntimeError("admin /config_dump returned %d" % st)
         d = os.path.join(self.run_dir, "config_dump")
@@ -477,11 +543,11 @@ class RealBackend:
             f.write(body)
         self.config_dumps[arm] = json.loads(body)
 
-    def _save_stats(self, arm, port):
+    def _save_stats(self, arm, port, timeout=10.0):
         """Every stat name and value at the end of the arm's first leg (for freezing evidence names)."""
         if arm in self.stats_saved:
             return
-        st, body = admin_get(port, "/stats", timeout=10.0)
+        st, body = admin_get(port, "/stats", timeout=timeout)
         if st == 200:
             d = os.path.join(self.run_dir, "stats")
             os.makedirs(d, exist_ok=True)
@@ -496,12 +562,17 @@ class RealBackend:
     def own_pids(self):
         return self.own.pids()
 
-    def _start_envoy(self, binary, bootstrap, cpus, workers, admin_port, env, extra, log_path):
+    def _start_envoy(self, binary, bootstrap, cpus, workers, admin_port, env, extra, log_path, ready_timeout_s=60,
+                     nofile=None):
+        """nofile: soft RLIMIT_NOFILE for this child only (set before exec; never a system change)."""
         elog = open(log_path, "w")
         cmd = ["taskset", "-c", cpus, binary, "-c", bootstrap, "--concurrency", str(workers),
                "--use-dynamic-base-id", "-l", self.exp["envoy"].get("log_level", "warn")] + list(extra)
-        p = self.own.start(cmd, stdout=elog, stderr=subprocess.STDOUT, env=dict(os.environ, **env))
-        if not wait_ready(admin_port, 60, p):
+        kw = {}
+        if nofile:
+            kw["preexec_fn"] = _nofile_preexec(int(nofile))
+        p = self.own.start(cmd, stdout=elog, stderr=subprocess.STDOUT, env=dict(os.environ, **env), **kw)
+        if not wait_ready(admin_port, ready_timeout_s, p):
             raise RuntimeError("envoy (%s) not ready (exit %s)" % (os.path.basename(bootstrap), p.poll()))
         exe = os.path.realpath("/proc/%d/exe" % p.pid)
         if exe != os.path.realpath(binary):
@@ -550,14 +621,17 @@ class RealBackend:
         m["cpuidle_fingerprint"] = sysprobe.cpuidle_fingerprint(self.idle_cpus)
         m["cpuidle_unchanged"] = m["cpuidle_fingerprint"] == self.cpuidle_fp0
         # 2. port preflight
-        must_open = [e["origin"]["port"]] if shape["kind"] == "proxied" else []
+        must_open = [e["origin"]["port"]] if shape["kind"] == "proxied" or (
+            aenv.get("stats_clusters") and _primes(arm, shape)) else []
         if aenv.get("ext_authz"):
             must_open.append(aenv["authz_grpc_port"] if aenv["ext_authz"] == "grpc" else aenv["authz_port"])
-        if aenv.get("tracing"):
+        if aenv.get("tracing") or (aenv.get("stats_sink") or {}).get("kind") == "otlp":
             must_open.append(aenv["collector_port"])
             if e["collector"].get("metrics_port"):
                 must_open.append(int(e["collector"]["metrics_port"]))
         free = [ecfg["listener_port"], ecfg["admin_port"]]
+        if aenv.get("stats_sink_port"):
+            free.append(int(aenv["stats_sink_port"]))
         if hop2_set:
             free += [e["hop2"]["listener_port"], e["hop2"]["admin_port"]]
         ok, det = sysprobe.port_preflight(free, must_open)
@@ -565,8 +639,12 @@ class RealBackend:
         if not (m["idle_ok"] and m["preflight_ok"]):
             m["verdict"] = validity.verdict(m, vcfg)
             return m
+        if shape["kind"] == "idle":
+            return self._run_idle_leg(arm, shape, rnd, bootstrap_path, leg_id, m, aenv, vcfg)
         envoy = None
         hop_b = None
+        sink = sink_out = sampler = None
+        adm_t = float(shape.get("admin_timeout_s", 5.0))
         side_u0 = {}
         if self.side_expected:
             # placement of every side-service process, read before Envoy starts
@@ -576,7 +654,8 @@ class RealBackend:
                     m["side_services"][svc.name] = svc.placement()
                 except OSError as ex:
                     m["side_services"][svc.name] = {"error": "placement unreadable: %s" % ex}
-        coll0 = self.collector.scrape() if self.collector and aenv.get("tracing") else None
+        coll0 = self.collector.scrape() if self.collector and (
+            aenv.get("tracing") or (aenv.get("stats_sink") or {}).get("kind") == "otlp") else None
         alog = (aenv.get("access_log") or {}).get("path")
         if alog:
             with open(alog, "w"):
@@ -595,12 +674,19 @@ class RealBackend:
                 m["hop2_cpus_allowed"] = sysprobe.cpus_allowed(hop_b.pid)
                 pin_ok = sysprobe.parse_cpuset(m["hop2_cpus_allowed"]) == hop2_set
             elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
+            sink, sink_out = self._sink_start(aenv, leg_id)
             envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, e["cpus"]["sut"], ecfg["workers"],
-                                            ecfg["admin_port"], env, arm.get("extra_args", []), elog_path)
+                                            ecfg["admin_port"], env, arm.get("extra_args", []), elog_path,
+                                            ready_timeout_s=float(shape.get("ready_timeout_s", 60)),
+                                            nofile=nofile_for(aenv, e))
             m["envoy_pid"] = envoy.pid
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
-            self._save_config_dump(arm["name"], ecfg["admin_port"])
+            self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+            if aenv.get("stats_clusters"):
+                lim = statsrow.parse_limits(statsrow.read("/proc/%d/limits" % envoy.pid))
+                m["nofile_soft"], m["nofile_hard"] = lim if lim else (None, None)
+            self._prime(m, arm, shape, aenv)
             sut_cpus = sysprobe.cpus_allowed(envoy.pid)
             m["sut_cpus_allowed"] = sut_cpus
             pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
@@ -634,7 +720,14 @@ class RealBackend:
                     c0 = sysprobe.proc_threads_cpu(cl.pid)
                     e0 = sysprobe.proc_threads_detail(envoy.pid)
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
-                    q0 = admin_stats(ecfg["admin_port"])
+                    t_q0 = time.monotonic()
+                    q0 = admin_stats(ecfg["admin_port"], adm_t)
+                    settle = float(shape.get("pre_window_settle_s") or 0)
+                    if settle:
+                        # an admin stats read flushes under stats_flush_on_admin: let that flush end
+                        # before the window opens (the response count still brackets q0..q1)
+                        time.sleep(settle)
+                    u0 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
                     qb0 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
                     p0 = sysprobe.per_cpu_times()
                     k0 = sysprobe.proc_run_ns(envoy.pid)
@@ -646,8 +739,13 @@ class RealBackend:
                     events = perf_events(mcfg, rnd)
                     if events != PERF_EVENTS:
                         m["perf_events"] = events
-                    pcmd = lambda pid: self.perf + ["stat", "-x", ",", "-e", events, "-p", str(pid),  # noqa: E731
-                                                    "--", "sleep", str(mcfg["window_s"])]
+                    per_thread = ["--per-thread"] if mcfg.get("per_thread") else []
+                    pcmd = lambda pid: self.perf + ["stat", "-x", ",", "-e", events] + per_thread + [  # noqa: E731
+                        "-p", str(pid), "--", "sleep", str(mcfg["window_s"])]
+                    if mcfg.get("main_sampler"):
+                        sampler = statsrow.MainSampler(envoy.pid, envoy.pid, float(mcfg.get("main_sample_s", 0.02)),
+                                                       sysprobe.parse_cpuset(e["cpus"]["client"]))
+                        sampler.start()
                     pb = subprocess.Popen(pcmd(hop_b.pid), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                           text=True) if hop_b else None
                     tl = None
@@ -664,6 +762,10 @@ class RealBackend:
                             tl.stop_evt.set()
                             tl.join(timeout=30)
                     t1 = time.monotonic()
+                    if sampler:
+                        sampler.stop_evt.set()
+                        sampler.join(timeout=10)
+                    u1 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
                     if tl:
                         tdir = os.path.join(self.run_dir, "timeline")
                         os.makedirs(tdir, exist_ok=True)
@@ -682,7 +784,7 @@ class RealBackend:
                     k1 = sysprobe.proc_run_ns(envoy.pid)
                     kb1 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     p1 = sysprobe.per_cpu_times()
-                    q1 = admin_stats(ecfg["admin_port"])
+                    q1 = admin_stats(ecfg["admin_port"], adm_t)
                     qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
                     t2 = time.monotonic()
                     e1 = sysprobe.proc_threads_detail(envoy.pid)
@@ -704,10 +806,13 @@ class RealBackend:
             with open(os.path.join(self.run_dir, "perf", leg_id + ".csv"), "w") as f:
                 f.write(pr.stderr)
             pv, prun = parse_perf_full(pr.stderr)
+            if per_thread:
+                # --per-thread lines carry the thread first: totals are the sum over threads
+                pv, prun = perf_totals(parse_perf_per_thread(pr.stderr))
             # Admin snapshots bracket the perf command, so the response count
             # covers a slightly longer span than the counters do; scale it to the
             # perf window (same for every arm, it only fixes absolute numbers).
-            win = t2 - t0
+            win = t2 - (t_q0 if settle else t0)
             perf_s = float(mcfg["window_s"])
             resp_raw = _delta(q0, q1, "http.ingress_http.downstream_rq_2xx")
             resp = resp_raw * perf_s / win if win > 0 else 0
@@ -751,6 +856,23 @@ class RealBackend:
             non2 = sum(_delta(q0, q1, "http.ingress_http.downstream_rq_%s" % c) for c in ("1xx", "3xx", "4xx", "5xx"))
             m["sut_stats_delta"] = _stat_deltas(q0, q1)
             m["sut_stats_window"] = _stat_window(q0, q1)
+            if per_thread:
+                pt = parse_perf_per_thread(pr.stderr)
+                m["perf_per_thread"] = pt
+                wk = [v for v in pt.values() if v["comm"].startswith("wrk:")]
+                cyc = lambda v: v.get("cycles", v.get("cycles:u", 0) + v.get("cycles:k", 0))  # noqa: E731
+                if wk and resp > 0:
+                    m["workers_cycles_per_req"] = sum(cyc(v) for v in wk) / resp
+            if sampler:
+                from . import statsrow as _sr
+                bursts = _sr.find_bursts(sampler.samples, float(shape.get("burst_min_busy", 0.2)),
+                                         float(shape.get("burst_join_s", 0.1)))
+                m["main"] = _sr.summarize_main(sampler.samples, bursts, perf_s)
+                m["flushes_counted"] = m["main"]["bursts"]
+            if sink:
+                m["udp"] = statsrow.udp_window(u0, u1, (m.get("main") or {}).get("bursts"))
+                if resp > 0:
+                    m["udp"]["datagrams_per_request"] = m["udp"]["sent"] / (resp_raw * (t1 - t0) / win)
             cu = m.get("conn_upstream") or {}
             if cu.get("segs_total") and q1.get("cluster.origin.upstream_rq_total"):
                 # TCP segments Envoy received from the origin per response, over the connections'
@@ -852,8 +974,21 @@ class RealBackend:
             if envoy is not None and envoy.poll() is None:
                 # end-of-leg snapshot: cumulative counters over the whole leg, just before the stop
                 try:
-                    m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"])
-                    self._save_stats(arm["name"], ecfg["admin_port"])
+                    m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t)
+                    self._save_stats(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+                    sc = aenv.get("stats_clusters")
+                    if sc:
+                        # the generated clusters' connect failures and overflows over the leg
+                        # (a used-only read after the window; it flushes under on_admin)
+                        names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1))
+                        post = statsrow.stats_read(ecfg["admin_port"], max(10.0, adm_t), usedonly=True)
+                        if post.get("status") != 200:
+                            # fail closed: no counts from a failed read (the evidence then fails too)
+                            m["error"] = m.get("error") or "post-window /stats?usedonly returned %s" % post.get("status")
+                            raise RuntimeError("post-window /stats returned %s" % post.get("status"))
+                        m["gen_cx_connect_fail"] = statsrow.generated_sum(post["numeric"], names,
+                                                                          "upstream_cx_connect_fail")
+                        m["gen_cx_overflow"] = statsrow.generated_sum(post["numeric"], names, "upstream_cx_overflow")
                 except (OSError, RuntimeError) as ex:
                     m["leg_end_snapshot_error"] = str(ex)
             if envoy is not None:
@@ -861,6 +996,10 @@ class RealBackend:
                 m["envoy_exit"] = st["exit"]
                 m["envoy_log_deprecated_lines"] = st.get("deprecated_lines")
                 m["envoy_log_bytes"] = st.get("log_bytes")
+            if sampler is not None:
+                sampler.stop_evt.set()
+            if sink is not None:
+                m["udpsink"] = statsrow.stop_udpsink(self.own, sink, sink_out)
             if hop_b is not None:
                 st = self._stop_envoy(hop_b, belog, blog)
                 m["hop2_exit"] = st["exit"]
@@ -887,6 +1026,284 @@ class RealBackend:
                 m["collector_delta"] = {"error": coll0.get("error") or c1.get("error")}
             else:
                 m["collector_delta"] = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)}
+        if arm.get("evidence") is not None:
+            from . import evidence
+            m["evidence"] = evidence.evaluate(m, arm["evidence"], self.config_dumps.get(arm["name"]),
+                                              gate=e.get("evidence_mode", "gate") == "gate")
+        m["verdict"] = validity.verdict(m, vcfg)
+        return m
+
+    # ---------------------------------------------------------------- idle legs (stats row)
+
+    def _sink_start(self, aenv, leg_id):
+        """The drain-only UDP sink for a statsd or dog_statsd arm, as this run's own child."""
+        from . import statsrow
+        kind = (aenv.get("stats_sink") or {}).get("kind")
+        if kind not in ("statsd", "dog_statsd"):
+            return None, None
+        sc = self.exp["stats_sink"]
+        d = os.path.join(self.run_dir, "udpsink")
+        os.makedirs(d, exist_ok=True)
+        out = os.path.join(d, leg_id + ".json")
+        p = statsrow.start_udpsink(self.own, self.exp["cpus"]["origin"], int(sc["port"]), int(sc["rcvbuf"]), out,
+                                   int(sc.get("sample_every", 1)))
+        return p, out
+
+    def _prime(self, m, arm, shape, aenv):
+        """One paced request per generated cluster, then a settle for the upstream connections
+        to close (their idle timeout); outside any window."""
+        from . import statsrow
+        sc = aenv.get("stats_clusters")
+        if not sc or not _primes(arm, shape):
+            m["primed"] = False
+            return
+        names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1))
+        m["primed"] = True
+        m["prime"] = statsrow.prime(self.exp["envoy"]["listener_port"], names,
+                                    int(shape.get("prime_in_flight", 200)), int(shape.get("prime_per_s", 1000)))
+        time.sleep(float(shape.get("prime_settle_s", 5)))
+
+    def _run_idle_leg(self, arm, shape, rnd, bootstrap_path, leg_id, m, aenv, vcfg):
+        """A leg with no client load: start Envoy, prime the generated clusters, read /stats once
+        before the window (then settle), sample the main thread for the window, read /stats
+        (used only) once after it, stop. Metrics per flush period, not per request."""
+        from . import statsrow
+        e = self.exp
+        ecfg, mcfg = e["envoy"], e["measure"]
+        m["idle_leg"] = True
+        if isinstance(bootstrap_path, dict):
+            bootstrap_path = bootstrap_path[arm["name"]]
+        sut = sysprobe.parse_cpuset(e["cpus"]["sut"])
+        sib = sysprobe.siblings_of(sut)
+        client_cpus = sysprobe.parse_cpuset(e["cpus"]["client"])
+        ready_t = float(shape.get("ready_timeout_s", 60))
+        adm_t = float(shape.get("admin_timeout_s", 30))
+        settle = float(shape.get("settle_s", 2))
+        window = float(arm.get("window_s") or shape.get("window_s", mcfg["window_s"]))
+        sf = aenv.get("stats_flush") or {}
+        interval = None if sf.get("on_admin") else float(sf.get("interval_s", 5))
+        m["flush_interval_s"] = interval
+        sc = aenv.get("stats_clusters")
+        names = envoy_config.stats_cluster_names(sc["count"], sc.get("seed", 1)) if sc else []
+        m["stats_clusters_count"] = len(names)
+        kind = (aenv.get("stats_sink") or {}).get("kind")
+        envoy = elog = sink = sampler = prober = scraper = None
+        sink_out = None
+        elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
+        try:
+            sink, sink_out = self._sink_start(aenv, leg_id)
+            t_s = time.monotonic()
+            envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, e["cpus"]["sut"], ecfg["workers"],
+                                            ecfg["admin_port"], dict(arm.get("env") or {}), arm.get("extra_args", []),
+                                            elog_path, ready_timeout_s=ready_t, nofile=nofile_for(aenv, e))
+            pid = envoy.pid
+            m["envoy_pid"] = pid
+            m["start_s"] = round(time.monotonic() - t_s, 2)
+            m["sut_cpus_allowed"] = sysprobe.cpus_allowed(pid)
+            m["pinning_ok"] = sysprobe.parse_cpuset(m["sut_cpus_allowed"]) == sut
+            lim = statsrow.parse_limits(statsrow.read("/proc/%d/limits" % pid))
+            m["nofile_soft"], m["nofile_hard"] = lim if lim else (None, None)
+            self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=adm_t)
+            self._prime(m, arm, shape, aenv)
+            m["fd_count"] = statsrow.fd_count(pid)
+            # the main thread is the thread whose tid is the pid; workers are wrk:*
+            m["main_comm"] = statsrow.thread_comm(pid, pid)
+            # one admin stats read before the window (with stats_flush_on_admin it flushes), then settle
+            t_pre = time.monotonic()
+            pre = statsrow.stats_read(ecfg["admin_port"], adm_t)
+            if pre["status"] != 200:
+                raise RuntimeError("pre-window /stats returned %s" % pre["status"])
+            n0 = pre["numeric"]
+            m["pre_read"] = {k: pre[k] for k in ("total", "histograms", "text_readouts", "seconds", "bytes")}
+            m["stats_total"] = pre["total"]
+            m["active_clusters"] = n0.get("cluster_manager.active_clusters")
+            m["gen_cx_active_pre"] = statsrow.generated_sum(n0, names, "upstream_cx_active")
+            time.sleep(settle)
+            # window
+            vm0 = statsrow.memory_kb(pid)
+            # a quiescent point (no flush in progress, the sink's queue read empty) before the
+            # kernel counters, so the window's datagrams are whole flushes
+            q0_ok, q0_s = statsrow.quiesce(pid, e["stats_sink"]["port"] if sink else None,
+                                           float(shape.get("quiesce_timeout_s", 30)))
+            tu0 = time.monotonic()
+            u0 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
+            sk0 = sysprobe.proc_run_ns(sink.pid) if sink else None
+            coll0 = self.collector.scrape() if (self.collector and kind == "otlp") else None
+            r0, rwhy0 = sysprobe.cpu_run_ns()
+            k0 = sysprobe.proc_run_ns(pid)
+            th0 = statsrow.threads_run_ns(pid)
+            sampler = statsrow.MainSampler(pid, pid, float(mcfg.get("main_sample_s", 0.02)), client_cpus)
+            prober = statsrow.ReadyProber(ecfg["admin_port"], 0.2, client_cpus)
+            if arm.get("prom_scrape_s"):
+                scraper = statsrow.PromScraper(ecfg["admin_port"], float(arm["prom_scrape_s"]), client_cpus, adm_t)
+            t0 = time.monotonic()
+            for th in (sampler, prober, scraper):
+                if th:
+                    th.start()
+            events = mcfg.get("main_perf_events") or "instructions:u,cycles:u,cycles:k,instructions:k,task-clock"
+            pr = subprocess.run(self.perf + ["stat", "-x", ",", "-e", events, "-t", str(pid), "--", "sleep",
+                                             "%g" % window], capture_output=True, text=True, timeout=window + 60)
+            for th in (sampler, prober, scraper):
+                if th:
+                    th.stop_evt.set()
+            for th in (sampler, prober, scraper):
+                if th:
+                    th.join(timeout=adm_t + 10)
+            t1 = time.monotonic()
+            r1, rwhy1 = sysprobe.cpu_run_ns()
+            k1 = sysprobe.proc_run_ns(pid)
+            th1 = statsrow.threads_run_ns(pid)
+            q1_ok, q1_s = statsrow.quiesce(pid, e["stats_sink"]["port"] if sink else None,
+                                           float(shape.get("quiesce_timeout_s", 30)))
+            tu1 = time.monotonic()
+            u1 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
+            m["quiesce"] = {"before_ok": q0_ok, "before_s": q0_s, "after_ok": q1_ok, "after_s": q1_s,
+                            "span_s": round(tu1 - tu0, 3)}
+            sk1 = sysprobe.proc_run_ns(sink.pid) if sink else None
+            vm1 = statsrow.memory_kb(pid)
+            m["memory"] = {"vm_rss_kb_before": vm0["vm_rss_kb"], "vm_hwm_kb_after": vm1["vm_hwm_kb"],
+                           "page_size": os.sysconf("SC_PAGE_SIZE")}
+            # one admin stats read after the window: used stats only
+            t_post = time.monotonic()
+            post = statsrow.stats_read(ecfg["admin_port"], adm_t, usedonly=True)
+            n1 = post["numeric"]
+            m["post_read"] = {k: post.get(k) for k in ("total", "histograms", "text_readouts", "seconds", "bytes",
+                                                         "status")}
+            m["used_total"] = post.get("total")
+            m["used_cg_lines"] = (post.get("total") or 0) - (post.get("histograms") or 0) - \
+                (post.get("text_readouts") or 0)
+            if getattr(self, "calibrate", False):
+                # calibration only: N and used N by kind (each read flushes under on_admin)
+                bk = {}
+                for kd in ("Counters", "Gauges", "Histograms", "TextReadouts"):
+                    for uo in (False, True):
+                        st_, body_, dt_ = statsrow.admin_text(ecfg["admin_port"], "/stats?type=%s%s" % (
+                            kd, "&usedonly" if uo else ""), adm_t)
+                        bk["%s%s" % (kd.lower(), "_used" if uo else "")] = (
+                            sum(1 for ln in body_.splitlines() if ": " in ln) if st_ == 200 else None)
+                m["by_kind"] = bk
+            m["gen_cx_connect_fail"] = statsrow.generated_sum(n1, names, "upstream_cx_connect_fail")
+            m["gen_cx_overflow"] = statsrow.generated_sum(n1, names, "upstream_cx_overflow")
+            keep0 = {k: v for k, v in n0.items() if IDLE_KEEP_RE.search(k)}
+            keep1 = {k: v for k, v in n1.items() if IDLE_KEEP_RE.search(k)}
+            m["sut_stats_leg_end"] = keep1
+            m["sut_stats_window"] = {k: keep1.get(k, 0) - keep0.get(k, 0) for k in sorted(set(keep0) | set(keep1))}
+            up0, up1 = n0.get("server.uptime"), n1.get("server.uptime")
+            if up0 is not None and up1 is not None:
+                m["uptime"] = {"delta_s": up1 - up0, "elapsed_s": round(t_post - t_pre, 3),
+                               "error_s": round(abs((up1 - up0) - (t_post - t_pre)), 3)}
+            m["dropped_stat_flushes_delta"] = n1.get("server.dropped_stat_flushes", 0) - \
+                n0.get("server.dropped_stat_flushes", 0)
+            m["watchdog_delta"] = {k: n1.get(k, 0) - n0.get(k, 0) for k in set(n0) | set(n1) if "watchdog" in k
+                                   and n1.get(k, 0) - n0.get(k, 0)}
+            m["memory"].update({k: n1[k] for k in n1 if k.startswith("server.memory_")})
+            # main thread: series, bursts, per-flush figures
+            samples = sampler.samples
+            bursts = statsrow.find_bursts(samples, float(shape.get("burst_min_busy", 0.2)),
+                                          float(shape.get("burst_join_s", 0.1)))
+            main = statsrow.summarize_main(samples, bursts, window)
+            main["sampler_missing"] = sampler.missing
+            if interval:
+                exp_n = statsrow.expected_flushes(t1 - t0, interval)
+                main["expected_flushes"] = exp_n
+                # with the main thread saturated the bursts merge into one: no count to compare
+                main["burst_count_error"] = None if statsrow.saturated(main.get("run_ms_per_s")) else \
+                    abs(main["bursts"] - exp_n)
+            m["main"] = main
+            mdir = os.path.join(self.run_dir, "main")
+            os.makedirs(mdir, exist_ok=True)
+            with gzip.open(os.path.join(mdir, leg_id + ".json.gz"), "wt") as f:
+                json.dump({"samples": samples, "bursts": bursts}, f)
+            m["main_tid_ok"] = bool(m["main_comm"]) and not m["main_comm"].startswith("wrk:") and \
+                sampler.missing == 0 and len(samples) >= 0.8 * window / float(mcfg.get("main_sample_s", 0.02))
+            # perf on the main thread
+            with open(os.path.join(self.run_dir, "perf", leg_id + ".csv"), "w") as f:
+                f.write(pr.stderr)
+            pv, prun = parse_perf_full(pr.stderr)
+            m["main_perf_raw"] = pv
+            m["perf_min_running_pct"] = min(prun.values()) if prun else None
+            cyc = (pv["cycles:u"] + pv["cycles:k"]) if ("cycles:u" in pv and "cycles:k" in pv) else pv.get("cycles")
+            m["perf_ok"] = cyc is not None and "instructions:u" in pv
+            if m["perf_ok"]:
+                ws = float(window)
+                mp = {"cycles_per_s": cyc / ws, "instructions_u_per_s": pv["instructions:u"] / ws}
+                if "cycles:u" in pv:
+                    mp.update(cycles_u_per_s=pv["cycles:u"] / ws, cycles_k_per_s=pv["cycles:k"] / ws)
+                if main.get("period_s"):
+                    mp["cycles_per_period"] = mp["cycles_per_s"] * main["period_s"]
+                m["main_perf"] = mp
+            # every thread's run time; SUT CPUs clean during the window
+            busy_win = t1 - t0
+            other = sum(th1[t][1] - th0[t][1] for t in th1 if t in th0 and t != pid)
+            m["main_over_busiest_other"] = statsrow.busiest_other_ratio(th0, th1, pid)
+            m["other_threads_ms_per_s"] = other / 1e6 / busy_win if busy_win > 0 else None
+            if k0 is not None and k1 is not None and r0 and r1 and not rwhy0 and not rwhy1:
+                envoy_cpus = (k1 - k0) / 1e9 / busy_win
+                sut_run = sum(r1[c] - r0[c] for c in sut if c in r0 and c in r1) / 1e9 / busy_win
+                m["envoy_cpus_run"] = round(envoy_cpus, 5)
+                m["sut_foreign_cpus"] = round(sut_run - envoy_cpus, 4)
+                m["sut_sibling_cpus"] = round(sum(r1[c] - r0[c] for c in sib if c in r0 and c in r1)
+                                              / 1e9 / busy_win, 4) if sib else 0.0
+            else:
+                m["sched_probe"] = "; ".join(x for x in (rwhy0, rwhy1) if x) or "no schedstat"
+            m["ready"] = prober.summary()
+            if scraper:
+                pc = scraper.summary()
+                pc["expected"] = int(busy_win // float(arm["prom_scrape_s"]))
+                pc["count_error"] = abs(pc["scrapes"] - pc["expected"])
+                m["prom"] = pc
+            # the flush count: bursts where the rung's flushes are visible to the sampler, else the
+            # interval (at the smallest rung a flush is under the 20 ms resolution)
+            visible = shape.get("bursts_visible", True)
+            if interval and (not visible or not main.get("bursts")):
+                flushes, m["flushes_from"] = int(round(busy_win / interval)), "interval"
+            else:
+                flushes, m["flushes_from"] = main.get("bursts") or 0, "bursts"
+            m["flushes_counted"] = flushes
+            if sink:
+                m["udp"] = statsrow.udp_window(u0, u1, None, m["used_cg_lines"])
+                if "error" not in m["udp"]:
+                    # whole flushes between the two quiescent points
+                    # flushes the span holds: by the measured period, else the interval (flush
+                    # starts are one interval apart); a saturated main thread then fails the count,
+                    # closed: its flushes are longer than the interval
+                    per = main.get("period_s") if not statsrow.saturated(main.get("run_ms_per_s")) else None
+                    exp_n = int(round((tu1 - tu0) / (per or interval)))
+                    main["saturated"] = statsrow.saturated(main.get("run_ms_per_s"))
+                    if kind == "statsd":
+                        m["udp"]["fit"] = statsrow.flush_fit(m["udp"]["sent"], m["used_cg_lines"], exp_n)
+                        if m["udp"]["fit"].get("n"):
+                            m["udp"]["sent_per_flush"] = m["udp"]["sent"] / m["udp"]["fit"]["n"]
+                    elif exp_n:
+                        # batched lines: datagrams per flush over the flushes the span holds
+                        m["udp"]["sent_per_flush"] = m["udp"]["sent"] / exp_n
+                m.setdefault("side_services", {})["udpsink"] = statsrow.process_side(
+                    sink.pid, e["cpus"]["origin"], sk0, sk1, busy_win)
+            if coll0 is not None and self.collector:
+                c1 = self.collector.scrape()
+                if "error" in coll0 or "error" in c1:
+                    m["collector_delta"] = {"error": coll0.get("error") or c1.get("error")}
+                else:
+                    cd = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)}
+                    if flushes and "accepted_metric_points" in cd:
+                        cd["accepted_metric_points_per_flush"] = cd["accepted_metric_points"] / flushes
+                    m["collector_delta"] = cd
+        except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg
+            m["error"] = "%s: %s" % (type(ex).__name__, ex)
+        finally:
+            for th in (sampler, prober, scraper):
+                if th is not None:
+                    th.stop_evt.set()
+            if envoy is not None:
+                st = self._stop_envoy(envoy, elog, elog_path)
+                m["envoy_exit"] = st["exit"]
+                try:
+                    with open(elog_path) as f:
+                        m["envoy_log_emfile"] = len(EMFILE_RE.findall(f.read()))
+                except OSError:
+                    m["envoy_log_emfile"] = None
+            if sink is not None:
+                m["udpsink"] = statsrow.stop_udpsink(self.own, sink, sink_out)
         if arm.get("evidence") is not None:
             from . import evidence
             m["evidence"] = evidence.evaluate(m, arm["evidence"], self.config_dumps.get(arm["name"]),

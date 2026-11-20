@@ -180,3 +180,11 @@ No measured value was changed.
 ## Licence
 
 See `LICENSE`.
+
+## Stats flush row (layout, once it has run)
+
+`data/stats-flush/<session date>/`: `rungs.json` and `cal/` (calibration per rung), `smoke/`, one directory per
+run (`m-10k`, `m-100k`, `m-300k`, `m-1m`, `w`, and `s-100k`, `s-1m`, `x-1m` if they ran), `frozen/` (the
+configs with the evidence frozen from the smoke), `w-prediction.json`, `profile-1m/` (the main thread's profile),
+`sysctl-session.json` (the receive-buffer limit before, during and after the session) and `tables.md`. The host
+is recorded as `bench-host`.

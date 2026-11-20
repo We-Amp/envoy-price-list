@@ -68,6 +68,8 @@ DEFAULTS = {
 def verdict(m, cfg=None):
     c = dict(DEFAULTS)
     c.update(cfg or {})
+    if m.get("idle_leg"):
+        return idle_verdict(m, c)
     reasons = []
     if not m.get("idle_ok"):
         reasons.append("box not idle before the leg")
@@ -171,6 +173,55 @@ def verdict(m, cfg=None):
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]
         reasons.append("evidence: %s%s" % ("; ".join(f[:4]), " (+%d more)" % (len(f) - 4) if len(f) > 4 else ""))
+    return {"valid": not reasons, "reasons": reasons}
+
+
+def _common(m, c, reasons):
+    """Gates every leg shares: box state, errors, pinning, SUT CPUs during the window, idle
+    states, exit code, multiplexing, side services, evidence."""
+    if not m.get("idle_ok"):
+        reasons.append("box not idle before the leg")
+    if not m.get("preflight_ok"):
+        reasons.append("port preflight failed: %s" % m.get("preflight_detail"))
+    if m.get("error"):
+        reasons.append("error: %s" % m["error"])
+    if not m.get("pinning_ok", True):
+        reasons.append("process not on its configured CPUs")
+    fc, sc = m.get("sut_foreign_cpus"), m.get("sut_sibling_cpus")
+    if fc is None or sc is None:
+        reasons.append("no scheduler run time for the SUT CPUs (%s)" % m.get("sched_probe", "no data"))
+    else:
+        if c["max_sut_foreign_cpus"] is not None and fc > c["max_sut_foreign_cpus"]:
+            reasons.append("other tasks used %.3f CPUs on the SUT CPUs during the window" % fc)
+        if c["max_sut_sibling_cpus"] is not None and sc > c["max_sut_sibling_cpus"]:
+            reasons.append("SMT siblings of the SUT CPUs busy %.3f CPUs during the window" % sc)
+    if c["require_cpuidle_unchanged"] and m.get("cpuidle_unchanged") is False:
+        reasons.append("idle-state configuration of the SUT CPUs changed since the start of the run")
+    if c["require_envoy_exit_zero"] and "envoy_exit" in m and m["envoy_exit"] not in (0, None):
+        reasons.append("envoy exit code %s" % m["envoy_exit"])
+    if c["require_perf_unmultiplexed"] and m.get("perf_min_running_pct") is not None \
+            and m["perf_min_running_pct"] < 99.99:
+        reasons.append("perf counters multiplexed (%.1f%% running)" % m["perf_min_running_pct"])
+
+
+def idle_verdict(m, c):
+    """An idle leg (stats row): no request gates; the main thread must be the right thread and
+    sampled for the whole window, its counters complete; side services and evidence as usual."""
+    reasons = []
+    _common(m, c, reasons)
+    if not m.get("perf_ok"):
+        reasons.append("perf counters of the main thread missing")
+    if not m.get("main_tid_ok"):
+        reasons.append("main thread not sampled as the main thread for the whole window (comm %s, %s samples, "
+                       "%s missing)" % (m.get("main_comm"), (m.get("main") or {}).get("samples"),
+                                        (m.get("main") or {}).get("sampler_missing")))
+    full = verdict(dict(m, idle_leg=False, idle_ok=True, preflight_ok=True, error=None, pinning_ok=True,
+                        sut_rate_2xx=1, target_rps=1, client_headroom=1, perf_ok=True, responses=1,
+                        sut_foreign_cpus=0, sut_sibling_cpus=0, envoy_exit=0, perf_min_running_pct=None,
+                        envoy_worker_max_share=None, envoy_worker_min_share=None, envoy_workers=None),
+                   dict(c, max_worker_share_factor=None, min_worker_share_factor=None,
+                        max_pending_total=None))
+    reasons += full["reasons"]  # the side-service and evidence gates
     return {"valid": not reasons, "reasons": reasons}
 
 

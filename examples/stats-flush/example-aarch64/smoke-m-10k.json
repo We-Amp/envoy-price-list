@@ -1,0 +1,503 @@
+{
+ "name": "sf-smoke-m-10k",
+ "machine_label": "example arm64 server (no SMT), bare metal, frequency policy as found; Envoy on 4 cores",
+ "workdir": "~/epl/runs/stats-flush",
+ "box": {
+  "name": "example-aarch64",
+  "arch": "aarch64",
+  "label": "arm-bench-host",
+  "machine_label": "example arm64 server (no SMT), bare metal, frequency policy as found; Envoy on 4 cores",
+  "cpus": {
+   "sut": "8-11",
+   "client": "16-31",
+   "origin": "32-47"
+  },
+  "perf": "/usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "client_binary": "~/nighthawk-arm64/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "collector_image": "otel/opentelemetry-collector:0.120.0@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "image_platform": "linux/arm64",
+  "binaries": {
+   "aarch64": {
+    "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+    "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+   }
+  },
+  "note": "A description for the portability check only: no ARM box is named yet. CPU sets, perf path and image digests are placeholders to be replaced from the real box at its step 0."
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "8-11",
+  "client": "16-31",
+  "origin": "32-47"
+ },
+ "client": {
+  "binary": "~/nighthawk-arm64/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/bin/perf",
+  "main_perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+  "main_sample_s": 0.02
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "platform": "linux/arm64",
+  "port": 8092,
+  "workers": 8,
+  "prime_file": true,
+  "worker_connections": 65536,
+  "worker_rlimit_nofile": 200000
+ },
+ "collector": {
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:PIN-THE-ARM64-DIGEST-AT-STEP-0",
+  "platform": "linux/arm64",
+  "port": 4317,
+  "metrics_port": 8888,
+  "metrics": true
+ },
+ "stats_sink": {
+  "port": 8125,
+  "rcvbuf": 268435456,
+  "sample_every": 1
+ },
+ "order": "latin",
+ "order_seed": 31,
+ "adaptive": false,
+ "primary_metric": "main_ms_per_s",
+ "comparisons": "base",
+ "base_arm": "flush-off",
+ "arms": [
+  {
+   "name": "flush-off",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "on_admin": true
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "main.bursts",
+     "scope": "field",
+     "max": 0,
+     "label": "no main-thread burst in the window"
+    },
+    {
+     "stat": "flush_interval_s",
+     "scope": "field",
+     "absent": true
+    }
+   ]
+  },
+  {
+   "name": "nosink",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    }
+   ]
+  },
+  {
+   "name": "statsd",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    },
+    "stats_sink": {
+     "kind": "statsd"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    },
+    {
+     "stat": "udp.sent_per_flush",
+     "scope": "field",
+     "per": "field:used_cg_lines",
+     "per_request": 1.0,
+     "tol": 0.01,
+     "label": "datagrams per whole flush = used counters and gauges, +/-1%"
+    },
+    {
+     "stat": "udp.fit.n_error",
+     "scope": "field",
+     "max": 1,
+     "label": "that number of flushes as the span and the measured period say, +/-1"
+    },
+    {
+     "stat": "udp.drop_share",
+     "scope": "field",
+     "max": 0.01,
+     "label": "drops under 1%"
+    }
+   ]
+  },
+  {
+   "name": "nosink-A2",
+   "binaries": {
+    "aarch64": {
+     "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+     "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+    }
+   },
+   "settings": {
+    "stats_clusters": {
+     "count": 100,
+     "seed": 31,
+     "idle_timeout_s": 1
+    },
+    "stats_flush": {
+     "interval_s": 1
+    }
+   },
+   "evidence": [
+    {
+     "stat": "active_clusters",
+     "scope": "field",
+     "equals": 101,
+     "tol_abs": 0,
+     "label": "clusters: the generated ones, the origin"
+    },
+    {
+     "stat": "gen_cx_connect_fail",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_overflow",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "gen_cx_active_pre",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "nofile_soft",
+     "scope": "field",
+     "min": 4496,
+     "label": "fd limit >= 4 x clusters + 4096"
+    },
+    {
+     "stat": "envoy_log_emfile",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "dropped_stat_flushes_delta",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.ok",
+     "scope": "field",
+     "equals": 100,
+     "tol_abs": 0,
+     "label": "one 200 per cluster"
+    },
+    {
+     "stat": "prime.non200",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "prime.errors",
+     "scope": "field",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "uptime.error_s",
+     "scope": "field",
+     "max": 2.0,
+     "label": "server.uptime advanced with the clock between the two reads"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "idle-10k",
+   "path": "/idle",
+   "kind": "idle",
+   "rps": 0,
+   "bursts_visible": false,
+   "ready_timeout_s": 60,
+   "admin_timeout_s": 30,
+   "settle_s": 3.0
+  }
+ ],
+ "uncalibrated": true,
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "smoke": true,
+ "evidence_mode": "record"
+}

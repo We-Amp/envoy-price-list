@@ -8,6 +8,9 @@ Commands (see README.md):
   status RUN_DIR                 progress of a (detached) run
   report RESULTS_JSON [--floor AA_RESULTS_JSON]   regenerate summary.md from results.json
   evidence-check SPEC RUN_DIR... [--freeze OUT]   run an evidence spec offline against recorded legs
+  stats-calibrate CFG --arm A --shapes S1,S2      stats row: one idle leg per rung, N by kind, timeouts
+  flush-profile CFG --arm A --shape S             stats row: perf record of the main thread over flushes
+  portability-check DIR...                        stats row: configs per box are free of other boxes' literals
   request-probe CFG --arm A --shape S [--trace C] [--expect H=V]   one request through a throw-away Envoy
   scrub RUN_DIR                  replace home directory paths with ~ in a run directory
   selftest                       offline tests: statistics, validity gates, schedule, dry run
@@ -101,6 +104,11 @@ def _detach(log_path):
 
 def cmd_run(args):
     exp = _load(args)
+    if exp.get("template"):
+        sys.exit("%s is a template (%s); it is not run as it is" % (args.config, exp.get("template_note", "")))
+    if exp.get("uncalibrated") and not args.allow_uncalibrated:
+        sys.exit("%s is uncalibrated: run the calibration and write the configs from it first "
+                 "(--allow-uncalibrated only for a dry run)" % args.config)
     run_dir = _run_dir(exp, args.out)
     if os.path.exists(os.path.join(run_dir, "legs.jsonl")):
         sys.exit("run dir %s already has legs; pick another --out" % run_dir)
@@ -155,7 +163,7 @@ def cmd_calibrate(args):
     rows = []
     try:
         origin.start()
-        if experiment.uses(exp, "tracing"):
+        if experiment.needs_collector(exp):
             from .origin import Collector
             collector = Collector(exp["collector"], exp["cpus"]["origin"], run_dir, log)
             collector.start()
@@ -447,6 +455,189 @@ def cmd_request_probe(args):
     sys.exit(1 if bad else 0)
 
 
+def _side_services(exp, run_dir, log, shapes):
+    from .origin import Collector, Origin
+    origin = Origin(exp["origin"], exp["cpus"].get("origin", ""), shapes, run_dir, log)
+    collector = Collector(exp["collector"], exp["cpus"]["origin"], run_dir, log) \
+        if experiment.needs_collector(exp) else None
+    return origin, collector
+
+
+def cmd_stats_calibrate(args):
+    """One idle leg per rung (shape) of one arm, with N by kind (Counters, Gauges, Histograms,
+    TextReadouts, all and used only), start time, admin read durations, flush duration (burst),
+    memory and fd peak. Writes calibrate.json and rungs.json: per shape the timeouts and the
+    settle the session should use (ready 3 x start, admin 3 x the slowest read, settle = the
+    longest flush + 2 s, all with floors) and the calibrated counts."""
+    exp = _load(args, check_rounds=False)
+    arm = [a for a in exp["arms"] if a["name"] == args.arm]
+    if not arm:
+        sys.exit("unknown arm")
+    shapes = []
+    for n in args.shapes.split(","):
+        sh = [s for s in exp["shapes"] if s["name"] == n]
+        if not sh:
+            sys.exit("unknown shape %s" % n)
+        shapes.append(dict(sh[0], **({"ready_timeout_s": args.ready_timeout} if args.ready_timeout else {}),
+                           **({"admin_timeout_s": args.admin_timeout} if args.admin_timeout else {})))
+    run_dir = _run_dir(dict(exp, name=exp["name"] + "-stats-calibrate"), args.out)
+    for d in ("logs", "nighthawk", "perf"):
+        os.makedirs(os.path.join(run_dir, d), exist_ok=True)
+    log = lambda m: print(m, flush=True)  # noqa: E731
+    from .leg import RealBackend
+    signal.signal(signal.SIGTERM, _on_term)
+    bpath, _, _ = experiment.prepare_bootstraps(exp, run_dir, log)
+    be = RealBackend(exp, run_dir, log)
+    be.calibrate = True
+    origin, collector = _side_services(exp, run_dir, log, exp["shapes"])
+    rows, rungs = [], {}
+    try:
+        origin.start()
+        if collector:
+            collector.start()
+        be.attach(origin, collector)
+        for sh in shapes:
+            m = be.run_leg(arm[0], sh, 0, bpath, "cal-%s-%s" % (arm[0]["name"], sh["name"]))
+            with open(os.path.join(run_dir, "calibrate-legs.jsonl"), "a") as f:
+                f.write(json.dumps(m, sort_keys=True, default=str) + "\n")
+            mn = m.get("main") or {}
+            reads = [x for x in ((m.get("pre_read") or {}).get("seconds"), (m.get("post_read") or {}).get("seconds"))
+                     if x is not None]
+            row = {"shape": sh["name"], "valid": m["verdict"]["valid"], "reasons": m["verdict"]["reasons"],
+                   "start_s": m.get("start_s"), "stats_total": m.get("stats_total"), "used_total": m.get("used_total"),
+                   "used_cg_lines": m.get("used_cg_lines"), "by_kind": m.get("by_kind"),
+                   "active_clusters": m.get("active_clusters"), "admin_read_s": reads, "bursts": mn.get("bursts"),
+                   "flush_run_ms_max": mn.get("burst_run_ms_max"), "stall_ms_max": mn.get("stall_ms_max"),
+                   "run_ms_per_period": mn.get("run_ms_per_period"), "memory": m.get("memory"),
+                   "fd_count": m.get("fd_count"), "nofile_soft": m.get("nofile_soft"), "prime": m.get("prime"),
+                   "udp": m.get("udp")}
+            rows.append(row)
+            print(json.dumps(row, default=str), flush=True)
+            if m.get("start_s") is not None:
+                rungs[sh["name"]] = {
+                    "ready_timeout_s": max(60, int(3 * m["start_s"]) + 1),
+                    "admin_timeout_s": max(10, int(3 * max(reads or [1])) + 1),
+                    "settle_s": round((mn.get("stall_ms_max") or 0) / 1e3 + 2.0, 2),
+                    "stats_total": m.get("stats_total"), "used_total": m.get("used_total"),
+                    "used_cg_lines": m.get("used_cg_lines")}
+    finally:
+        if collector:
+            collector.stop()
+        origin.stop()
+        be.close()
+        with open(os.path.join(run_dir, "calibrate.json"), "w") as f:
+            json.dump(rows, f, indent=1, default=str)
+        with open(os.path.join(run_dir, "rungs.json"), "w") as f:
+            json.dump(rungs, f, indent=1)
+        sysprobe.scrub_tree(run_dir)
+    print(os.path.join(run_dir, "rungs.json"))
+
+
+PROFILE_CLASSES = (
+    ("reference counting and latching", r"(?i)(refcount|incref|decref|RefcountPtr|latch|MetricSnapshot|"
+                                         r"forEachSinked|SharedPtr|shared_ptr|atomic)"),
+    ("histogram accumulate and quantiles", r"(?i)(hist_|merge|quantile|refresh|Histogram|circllhist)"),
+)
+
+
+def classify_profile(rows):
+    """[(pct, symbol)] -> {class: pct} with the rest under "other"."""
+    import re as _re
+    out = {name: 0.0 for name, _ in PROFILE_CLASSES}
+    out["other"] = 0.0
+    for pct, sym in rows:
+        for name, pat in PROFILE_CLASSES:
+            if _re.search(pat, sym):
+                out[name] += pct
+                break
+        else:
+            out["other"] += pct
+    return out
+
+
+def parse_perf_report(text):
+    """[(percent, symbol)] from `perf report --stdio --sort symbol` lines like
+    `  12.34%  [.] Envoy::Stats::...`."""
+    import re as _re
+    rows = []
+    for line in text.splitlines():
+        mm = _re.match(r"^\s*([0-9.]+)%\s+\[[.k]\]\s+(.+?)\s*$", line)
+        if mm:
+            rows.append((float(mm.group(1)), mm.group(2)))
+    return rows
+
+
+def cmd_flush_profile(args):
+    """Exploratory, outside any measured leg: a throw-away Envoy of the arm at the shape's rung,
+    primed, then `perf record -t <main tid>` over several flushes; the main thread's samples by
+    symbol, split into reference counting and latching, histogram merge and quantiles, and the
+    rest. Without a symbol table the split is skipped and said so."""
+    exp = _load(args, check_rounds=False)
+    arm = [a for a in exp["arms"] if a["name"] == args.arm]
+    shape = [s for s in exp["shapes"] if s["name"] == args.shape]
+    if not arm or not shape:
+        sys.exit("unknown arm or shape")
+    arm, shape = arm[0], shape[0]
+    run_dir = _run_dir(dict(exp, name="%s-profile-%s-%s" % (exp["name"], arm["name"], shape["name"])), args.out)
+    os.makedirs(os.path.join(run_dir, "logs"), exist_ok=True)
+    log = lambda m: print(m, flush=True)  # noqa: E731
+    from .leg import RealBackend, nofile_for
+    signal.signal(signal.SIGTERM, _on_term)
+    bpath, _, _ = experiment.prepare_bootstraps(exp, run_dir, log)
+    be = RealBackend(exp, run_dir, log)
+    origin, _ = _side_services(exp, run_dir, log, exp["shapes"])
+    aenv = experiment.arm_envoy(exp, arm, run_dir)
+    elog_path = os.path.join(run_dir, "logs", "profile.envoy.log")
+    data = os.path.join(run_dir, "perf.data")
+    envoy = elog = None
+    try:
+        origin.start()
+        envoy, elog = be._start_envoy(arm["binary"], bpath[arm["name"]], exp["cpus"]["sut"], exp["envoy"]["workers"],
+                                      exp["envoy"]["admin_port"], dict(arm.get("env") or {}), [], elog_path,
+                                      ready_timeout_s=float(shape.get("ready_timeout_s", 60)),
+                                      nofile=nofile_for(aenv, exp))
+        m = {}
+        be._prime(m, arm, shape, aenv)
+        print("primed: %s" % m.get("prime"))
+        r = subprocess.run(exp["measure"]["perf"] + ["record", "-F", str(args.freq), "-t", str(envoy.pid), "-o", data,
+                                                     "--", "sleep", str(args.seconds)],
+                           capture_output=True, text=True, timeout=args.seconds + 120)
+        if r.returncode != 0:
+            sys.exit("perf record failed: %s" % r.stderr[-400:])
+    finally:
+        if envoy is not None:
+            be._stop_envoy(envoy, elog, elog_path)
+        origin.stop()
+        be.close()
+    rep = subprocess.run(exp["measure"]["perf"] + ["report", "-i", data, "--stdio", "--sort", "symbol", "--no-children"],
+                         capture_output=True, text=True, timeout=600)
+    with open(os.path.join(run_dir, "perf-report.txt"), "w") as f:
+        f.write(rep.stdout)
+    rows = parse_perf_report(rep.stdout)
+    named = sum(p for p, s in rows if not s.startswith("0x"))
+    out = {"samples_by_symbol": rows[:40], "named_pct": named}
+    if named < 50.0:
+        out["split"] = None
+        out["note"] = "the binary has no usable symbol table (%.0f%% of samples named): split skipped" % named
+    else:
+        out["split"] = classify_profile(rows)
+    with open(os.path.join(run_dir, "profile.json"), "w") as f:
+        json.dump(out, f, indent=1)
+    print(json.dumps({k: v for k, v in out.items() if k != "samples_by_symbol"}, indent=1))
+    for p, s in rows[:15]:
+        print("%6.2f%%  %s" % (p, s[:140]))
+
+
+def cmd_portability_check(args):
+    from . import portability
+    problems = portability.check_dirs(args.dirs)
+    for p in problems:
+        print("PORTABILITY %s" % p)
+    print("portability-check: %s (%d problems, %d boxes)" % ("PASS" if not problems else "FAIL", len(problems),
+                                                             len(args.dirs)))
+    sys.exit(1 if problems else 0)
+
+
 def cmd_scrub(args):
     from .sysprobe import scrub_tree
     for p in scrub_tree(os.path.expanduser(args.run_dir)):
@@ -579,6 +770,7 @@ def main(argv=None):
     p.add_argument("--max-rounds", type=int)
     p.add_argument("--fixed", action="store_true", help="run exactly --rounds, no adaptive blocks")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--allow-uncalibrated", action="store_true")
     p.add_argument("--detach", action="store_true")
     p.add_argument("--allow-short", action="store_true")
     common(p)
@@ -625,6 +817,27 @@ def main(argv=None):
     p.add_argument("--out")
     common(p)
     p.set_defaults(fn=cmd_request_probe, allow_short=True)
+    p = sp.add_parser("stats-calibrate")
+    p.add_argument("config")
+    p.add_argument("--arm", required=True)
+    p.add_argument("--shapes", required=True)
+    p.add_argument("--ready-timeout", type=float)
+    p.add_argument("--admin-timeout", type=float)
+    p.add_argument("--out")
+    common(p)
+    p.set_defaults(fn=cmd_stats_calibrate, allow_short=True)
+    p = sp.add_parser("flush-profile")
+    p.add_argument("config")
+    p.add_argument("--arm", required=True)
+    p.add_argument("--shape", required=True)
+    p.add_argument("--seconds", type=int, default=10)
+    p.add_argument("--freq", type=int, default=999)
+    p.add_argument("--out")
+    common(p)
+    p.set_defaults(fn=cmd_flush_profile, allow_short=True)
+    p = sp.add_parser("portability-check")
+    p.add_argument("dirs", nargs="+")
+    p.set_defaults(fn=cmd_portability_check)
     p = sp.add_parser("scrub")
     p.add_argument("run_dir")
     p.set_defaults(fn=cmd_scrub)

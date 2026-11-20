@@ -62,6 +62,8 @@ DEFAULTS = {
     # metrics_port: the collector's internal telemetry at level basic on this loopback port
     # (receiver span counters, scraped before and after every leg); None = level none
     "collector": {"image": None, "port": 4317, "metrics_port": None},
+    # UDP discard sink for statsd arms (the stats row): port, receive buffer asked for, CPUs
+    "stats_sink": {"port": 8125, "rcvbuf": 268435456, "sample_every": 1000},
     "record_hostname": False,
     "alpha": ALPHA,
 }
@@ -82,6 +84,13 @@ METRICS = [
      lambda m: m["hop2_workers"]["worker_max_busy"]),
     ("hop2_conns_used", "first hop -> second hop: connections carrying traffic",
      lambda m: m["conn_hop2_downstream"]["conns_over_1pct_of_mean"]),
+    # idle legs of the stats row (absent elsewhere, so no comparison is made): the main
+    # thread's run time per second and per flush period, its cycles per second (perf -t)
+    ("main_ms_per_s", "main thread ms / s", lambda m: m["main"]["run_ms_per_s"]),
+    ("main_ms_per_period", "main thread ms / flush period", lambda m: m["main"]["run_ms_per_period"]),
+    ("main_cycles_per_s", "main thread cycles / s", lambda m: m["main_perf"]["cycles_per_s"]),
+    ("main_cycles_per_period", "main thread cycles / flush period", lambda m: m["main_perf"]["cycles_per_period"]),
+    ("workers_cycles_per_req", "worker threads cycles / req", lambda m: m["workers_cycles_per_req"]),
     ("p50_us", "p50 latency (us)", lambda m: m["latency_us"]["p50"]),
     ("p99_us", "p99 latency (us)", lambda m: m["latency_us"]["p99"]),
 ]
@@ -136,7 +145,14 @@ def load(path, overrides=None):
     exp = _merge(DEFAULTS, raw)
     exp = _merge(exp, overrides or {})
     exp["_config_text"] = json.dumps(_merge(raw, overrides or {}), sort_keys=True)
+    arch = box_arch(exp)
     for a in exp["arms"]:
+        if a.get("binaries"):
+            # per-architecture entries: the box's (or this machine's) architecture picks one
+            pick = a["binaries"].get(arch)
+            if pick is None:
+                raise ValueError("arm %s has no binary for architecture %s" % (a.get("name"), arch))
+            a.update(pick)
         a["binary"] = _expand(a["binary"])
     exp["client"]["binary"] = _expand(exp["client"]["binary"])
     if isinstance(exp["measure"]["perf"], str):
@@ -159,8 +175,10 @@ def arm_envoy(exp, arm, run_dir=""):
     e = _merge(exp["envoy"], arm_settings(arm))
     if e.get("access_log"):
         e["access_log"] = dict(e["access_log"], path=os.path.join(run_dir, "alog", arm["name"] + ".alog"))
-    if e.get("tracing"):
+    if e.get("tracing") or (e.get("stats_sink") or {}).get("kind") == "otlp":
         e["collector_port"] = exp["collector"]["port"]
+    if (e.get("stats_sink") or {}).get("kind") in ("statsd", "dog_statsd"):
+        e["stats_sink_port"] = exp["stats_sink"]["port"]
     if e.get("ext_authz") == "grpc":
         e["authz_grpc_port"] = exp["origin"]["authz_grpc_port"]
     elif e.get("ext_authz"):
@@ -213,6 +231,21 @@ def hop2_key(arm):
     return "_hop2:" + arm["name"]
 
 
+def small_clusters(aenv, n=2):
+    """The arm's envoy section with the generated cluster count capped at n: the same structure,
+    for checks that do not need every cluster (validation, portability)."""
+    sc = aenv.get("stats_clusters")
+    if sc and int(sc.get("count", 0)) > n:
+        aenv = dict(aenv, stats_clusters=dict(sc, count=n))
+    return aenv
+
+
+def needs_collector(exp):
+    """Tracing arms and OTLP stats-sink arms send to the local null collector."""
+    return uses(exp, "tracing") or any((arm_envoy(exp, a).get("stats_sink") or {}).get("kind") == "otlp"
+                                       for a in exp["arms"])
+
+
 def uses(exp, setting):
     return any(arm_settings(a).get(setting) for a in exp["arms"]) or bool(exp["envoy"].get(setting))
 
@@ -261,7 +294,8 @@ def effective_order(exp):
 
 def order_period(exp):
     """Rounds after which every arm has been in every position equally often."""
-    return 2 if effective_order(exp) == "abba" else 2 * len(exp["arms"])
+    o = effective_order(exp)
+    return 2 if o == "abba" else len(exp["arms"]) if o == "latin" else 2 * len(exp["arms"])
 
 
 def validate(exp, allow_short=False, check_rounds=True):
@@ -279,21 +313,24 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm name %r must be [A-Za-z0-9._-]+" % n)
     if exp.get("base_arm", names[0] if names else None) not in names:
         errs.append("base_arm not among arms")
-    if exp["order"] not in ("auto", "abba", "rotate"):
-        errs.append("order must be auto, abba or rotate")
+    if exp["order"] not in ("auto", "abba", "rotate", "latin"):
+        errs.append("order must be auto, abba, rotate or latin")
     elif exp["order"] == "abba" and len(arms) > 2:
         errs.append("abba with %d arms pins the middle arms to fixed positions; use rotate (or auto)" % len(arms))
     if exp["comparisons"] not in ("base", "all_pairs"):
         errs.append("comparisons must be base or all_pairs")
     if exp["primary_metric"] not in METRIC_KEYS:
         errs.append("primary_metric must be one of %s" % METRIC_KEYS)
-    if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate"):
+    if exp.get("smoke"):
+        check_rounds = False  # a smoke runs each arm once or twice; it carries no comparison
+    if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate", "latin"):
         per = order_period(exp)
         rmin, rmax, blk = exp["rounds"], exp["rounds_max"], exp["rounds_block"]
         if rmin < 12 and not allow_short:
             errs.append("rounds must be >= 12 (method rule); use --allow-short only for smoke runs")
         for label, v in (("rounds", rmin), ("rounds_max", rmax), ("rounds_block", blk)):
-            if v < 2 or v % 2:
+            if effective_order(exp) != "latin" and (v < 2 or v % 2):
+                # abba and rotate pair a forward with a reversed round; a Latin square does not
                 errs.append("%s must be even (got %d)" % (label, v))
             elif v % per:
                 errs.append("%s must be a multiple of %d (%s order, %d arms)" % (
@@ -319,8 +356,13 @@ def validate(exp, allow_short=False, check_rounds=True):
     if not snames or len(set(snames)) != len(snames):
         errs.append("shapes must be non-empty with unique names")
     for s in exp.get("shapes", []):
-        if s.get("kind") not in ("proxied", "direct_headers", "routes"):
-            errs.append("shape %s: kind must be proxied, direct_headers or routes" % s.get("name"))
+        if s.get("kind") not in ("proxied", "direct_headers", "routes", "idle"):
+            errs.append("shape %s: kind must be proxied, direct_headers, routes or idle" % s.get("name"))
+        if s.get("pre_window_settle_s") and s.get("kind") != "idle":
+            li = s.get("lead_in_s", exp["measure"]["lead_in_s"])
+            if li + float(s["pre_window_settle_s"]) + exp["measure"]["window_s"] + 1 > exp["client"]["duration_s"]:
+                errs.append("shape %s: client duration must exceed lead_in + pre_window_settle + window + 1 s"
+                            % s.get("name"))
         if s.get("kind") == "routes":
             rs = (s.get("route_table") or {}).get("routes")
             if not isinstance(rs, list) or not rs:
@@ -363,9 +405,9 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: hop2_env without two_hop" % a.get("name"))
     if uses(exp, "two_hop") and "hop2" not in sets:
         errs.append("a two_hop arm needs cpus.hop2")
-    if uses(exp, "tracing") and not exp["collector"].get("image"):
+    if needs_collector(exp) and not exp["collector"].get("image"):
         errs.append("a tracing arm needs collector.image")
-    if uses(exp, "tracing") and "origin" not in sets:
+    if needs_collector(exp) and "origin" not in sets:
         errs.append("a tracing arm needs cpus.origin (the collector runs there)")
     for a in arms:
         az = arm_settings(a).get("ext_authz")
@@ -374,7 +416,8 @@ def validate(exp, allow_short=False, check_rounds=True):
         elif az and az != "grpc" and not exp["origin"].get("authz_port"):
             errs.append("arm %s: an HTTP ext_authz arm needs origin.authz_port" % a.get("name"))
         try:
-            envoy_config.bootstrap(exp.get("shapes", []), arm_envoy(exp, a, "/r"), exp["origin"]["port"], "/r/c")
+            envoy_config.bootstrap(exp.get("shapes", []), small_clusters(arm_envoy(exp, a, "/r")),
+                                   exp["origin"]["port"], "/r/c")
         except (ValueError, KeyError, TypeError) as e:
             errs.append("arm %s: %s" % (a.get("name"), e))
         h2s = arm_settings(a).get("hop2_settings")
@@ -454,6 +497,12 @@ def round_order(exp, r):
     arms = exp["arms"]
     k = len(arms)
     pair = (r - 1) // 2
+    if effective_order(exp) == "latin":
+        # one Latin square: round r starts at arm r-1 (mod k); k rounds put every arm in every
+        # position once (a seeded rotation offset, no reversed rounds)
+        off = random.Random("epl-latin:%s" % exp.get("order_seed", 1)).randrange(k)
+        s = (r - 1 + off) % k
+        return arms[s:] + arms[:s]
     if effective_order(exp) == "abba":
         fwd = list(arms)
     else:
@@ -545,6 +594,46 @@ def collect_metadata(exp, bootstrap_text, texts=None):
                         settings={k: v for k, v in exp["client"].items() if k != "binary"})
     md["perf_version"] = _cmd_out(exp["measure"]["perf"] + ["--version"])
     return md
+
+
+ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
+ELF_MACHINE = {62: "x86_64", 183: "aarch64"}
+
+
+def norm_arch(a):
+    return ARCH_ALIASES.get(a, a)
+
+
+def box_arch(exp):
+    """The architecture a config is for: its `box.arch`, else this machine's."""
+    return norm_arch((exp.get("box") or {}).get("arch") or platform.machine())
+
+
+def elf_arch(path):
+    """Architecture of an ELF executable from its header (e_machine), or None."""
+    try:
+        with open(path, "rb") as f:
+            h = f.read(20)
+    except OSError:
+        return None
+    if len(h) < 20 or h[:4] != b"\x7fELF":
+        return None
+    order = "little" if h[5] == 1 else "big"
+    return ELF_MACHINE.get(int.from_bytes(h[18:20], order), "elf-machine-%d" % int.from_bytes(h[18:20], order))
+
+
+def check_arch(exp):
+    """[error]: the box description against this machine, and every arm's binary against both."""
+    errs = []
+    here = norm_arch(platform.machine())
+    want = box_arch(exp)
+    if want != here:
+        errs.append("config is for %s, this machine is %s" % (want, here))
+    for a in exp["arms"]:
+        ea = elf_arch(a["binary"])
+        if ea is not None and ea != want:
+            errs.append("arm %s binary is %s, not %s" % (a["name"], ea, want))
+    return errs
 
 
 def check_binaries(exp, md):
@@ -1003,7 +1092,9 @@ class Runner:
                 os.sched_setaffinity(0, hc)
             md = collect_metadata(exp, btxt, btexts)
             md["harness_cpus"] = sorted(os.sched_getaffinity(0))
-            errs = check_binaries(exp, md) + check_wasm(exp)
+            errs = check_binaries(exp, md) + check_wasm(exp) + (check_arch(exp) if exp.get("box") else [])
+            md["box"] = exp.get("box")
+            md["page_size"] = os.sysconf("SC_PAGE_SIZE")
             md["wasm_sha256"] = {a: w[1] for a, w in wasm_files(exp).items()}
             if errs:
                 raise SystemExit("binary proof failed: " + "; ".join(errs))
@@ -1030,7 +1121,7 @@ class Runner:
                 from .origin import Origin
                 origin = Origin(exp["origin"], exp["cpus"].get("origin", ""), exp["shapes"], self.run_dir, self.log)
                 md["origin"] = origin.start()
-                if uses(exp, "tracing"):
+                if needs_collector(exp):
                     from .origin import Collector
                     collector = Collector(exp["collector"], exp["cpus"]["origin"], self.run_dir, self.log)
                     md["collector"] = collector.start()
