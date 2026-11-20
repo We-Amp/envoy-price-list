@@ -181,10 +181,18 @@ No measured value was changed.
 
 See `LICENSE`.
 
-## Stats flush row (layout, once it has run)
+## Stats study
 
-`data/stats-flush/<session date>/`: `rungs.json` and `cal/` (calibration per rung), `smoke/`, one directory per
-run (`m-10k`, `m-100k`, `m-300k`, `m-1m`, `w`, and `s-100k`, `s-1m`, `x-1m` if they ran), `frozen/` (the
-configs with the evidence frozen from the smoke), `w-prediction.json`, `profile-1m/` (the main thread's profile),
-`sysctl-session.json` (the receive-buffer limit before, during and after the session) and `tables.md`. The host
-is recorded as `bench-host`.
+The runs of the stats study (flush cost and sinks, flush latency, the store stats at 1 to 28 workers, shared
+against per-connection counters, the atomics microbenchmarks, the Arm code-generation checks) are not in git:
+about 320 MB of raw records, published as assets of the release of tag `stats-2026-11`, one archive per study.
+
+```
+python3 tools/fetch-stats-data.py        # downloads, verifies and unpacks into data/stats/ (ignored by git)
+```
+
+In git: `stats-data.manifest` (every file of every archive with its size and SHA-256), `stats-data.SHA256SUMS`
+(the archives), the index with the conditions of every run ([`../docs/stats-data/README.md`](../docs/stats-data/README.md)),
+what was changed in the raw records ([`../docs/stats-data/WHAT-WAS-CHANGED.md`](../docs/stats-data/WHAT-WAS-CHANGED.md))
+and the rendered tables ([`../docs/stats-tables/`](../docs/stats-tables/)). How to run the study:
+[`../docs/stats-study.md`](../docs/stats-study.md). The directories of the earlier studies above are in git as before.
