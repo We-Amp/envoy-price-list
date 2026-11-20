@@ -13,6 +13,8 @@ Commands (see README.md):
   portability-check DIR...                        stats row: configs per box are free of other boxes' literals
   request-probe CFG --arm A --shape S [--trace C] [--expect H=V]   one request through a throw-away Envoy
   scrub RUN_DIR                  replace home directory paths with ~ in a run directory
+  scrub RUN_DIR --publish [--check] [--host-label L] [--name OLD=NEW] [--names-file F] [--replace-file F]
+                                 the wider scrub before a tree is published (epl/pubscrub.py)
   selftest                       offline tests: statistics, validity gates, schedule, dry run
   remote HOST <run|calibrate|status|fetch|ship> ...  same, on a bench box over ssh
 """
@@ -640,8 +642,27 @@ def cmd_portability_check(args):
 
 def cmd_scrub(args):
     from .sysprobe import scrub_tree
-    for p in scrub_tree(os.path.expanduser(args.run_dir)):
-        print(p)
+    root = os.path.expanduser(args.run_dir)
+    if not (args.publish or args.check):
+        for p in scrub_tree(root):
+            print(p)
+        return
+    from . import pubscrub
+    try:
+        names = pubscrub.parse_names((args.name or []) + (pubscrub.load_names_file(args.names_file)
+                                                         if args.names_file else []))
+        replace = pubscrub.load_replace_file(args.replace_file) if args.replace_file else []
+    except (ValueError, OSError) as e:
+        sys.exit("scrub: %s" % e)
+    rep = pubscrub.scrub_publish_tree(root, args.host_label, names, replace, check=args.check)
+    for p in sorted(rep["changed"]):
+        print("%s %s" % (p, " ".join("%s=%d" % kv for kv in sorted(rep["changed"][p].items()))))
+    for p in rep["binary"]:
+        print("not text, untouched: %s" % p)
+    print("%d files, %d %s, %d not text" % (rep["files"], len(rep["changed"]),
+                                           "would change" if args.check else "changed", len(rep["binary"])))
+    if args.check and rep["changed"]:
+        sys.exit(1)
 
 
 def cmd_selftest(args):
@@ -840,6 +861,15 @@ def main(argv=None):
     p.set_defaults(fn=cmd_portability_check)
     p = sp.add_parser("scrub")
     p.add_argument("run_dir")
+    p.add_argument("--publish", action="store_true",
+                   help="the scrub for a tree that is published: every text file and gzip member, host_name "
+                        "fields, cloud VM names (see epl/pubscrub.py)")
+    p.add_argument("--check", action="store_true", help="with the --publish rules: write nothing, exit 1 if a "
+                                                        "file would change")
+    p.add_argument("--host-label", default="host", help="what a host name becomes (default: host)")
+    p.add_argument("--name", action="append", metavar="OLD=NEW", help="replace a name (whole tokens); repeatable")
+    p.add_argument("--names-file", help="OLD=NEW lines; keep this file outside the tree")
+    p.add_argument("--replace-file", help="JSON list of [old, new] exact strings; keep it outside the tree")
     p.set_defaults(fn=cmd_scrub)
     p = sp.add_parser("selftest")
     p.add_argument("-v", "--verbose", action="store_true")
