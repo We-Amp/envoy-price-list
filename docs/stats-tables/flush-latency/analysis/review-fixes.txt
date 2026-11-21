@@ -1,0 +1,95 @@
+F2. PROBE LATENCY OUTSIDE THE WINDOW (whole probe logs; all 36 legs)
+    flush phase before the window = seconds after a start on the leg's 10 s grid, extrapolated back from the first whole burst
+    r01-own-nosink           unused   outside the window: n  7046, worst   7.73 ms on worker CPU 2 at t0 -6.45 s (Nighthawk starts at t0 -6.49 s); 1.05 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-nosink           unused   outside the window: n  7021, worst   5.03 ms on worker CPU 2 at t0 -6.47 s (Nighthawk starts at t0 -6.50 s); 0.55 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r03-own-nosink           PRIMARY  outside the window: n  7019, worst  10.35 ms on worker CPU 3 at t0 -6.44 s (Nighthawk starts at t0 -6.49 s); 1.05 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r04-own-nosink           unused   outside the window: n  7022, worst   4.62 ms on worker CPU 3 at t0 -6.46 s (Nighthawk starts at t0 -6.49 s); 0.77 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r05-own-nosink           PRIMARY  outside the window: n  7085, worst   8.67 ms on worker CPU 3 at t0 -6.45 s (Nighthawk starts at t0 -6.49 s); 0.98 s after a grid flush start (flush 0.27 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-own-nosink.rr1       PRIMARY  outside the window: n  7036, worst  14.55 ms on worker CPU 2 at t0 +60.10 s (Nighthawk starts at t0 -6.50 s); 7.50 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-nosink.rr1       PRIMARY  outside the window: n  7058, worst   4.23 ms on worker CPU 2 at t0 -6.46 s (Nighthawk starts at t0 -6.50 s); 1.00 s after a grid flush start (flush 0.28 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-own-statsd           unused   outside the window: n  7256, worst   8.37 ms on worker CPU 0 at t0 -6.52 s (Nighthawk starts at t0 -6.56 s); 5.51 s after a grid flush start (flush 2.34 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-statsd           unused   outside the window: n  7387, worst  10.36 ms on worker CPU 0 at t0 -6.87 s (Nighthawk starts at t0 -6.92 s); 1.38 s after a grid flush start (flush 2.43 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r03-own-statsd           PRIMARY  outside the window: n  7796, worst   9.12 ms on worker CPU 0 at t0 -4.14 s (Nighthawk starts at t0 -7.47 s); 4.11 s after a grid flush start (flush 2.40 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r04-own-statsd           unused   outside the window: n  7591, worst  10.01 ms on worker CPU 3 at t0 -2.64 s (Nighthawk starts at t0 -7.20 s); 5.64 s after a grid flush start (flush 2.46 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r05-own-statsd           PRIMARY  outside the window: n  7588, worst   6.91 ms on worker CPU 2 at t0 -7.15 s (Nighthawk starts at t0 -7.18 s); 1.04 s after a grid flush start (flush 2.37 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-own-statsd.rr1       PRIMARY  outside the window: n  7408, worst   7.18 ms on worker CPU 2 at t0 -6.94 s (Nighthawk starts at t0 -6.98 s); 1.24 s after a grid flush start (flush 2.36 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-statsd.rr1       PRIMARY  outside the window: n  7538, worst   4.68 ms on worker CPU 3 at t0 -7.08 s (Nighthawk starts at t0 -7.11 s); 1.19 s after a grid flush start (flush 2.45 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-own-otlp             unused   outside the window: n  7033, worst   9.14 ms on worker CPU 3 at t0 -6.47 s (Nighthawk starts at t0 -6.52 s); 6.38 s after a grid flush start (flush 1.29 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-otlp             unused   outside the window: n  7056, worst   6.67 ms on worker CPU 0 at t0 -6.46 s (Nighthawk starts at t0 -6.50 s); 1.26 s after a grid flush start (flush 1.32 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r03-own-otlp             PRIMARY  outside the window: n  7017, worst   8.13 ms on worker CPU 2 at t0 -6.45 s (Nighthawk starts at t0 -6.50 s); 1.51 s after a grid flush start (flush 1.35 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r04-own-otlp             unused   outside the window: n  7057, worst   9.32 ms on worker CPU 2 at t0 -3.13 s (Nighthawk starts at t0 -6.50 s); 4.49 s after a grid flush start (flush 1.31 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r05-own-otlp             PRIMARY  outside the window: n  7037, worst   5.52 ms on worker CPU 2 at t0 -6.45 s (Nighthawk starts at t0 -6.49 s); 1.27 s after a grid flush start (flush 1.31 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-own-otlp.rr1         PRIMARY  outside the window: n  7001, worst   3.79 ms on worker CPU 1 at t0 -6.44 s (Nighthawk starts at t0 -6.48 s); 0.77 s after a grid flush start (flush 1.29 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-own-otlp.rr1         PRIMARY  outside the window: n  7071, worst   7.55 ms on worker CPU 0 at t0 -0.80 s (Nighthawk starts at t0 -6.51 s); 6.97 s after a grid flush start (flush 1.33 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-shared-nosink        unused   outside the window: n  7507, worst   7.44 ms on worker CPU 0 at t0 -6.73 s (Nighthawk starts at t0 -6.77 s); 5.24 s after a grid flush start (flush 0.39 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-shared-nosink        unused   outside the window: n  7617, worst   7.05 ms on worker CPU 2 at t0 -6.85 s (Nighthawk starts at t0 -6.89 s); 1.19 s after a grid flush start (flush 0.40 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r03-shared-nosink        PRIMARY  outside the window: n  7552, worst   9.75 ms on worker CPU 0 at t0 -0.35 s (Nighthawk starts at t0 -6.86 s); 7.34 s after a grid flush start (flush 0.40 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r04-shared-nosink        unused   outside the window: n  7516, worst   4.91 ms on worker CPU 0 at t0 -5.27 s (Nighthawk starts at t0 -6.82 s); 2.30 s after a grid flush start (flush 0.38 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r05-shared-nosink        PRIMARY  outside the window: n  7550, worst   7.76 ms on worker CPU 3 at t0 -6.79 s (Nighthawk starts at t0 -6.84 s); 0.95 s after a grid flush start (flush 0.39 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-shared-nosink.rr1    PRIMARY  outside the window: n  7539, worst   4.67 ms on worker CPU 0 at t0 -5.75 s (Nighthawk starts at t0 -6.82 s); 2.25 s after a grid flush start (flush 0.39 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r02-shared-nosink.rr1    PRIMARY  outside the window: n  7546, worst   4.75 ms on worker CPU 3 at t0 -6.82 s (Nighthawk starts at t0 -6.86 s); 0.99 s after a grid flush start (flush 0.39 s: outside); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-shared-statsd        invalid  outside the window: n  8992, worst  32.47 ms on worker CPU 0 at t0 -8.44 s (Nighthawk starts at t0 -8.49 s); 0.86 s after a grid flush start (flush 3.56 s: in flush); over 20 ms: 5 (CPU 0: 5), their times rel t0: -8.44, -8.43, -8.43, -8.42, -8.42
+    r02-shared-statsd        invalid  outside the window: n  8558, worst  10.57 ms on worker CPU 0 at t0 -7.95 s (Nighthawk starts at t0 -7.99 s); 1.28 s after a grid flush start (flush 3.57 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r03-shared-statsd        PRIMARY  outside the window: n  8482, worst  29.15 ms on worker CPU 0 at t0 -7.86 s (Nighthawk starts at t0 -7.91 s); 1.35 s after a grid flush start (flush 3.62 s: in flush); over 20 ms: 3 (CPU 0: 3), their times rel t0: -7.86, -7.85, -7.85
+    r04-shared-statsd        invalid  outside the window: n  8832, worst  13.67 ms on worker CPU 0 at t0 -8.34 s (Nighthawk starts at t0 -8.38 s); 0.99 s after a grid flush start (flush 3.57 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r05-shared-statsd        PRIMARY  outside the window: n  8593, worst  16.11 ms on worker CPU 0 at t0 -8.01 s (Nighthawk starts at t0 -8.06 s); 1.20 s after a grid flush start (flush 3.57 s: in flush); over 20 ms: 0 (CPU 0: 0), their times rel t0: 
+    r01-shared-statsd.rr1    PRIMARY  outside the window: n  8478, worst  29.35 ms on worker CPU 0 at t0 -7.89 s (Nighthawk starts at t0 -7.94 s); 1.30 s after a grid flush start (flush 3.52 s: in flush); over 20 ms: 2 (CPU 0: 2), their times rel t0: -7.89, -7.89
+    r02-shared-statsd.rr1    PRIMARY  outside the window: n  8647, worst  27.08 ms on worker CPU 2 at t0 -5.13 s (Nighthawk starts at t0 -8.14 s); 4.15 s after a grid flush start (flush 3.60 s: outside); over 20 ms: 2 (CPU 0: 0), their times rel t0: -5.13, -5.12
+    r04-shared-statsd.rr1    unused   outside the window: n  9006, worst  24.83 ms on worker CPU 0 at t0 -6.67 s (Nighthawk starts at t0 -8.51 s); 2.83 s after a grid flush start (flush 3.73 s: in flush); over 20 ms: 1 (CPU 0: 1), their times rel t0: -6.67
+    probes of 100 ms or more in the whole logs: 0 of 2002609
+    own/nosink     worst outside the window per leg, ms: 7.7 5.0 10.4 4.6 8.7 14.6 4.2
+    own/statsd     worst outside the window per leg, ms: 8.4 10.4 9.1 10.0 6.9 7.2 4.7
+    own/otlp       worst outside the window per leg, ms: 9.1 6.7 8.1 9.3 5.5 3.8 7.5
+    shared/nosink  worst outside the window per leg, ms: 7.4 7.1 9.8 4.9 7.8 4.7 4.8
+    shared/statsd  worst outside the window per leg, ms: 32.5 10.6 29.2 13.7 16.1 29.4 27.1 24.8
+
+F3. ADMIN WAIT, probe intended inside a burst [start, end], no guard (primary set)
+    own/nosink     n  132 median 140 ms max 372 ms
+    own/statsd     n 1154 median 1195 ms max 2504 ms
+    own/otlp       n  631 median 606 ms max 1323 ms
+    shared/nosink  n  187 median 194 ms max 477 ms
+    shared/statsd  n 1721 median 1782 ms max 3670 ms
+
+F9. ADMIN probes sent from start + 20 ms to end - 100 ms: answered more than 50 / 20 / 10 ms before the burst end (primary set)
+    own/nosink     sent   70; answered >50 ms before the end 0, >20 ms 0, >10 ms 0; answer time before the burst end: median 1.9 ms, max 4.9 ms
+    own/statsd     sent 1087; answered >50 ms before the end 0, >20 ms 0, >10 ms 0; answer time before the burst end: median 2.4 ms, max 5.8 ms
+    own/otlp       sent  577; answered >50 ms before the end 334, >20 ms 577, >10 ms 577; answer time before the burst end: median 52.8 ms, max 61.9 ms
+    shared/nosink  sent  128; answered >50 ms before the end 0, >20 ms 0, >10 ms 0; answer time before the burst end: median 1.6 ms, max 4.2 ms
+    shared/statsd  sent 1661; answered >50 ms before the end 0, >20 ms 0, >10 ms 6; answer time before the burst end: median 4.1 ms, max 10.3 ms
+    no-sink and statsd cells together: sent 2,946; answered more than 20 ms before the burst end: 0
+
+F13. REQUESTS THAT WAITED FOR THEIR OWN CONNECTION, in the window (primary set)
+    own/nosink     1
+    own/statsd     4
+    own/otlp       2
+    shared/nosink  0
+    shared/statsd  0
+    total 7; longest wait for the connection 10.8 ms
+
+F4. SLOW EVENTS, the 20 legs of the complete rounds only (exploratory)
+    probe in the used span over 5 ms; probes of ONE worker closer than 25 ms (intended time) are one event.
+    Definition A: any such group (one probe is enough). Definition B: the group spans at least 2 of the worker's 4 connections.
+    In the shared-core cells the worker on CPU 0 is left out (its in-flush delay is the L3 effect); own-core cells count all 4 workers.
+    in = first probe of the event inside [start - 20 ms, end] of a whole flush; out = outside every flush zone [start - 20 ms, end + 250 ms]; else post.
+    definition A (any group)
+      own/nosink     events 16: in  2 (within 50 ms of a start: 0), out 14, post 0; worker-seconds in 29, out 892; per worker-hour in 252, out 56; expected in 0.5; binomial p 0.09; peak max 25.5 ms
+      own/statsd     events 16: in  6 (within 50 ms of a start: 0), out  9, post 1; worker-seconds in 232, out 689; per worker-hour in 93, out 47; expected in 3.8; binomial p 0.23; peak max 30.8 ms
+      own/otlp       events 16: in  4 (within 50 ms of a start: 2), out 12, post 0; worker-seconds in 129, out 792; per worker-hour in 112, out 55; expected in 2.2; binomial p 0.27; peak max 25.4 ms
+      shared/nosink  events  9: in  2 (within 50 ms of a start: 0), out  7, post 0; worker-seconds in 30, out 661; per worker-hour in 243, out 38; expected in 0.4; binomial p 0.05; peak max 13.1 ms
+      shared/statsd  events  7: in  2 (within 50 ms of a start: 1), out  5, post 0; worker-seconds in 259, out 431; per worker-hour in 28, out 42; expected in 2.6; binomial p 0.72; peak max 11.6 ms
+      own-core cells                     in 12, out 35; per worker-hour in 111, out 53; expected in 6.6; binomial two-sided p 0.03 | without the 2 within 50 ms of a start: in 10, per worker-hour 93, p 0.13
+      shared-core cells, workers 1 to 3  in  4, out 12; per worker-hour in 50, out 40; expected in 3.3; binomial two-sided p 0.76 | without the 1 within 50 ms of a start: in 3, per worker-hour 37, p 1.00
+      all five cells                     in 16, out 47; per worker-hour in 85, out 49; expected in 10.3; binomial two-sided p 0.06 | without the 3 within 50 ms of a start: in 13, per worker-hour 69, p 0.29
+    definition B (2 or more connections)
+      own/nosink     events  7: in  0 (within 50 ms of a start: 0), out  7, post 0; worker-seconds in 29, out 892; per worker-hour in 0, out 28; expected in 0.2; binomial p 1.00; peak max 25.5 ms
+      own/statsd     events  8: in  3 (within 50 ms of a start: 0), out  5, post 0; worker-seconds in 232, out 689; per worker-hour in 47, out 26; expected in 2.0; binomial p 0.42; peak max 30.8 ms
+      own/otlp       events  5: in  1 (within 50 ms of a start: 1), out  4, post 0; worker-seconds in 129, out 792; per worker-hour in 28, out 18; expected in 0.7; binomial p 0.53; peak max 25.4 ms
+      shared/nosink  events  3: in  0 (within 50 ms of a start: 0), out  3, post 0; worker-seconds in 30, out 661; per worker-hour in 0, out 16; expected in 0.1; binomial p 1.00; peak max 13.1 ms
+      shared/statsd  events  2: in  0 (within 50 ms of a start: 0), out  2, post 0; worker-seconds in 259, out 431; per worker-hour in 0, out 17; expected in 0.8; binomial p 0.53; peak max 11.6 ms
+      own-core cells                     in  4, out 16; per worker-hour in 37, out 24; expected in 2.8; binomial two-sided p 0.51 | without the 1 within 50 ms of a start: in 3, per worker-hour 28, p 0.74
+      shared-core cells, workers 1 to 3  in  0, out  5; per worker-hour in 0, out 16; expected in 1.0; binomial two-sided p 0.59 | without the 0 within 50 ms of a start: in 0, per worker-hour 0, p 0.59
+      all five cells                     in  4, out 21; per worker-hour in 21, out 22; expected in 4.1; binomial two-sided p 1.00 | without the 1 within 50 ms of a start: in 3, per worker-hour 16, p 0.79
+
+F4b. WHAT THE EVENTS ARE (definition A, the 20 legs of the complete rounds): scheduler counters of that worker's thread in the 55 ms around the event
+    events 64; peak ms median 8.8, max 30.8; no other worker slow within 10 ms: 58; run-queue wait of 5 ms or more: 18 (median 11.1 ms, max 30.6); worker ran flat out 15 ms: 2; neither: 44
+    control stream, the same 20 legs, whole logs: over 5 ms 0 of 69488

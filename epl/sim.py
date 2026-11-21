@@ -31,7 +31,40 @@ class SimBackend:
                 "arms": {a["name"]: {"md5": "sim", "version": "sim"} for a in exp["arms"]},
                 "started_utc": "sim"}
 
+    def run_idle_leg(self, arm, shape, rnd, leg_id):
+        """An idle leg of the stats row: the main thread at 0.5 ms/s plus `sim_flush_ms` per
+        flush (arm; default 10 ms) at the arm's flush interval; flush-off has no flushes."""
+        r = self.rng
+        sf = (arm.get("settings") or {}).get("stats_flush") or {}
+        interval = None if sf.get("on_admin") else float(sf.get("interval_s", 5))
+        d = float(arm.get("sim_flush_ms", 10.0)) * r.gauss(1.0, float(self.exp.get("sim_cycles_noise", 0.014)))
+        base = 0.5 * r.gauss(1.0, 0.01)
+        main = {"samples": 1000, "bursts": 0, "sampler_missing": 0}
+        if interval:
+            per = interval + d / 1e3
+            main.update(bursts=int(20 // per), periods=int(20 // per) - 1, period_s=per,
+                        run_ms_per_period=d + base * per, run_ms_per_s=d / per + base,
+                        stall_ms_p50=d, stall_ms_max=d * 1.1, burst_count_error=0)
+        else:
+            main["run_ms_per_s"] = base
+        cps = main["run_ms_per_s"] * 2.3e6
+        k = ((arm.get("settings") or {}).get("stats_clusters") or {}).get("count", 0)
+        m = {"leg_id": leg_id, "arm": arm["name"], "shape": shape["name"], "round": rnd, "idle_leg": True,
+             "target_rps": 0,
+             "idle_ok": True, "preflight_ok": True, "pinning_ok": True, "perf_ok": True, "main_tid_ok": True,
+             "sut_foreign_cpus": 0.0, "sut_sibling_cpus": 0.0, "envoy_exit": 0, "perf_min_running_pct": 100.0,
+             "flush_interval_s": interval, "main": main, "stats_total": 110 * k + 300,
+             "main_perf": {"cycles_per_s": cps, "cycles_u_per_s": cps * 0.7, "cycles_k_per_s": cps * 0.3,
+                           "cycles_per_period": cps * main.get("period_s", 1.0)},
+             "ready": {"max_ms": 2.0 + d}, "memory": {"vm_hwm_kb_after": 100000 + k * 50}}
+        if arm.get("evidence") is not None:
+            m["evidence"] = {"ok": True, "gate": False, "simulated": True, "items": [], "failed": []}
+        m["verdict"] = validity.verdict(m, self.exp["validity"])
+        return m
+
     def run_leg(self, arm, shape, rnd, bootstrap_path, leg_id):
+        if shape.get("kind") == "idle":
+            return self.run_idle_leg(arm, shape, rnd, leg_id)
         f = float(arm.get("sim_factor", 1.0))
         fc = f * float(arm.get("sim_cycles_factor", 1.0))
         ni = float(self.exp.get("sim_ins_noise", 0.002))

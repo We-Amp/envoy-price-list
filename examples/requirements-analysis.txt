@@ -1,0 +1,7 @@
+# The analysis scripts examples/stats-flush/analysis-s, examples/stats-flush/analysis-l and
+# examples/stats-mt/analysis-u-hi of the stats study need these. Everything else (bin/epl, the table
+# scripts, tools/, and the other analysis-* scripts) needs only Python.
+# These are the versions every published output was produced and re-checked with, on Python 3.9.6.
+# The harness runs on Python 3.8 or later; these two versions need Python 3.9 or later.
+numpy==2.0.2
+scipy==1.13.1

@@ -1,0 +1,87 @@
+
+==============================================================================================================
+RUN S loaded rung (100k stats, 5 s interval, 5,200 req/s)  (sw)  reference nosink, A/A nosink-A2
+recorded per leg: 17 results (16 client workers + global); statistics with samples: ['benchmark_http_client.latency_2xx', 'benchmark_http_client.queue_to_connect', 'benchmark_http_client.request_to_response', 'benchmark_http_client.response_body_size', 'benchmark_http_client.response_header_size', 'sequencer.callback']
+percentile list: 88 points per statistic; one histogram over the whole client run of 28 s (145600 requests); no per-interval output
+
+-- per arm, mean over rounds of the leg values (ms); max = slowest single request in any leg
+   arm             n     p50     p90     p99   p99.9  p99.99 max mean max worst  requests per leg slower than 1 ms, 2 ms, 5 ms, 10 ms, 20 ms
+   nosink         10   0.395   0.478   0.614   3.902   6.835     7.37     10.15  212.9  178.6  117.6  0.3  0.0
+   nosink-A2      10   0.394   0.475   0.614   4.691   7.905     8.48     10.92  217.0  181.8  139.6  5.1  0.0
+   statsd         10   0.446   0.581   0.774   6.304   9.383    10.07     13.97  349.5  229.8  177.3  41.0  0.0
+   dogstatsd-buf  10   0.449   0.595   0.819   6.029   9.714    10.44     17.02  460.3  221.4  170.1  53.8  0.0
+   otlp           10   0.394   0.474   0.613   4.258   7.190     7.77     10.88  227.0  177.3  118.4  2.4  0.0
+
+-- main-thread flush under load, and what it could reach if every request arriving during a flush waited for it
+   nosink         flush burst 20 ms mean (stall max 60 ms), bursts in window [4], busy 30.7%: 0.39% of a 5 s period -> visible from p99.61 upward; about 572 requests per 28 s client run arrive during a flush
+   nosink-A2      flush burst 21 ms mean (stall max 60 ms), bursts in window [4], busy 30.6%: 0.41% of a 5 s period -> visible from p99.59 upward; about 599 requests per 28 s client run arrive during a flush
+   statsd         flush burst 224 ms mean (stall max 280 ms), bursts in window [4], busy 36.2%: 4.49% of a 5 s period -> visible from p95.51 upward; about 6535 requests per 28 s client run arrive during a flush
+   dogstatsd-buf  flush burst 81 ms mean (stall max 120 ms), bursts in window [4], busy 35.7%: 1.63% of a 5 s period -> visible from p98.37 upward; about 2368 requests per 28 s client run arrive during a flush
+   otlp           flush burst 115 ms mean (stall max 160 ms), bursts in window [4], busy 31.2%: 2.31% of a 5 s period -> visible from p97.69 upward; about 3361 requests per 28 s client run arrive during a flush
+
+-- paired by round against nosink: percentiles as % change [95% t interval]
+   nosink-A2      n=10  p50 -0.4% [-2.8, +2.0];  p90 -0.6% [-2.4, +1.2];  p99 +0.1% [-1.7, +1.9];  p99.9 +15.7% [-37.3, +113.5];  p99.99 +12.0% [-18.1, +53.1]
+   statsd         n=10  p50 +12.7% [+9.9, +15.6];  p90 +21.3% [+17.6, +25.2];  p99 +25.7% [+17.3, +34.7];  p99.9 +55.8% [-3.9, +152.5];  p99.99 +36.5% [+11.9, +66.6]
+   dogstatsd-buf  n=10  p50 +13.6% [+10.8, +16.5];  p90 +24.1% [+19.0, +29.6];  p99 +32.4% [+19.3, +46.9];  p99.9 +44.5% [-29.3, +195.5];  p99.99 +39.2% [+0.5, +92.9]
+   otlp           n=10  p50 -0.4% [-3.1, +2.3];  p90 -1.0% [-2.9, +0.9];  p99 -0.2% [-2.9, +2.7];  p99.9 +2.4% [-37.7, +68.5];  p99.99 +3.8% [-16.7, +29.4]
+
+-- paired by round against nosink: absolute differences [95% t interval]
+   nosink-A2      p50 -2 [-11, +8] us;  p90 -3 [-12, +5] us;  p99 +0 [-11, +12] us;  p99.9 +789 [-918, +2497] us;  p99.99 +1071 [-850, +2991] us;  max +1.11 [-0.77, +2.99] ms
+                  requests per leg (of 145600): > 1 ms: +4.1 [-24.6, +32.8];  > 2 ms: +3.2 [-29.3, +35.7];  > 5 ms: +22.0 [-40.8, +84.8];  > 10 ms: +4.8 [-4.7, +14.3];  > 20 ms: +0.0 [+0.0, +0.0]
+   statsd         p50 +50 [+39, +61] us;  p90 +102 [+85, +119] us;  p99 +160 [+107, +213] us;  p99.9 +2402 [+349, +4455] us;  p99.99 +2549 [+970, +4128] us;  max +2.70 [+1.00, +4.40] ms
+                  requests per leg (of 145600): > 1 ms: +136.6 [-16.1, +289.3];  > 2 ms: +51.2 [+7.4, +95.0];  > 5 ms: +59.7 [+4.7, +114.7];  > 10 ms: +40.7 [+4.1, +77.3];  > 20 ms: +0.0 [+0.0, +0.0]
+   dogstatsd-buf  p50 +54 [+43, +64] us;  p90 +116 [+91, +141] us;  p99 +205 [+118, +292] us;  p99.9 +2127 [-900, +5154] us;  p99.99 +2879 [+3, +5756] us;  max +3.07 [-0.05, +6.19] ms
+                  requests per leg (of 145600): > 1 ms: +247.4 [-121.1, +615.9];  > 2 ms: +42.8 [-4.4, +90.0];  > 5 ms: +52.5 [-13.1, +118.1];  > 10 ms: +53.5 [-3.3, +110.3];  > 20 ms: +0.0 [+0.0, +0.0]
+   otlp           p50 -2 [-12, +9] us;  p90 -5 [-14, +4] us;  p99 -1 [-19, +16] us;  p99.9 +357 [-1388, +2101] us;  p99.99 +356 [-1249, +1961] us;  max +0.40 [-1.29, +2.09] ms
+                  requests per leg (of 145600): > 1 ms: +14.1 [-28.8, +57.0];  > 2 ms: -1.3 [-32.6, +30.0];  > 5 ms: +0.8 [-56.6, +58.2];  > 10 ms: +2.1 [-2.8, +7.0];  > 20 ms: +0.0 [+0.0, +0.0]
+
+-- slowest request per leg (ms), by round, and the client's own queue-to-connect maximum
+   nosink         max 7.2 6.4 9.1 4.8 6.2 10.1 6.6 9.8 6.8 6.6 | queue-to-connect max 37.9 | workers whose own max is over 5 ms, per leg: 12 13 16 0 13 16 14 15 15 14
+   nosink-A2      max 10.2 9.2 8.6 10.9 6.9 9.5 3.2 10.1 9.7 6.5 | queue-to-connect max 39.7 | workers whose own max is over 5 ms, per leg: 16 15 16 16 15 16 0 16 15 12
+   statsd         max 10.9 6.3 7.3 8.2 12.1 14.0 10.6 12.1 7.8 11.5 | queue-to-connect max 46.1 | workers whose own max is over 5 ms, per leg: 16 12 14 16 16 16 16 16 14 16
+   dogstatsd-buf  max 8.9 6.2 7.7 17.0 12.1 13.1 14.0 7.7 8.5 9.2 | queue-to-connect max 45.5 | workers whose own max is over 5 ms, per leg: 16 13 15 16 16 16 16 15 16 16
+   otlp           max 8.7 5.1 7.1 5.2 10.9 7.2 9.7 10.1 8.4 5.4 | queue-to-connect max 42.5 | workers whose own max is over 5 ms, per leg: 15 2 14 3 16 16 16 15 15 11
+
+==============================================================================================================
+RUN W (2026-11-18; 100k stats, 5 s interval, 5,200 req/s)  (../sink-flush-cost/w)  reference flush-off, A/A flush-off-A2
+recorded per leg: 17 results (16 client workers + global); statistics with samples: ['benchmark_http_client.latency_2xx', 'benchmark_http_client.queue_to_connect', 'benchmark_http_client.request_to_response', 'benchmark_http_client.response_body_size', 'benchmark_http_client.response_header_size', 'sequencer.callback']
+percentile list: 88 points per statistic; one histogram over the whole client run of 28 s (145600 requests); no per-interval output
+
+-- per arm, mean over rounds of the leg values (ms); max = slowest single request in any leg
+   arm             n     p50     p90     p99   p99.9  p99.99 max mean max worst  requests per leg slower than 1 ms, 2 ms, 5 ms, 10 ms, 20 ms
+   flush-off       8   0.393   0.475   0.620   4.816   7.396     8.00     11.81  241.1  189.9  135.8  6.1  0.0
+   flush-off-A2    8   0.392   0.473   0.610   5.079   7.867     8.51     10.70  251.9  202.1  152.5  2.6  0.0
+   nosink          8   0.392   0.472   0.611   4.081   7.532     8.13     13.74  220.0  175.5  104.8  11.0  0.0
+   statsd          8   0.442   0.587   0.803   6.806  10.461    11.18     13.84  330.2  223.5  164.1  67.4  0.0
+
+-- main-thread flush under load, and what it could reach if every request arriving during a flush waited for it
+   flush-off      flush burst 0 ms mean (stall max 0 ms), bursts in window [0], busy 30.5%: 0.00% of a 5 s period -> visible from p100.00 upward; about 0 requests per 28 s client run arrive during a flush
+   flush-off-A2   flush burst 0 ms mean (stall max 0 ms), bursts in window [0], busy 30.5%: 0.00% of a 5 s period -> visible from p100.00 upward; about 0 requests per 28 s client run arrive during a flush
+   nosink         flush burst 24 ms mean (stall max 60 ms), bursts in window [4], busy 30.7%: 0.49% of a 5 s period -> visible from p99.51 upward; about 708 requests per 28 s client run arrive during a flush
+   statsd         flush burst 230 ms mean (stall max 260 ms), bursts in window [4], busy 36.1%: 4.60% of a 5 s period -> visible from p95.40 upward; about 6692 requests per 28 s client run arrive during a flush
+
+-- paired by round against flush-off: percentiles as % change [95% t interval]
+   flush-off-A2   n=8  p50 -0.3% [-4.0, +3.6];  p90 -0.5% [-2.7, +1.7];  p99 -1.5% [-4.5, +1.5];  p99.9 +16.6% [-49.9, +171.5];  p99.99 +8.6% [-27.0, +61.7]
+   nosink         n=8  p50 -0.2% [-2.5, +2.2];  p90 -0.6% [-2.6, +1.4];  p99 -1.4% [-4.0, +1.3];  p99.9 -20.0% [-67.3, +96.2];  p99.99 -0.4% [-32.9, +47.9]
+   statsd         n=8  p50 +12.4% [+9.5, +15.4];  p90 +23.6% [+20.4, +26.8];  p99 +29.5% [+23.2, +36.0];  p99.9 +51.2% [-33.4, +243.2];  p99.99 +41.2% [-6.4, +112.9]
+
+-- paired by round against flush-off: absolute differences [95% t interval]
+   flush-off-A2   p50 -1 [-16, +14] us;  p90 -2 [-13, +8] us;  p99 -9 [-28, +10] us;  p99.9 +262 [-2571, +3095] us;  p99.99 +471 [-2402, +3344] us;  max +0.51 [-2.45, +3.47] ms
+                  requests per leg (of 145600): > 1 ms: +10.8 [-62.1, +83.6];  > 2 ms: +12.2 [-47.1, +71.6];  > 5 ms: +16.8 [-80.0, +113.5];  > 10 ms: -3.5 [-19.3, +12.3];  > 20 ms: +0.0 [+0.0, +0.0]
+   nosink         p50 -1 [-10, +8] us;  p90 -3 [-12, +7] us;  p99 -9 [-25, +8] us;  p99.9 -735 [-3960, +2490] us;  p99.99 +137 [-2768, +3041] us;  max +0.13 [-2.97, +3.24] ms
+                  requests per leg (of 145600): > 1 ms: -21.1 [-81.6, +39.4];  > 2 ms: -14.4 [-75.3, +46.5];  > 5 ms: -31.0 [-134.5, +72.5];  > 10 ms: +4.9 [-19.3, +29.1];  > 20 ms: +0.0 [+0.0, +0.0]
+   statsd         p50 +49 [+37, +60] us;  p90 +112 [+97, +127] us;  p99 +184 [+143, +224] us;  p99.9 +1990 [-1288, +5267] us;  p99.99 +3066 [-142, +6273] us;  max +3.18 [-0.22, +6.57] ms
+                  requests per leg (of 145600): > 1 ms: +89.1 [+37.5, +140.7];  > 2 ms: +33.6 [-13.0, +80.2];  > 5 ms: +28.4 [-61.2, +117.9];  > 10 ms: +61.2 [+4.1, +118.4];  > 20 ms: +0.0 [+0.0, +0.0]
+
+-- slowest request per leg (ms), by round, and the client's own queue-to-connect maximum
+   flush-off      max 9.6 11.8 4.9 7.5 8.4 7.8 5.3 8.6 | queue-to-connect max 36.6 | workers whose own max is over 5 ms, per leg: 16 16 0 16 16 16 5 16
+   flush-off-A2   max 10.1 7.0 10.3 7.2 6.5 9.3 10.7 6.8 | queue-to-connect max 39.9 | workers whose own max is over 5 ms, per leg: 16 16 16 15 15 16 16 15
+   nosink         max 8.7 10.8 5.6 8.9 5.1 5.0 13.7 7.2 | queue-to-connect max 41.7 | workers whose own max is over 5 ms, per leg: 15 16 11 14 1 0 16 15
+   statsd         max 13.6 12.6 13.8 13.3 8.3 5.6 13.2 9.0 | queue-to-connect max 39.7 | workers whose own max is over 5 ms, per leg: 16 16 16 16 16 13 16 16
+
+==============================================================================================================
+time-resolved data in a loaded leg (r01 statsd):
+   raw main-thread series kept: False (idle runs keep main/<leg>.json.gz)
+   main summary keys: ['burst_run_ms_max', 'burst_run_ms_mean', 'burst_run_ms_p50', 'bursts', 'period_s', 'periods', 'run_ms_per_period', 'run_ms_per_s', 'samples', 'stall_ms_max', 'stall_ms_p50', 'window_s']
+   discard sink uptime samples (wall clock s, server.uptime): 10, first [1795095237.433, 6.0], last [1795095279.357, 48.0]
+   latency fields in the leg record: ['count', 'max', 'mean', 'p50', 'p90', 'p99', 'p999']

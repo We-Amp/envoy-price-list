@@ -62,12 +62,16 @@ DEFAULTS = {
     # at most this share of the container's CPU set; the container's cpuset and every
     # process in it must sit on the configured set. None turns the gate off.
     "max_side_service_busy": 0.5,
+    # Cloud VMs: share of CPU time stolen by the hypervisor over the window (None: not gated)
+    "max_steal_share": None,
 }
 
 
 def verdict(m, cfg=None):
     c = dict(DEFAULTS)
     c.update(cfg or {})
+    if m.get("idle_leg"):
+        return idle_verdict(m, c)
     reasons = []
     if not m.get("idle_ok"):
         reasons.append("box not idle before the leg")
@@ -81,12 +85,14 @@ def verdict(m, cfg=None):
     rate = m.get("sut_rate_2xx")
     if rate is None or not tgt:
         reasons.append("no achieved-rate measurement")
-    elif abs(rate / tgt - 1.0) > c["rate_tolerance"]:
+    # None: the rate is recorded only (run L gates the listener's request count itself, exactly)
+    elif c["rate_tolerance"] is not None and abs(rate / tgt - 1.0) > c["rate_tolerance"]:
         reasons.append("achieved rate %.1f misses target %d by %.2f%%"
                        % (rate, tgt, (rate / tgt - 1.0) * 100))
     ovf_d = {k: v for k, v in (m.get("client_overflow") or {}).items() if k not in (c["overflow_ignore"] or [])}
     ovf = sum(ovf_d.values())
-    if ovf > c["max_overflow"]:
+    # None: recorded, not gated (run L: a stalled worker makes the client queue, and that is an outcome)
+    if c["max_overflow"] is not None and ovf > c["max_overflow"]:
         reasons.append("client overflow/pool-exhausted counters %d (%s)"
                        % (ovf, ", ".join("%s=%d" % kv for kv in sorted(ovf_d.items()))))
     nc = sum((m.get("client_non2xx") or {}).values())
@@ -167,10 +173,78 @@ def verdict(m, cfg=None):
         if not sv.get("pids_ok"):
             reasons.append("side service %s: processes off the configured set: %s"
                            % (name, sv.get("bad_pids") or "no process found"))
+    if c["max_steal_share"] is not None and (m.get("steal_share") is None or m["steal_share"] > c["max_steal_share"]):
+        reasons.append("steal time %s of the CPU time in the window, limit %.1f%%" % (
+            "unknown" if m.get("steal_share") is None else "%.2f%%" % (100 * m["steal_share"]),
+            100 * c["max_steal_share"]))
+    if m.get("rung_pin") is not None and not m["rung_pin"].get("ok"):
+        reasons.append("rung threads not on their cores: %s" % m["rung_pin"])
+    if m.get("rung_pin_after") is not None and not m["rung_pin_after"].get("ok"):
+        reasons.append("rung threads left their cores during the leg: %s" % m["rung_pin_after"])
+    if m.get("responses_from") == "origin":
+        if not m.get("origin_reads_ok") or not m.get("responses"):
+            reasons.append("no origin response count (stub_status read failed or zero)")
+        adm = m.get("responses_admin_raw")
+        if adm and m.get("responses_raw") and abs(m["responses_raw"] / float(adm) - 1.0) > 0.005:
+            reasons.append("origin response count %d differs from Envoy's %d by more than 0.5%%"
+                           % (m["responses_raw"], adm))
+    if m.get("workers_expected") is not None and (m.get("workers_perf_threads") != m["workers_expected"]
+                                                 or m.get("workers_cycles_per_req") is None):
+        reasons.append("worker-only cycles cover %s of %d worker threads" % (
+            m.get("workers_perf_threads"), m["workers_expected"]))
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]
         reasons.append("evidence: %s%s" % ("; ".join(f[:4]), " (+%d more)" % (len(f) - 4) if len(f) > 4 else ""))
+    return {"valid": not reasons, "reasons": reasons}
+
+
+def _common(m, c, reasons):
+    """Gates every leg shares: box state, errors, pinning, SUT CPUs during the window, idle
+    states, exit code, multiplexing, side services, evidence."""
+    if not m.get("idle_ok"):
+        reasons.append("box not idle before the leg")
+    if not m.get("preflight_ok"):
+        reasons.append("port preflight failed: %s" % m.get("preflight_detail"))
+    if m.get("error"):
+        reasons.append("error: %s" % m["error"])
+    if not m.get("pinning_ok", True):
+        reasons.append("process not on its configured CPUs")
+    fc, sc = m.get("sut_foreign_cpus"), m.get("sut_sibling_cpus")
+    if fc is None or sc is None:
+        reasons.append("no scheduler run time for the SUT CPUs (%s)" % m.get("sched_probe", "no data"))
+    else:
+        if c["max_sut_foreign_cpus"] is not None and fc > c["max_sut_foreign_cpus"]:
+            reasons.append("other tasks used %.3f CPUs on the SUT CPUs during the window" % fc)
+        if c["max_sut_sibling_cpus"] is not None and sc > c["max_sut_sibling_cpus"]:
+            reasons.append("SMT siblings of the SUT CPUs busy %.3f CPUs during the window" % sc)
+    if c["require_cpuidle_unchanged"] and m.get("cpuidle_unchanged") is False:
+        reasons.append("idle-state configuration of the SUT CPUs changed since the start of the run")
+    if c["require_envoy_exit_zero"] and "envoy_exit" in m and m["envoy_exit"] not in (0, None):
+        reasons.append("envoy exit code %s" % m["envoy_exit"])
+    if c["require_perf_unmultiplexed"] and m.get("perf_min_running_pct") is not None \
+            and m["perf_min_running_pct"] < 99.99:
+        reasons.append("perf counters multiplexed (%.1f%% running)" % m["perf_min_running_pct"])
+
+
+def idle_verdict(m, c):
+    """An idle leg (stats row): no request gates; the main thread must be the right thread and
+    sampled for the whole window, its counters complete; side services and evidence as usual."""
+    reasons = []
+    _common(m, c, reasons)
+    if not m.get("perf_ok"):
+        reasons.append("perf counters of the main thread missing")
+    if not m.get("main_tid_ok"):
+        reasons.append("main thread not sampled as the main thread for the whole window (comm %s, %s samples, "
+                       "%s missing)" % (m.get("main_comm"), (m.get("main") or {}).get("samples"),
+                                        (m.get("main") or {}).get("sampler_missing")))
+    full = verdict(dict(m, idle_leg=False, idle_ok=True, preflight_ok=True, error=None, pinning_ok=True,
+                        sut_rate_2xx=1, target_rps=1, client_headroom=1, perf_ok=True, responses=1,
+                        sut_foreign_cpus=0, sut_sibling_cpus=0, envoy_exit=0, perf_min_running_pct=None,
+                        envoy_worker_max_share=None, envoy_worker_min_share=None, envoy_workers=None),
+                   dict(c, max_worker_share_factor=None, min_worker_share_factor=None,
+                        max_pending_total=None))
+    reasons += full["reasons"]  # the side-service and evidence gates
     return {"valid": not reasons, "reasons": reasons}
 
 

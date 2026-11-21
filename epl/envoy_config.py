@@ -35,6 +35,7 @@ DTLS = "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Downstream
 EXT_AUTHZ = "type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz"
 OTEL = "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
 FILE_LOG = "type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog"
+STATS_LOG = "type.googleapis.com/envoy.extensions.access_loggers.stats.v3.Config"
 UPSTREAM_HTTP = "type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 JWT_AUTHN = "type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication"
 LOCAL_RL = "type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit"
@@ -61,6 +62,30 @@ COMPRESSOR_LIBS = {
 COMPRESSOR_RESPONSE = {"common_config": {"min_content_length": 30}, "disable_on_etag_header": False,
                        "remove_accept_encoding_header": False}
 WASM_RUNTIMES = ("envoy.wasm.runtime.v8",)
+STATSD = "type.googleapis.com/envoy.config.metrics.v3.StatsdSink"
+DOG_STATSD = "type.googleapis.com/envoy.config.metrics.v3.DogStatsdSink"
+OTLP_SINK = "type.googleapis.com/envoy.extensions.stat_sinks.open_telemetry.v3.SinkConfig"
+# Stats-row cluster generator: K extra static clusters to the origin, selected per request by
+# a header on one route. Names look like service names (45 to 75 characters as full stat
+# names); `.test` is a reserved name.
+ORIGIN_STATUS_PATH = "/epl-status"  # nginx stub_status on the origin (responses counted there)
+STATS_CLUSTER_HEADER = "x-epl-cluster"
+STATS_PRIME_PATH = "/epl-prime"
+STATS_WORDS = ["accounts", "billing", "catalog", "checkout", "delivery", "directory", "events", "feedback",
+               "gateway", "identity", "inventory", "ledger", "loyalty", "media", "messaging", "metrics",
+               "notifications", "orders", "payments", "pricing", "profile", "ratings", "recommend", "refunds",
+               "reporting", "returns", "search", "sessions", "shipping", "storage", "telemetry", "wallet"]
+
+# The stats access logger of the dose run: K counters, each incremented by 1 per request, in
+# their own scope, with one tag whose value is a command operator. The tag value decides how
+# many counter objects exist: the listener port is the same for every request (one object per
+# counter, shared by all workers); the client's port is one value per downstream connection
+# (one object per counter and connection, and a connection belongs to one worker). Both values
+# are five digits here, so the flat names have the same length: dose.c000.port.<port>.
+STATS_LOG_SCOPE = "dose"
+STATS_LOG_TAG = "port"
+STATS_LOG_TAG_VALUES = ("%DOWNSTREAM_LOCAL_PORT%", "%DOWNSTREAM_REMOTE_PORT%")
+STATS_LOG_MAX_COUNTERS = 1024
 
 # Settings an arm may change, with what each one does. All are generic Envoy
 # settings; none is off by default in the sense of costing work.
@@ -97,6 +122,24 @@ SETTINGS = {
     "lua": "Lua filter before the router with an inline script: {inline: source}",
     "wasm": "Wasm filter before the router, one VM per worker, module from a local file, fail closed: "
             "{file: path (relative to the harness), sha256: hex, runtime: envoy.wasm.runtime.v8}",
+    "stats_clusters": "the stats-row generator: {count, seed, idle_timeout_s (default 1)}: that many extra "
+                      "static clusters to the origin, seeded service-like names, one route on "
+                      "/epl-prime that picks the cluster by the x-epl-cluster header",
+    "stats_flush": "stats flush: {interval_s: seconds} (stats_flush_interval) | {on_admin: true} "
+                   "(stats_flush_on_admin: no timer, every admin stats read flushes)",
+    "stats_sink": "one stats sink: {kind: statsd | dog_statsd, prefix, max_bytes_per_datagram (dog_statsd)} "
+                  "to the harness's UDP discard sink, or {kind: otlp, max_data_points_per_request} over "
+                  "envoy_grpc to the collector; the harness sets ports",
+    "listener_address": "the listener's address: 127.0.0.1 (the harness default: every accepted connection's local "
+                        "address is the listener's one address object) | 0.0.0.0 (the wildcard address: Envoy reads "
+                        "each accepted connection's local address into its own object); the client targets loopback",
+    "stats_access_log": "stats access logger on the HCM (envoy.access_loggers.stats): {counters: K, tag: "
+                        "%DOWNSTREAM_LOCAL_PORT% (one counter object per counter) | %DOWNSTREAM_REMOTE_PORT% (one "
+                        "per counter and downstream connection)}: K counters dose.c000.. each incremented by 1 "
+                        "per request, tag `port`; no scope limit, no eviction. hot: true lists the one counter "
+                        "dose.c000 K times instead (the logger keeps every entry and looks up and adds once per "
+                        "entry): the same K lookups and adds per request, all on one counter object",
+    "stats_reject_all": "true: stats_config.stats_matcher.reject_all (every stat becomes a null object)",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
 }
@@ -147,7 +190,9 @@ VHOST_FIELDS = ("request_headers_to_add", "response_headers_to_add", "request_he
 
 
 def shape_routes(shape, envoy_cfg=None):
-    """The routes a shape contributes, in order."""
+    """The routes a shape contributes, in order (an idle shape: none)."""
+    if shape["kind"] == "idle":
+        return []
     if shape["kind"] == "routes":
         rt = shape.get("route_table") or {}
         rs = rt.get("routes")
@@ -253,6 +298,127 @@ def wasm_filter(w):
             "failure_policy": "FAIL_CLOSED"}}}
 
 
+def stats_cluster_names(count, seed):
+    """Seeded service-like cluster names: svc-<4 digits>-<word>.ns-<2 digits>.cluster.test."""
+    import random
+    r = random.Random("epl-stats-clusters:%s" % seed)
+    return ["svc-%04d-%s.ns-%02d.cluster.test" % (i, r.choice(STATS_WORDS), r.randint(0, 99))
+            for i in range(int(count))]
+
+
+def stats_clusters(sc, origin_port):
+    bad = sorted(set(sc) - {"count", "seed", "idle_timeout_s"})
+    if bad or int(sc.get("count", 0)) < 1:
+        raise ValueError("stats_clusters takes {count >= 1, seed, idle_timeout_s}")
+    idle = "%ds" % int(sc.get("idle_timeout_s", 1))
+    out = []
+    for n in stats_cluster_names(sc["count"], sc.get("seed", 1)):
+        c = _static_cluster(n, origin_port)
+        c["typed_extension_protocol_options"] = {"envoy.extensions.upstreams.http.v3.HttpProtocolOptions": {
+            "@type": UPSTREAM_HTTP, "common_http_protocol_options": {"idle_timeout": idle},
+            "explicit_http_config": {"http_protocol_options": {}}}}
+        out.append(c)
+    return out
+
+
+def stats_access_log_names(count):
+    """The counter names of the stats access logger, without scope and tag: c000, c001, ..."""
+    return ["c%03d" % i for i in range(int(count))]
+
+
+def stats_access_log_flat(i, tag_value):
+    """The flat stat name of counter i for one tag value (scope, name, tag name, tag value)."""
+    return "%s.%s.%s.%s" % (STATS_LOG_SCOPE, stats_access_log_names(i + 1)[i], STATS_LOG_TAG, tag_value)
+
+
+def stats_access_log(sl):
+    """The HCM access-log entry of the `stats_access_log` setting. Shape from
+    api/envoy/extensions/access_loggers/stats/v3/stats.proto at v1.40.2: exactly one of the
+    deprecated stat_prefix and stats_scope must be set (stats_scope here, with only its prefix:
+    max_counters unset means no limit, enable_eviction false); a counter needs value_format or
+    value_fixed (value_fixed 1 here: no formatter runs for the value)."""
+    if not isinstance(sl, dict) or not {"counters", "tag"} <= set(sl) <= {"counters", "tag", "hot"}:
+        raise ValueError("stats_access_log takes {counters, tag} and optionally hot")
+    if sl.get("hot", False) not in (True, False):
+        raise ValueError("stats_access_log.hot must be true or false")
+    n = sl["counters"]
+    if isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= STATS_LOG_MAX_COUNTERS:
+        raise ValueError("stats_access_log.counters must be an integer from 1 to %d" % STATS_LOG_MAX_COUNTERS)
+    if sl["tag"] not in STATS_LOG_TAG_VALUES:
+        raise ValueError("stats_access_log.tag must be one of %s" % (STATS_LOG_TAG_VALUES,))
+    return {"name": "envoy.access_loggers.stats", "typed_config": {
+        "@type": STATS_LOG, "stats_scope": {"prefix": STATS_LOG_SCOPE},
+        "counters": [{"stat": {"name": name, "tags": [{"name": STATS_LOG_TAG, "value_format": sl["tag"]}]},
+                      "value_fixed": 1}
+                     # hot: the first counter, n times. The logger (stats.cc at v1.40.2) builds one
+                     # entry per configured counter with no check for repeats and, per request, walks
+                     # the entries: one tag format, one lookup and one add each.
+                     for name in ([stats_access_log_names(1)[0]] * n if sl.get("hot") else stats_access_log_names(n))]}}
+
+
+def stats_sink(sk, envoy_cfg):
+    kind = sk.get("kind")
+    if kind in ("statsd", "dog_statsd"):
+        addr = {"socket_address": {"protocol": "UDP", "address": "127.0.0.1",
+                                   "port_value": int(envoy_cfg["stats_sink_port"])}}
+        if kind == "statsd":
+            bad = sorted(set(sk) - {"kind", "prefix"})
+            tc = {"@type": STATSD, "address": addr, "prefix": sk.get("prefix", "envoy")}
+            name = "envoy.stat_sinks.statsd"
+        else:
+            bad = sorted(set(sk) - {"kind", "prefix", "max_bytes_per_datagram"})
+            tc = {"@type": DOG_STATSD, "address": addr, "prefix": sk.get("prefix", "envoy")}
+            if sk.get("max_bytes_per_datagram"):
+                tc["max_bytes_per_datagram"] = int(sk["max_bytes_per_datagram"])
+            name = "envoy.stat_sinks.dog_statsd"
+    elif kind == "otlp":
+        bad = sorted(set(sk) - {"kind", "max_data_points_per_request"})
+        tc = {"@type": OTLP_SINK, "grpc_service": {"envoy_grpc": {"cluster_name": "otel_collector"}}}
+        if sk.get("max_data_points_per_request"):
+            tc["max_data_points_per_request"] = int(sk["max_data_points_per_request"])
+        name = "envoy.stat_sinks.open_telemetry"
+    else:
+        raise ValueError("stats_sink.kind must be statsd, dog_statsd or otlp")
+    if bad:
+        raise ValueError("stats_sink %s: unknown fields %s" % (kind, bad))
+    return {"name": name, "typed_config": tc}
+
+
+# What the multi-threaded stats shape must not contain: anything that reads a stat to decide
+# (least-request or bounded-load balancing, outlier detection, health checks, the fault and
+# local rate-limit filters, a stats sink).
+AUDIT_LB = {"ROUND_ROBIN"}
+
+
+def audit_mt_s(b):
+    """[problem] of a bootstrap against the decision-reader list of the mt-s shape."""
+    probs = []
+    clusters = b["static_resources"]["clusters"]
+    if [c["name"] for c in clusters] != ["origin"]:
+        probs.append("clusters %s, expected the one origin cluster" % [c["name"] for c in clusters])
+    for c in clusters:
+        if c.get("lb_policy", "ROUND_ROBIN") not in AUDIT_LB:
+            probs.append("cluster %s lb_policy %s" % (c["name"], c.get("lb_policy")))
+        for k in ("outlier_detection", "health_checks", "common_lb_config", "least_request_lb_config"):
+            if c.get(k):
+                probs.append("cluster %s has %s" % (c["name"], k))
+        eps = [e for ep in c["load_assignment"]["endpoints"] for e in ep["lb_endpoints"]]
+        if len(eps) != 1:
+            probs.append("cluster %s has %d hosts, expected one" % (c["name"], len(eps)))
+    ls = b["static_resources"]["listeners"]
+    if len(ls) != 1:
+        probs.append("%d listeners, expected one" % len(ls))
+    for l_ in ls:
+        for ch in l_["filter_chains"]:
+            for f in ch["filters"]:
+                hf = [x["name"] for x in f["typed_config"].get("http_filters", [])]
+                if hf != ["envoy.filters.http.router"]:
+                    probs.append("http filters %s, expected the router only" % hf)
+    if b.get("stats_sinks"):
+        probs.append("a stats sink is configured")
+    return probs
+
+
 def _static_cluster(name, port, http2=False):
     c = {"name": name, "connect_timeout": "1s", "type": "STATIC", "lb_policy": "ROUND_ROBIN",
          "load_assignment": {"cluster_name": name, "endpoints": [{"lb_endpoints": [{
@@ -337,6 +503,8 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         elif al.get("format", "text") != "text":
             raise ValueError("access_log.format must be text or json")
         hcm["access_log"] = [{"name": "envoy.access_loggers.file", "typed_config": fl}]
+    if envoy_cfg.get("stats_access_log"):
+        hcm.setdefault("access_log", []).append(stats_access_log(envoy_cfg["stats_access_log"]))
     az = envoy_cfg.get("ext_authz")
     if az:
         if az not in (True, "http", "grpc"):
@@ -403,11 +571,35 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
                 "explicit_http_config": {"http_protocol_options": {}}}}
     if envoy_cfg.get("upstream_pool_per_downstream"):
         clusters[0]["connection_pool_per_downstream_connection"] = True
-    return {
+    out = {
         "admin": {"address": {"socket_address": {"address": "127.0.0.1",
                                                  "port_value": int(envoy_cfg["admin_port"])}}},
         "static_resources": {"listeners": [listener], "clusters": clusters},
     }
+    sc = envoy_cfg.get("stats_clusters")
+    if sc:
+        clusters.extend(stats_clusters(sc, envoy_cfg.get("upstream_port") or origin_port))
+        hcm["route_config"]["virtual_hosts"][0]["routes"].append(
+            {"match": {"path": STATS_PRIME_PATH}, "route": {"cluster_header": STATS_CLUSTER_HEADER}})
+    sf = envoy_cfg.get("stats_flush")
+    if sf:
+        if set(sf) == {"interval_s"}:
+            v = float(sf["interval_s"])
+            out["stats_flush_interval"] = ("%gs" % v) if v >= 0.001 else None
+        elif sf == {"on_admin": True}:
+            out["stats_flush_on_admin"] = True
+        else:
+            raise ValueError("stats_flush takes {interval_s} or {on_admin: true}")
+    sk = envoy_cfg.get("stats_sink")
+    if sk:
+        if sf == {"on_admin": True}:
+            raise ValueError("a stats sink with stats_flush on_admin flushes only on admin reads")
+        out["stats_sinks"] = [stats_sink(sk, envoy_cfg)]
+        if sk.get("kind") == "otlp" and not any(c["name"] == "otel_collector" for c in clusters):
+            clusters.append(_static_cluster("otel_collector", envoy_cfg["collector_port"], http2=True))
+    if envoy_cfg.get("stats_reject_all"):
+        out["stats_config"] = {"stats_matcher": {"reject_all": True}}
+    return out
 
 
 # keys that look like settings but are not (typos of the real ones)
@@ -470,7 +662,8 @@ AUTHZ_GRPC_BODY = b"\x00\x00\x00\x00\x00"
 
 
 def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_timeout_s=600,
-               keepalive_requests=10000000, types=None):
+               keepalive_requests=10000000, types=None, worker_connections=8192, worker_rlimit_nofile=None,
+               stub_status=False):
     authz = ("  server { listen 127.0.0.1:%d; location / { return 200; } }\n" % int(authz_port)) if authz_port else ""
     if authz_grpc_port:
         authz += ("  server { listen 127.0.0.1:%d; http2 on; root /www;\n"
@@ -478,11 +671,12 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
                   "    location = /%s { internal; types { } default_type application/grpc;\n"
                   "      add_trailer grpc-status 0 always; }\n"
                   "  }\n" % (int(authz_grpc_port), AUTHZ_GRPC_FILE, AUTHZ_GRPC_FILE))
-    return (
-        "worker_processes %d;\n"
-        "pid /tmp/nginx.pid;\n"
-        "error_log stderr warn;\n"
-        "events { worker_connections 8192; }\n"
+    head = ("worker_processes %d;\n"
+            "pid /tmp/nginx.pid;\n"
+            "error_log stderr warn;\n" % int(workers)
+            + ("worker_rlimit_nofile %d;\n" % int(worker_rlimit_nofile) if worker_rlimit_nofile else "")
+            + "events { worker_connections %d; }\n" % int(worker_connections))
+    return head + (
         "http {\n"
         "  access_log off;\n"
         "  sendfile on;\n"
@@ -492,7 +686,9 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
         "  open_file_cache max=64;\n"
         "  server { listen 127.0.0.1:%d; root /www;%s }\n"
         "%s"
-        "}\n" % (int(workers), int(keepalive_requests), int(keepalive_timeout_s), int(port),
+        "}\n" % (int(keepalive_requests), int(keepalive_timeout_s), int(port),
                  "".join("\n    location = %s { types { } default_type %s; }" % (p, t)
-                         for p, t in sorted((types or {}).items())) + ("\n " if types else ""), authz)
+                         for p, t in sorted((types or {}).items()))
+                 + ("\n    location = %s { stub_status; }" % ORIGIN_STATUS_PATH if stub_status else "")
+                 + ("\n " if (types or stub_status) else ""), authz)
     )

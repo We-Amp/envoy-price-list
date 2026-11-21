@@ -1,0 +1,79 @@
+== 1. UDP sinks: receiver-side counts
+
+s-100k
+  statsd         window (kernel InDatagrams): datagrams per flush 31112.2 .. 31112.2; kernel dropped 0, RcvbufErrors 0, socket drops 0, InErrors 0
+                 admin used counter+gauge count [31096]
+                 receiver lifetime: datagrams 927131 .. 936047; lines (datagrams + newlines) 927131 .. 936047; bytes per line 77.76 .. 77.78; bytes per datagram 78 .. 78; flushes seen (uptime lines) [30]; rcvbuf granted [536870912]
+                 receiver lifetime lines per flush seen: 30904 31200 31200 31201 31199 31200 31200 31200 31202 31201
+  dogstatsd-buf  window (kernel InDatagrams): datagrams per flush 2308.0 .. 2312.0; kernel dropped 0, RcvbufErrors 0, socket drops 0, InErrors 0
+                 admin used counter+gauge count [31094]
+                 receiver lifetime: datagrams 73041 .. 74673; lines (datagrams + newlines) 904421 .. 926177; bytes per line 101.69 .. 101.72; bytes per datagram 1258 .. 1261; flushes seen (uptime lines) [29, 30]; rcvbuf granted [536870912]
+                 receiver lifetime lines per flush seen: 30873 31197 31197 31196 31197 31196 31187 31197 31195 31198
+  dogstatsd-buf lifetime lines / statsd lifetime lines, by round: 0.9990 0.9666 0.9666 0.9665 0.9666 0.9665 0.9663 0.9666 0.9665 0.9666
+  mean ratio 0.9697; mean lifetime lines statsd 935120, dogstatsd-buf 906820
+  window: statsd lines per flush 31112.2; dogstatsd-buf datagrams per flush 2309.9 -> 13.47 lines per datagram if every line arrived; dogstatsd bytes per line (lifetime, without the joining newline) 101.7 -> a 1432-byte datagram holds at most 13 lines; implied fill 1382 bytes of 1432
+
+s-1m
+  statsd         window (kernel InDatagrams): datagrams per flush 310151.0 .. 310154.0; kernel dropped 0, RcvbufErrors 0, socket drops 0, InErrors 0
+                 admin used counter+gauge count [310098]
+                 receiver lifetime: datagrams 3163211 .. 3359110; lines (datagrams + newlines) 3163211 .. 3359110; bytes per line 77.66 .. 77.76; bytes per datagram 78 .. 78; flushes seen (uptime lines) [11]; rcvbuf granted [536870912]
+                 receiver lifetime lines per flush seen: 287565 303410 303060 305352 305374 305349 303255 305362
+  dogstatsd-buf  window (kernel InDatagrams): datagrams per flush 22926.0 .. 22937.0; kernel dropped 0, RcvbufErrors 0, socket drops 0, InErrors 0
+                 admin used counter+gauge count [310098, 310103]
+                 receiver lifetime: datagrams 278195 .. 287928; lines (datagrams + newlines) 3012478 .. 3149920; bytes per line 101.47 .. 101.61; bytes per datagram 1100 .. 1110; flushes seen (uptime lines) [10, 11]; rcvbuf granted [536870912]
+                 receiver lifetime lines per flush seen: 286356 303922 303893 301248 303892 303892 303914 301399
+  dogstatsd-buf lifetime lines / statsd lifetime lines, by round: 0.9958 0.9106 0.9116 0.8969 0.9047 0.9048 0.9111 0.8973
+  mean ratio 0.9160; mean lifetime lines statsd 3325748, dogstatsd-buf 3046440
+  window: statsd lines per flush 310152.4; dogstatsd-buf datagrams per flush 22932.0 -> 13.52 lines per datagram if every line arrived; dogstatsd bytes per line (lifetime, without the joining newline) 101.6 -> a 1432-byte datagram holds at most 13 lines; implied fill 1386 bytes of 1432
+
+== 2. OTLP: requests, resets, bytes
+
+s-100k (leg-end counters cover the whole leg; flushes in the leg = rq_total / requests per flush)
+  r01 used 36141 -> 4 requests per flush expected; rq_total 115 (28.75 flushes), rq_2xx 115, http2.rx_reset absent (unused = 0), tx 180.4 MB (6.27 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r02 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r03 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r04 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r05 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r06 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r07 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r08 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r09 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  r10 used 36141 -> 4 requests per flush expected; rq_total 116 (29.00 flushes), rq_2xx 116, http2.rx_reset absent (unused = 0), tx 182.6 MB (6.30 MB per flush), collector points per flush 36141.0 = 1.0000 of used, refused 0
+  non-zero failure-type counters of cluster.otel_collector (window read): none
+
+s-1m (leg-end counters cover the whole leg; flushes in the leg = rq_total / requests per flush)
+  r01 used 360147 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 17, tx 214.8 MB (53.70 MB per flush), collector points per flush 310146.0 = 0.8612 of used, refused 0
+  r02 used 360147 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 13, tx 215.7 MB (53.93 MB per flush), collector points per flush 310146.3 = 0.8612 of used, refused 0
+  r03 used 360147 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 13, tx 232.6 MB (58.14 MB per flush), collector points per flush 310147.0 = 0.8612 of used, refused 0
+  r04 used 360147 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 20, tx 202.9 MB (50.73 MB per flush), collector points per flush 310146.3 = 0.8612 of used, refused 0
+  r05 used 360147 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 18, tx 202.3 MB (50.58 MB per flush), collector points per flush 310146.3 = 0.8612 of used, refused 0
+  r06 used 360146 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 20, tx 210.6 MB (52.64 MB per flush), collector points per flush 310146.0 = 0.8612 of used, refused 0
+  r07 used 360146 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 20, tx 196.5 MB (49.13 MB per flush), collector points per flush 310146.0 = 0.8612 of used, refused 0
+  r08 used 360146 -> 37 requests per flush expected; rq_total 148 (4.00 flushes), rq_2xx 148, http2.rx_reset 20, tx 213.0 MB (53.24 MB per flush), collector points per flush 310146.0 = 0.8612 of used, refused 0
+  non-zero failure-type counters of cluster.otel_collector (window read): {'cluster.otel_collector.http2.rx_reset': [17, 13, 13, 20, 18, 20, 20, 20]}
+
+sw (loaded, 100k, 5 s)
+  sw/stats/otlp.txt.gz: 118554 lines (what this dump holds is not labelled used-only or all; not used as an expectation)
+  r01 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 345419 (38379.9 per request-quartet), refused 0; failure-type counters non-zero: none
+  r02 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335418 (37268.7 per request-quartet), refused 0; failure-type counters non-zero: none
+  r03 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335419 (37268.8 per request-quartet), refused 0; failure-type counters non-zero: none
+  r04 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 325419 (36157.7 per request-quartet), refused 0; failure-type counters non-zero: none
+  r05 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 325420 (36157.8 per request-quartet), refused 0; failure-type counters non-zero: none
+  r06 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335420 (37268.9 per request-quartet), refused 0; failure-type counters non-zero: none
+  r07 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 325419 (36157.7 per request-quartet), refused 0; failure-type counters non-zero: none
+  r08 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335420 (37268.9 per request-quartet), refused 0; failure-type counters non-zero: none
+  r09 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335420 (37268.9 per request-quartet), refused 0; failure-type counters non-zero: none
+  r10 window: 16 requests in 4 flushes, tx 25.41 MB; leg end: rq_total 36 rq_2xx 36; collector accepted 335418 (37268.7 per request-quartet), refused 0; failure-type counters non-zero: none
+  accepted modulo 10,000: [5418, 5419, 5420]  (legs differ by whole 10,000-point requests)
+
+== 3. idle sink rows, A/A-widened (rung's A/A half-width in place of 0.34)
+  s-100k A/A nosink-A2 vs nosink: half-width 2.28 log-% (2% target missed), reach 3.70
+  s-100k statsd         vs nosink     +1899% plain [+1848, +1951]; A/A-widened [+1801, +2001]; arm 220.7 ms +/- 2.3% (A/A half-width) = +/- 5.0 ms; delta +209.7 ms
+  s-100k dogstatsd-buf  vs nosink     +553% plain [+542, +565]; A/A-widened [+523, +585]; arm 72.1 ms +/- 2.3% (A/A half-width) = +/- 1.6 ms; delta +61.1 ms
+  s-100k otlp           vs nosink     +837% plain [+823, +851]; A/A-widened [+795, +882]; arm 103.5 ms +/- 2.3% (A/A half-width) = +/- 2.4 ms; delta +92.4 ms
+  s-1m A/A nosink-5s-A2 vs nosink-5s: half-width 2.64 log-% (2% target missed), reach 4.29
+  s-1m A/A nosink-5s-A2 vs nosink-5s: half-width 2.64 log-% (2% target missed), reach 4.29
+  s-1m A/A nosink-A2 vs nosink: half-width 2.00 log-% (2% target met), reach 2.60
+  s-1m statsd         vs nosink-5s  +816% plain [+793, +839]; A/A-widened [+766, +868]; arm 2391.1 ms +/- 2.6% (A/A half-width) = +/- 63.1 ms; delta +2129.9 ms
+  s-1m dogstatsd-buf  vs nosink-5s  +251% plain [+244, +258]; A/A-widened [+232, +271]; arm 916.2 ms +/- 2.6% (A/A half-width) = +/- 24.2 ms; delta +655.0 ms
+  s-1m otlp           vs nosink-20s +376% plain [+361, +392]; A/A-widened [+349, +405]; arm 1271.0 ms +/- 2.6% (A/A half-width) = +/- 33.6 ms; delta +1004.1 ms

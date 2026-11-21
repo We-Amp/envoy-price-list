@@ -1,0 +1,97 @@
+== items 1, 18: v2 widened interval, 1.96*sqrt(SE^2 + 0.34^2), max with the t half-width
+  U-hi  mt-14w-one    effect -1.47% widened [-2.38, -0.55] hw 0.93; A/A hw 1.11 gate FAIL
+  U-hi  mt-14w-split  effect -1.99% widened [-2.84, -1.13] hw 0.87; A/A hw 1.19 gate FAIL
+  U-hi  mt-28w        effect -1.98% widened [-2.95, -0.99] hw 1.00; A/A hw 0.62 gate pass
+  U     mt-14w-one    effect -2.29% widened [-3.22, -1.36] hw 0.95; A/A hw 0.88 gate pass
+  U     mt-14w-split  effect -2.64% widened [-3.72, -1.55] hw 1.11; A/A hw 0.82 gate pass
+  U     mt-28w        effect -2.28% widened [-3.30, -1.25] hw 1.05; A/A hw 1.02 gate FAIL
+== note 4: Holm over the 3 effect rows only (U-hi)
+   ['0.00059', '1.9e-05', '0.00025']
+== item 2: load difference with the plan cross-session form, SE = sqrt(SE1^2 + SE2^2 + 0.34^2 + 0.34^2), x1.96
+  mt-14w-one    diff +0.84 [-0.49, +2.17]; A/A gate U 0.88 U-hi 1.11
+      cpi_tot diff +0.72 [-0.53, +1.97] (0.34 was derived for cycles per request, applied here for scale only)
+      cpi_u diff +0.70 [-0.53, +1.92] (0.34 was derived for cycles per request, applied here for scale only)
+  mt-14w-split  diff +0.67 [-0.75, +2.08]; A/A gate U 0.82 U-hi 1.19
+      cpi_tot diff +0.64 [-0.78, +2.06] (0.34 was derived for cycles per request, applied here for scale only)
+      cpi_u diff +0.62 [-0.86, +2.10] (0.34 was derived for cycles per request, applied here for scale only)
+  mt-28w        diff +0.31 [-1.14, +1.76]; A/A gate U 1.02 U-hi 0.62
+      cpi_tot diff +0.22 [-1.14, +1.59] (0.34 was derived for cycles per request, applied here for scale only)
+      cpi_u diff +0.07 [-1.23, +1.38] (0.34 was derived for cycles per request, applied here for scale only)
+  between-session spread alone: 1.96*sqrt(2)*0.34 = 0.94 points
+== item 5: marginal cycles per removed instruction (u+k), bootstrap over rounds (20000 resamples, seed 1)
+  mt-14w-one    U-hi 1.28 [0.80, 1.78]  U 2.01 [1.47, 2.50]  difference -0.73 [-1.42, +0.00]
+  mt-14w-split  U-hi 1.71 [1.25, 2.14]  U 2.36 [1.55, 3.10]  difference -0.64 [-1.52, +0.28]
+  mt-28w        U-hi 1.68 [1.13, 2.27]  U 1.99 [1.37, 2.59]  difference -0.32 [-1.13, +0.52]
+== item 6: the two pre-declared contrasts (experiment.json growth / cross_socket), Holm over 2
+  experiment.json /box/growth = [["28w", "1w"], ["14w-one", "1w"]]
+  experiment.json /box/u_hi/growth = [["28w", "14w-one"]]
+  experiment.json /growth = [["28w", "14w-one"]]
+  experiment.json /box/cross_socket = [["14w-split", "14w-one"]]
+  experiment.json /box/u_hi/cross_socket = [["14w-split", "14w-one"]]
+  experiment.json /cross_socket = [["14w-split", "14w-one"]]
+  experiment.json /rerun_invalid = 1
+  experiment.json /target_worker_busy = [0.6, 0.7]
+  experiment.json /aa/max_half_width_pct = {"cycles_total": 1.0, "instructions_u": 0.5}
+  mt-28w - mt-14w-one: n 14 -0.61 [-1.79, +0.58] raw p 0.289
+  mt-14w-split - mt-14w-one: n 14 -0.47 [-1.23, +0.29] raw p 0.207
+   Holm(2): ['0.41', '0.41']
+== item 7: "other tasks" figure in calibration legs (rate per worker -> figure)
+   stopped-1800/cal-hi-14w-one/calibrate-legs.jsonl keys: ['rung_workers', 'started_utc', 'sut_foreign_cpus']
+     2026-11-19T14:15:04Z rps 21000 workers 14 foreign 0.0095 valid True reasons []
+     2026-11-19T14:15:42Z rps 25200 workers 14 foreign 0.0083 valid True reasons []
+     2026-11-19T14:16:20Z rps 29400 workers 14 foreign 0.0044 valid True reasons []
+     2026-11-19T14:17:04Z rps 33600 workers 14 foreign 0.0055 valid False reasons ['client overflow/pool-exhausted counters 4 (upstream_cx_overflow=4)', 'client pending tot
+     2026-11-19T14:17:54Z rps 37800 workers 14 foreign 0.0051 valid False reasons ['client overflow/pool-exhausted counters 17 (upstream_cx_overflow=17)', 'client pending t
+   stopped-1800/cal-hi-28w/calibrate-legs.jsonl keys: ['rung_workers', 'started_utc', 'sut_foreign_cpus']
+     2026-11-19T14:18:46Z rps 42000 workers 28 foreign 0.038 valid True reasons []
+     2026-11-19T14:19:43Z rps 50400 workers 28 foreign 0.0584 valid False reasons ['other tasks used 0.058 CPUs on the SUT CPUs during the window']
+     2026-11-19T14:20:46Z rps 58800 workers 28 foreign 0.0556 valid False reasons ['client overflow/pool-exhausted counters 12 (upstream_cx_overflow=12)', 'client pending t
+     2026-11-19T14:21:49Z rps 67200 workers 28 foreign 0.1053 valid False reasons ['client overflow/pool-exhausted counters 27 (upstream_cx_overflow=27)', 'client pending t
+     2026-11-19T14:22:52Z rps 75600 workers 28 foreign 0.1463 valid False reasons ['client overflow/pool-exhausted counters 32 (upstream_cx_overflow=32)', 'client pending t
+   multi-worker/cal-1w/calibrate-legs.jsonl keys: ['rung_workers', 'started_utc', 'sut_foreign_cpus']
+     2026-11-18T13:30:39Z rps 800 workers 1 foreign 0.0006 valid True reasons []
+     2026-11-18T13:31:12Z rps 1000 workers 1 foreign 0.0004 valid True reasons []
+     2026-11-18T13:31:45Z rps 1300 workers 1 foreign 0.0007 valid True reasons []
+     2026-11-18T13:32:19Z rps 1600 workers 1 foreign 0.0032 valid True reasons []
+     2026-11-18T13:32:52Z rps 2000 workers 1 foreign 0.0009 valid True reasons []
+   multi-worker/cal-28w/calibrate-legs.jsonl keys: ['rung_workers', 'started_utc', 'sut_foreign_cpus']
+     2026-11-18T13:33:27Z rps 22400 workers 28 foreign 0.0533 valid False reasons ['client overflow/pool-exhausted counters 148 (upstream_cx_overflow=148)', 'client pending
+     2026-11-18T13:34:05Z rps 28000 workers 28 foreign 0.0232 valid False reasons ['client overflow/pool-exhausted counters 517 (upstream_cx_overflow=517)', 'client pending
+     2026-11-18T13:34:43Z rps 36400 workers 28 foreign 0.049 valid False reasons ['client overflow/pool-exhausted counters 1434 (upstream_cx_overflow=1434)', 'client pendi
+     2026-11-18T13:35:21Z rps 44800 workers 28 foreign 0.06 valid False reasons ['client overflow/pool-exhausted counters 1224 (upstream_cx_overflow=1224)', 'client pendi
+     2026-11-18T13:36:18Z rps 56000 workers 28 foreign 0.1148 valid False reasons ['client overflow/pool-exhausted counters 2074 (upstream_cx_overflow=2074)', 'client pendi
+== note 9: figure by position of the leg inside its block (consecutive legs of one shape)
+  U-hi  mt-14w-one    blocks 21 mean by position 0.020 0.024 0.032 invalid by position [1, 2, 5]; third-first paired t p 0.045 wilcoxon p 0.016
+  U-hi  mt-14w-split  blocks 15 mean by position 0.011 0.011 0.014 invalid by position [0, 0, 0]; third-first paired t p 0.145 wilcoxon p 0.135
+  U-hi  mt-28w        blocks 17 mean by position 0.022 0.028 0.027 invalid by position [0, 1, 1]; third-first paired t p 0.151 wilcoxon p 0.225
+  U     mt-14w-one    blocks 15 mean by position 0.018 0.020 0.016 invalid by position [0, 0, 0]; third-first paired t p 0.611 wilcoxon p 0.978
+  U     mt-14w-split  blocks 15 mean by position 0.010 0.011 0.007 invalid by position [0, 0, 0]; third-first paired t p 0.157 wilcoxon p 0.109
+  U     mt-28w        blocks 16 mean by position 0.026 0.018 0.022 invalid by position [1, 0, 0]; third-first paired t p 0.052 wilcoxon p 0.074
+  1,800 session 14w-one: n 16 median 0.007 max 0.047
+== note 13: per-arm medians of the figure
+  base         all 53 legs 0.0181; current valid 44 legs 0.0166
+  stats-reject all 53 legs 0.0186; current valid 45 legs 0.0174
+  base-A2      all 53 legs 0.0198; current valid 45 legs 0.0193
+== note 14: A/A half-width without the low legs; legs 3% or more from their shape/arm median
+  mt-14w-one A/A without rounds (): n 14 hw 1.11
+  mt-14w-one A/A without rounds (8,): n 13 hw 0.89
+  mt-14w-split A/A without rounds (): n 15 hw 1.19
+  mt-14w-split A/A without rounds (7,): n 14 hw 1.10
+  mt-14w-split A/A without rounds (1, 7): n 13 hw 0.96
+   r08-mt-14w-one-base-A2 0.9570
+   r01-mt-14w-split-base-A2 1.0299
+   r07-mt-14w-split-base-A2 0.9685
+== note 15: base arm, 14w-split against 14w-one, both runs (percent)
+  U     cyc_u  n 15 +0.56% [-0.34, +1.46]
+  U     cpi_u  n 15 +0.56% [-0.33, +1.47]
+  U     wcyc   n 15 +0.11% [-0.83, +1.06]
+  U     cyc_k  n 15 -0.76% [-1.95, +0.45]
+  U-hi  cyc_u  n 14 +0.88% [+0.31, +1.45]
+  U-hi  cpi_u  n 14 +0.91% [+0.35, +1.47]
+  U-hi  wcyc   n 14 +0.24% [-0.47, +0.95]
+  U-hi  cyc_k  n 14 -1.03% [-2.13, +0.08]
+== note 12: absolute delta 14w-split
+  10.740k [7.434, 14.046]
+== note 11: base-arm SUT busy medians
+   U-hi [36.6, 36.6, 36.1]
+   U [26.0, 25.8, 26.1]

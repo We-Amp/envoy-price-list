@@ -1,0 +1,7 @@
+User instructions per request removed by reject_all (arm minus its reject arm, paired by round)
+   mt-4w   official 6.41k [6.39, 6.43]  (6411.6, 20 rounds)
+   mt-4w   dev      6.11k [6.09, 6.14]  (6114.3, 20 rounds)
+   mt-4w   the release removes 4.6% more than the dev build (6.41k against 6.11k per request)
+   mt-12w  official 6.42k [6.40, 6.44]  (6419.5, 20 rounds)
+   mt-12w  dev      6.12k [6.10, 6.15]  (6120.3, 20 rounds)
+   mt-12w  the release removes 4.7% more than the dev build (6.42k against 6.12k per request)

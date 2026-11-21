@@ -34,10 +34,14 @@ Scopes:
   leg     the end-of-leg admin snapshot, taken just before Envoy is stopped
           (`sut_stats_leg_end`; cumulative since Envoy started, warm-up included)
   field   a value of the leg record, by dotted path (`access_log_lines`,
-          `collector_delta.accepted_spans`, `tcmalloc_percpu_slab_bytes`)
+          `collector_delta.accepted_spans`, `tcmalloc_percpu_slab_bytes`,
+          `stat_count.start_n`: the stats under measure.stat_count_prefix before the window)
   config  the arm's /config_dump, saved at the arm's first start: every occurrence
           of the key NAME, anywhere in the dump; `equals` needs all of them equal
-          to X (and at least one), `present` at least one, `absent` none
+          to X (and at least one), `present` at least one, `absent` none.
+          "where": {KEY: VALUE, ...} keeps only the occurrences in an object that also
+          holds these keys with these values (the `address` beside `port_value` 10110:
+          the listener's socket address, not the admin's or a cluster's)
 """
 
 import gzip
@@ -77,6 +81,8 @@ def validate_items(items, arm_names=()):
         if numeric and ("equals" in it or "per_request" in it or "ref" in it) and not any(
                 k in it for k in ("tol", "tol_abs", "tol_binomial_sd")):
             errs.append("%s: needs a tolerance (tol, tol_abs or tol_binomial_sd; 0 for a count that must stay 0)" % w)
+        if "where" in it and (sc != "config" or not isinstance(it["where"], dict) or not it["where"]):
+            errs.append("%s: where is a non-empty object, for config scope only" % w)
         if sc == "config" and set(kinds) - {"equals", "present", "absent"}:
             errs.append("%s: config scope takes equals, present or absent" % w)
         if "per" in it and (not isinstance(it["per"], str) or it["per"].split(":", 1)[0] not in SCOPES[:3]):
@@ -105,7 +111,11 @@ SNAPSHOT = {"window": "sut_stats_window", "leg": "sut_stats_leg_end"}
 def snapshot_missing(m, scope):
     """True when the stats snapshot a window or leg item reads was never taken (or is empty):
     then no item of that scope can pass, `absent` included."""
-    return scope in SNAPSHOT and not m.get(SNAPSHOT[scope])
+    if scope not in SNAPSHOT:
+        return False
+    d = m.get(SNAPSHOT[scope])
+    # an empty snapshot counts when the read itself succeeded (an arm that rejects every stat)
+    return d is None or (not d and not m.get(SNAPSHOT[scope] + "_ok"))
 
 
 def lookup(m, scope, name):
@@ -119,14 +129,16 @@ def lookup(m, scope, name):
     raise ValueError("scope %s has no plain lookup" % scope)
 
 
-def config_values(dump, key):
-    """Every value stored under `key` anywhere in a parsed /config_dump."""
+def config_values(dump, key, where=None):
+    """Every value stored under `key` anywhere in a parsed /config_dump; with `where`, only in
+    objects that also hold those keys with those values."""
     out = []
 
     def walk(x):
         if isinstance(x, dict):
+            hit = not where or all(k in x and x[k] == v for k, v in where.items())
             for k, v in x.items():
-                if k == key:
+                if k == key and hit:
                     out.append(v)
                 walk(v)
         elif isinstance(x, list):
@@ -139,6 +151,8 @@ def config_values(dump, key):
 def _denominator(m, it):
     sc = it.get("scope", "window")
     spec = it.get("per") or DEFAULT_PER.get(sc)
+    if not spec and sc == "field":
+        return 1.0, None  # a field value is compared as it is (per flush, per leg: the field says)
     if not spec:
         return None, "no denominator for scope %s" % sc
     s, n = spec.split(":", 1)
@@ -174,7 +188,7 @@ def check_item(m, it, config_dump=None):
         if config_dump is None:
             r["why"] = "no /config_dump for this arm"
             return r
-        vals = config_values(config_dump, it["stat"])
+        vals = config_values(config_dump, it["stat"], it.get("where"))
         r["value"] = vals[:4]
         if it.get("absent"):
             r["ok"] = not vals

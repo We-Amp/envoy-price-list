@@ -180,3 +180,20 @@ No measured value was changed.
 ## Licence
 
 See `LICENSE`.
+
+## Stats study
+
+The runs of the stats study (flush cost and sinks, flush latency, the store stats at 1 to 28 workers, shared
+against per-connection counters, the atomics microbenchmarks, the Arm code-generation checks) are not in git:
+about 320 MB of raw records, published as assets of the release of tag `stats-2026-11`, one archive per study.
+
+```
+python3 tools/fetch-stats-data.py        # downloads, verifies and unpacks into data/stats/ (ignored by git)
+```
+
+In git: `stats-data.manifest` (every file of every archive with its size and SHA-256), `stats-data.SHA256SUMS`
+(the archives), the index with the conditions of every run ([`../docs/stats-data/README.md`](../docs/stats-data/README.md)),
+what was changed in the raw records ([`../docs/stats-data/WHAT-WAS-CHANGED.md`](../docs/stats-data/WHAT-WAS-CHANGED.md)),
+the rendered tables ([`../docs/stats-tables/`](../docs/stats-tables/)), and the maps from the commit ids recorded in the data
+to the published commits ([harness](../docs/stats-data/harness-commit-map.md), [Envoy](../docs/stats-data/envoy-commit-map.md)). How to run the study:
+[`../docs/stats-study.md`](../docs/stats-study.md). The directories of the earlier studies above are in git as before.

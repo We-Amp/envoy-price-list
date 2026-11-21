@@ -1,0 +1,276 @@
+{
+ "name": "mt-smoke-u-x86-vm",
+ "machine_label": "a current x86 cloud VM, 16 vCPU (8 cores with SMT, one thread per core, siblings idle), spot, PMU on",
+ "workdir": "~/epl/runs/stats-mt",
+ "box": {
+  "name": "x86-vm",
+  "arch": "x86_64",
+  "label": "x86-vm",
+  "kind": "cloud-vm",
+  "machine_label": "a current x86 cloud VM, 16 vCPU (8 cores with SMT, one thread per core, siblings idle), spot, PMU on",
+  "cpus": {
+   "sut": "0-4",
+   "client": "5-6",
+   "origin": "7"
+  },
+  "main_cpu": 4,
+  "rungs": [
+   {
+    "name": "1w",
+    "workers": 1,
+    "worker_cpus": "0",
+    "client_concurrency": 1
+   },
+   {
+    "name": "4w",
+    "workers": 4,
+    "worker_cpus": "0-3",
+    "client_concurrency": 2
+   }
+  ],
+  "growth": [
+   [
+    "4w",
+    "1w"
+   ]
+  ],
+  "cross_socket": [],
+  "perf": "sudo -n /usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+  "hitm_events": null,
+  "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "origin_image": "nginx:alpine@sha256:PIN-THE-AMD64-DIGEST-ON-THE-VM",
+  "image_platform": "linux/amd64",
+  "binaries": {
+   "x86_64": {
+    "binary": "~/epl/bin/envoy-1.40.2",
+    "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+    "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+   }
+  },
+  "steal_gate": 0.02,
+  "micro": {
+   "root": "~/epl/bins/stats/r5",
+   "rows": [
+    "model",
+    "stat",
+    "histogram"
+   ],
+   "placement": "vm",
+   "cpus": "0-7",
+   "threads": [
+    1,
+    4,
+    7
+   ],
+   "histogram_workers": [
+    1,
+    7
+   ],
+   "smoke": {
+    "threads": [
+     1,
+     2,
+     4
+    ],
+    "histogram_workers": [
+     1,
+     2
+    ]
+   },
+   "pmu": true,
+   "max_invol_switches": 5,
+   "invol_switches_per_s": 25,
+   "invol_bound_record": "rule of 2026-11-18: per thread max(5, 25/s x window), times the threads, on every box (5 per thread at the 0.2 s smoke, 25 per thread at 1 s)"
+  },
+  "note": "The x86 comparison VM: 16 vCPU = 8 cores with SMT. Threads map to physical cores, as on the Arm VM (where a vCPU is a core): one CPU per core is listed and its sibling stays idle, so N threads use N cores on both VMs. CPU numbers assume CPUs 0-7 are one per core and 8-15 their siblings; the micro runner checks this with lscpu -p=CPU,CORE at the start and refuses otherwise (edit the lists then). Microbenchmarks: threads 1, 4 and 7 (top: one spare core), histogram workers 1 and 7; the involuntary-switch bound is frozen from the session's smoke. End to end only 1w and 4w fit (SUT 0-4 with the main thread on 4, client 5-6, origin 7, siblings idle); the 12-worker rung of the Arm VM has no x86 counterpart here. Perf through sudo, PMU standard; steal gated at 2%. Binaries in <root>/<commit>/<target>, pinned by sha256 in boxes/sha256/x86-vm.txt after the rebuild."
+ },
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true,
+  "nofile": 65536
+ },
+ "cpus": {
+  "sut": "0-4",
+  "client": "5-6",
+  "origin": "7"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 4,
+  "connections_per_worker": 16,
+  "warmup_s": 5,
+  "nofile": 65536,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "sudo -n /usr/bin/perf",
+  "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations,ref-cycles",
+  "per_thread": true,
+  "numastat": false,
+  "responses_from": "origin"
+ },
+ "validity": {
+  "max_steal_share": 0.02,
+  "max_non2xx": 0
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:PIN-THE-AMD64-DIGEST-ON-THE-VM",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8,
+  "stub_status": true
+ },
+ "audit": "mt-s",
+ "order": "latin",
+ "shape_order": "latin",
+ "order_seed": 41,
+ "primary_metric": "workers_cycles_per_req",
+ "comparisons": "base",
+ "base_arm": "base",
+ "arms": [
+  {
+   "name": "base",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "absent": true,
+     "label": "no stats matcher"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "min": 1,
+     "label": "store stats present"
+    }
+   ]
+  },
+  {
+   "name": "stats-reject",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "settings": {
+    "stats_reject_all": true
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "equals": true,
+     "label": "stats_matcher reject_all"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "absent": true,
+     "label": "store stats absent at the end of the leg (the read succeeded, the stat is not there)"
+    }
+   ]
+  },
+  {
+   "name": "base-A2",
+   "binaries": {
+    "x86_64": {
+     "binary": "~/epl/bin/envoy-1.40.2",
+     "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+     "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "reject_all",
+     "scope": "config",
+     "absent": true,
+     "label": "no stats matcher"
+    },
+    {
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "scope": "leg",
+     "min": 1,
+     "label": "store stats present"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "mt-1w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 1300,
+   "workers": 1,
+   "worker_cpus": "0",
+   "main_cpu": 4,
+   "client_concurrency": 1,
+   "client_connections_per_worker": 16,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
+  },
+  {
+   "name": "mt-4w",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200,
+   "workers": 4,
+   "worker_cpus": "0-3",
+   "main_cpu": 4,
+   "client_concurrency": 2,
+   "client_connections_per_worker": 32,
+   "client_extra_args": [
+    "--rate-limiter-plugin-config",
+    "{\"name\":\"nighthawk.linear-ramping-rate-limiter-plugin\",\"typed_config\":{\"@type\":\"type.googleapis.com/nighthawk.rate_limiter.LinearRampingRateLimiterConfig\",\"ramp_time\":\"1s\"}}"
+   ],
+   "lead_in_s": 3
+  }
+ ],
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "adaptive": false,
+ "r_star": 1300,
+ "k": 16,
+ "session_record": {
+  "fix_envoy_static": {
+   "binary": "~/epl/bins/stats/envoy-static-top-3c9cce2f2c",
+   "sha256": "1c0f3ccfc81045d49ff0fce238e9094e1bf7c0894e19470a8a7b51fd8fb9133c",
+   "record": "built from 3c9cce2f2c / 71a80bcaab; source tree outside test/ identical to 977c664058"
+  }
+ },
+ "smoke": true,
+ "evidence_mode": "record"
+}

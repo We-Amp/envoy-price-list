@@ -1,0 +1,25 @@
+1. Store-stat price (base - stats-reject, worker-only cycles per request) and its share of base
+   mt-1w         n 15  16.95 [-7.62, 41.51] k cycles; base 634.7k; share 2.67% [-1.20, 6.54]
+   mt-4w         n 15  13.47 [7.13, 19.80] k cycles; base 580.2k; share 2.32% [1.23, 3.41]
+   mt-14w-one    n 15  13.06 [8.87, 17.24] k cycles; base 569.5k; share 2.29% [1.56, 3.03]
+   mt-14w-split  n 15  15.06 [9.59, 20.53] k cycles; base 570.2k; share 2.64% [1.68, 3.60]
+   mt-28w        n 15  13.05 [8.03, 18.06] k cycles; base 572.1k; share 2.28% [1.40, 3.16]
+
+2. Instructions per request removed (user + kernel, whole process)
+   mt-1w         n 15  6.44 [3.91, 8.96] k instructions; 3.9% of base user instructions
+   mt-4w         n 15  6.51 [5.92, 7.09] k instructions; 4.0% of base user instructions
+   mt-14w-one    n 15  6.48 [6.07, 6.89] k instructions; 4.0% of base user instructions
+   mt-14w-split  n 15  6.39 [6.02, 6.76] k instructions; 3.9% of base user instructions
+   mt-28w        n 15  6.54 [6.11, 6.98] k instructions; 4.0% of base user instructions
+
+3. Price differences between rungs (paired by round; exploratory)
+   delta(28w) - delta(4w): n 15  -0.42k [-8.06, +7.22]
+   delta(28w) - delta(14w-one): n 15  -0.01k [-6.60, +6.58]
+   delta(14w-split) - delta(14w-one): n 15  +2.00k [-4.74, +8.74]
+
+4. HITM loads per request (evidence legs, mean over the rounds)
+   mt-1w         base local 37.5 remote 55.4 total 92.9; base - stats-reject: local +1.0 remote +1.7 total +2.7
+   mt-4w         base local 39.1 remote 58.4 total 97.5; base - stats-reject: local +1.5 remote -0.2 total +1.3
+   mt-14w-one    base local 32.6 remote 61.8 total 94.4; base - stats-reject: local +7.2 remote -0.9 total +6.3
+   mt-14w-split  base local 39.2 remote 52.5 total 91.7; base - stats-reject: local +1.8 remote +6.0 total +7.8
+   mt-28w        base local 40.8 remote 41.8 total 82.7; base - stats-reject: local +7.0 remote +1.1 total +8.1
