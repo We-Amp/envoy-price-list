@@ -84,7 +84,7 @@ counter run, the Arm code generation end-to-end run and the Arm atomics bisect.
 | Arm | Targets | Options, as recorded | Part of the measurement? |
 |---|---|---|---|
 | upstream base, sink fix | `//source/exe:envoy-static.stripped` | `-c opt --stripopt=--strip-all --linkopt=-Wl,--compress-debug-sections=zlib`, the default `.bazelrc`, Envoy's hermetic clang 22.1.8, Bazel 9.3.2, x86-64 | No. Both binaries of the comparison were built the same way; only the source differs |
-| benchmarks on the sink fix, relaxed ordering, relaxed ordering plus test-before-set | `//test/common/stats:atomic_model_benchmark`, `//test/common/stats:stat_update_benchmark`, `//test/common/stats:histogram_record_benchmark`, `//test/server:server_stats_flush_contended_benchmark` | `-c opt` with the same release options as above, hermetic clang 22.1.8; built for x86-64, and for arm64 on the Arm VM. For x86-64 the literal command line was not kept: the build notes say "`-c opt` with the release options" | No. The arms of a comparison were built the same way on the same host; only the source differs. The Arm binaries of these runs were not disassembled; the Arm atomics pair below is the controlled comparison |
+| benchmarks on the sink fix, relaxed ordering, relaxed ordering plus test-before-set | `//test/common/stats:atomic_model_benchmark`, `//test/common/stats:stat_update_benchmark`, `//test/common/stats:histogram_record_benchmark`, `//test/server:server_stats_flush_contended_benchmark` | `-c opt` with the same release options as above, hermetic clang 22.1.8; built for x86-64, and for arm64 on the Arm VM. For x86-64 the literal command line was not kept: the build notes record only `-c opt` with the release options | No. The arms of a comparison were built the same way on the same host; only the source differs. The Arm binaries of these runs were not disassembled; the Arm atomics pair below is the controlled comparison |
 | source of the Arm atomics pair | `//test/common/stats:atomic_model_benchmark`, `//test/common/stats:stat_update_benchmark` | arm64, `-c opt`, hermetic clang 22.1.8, built twice from the same source, each in its own output base: `fix-lse` with `--copt=-march=armv8-a+lse --copt=-mno-outline-atomics`; `fix-llsc` with `--copt=-march=armv8-a --copt=-mno-outline-atomics` | **Yes. The two flag sets are the experiment**; the source is the same for both |
 
 Check of the Arm pair, from the build record: disassembly of the increment paths with `llvm-objdump` showed
@@ -96,6 +96,38 @@ Runtime environment of the benchmarks (not a build option, but needed to repeat 
 (the CPU list threads are pinned to), `STATS_BENCH_WARMUP` and `STATS_BENCH_SECONDS` (the windows),
 `STATS_BENCH_THREADS` and `STATS_BENCH_HAMMERS` (the thread counts). The harness configs record the values
 used.
+
+## Build check of the published tags
+
+On 2026-11-21 the five published tags were cloned from the public fork and built on an x86-64 build
+machine with the toolchain of the measured builds (Bazel 9.3.2, Envoy's hermetic clang 22.1.8), with the
+same targets and options as above.
+
+| Tag | Compiles | Stats tests (`//test/common/stats/...` and the stats integration test) | Benchmark pre-flight tests |
+|---|---|---|---|
+| `stats-2026-11/sink-fix` | yes | 31 of 31 pass | none in this tree |
+| `stats-2026-11/bench-fix` | yes | 34 of 34 pass | 4 of 4 pass |
+| `stats-2026-11/bench-fix-relaxed` | yes | 34 of 34 pass | 4 of 4 pass |
+| `stats-2026-11/bench-fix-relaxed-p1` | yes | 34 of 34 pass | 4 of 4 pass |
+| `stats-2026-11/bench-lse-source` | yes (x86-64 only) | 34 of 34 pass | 4 of 4 pass |
+
+- **Same binaries.** The twelve benchmark binaries built from `bench-fix`, `bench-fix-relaxed` and
+  `bench-fix-relaxed-p1`, and the flush benchmark built from `sink-fix`, have the same SHA-256 as the
+  binaries we measured. The Envoy server binary built from `sink-fix` has the same size as the measured one
+  and a different SHA-256, because Envoy embeds its source revision in the binary.
+- **Envoy's format check fails on every tag, on lines the measured commits also have.** On `sink-fix`:
+  `test/common/stats/allocator_test.cc`, `metric_impl_test.cc`, `thread_local_store_test.cc` and
+  `test/server/admin/BUILD`; this tag predates the formatting commit that the four benchmark tags contain.
+  On the four benchmark tags: the include order in `test/common/stats/bench_pinning.h` and two reflows in
+  `test/common/stats/stat_update_speed_test.cc`. None of these is one of the replaced comment lines.
+- **The wider test list on `sink-fix`:** 175 of the 178 targets that were run for the measured commit pass.
+  `//test/extensions/dynamic_modules/network:integration_test` fails, as it did on the upstream base in the
+  original build. `//test/extensions/dynamic_modules:rust_sdk_test` failed two IPv6 address cases and then
+  passed 5 of 5 reruns. `//test/extensions/dynamic_modules:abi_impl_test` timed out in 2 of 8 shards on a
+  loaded machine and passed on rerun.
+- **Not run:** AddressSanitizer, ThreadSanitizer, the mobile engine test, a full `//test/...` sweep, and the
+  arm64 builds of `bench-lse-source` with the two flag sets. The earlier ThreadSanitizer finding on the
+  relaxed-ordering series, recorded in its commit message, is neither confirmed nor cleared by this check.
 
 ## Credits
 
