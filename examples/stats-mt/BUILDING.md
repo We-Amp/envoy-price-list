@@ -4,8 +4,7 @@ Most of the stats study runs the official Envoy v1.40.2 release binary and needs
 parts use builds of our own. This file gives their build options as recorded when they were built,
 and says what was not recorded.
 
-The source of each arm is a tag on the fork `https://github.com/We-Amp/envoy` (**PLANNED** until
-the tags exist). The published commits are a cleaned copy of the commits that were measured; the
+The source of each arm is a tag on the fork `https://github.com/We-Amp/envoy`. The published commits are a cleaned copy of the commits that were measured; the
 configs, binary names and raw results name the measured ones.
 [`docs/stats-data/envoy-commit-map.md`](../../docs/stats-data/envoy-commit-map.md) maps one to the
 other and states how they differ (commit messages, and five comment lines in two test-only files).
@@ -43,7 +42,7 @@ measured; only the source differs.
 ## The benchmark binaries (microbenchmarks, round 5)
 
 Per arm (`fix`, `fix-relaxed`, `fix-relaxed-p1`). Recorded as a command line for arm64 (the build
-script of the Arm VM has it); for x86-64 the build notes say "`-c opt` with the release options", which
+script of the Arm VM has it); for x86-64 the build notes record only `-c opt` with the release options, which
 are the options of the proxy build above, and the literal command line was not kept:
 
 ```

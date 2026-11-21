@@ -17,7 +17,7 @@ python3 tools/fetch-stats-data.py --list         # the studies, their sizes and 
 
 The assets, their sizes and their checksums are listed in [`docs/stats-data/ASSETS.md`](stats-data/ASSETS.md).
 The script downloads `stats-2026-11-data-<study>.tar.gz` from
-`https://github.com/We-Amp/envoy-price-list/releases/download/stats-2026-11/` (**PLANNED**), checks
+`https://github.com/We-Amp/envoy-price-list/releases/download/stats-2026-11/`, checks
 each archive against `data/stats-data.SHA256SUMS`, unpacks into `data/stats/` (ignored by git) and
 checks every file against `data/stats-data.manifest`. `--from DIR` takes archives you already have.
 `--verify` checks the unpacked tree again, for example after rendering tables into it. An archive the
@@ -38,11 +38,8 @@ repository and of the Envoy fork are cleaned copies with other ids:
 The data directories of the earlier studies (`data/features/`, `data/route-table/` and the others
 listed in `data/README.md`) are in git as before.
 
-Links marked **PLANNED** name tags that are created when this branch is published; until then they
-do not resolve.
-
-- Harness and data: tag `stats-2026-11` on this repository and its release (**PLANNED**).
-- Envoy patches: tags on the fork `https://github.com/We-Amp/envoy` (**PLANNED**; table below).
+- Harness and data: tag `stats-2026-11` on this repository and its release.
+- Envoy patches: tags on the fork `https://github.com/We-Amp/envoy` (table below).
 
 ## What you need
 
@@ -90,7 +87,7 @@ proxy's cores, or in which the client lacked headroom, is invalid on any machine
 | Arm LSE against LL/SC | one source (the `fix` arm with time-based batching), built twice | `964d72f7a6` | fork tag `stats-2026-11/bench-lse-source` |
 | Microbenchmarks round 4 (flush overlapping updates, exploratory) | `fix` `7d877d4424`, `fix-relaxed` `f5eae01224`, `fix-relaxed-p1` `2b94594e18`, `base` `3a80b1543c`, `base-relaxed` `e6e0544805`, `base-relaxed-p1` `ba1e983c9d` | as named | **not published** |
 
-The fork is `https://github.com/We-Amp/envoy`; its tags are **PLANNED** until they exist.
+The fork is `https://github.com/We-Amp/envoy`.
 
 **The tags point at cleaned commits, not at the measured ones.** The configs, the binary names and
 the raw results identify every own build by the commit it was built from. Those commits are not

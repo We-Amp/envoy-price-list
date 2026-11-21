@@ -9,7 +9,7 @@ manifest in this repository.
 Without STUDY every archive is fetched (about 320 MB unpacked). The archives are the assets of
 the release of tag stats-2026-11:
 
-    https://github.com/We-Amp/envoy-price-list/releases/download/stats-2026-11/   (PLANNED)
+    https://github.com/We-Amp/envoy-price-list/releases/download/stats-2026-11/
 
 --from names another base URL, or a directory that already holds the archives. Each archive is
 checked against data/stats-data.SHA256SUMS before anything is unpacked, and every unpacked file

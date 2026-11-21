@@ -13,7 +13,6 @@ import os
 import tarfile
 
 TAG = "stats-2026-11"
-# PLANNED: the release of this tag does not exist until the branch is published
 BASE_URL = "https://github.com/We-Amp/envoy-price-list/releases/download/%s/" % TAG
 ASSET = TAG + "-data-%s.tar.gz"
 
