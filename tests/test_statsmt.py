@@ -927,7 +927,9 @@ class DoseLegTest(unittest.TestCase):
         i_t2 = src.index("                    t2 = time.monotonic()")
         self.assertLess(src.index("sc0 = stat_count(ecfg[\"admin_port\"], scp, adm_t) if scp else None"), i_q0)
         self.assertGreater(src.index('m["stat_count"] = stat_count_record('), i_t2)
-        self.assertEqual(src.count("admin_stats(ecfg[\"admin_port\"], adm_t, sfx)"), 3)  # q0, q1, leg end
+        # q0, q1, leg end, and the xDS arms' read before their pre-window updates (before t_q0)
+        self.assertEqual(src.count("admin_stats(ecfg[\"admin_port\"], adm_t, sfx)"), 4)
+        self.assertLess(src.index("xq_start = admin_stats(ecfg[\"admin_port\"], adm_t, sfx)"), i_q0)
 
     def test_stat_ops_apart(self):
         p0 = {("counter", 'envoy_dose_c000{port="40000"}'): 10.0, ("counter", "envoy_http_rq_total"): 5.0}

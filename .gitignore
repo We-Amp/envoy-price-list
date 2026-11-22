@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 runs/
 data/stats/
+data/waves/
+tools/extproc/out/

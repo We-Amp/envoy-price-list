@@ -8,6 +8,7 @@ mode "external": something else serves the origin port; the harness only
                  start it).
 """
 
+import hashlib
 import http.client
 import os
 import re
@@ -52,12 +53,16 @@ class Origin:
         self.container_id = None
         self.side = None  # SideService once the harness's own container runs
         self.meta = {"mode": cfg.get("mode", "external"), "port": cfg["port"]}
+        # other containers started with the origin, on its CPUs, gated like it: [(name, object
+        # with container_id and side)]
+        self.companions = []
 
     def start(self):
         mode = self.meta["mode"]
         port = int(self.cfg["port"])
         needs = any(s["kind"] == "proxied" for s in self.shapes) or bool(self.cfg.get("authz_port")) \
-            or bool(self.cfg.get("authz_grpc_port")) or bool(self.cfg.get("prime_file"))
+            or bool(self.cfg.get("authz_grpc_port")) or bool(self.cfg.get("prime_file")) \
+            or bool(self.cfg.get("ext_proc_port"))
         if mode == "external" or not needs:
             if needs and not sysprobe.port_open("127.0.0.1", port):
                 raise RuntimeError("external origin port %d not accepting connections" % port)
@@ -80,6 +85,12 @@ class Origin:
             os.makedirs(os.path.dirname(p), exist_ok=True)
             with open(p, "wb") as f:
                 f.write(bodies.get(rel, b"a" * size))
+        grpc = envoy_config.grpc_files(self.shapes)
+        for rel, body in grpc.values():
+            p = os.path.join(www, rel)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "wb") as f:
+                f.write(body)
         if self.cfg.get("authz_grpc_port"):
             p = os.path.join(www, envoy_config.AUTHZ_GRPC_FILE)
             os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -91,7 +102,9 @@ class Origin:
                                        self.cfg.get("keepalive_requests", 10000000),
                                        envoy_config.content_types(self.shapes),
                                        self.cfg.get("worker_connections", 8192), self.cfg.get("worker_rlimit_nofile"),
-                                       bool(self.cfg.get("stub_status")))
+                                       bool(self.cfg.get("stub_status")),
+                                       h2c_port=self.cfg.get("h2c_port"), tls_port=self.cfg.get("tls_port"),
+                                       tls_cert=self.cfg.get("tls_cert", "ecdsa-p256-san"), grpc=grpc)
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(conf)
         image = self.cfg.get("image", "nginx:alpine")
@@ -99,13 +112,17 @@ class Origin:
         args = ["docker", "run", "-d", "--rm", "--name", name, "--network", "host",
                 "--cpuset-cpus", self.cpus] + (["--platform", self.cfg["platform"]] if self.cfg.get("platform") else []) + [
                 "-v", "%s:/etc/nginx/nginx.conf:ro" % os.path.join(od, "nginx.conf"),
-                "-v", "%s:/www:ro" % www, image]
+                "-v", "%s:/www:ro" % www] + (
+                # the TLS server's certificate, from the run's certificate directory (read-only)
+                ["-v", "%s:/certs:ro" % os.path.join(self.run_dir, "certs")] if self.cfg.get("tls_port") else []) + [
+                image]
         r = subprocess.run(args, capture_output=True, text=True, timeout=120)
         if r.returncode != 0:
             raise RuntimeError("docker run failed: %s" % r.stderr.strip()[:300])
         self.container_id = r.stdout.strip()
         self.log("origin container %s (%s) started" % (self.container_id[:12], name))
-        for p in [port] + [int(self.cfg[k]) for k in ("authz_port", "authz_grpc_port") if self.cfg.get(k)]:
+        for p in [port] + [int(self.cfg[k]) for k in ("authz_port", "authz_grpc_port", "h2c_port", "tls_port")
+                           if self.cfg.get(k)]:
             if not sysprobe.wait_port("127.0.0.1", p, 30):
                 self.stop()
                 raise RuntimeError("origin did not open port %d" % p)
@@ -114,19 +131,106 @@ class Origin:
         self.side = side_service("origin", self.container_id, self.cpus, self.log)
         self.meta.update(image=image, image_id=img, container_name=name, workers=self.cfg.get("workers", 8),
                          authz_port=self.cfg.get("authz_port"), authz_grpc_port=self.cfg.get("authz_grpc_port"),
+                         h2c_port=self.cfg.get("h2c_port"), tls_port=self.cfg.get("tls_port"),
+                         grpc_sha256={k: hashlib.sha256(v[1]).hexdigest() for k, v in grpc.items()},
                          nginx_conf_sha256=sysprobe.text_sha256(conf),
                          files={k: v for k, v in files.items()})
         if bodies:
-            import hashlib
             self.meta["body_sha256"] = {k: hashlib.sha256(v).hexdigest() for k, v in bodies.items()}
+        if self.cfg.get("ext_proc_port"):
+            xp = ExtProcService(self.cfg, self.cpus, self.log)
+            try:
+                self.meta["ext_proc"] = xp.start()
+            except Exception:
+                xp.stop()
+                self.stop()
+                raise
+            self.companions.append(("ext_proc", xp))
         time.sleep(0.5)
         return self.meta
 
     def stop(self):
+        for _, c in self.companions:
+            c.stop()
+        self.companions = []
         if self.container_id:
             subprocess.run(["docker", "stop", "-t", "5", self.container_id],
                            capture_output=True, text=True, timeout=60)
             self.log("origin container %s stopped" % self.container_id[:12])
+            self.container_id = None
+
+
+def ext_proc_binary(cfg):
+    from .experiment import HARNESS_ROOT
+    p = os.path.expanduser(cfg["ext_proc_binary"])
+    return p if os.path.isabs(p) else os.path.join(HARNESS_ROOT, p)
+
+
+def ext_proc_args(cfg, cpus, name, binary):
+    """docker run arguments of the ext_proc test service: the static binary (tools/extproc)
+    bind-mounted into the origin's pinned image as its entrypoint, host network, the origin's
+    CPUs; GOMAXPROCS from the config when set (else Go's default: the CPUs it may use)."""
+    port = int(cfg["ext_proc_port"])
+    env = ["-e", "GOMAXPROCS=%d" % int(cfg["ext_proc_gomaxprocs"])] if cfg.get("ext_proc_gomaxprocs") else []
+    return (["docker", "run", "-d", "--rm", "--name", name, "--network", "host", "--cpuset-cpus", cpus]
+            + (["--platform", cfg["platform"]] if cfg.get("platform") else []) + env
+            + ["-v", "%s:/epl-extproc:ro" % binary, "--entrypoint", "/epl-extproc",
+               cfg.get("image", "nginx:alpine"), "-addr", "127.0.0.1:%d" % port])
+
+
+class ExtProcService:
+    """The ext_proc test service (tools/extproc): one container the harness starts and stops by
+    the ID `docker run` returned, pinned to the origin's CPUs. The binary's sha256 must match
+    origin.ext_proc_sha256, or nothing starts. Its CPU time is read from its cgroup per leg and
+    never added to Envoy's."""
+
+    def __init__(self, cfg, cpus, log):
+        self.cfg, self.cpus, self.log = cfg, cpus, log
+        self.container_id = None
+        self.side = None
+        self.port = int(cfg["ext_proc_port"])
+
+    def start(self):
+        binary = ext_proc_binary(self.cfg)
+        got = sysprobe.file_hashes(binary)["sha256"]
+        if got != self.cfg.get("ext_proc_sha256"):
+            raise RuntimeError("ext_proc binary %s sha256 %s != %s" % (binary, got, self.cfg.get("ext_proc_sha256")))
+        if sysprobe.port_open("127.0.0.1", self.port):
+            raise RuntimeError("ext_proc port %d already in use" % self.port)
+        name = "epl-extproc-%d" % os.getpid()
+        r = subprocess.run(ext_proc_args(self.cfg, self.cpus, name, binary), capture_output=True, text=True,
+                           timeout=120)
+        if r.returncode != 0:
+            raise RuntimeError("docker run (ext_proc) failed: %s" % r.stderr.strip()[:300])
+        self.container_id = r.stdout.strip()
+        self.log("ext_proc container %s (%s) started" % (self.container_id[:12], name))
+        if not sysprobe.wait_port("127.0.0.1", self.port, 30):
+            self.stop()
+            raise RuntimeError("ext_proc service did not open port %d" % self.port)
+        self.side = side_service("ext_proc", self.container_id, self.cpus, self.log)
+        return {"port": self.port, "binary_sha256": got, "container_name": name,
+                "gomaxprocs": self.cfg.get("ext_proc_gomaxprocs")}
+
+    def stats(self):
+        """The service's own counters (GET /epl-stats), or {"error": ...}; never inside a window."""
+        try:
+            c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5.0)
+            try:
+                c.request("GET", "/epl-stats")
+                r = c.getresponse()
+                body = r.read().decode(errors="replace")
+            finally:
+                c.close()
+            import json
+            return json.loads(body) if r.status == 200 else {"error": "status %d" % r.status}
+        except (OSError, http.client.HTTPException, ValueError) as e:
+            return {"error": "%s: %s" % (type(e).__name__, e)}
+
+    def stop(self):
+        if self.container_id:
+            subprocess.run(["docker", "stop", "-t", "5", self.container_id], capture_output=True, text=True,
+                           timeout=60)
+            self.log("ext_proc container %s stopped" % self.container_id[:12])
             self.container_id = None
 
 
@@ -296,14 +400,19 @@ def make_certs(cert_dir, kinds, log):
     out = {}
     for kind in kinds:
         crt, key = os.path.join(cert_dir, kind + ".crt"), os.path.join(cert_dir, kind + ".key")
-        for args in (["openssl", "genpkey", "-out", key] + envoy_config.CERT_KINDS[kind],
-                     ["openssl", "req", "-x509", "-new", "-key", key, "-days", "30", "-subj", "/CN=bench.local",
-                      "-sha256", "-out", crt]):
+        san = envoy_config.CERT_SAN.get(kind)
+        # kinds with a SAN carry it as their CN too, and as a DNS subjectAltName (-addext needs
+        # OpenSSL 1.1.1 or later); the older kinds are made exactly as before
+        req = ["openssl", "req", "-x509", "-new", "-key", key, "-days", "30", "-subj", "/CN=%s" % (san or "bench.local"),
+               "-sha256", "-out", crt] + (["-addext", "subjectAltName=DNS:%s" % san] if san else [])
+        for args in (["openssl", "genpkey", "-out", key] + envoy_config.CERT_KINDS[kind], req):
             r = subprocess.run(args, capture_output=True, text=True, timeout=120)
             if r.returncode != 0:
                 raise RuntimeError("openssl failed for %s: %s" % (kind, r.stderr.strip()[-300:]))
         os.chmod(key, 0o600)
         out[kind] = {"crt_sha256": sysprobe.file_hashes(crt)["sha256"], "args": envoy_config.CERT_KINDS[kind]}
+        if san:
+            out[kind]["san"] = san
         log("certificate %s made" % kind)
     v = subprocess.run(["openssl", "version"], capture_output=True, text=True, timeout=30).stdout.strip()
     return {"openssl": v, "certs": out}

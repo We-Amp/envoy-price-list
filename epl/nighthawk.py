@@ -10,12 +10,40 @@ OVERFLOW_COUNTERS = (
     "upstream_cx_overflow",
     "upstream_cx_pool_overflow",
     "benchmark.stream_resets",
+    # a connect that failed or timed out (churn shapes: an exhausted port range or a full
+    # conntrack table shows here first); zero on every clean leg of any shape
+    "upstream_cx_connect_fail",
+    "upstream_cx_connect_timeout",
 )
 NON2XX_COUNTERS = ("benchmark.http_1xx", "benchmark.http_3xx", "benchmark.http_4xx",
                    "benchmark.http_5xx", "benchmark.http_xxx")
 
 
+def multi_target_args(scheme, port, path, mt):
+    """The target arguments that replace the URI when a leg spreads its connections over several
+    loopback destination addresses: one --multi-target-endpoint per address (Nighthawk's one
+    cluster per client worker, round robin over the hosts), the path, and HTTPS for TLS arms.
+    mt = {"count": N, "base": "127.0.0.1"}: addresses base, base+1, ... (all inside 127/8)."""
+    import ipaddress
+    n = int(mt.get("count", 0))
+    if n < 1:
+        raise ValueError("multi_target.count must be at least 1")
+    first = ipaddress.IPv4Address(mt.get("base", "127.0.0.1"))
+    last = first + (n - 1)
+    lo = ipaddress.IPv4Network("127.0.0.0/8")
+    if first not in lo or last not in lo:
+        raise ValueError("multi_target addresses must stay inside 127.0.0.0/8")
+    args = []
+    for i in range(n):
+        args += ["--multi-target-endpoint", "%s:%d" % (first + i, int(port))]
+    args += ["--multi-target-path", path]
+    if scheme == "https":
+        args.append("--multi-target-use-https")
+    return args
+
+
 def client_args(client_cfg, total_rps, url, duration_s, json_out, shape_extra=None, base_extra=None):
+    """`url` is a URI string, or a list of target arguments (multi_target_args) that replaces it."""
     conc = int(client_cfg.get("concurrency", 4))
     per_worker = total_rps / conc
     if abs(per_worker - round(per_worker)) > 1e-9:
@@ -35,7 +63,10 @@ def client_args(client_cfg, total_rps, url, duration_s, json_out, shape_extra=No
     # prefetch and LRU reuse so that connection churn is spread out in time
     args += list(client_cfg.get("extra_args", []) if base_extra is None else base_extra)
     args += list(shape_extra or [])  # per-shape client settings (TLS parameters, connection churn, h2)
-    args.append(url)
+    if isinstance(url, (list, tuple)):
+        args += list(url)
+    else:
+        args.append(url)
     return args
 
 

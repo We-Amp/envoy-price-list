@@ -1414,7 +1414,9 @@ class SinkFlagTest(unittest.TestCase):
         self.assertIn("--classes", calls[1])
         with open(os.path.join(HERE, "epl", "leg.py")) as f:
             src = f.read()
-        self.assertIn('classes=bool(self.exp["measure"].get("latency"))', src)
+        # run L (measure.latency) and the datagram-class runs (measure.udp_classes) set the flag
+        self.assertIn('classes=bool(self.exp["measure"].get("latency")\n'
+                      '                                                or self.exp["measure"].get("udp_classes")))', src)
         self.assertEqual(src.count("start_udpsink("), 1)
 
 

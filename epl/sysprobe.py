@@ -731,3 +731,67 @@ def cpuidle_residency(a, b, window_s):
             x["residency"] = round(x["residency"] + row[name]["residency"], 4)
         out[str(c)] = row
     return {"per_cpu": out, "sum": tot}
+
+
+# Kernel TCP counters that show a connection-churn rig hitting a limit of the box rather than
+# measuring Envoy: listen-queue drops, SYN retransmits (a SYN dropped, for example by a full
+# conntrack table), TIME_WAIT bucket overflow, failed connects. Box-wide, read around the window.
+KNET_TCPEXT = ("ListenOverflows", "ListenDrops", "TCPTimeWaitOverflow", "TCPSynRetrans", "TCPReqQFullDrop",
+               "TCPReqQFullDoCookies", "SyncookiesSent", "TCPAbortOnData", "TCPAbortOnClose", "TCPDeferAcceptDrop")
+KNET_TCP = ("ActiveOpens", "PassiveOpens", "AttemptFails", "EstabResets", "RetransSegs", "OutRsts", "InErrs")
+
+
+def parse_proc_net_pairs(text):
+    """{"Prefix.Field": int} from /proc/net/netstat or /proc/net/snmp (header line, value line)."""
+    out = {}
+    lines = (text or "").splitlines()
+    for i in range(0, len(lines) - 1):
+        h, v = lines[i].split(), lines[i + 1].split()
+        if not h or not v or h[0] != v[0] or not h[0].endswith(":"):
+            continue
+        if not all(x.lstrip("-").isdigit() for x in v[1:]):
+            continue
+        p = h[0][:-1]
+        for k, x in zip(h[1:], v[1:]):
+            out["%s.%s" % (p, k)] = int(x)
+    return out
+
+
+def parse_sockstat_tcp(text):
+    """{inuse, orphan, tw, alloc, mem} of the TCP: line of /proc/net/sockstat."""
+    for ln in (text or "").splitlines():
+        if ln.startswith("TCP:"):
+            f = ln.split()[1:]
+            return {f[i]: int(f[i + 1]) for i in range(0, len(f) - 1, 2) if f[i + 1].isdigit()}
+    return {}
+
+
+def kernel_net(root="/proc"):
+    """One snapshot of the kernel TCP counters, the TIME_WAIT count and the conntrack fill."""
+    pairs = {}
+    for f in ("net/netstat", "net/snmp"):
+        pairs.update(parse_proc_net_pairs(_read(os.path.join(root, f), "")))
+    snap = {"TcpExt." + k: pairs.get("TcpExt." + k) for k in KNET_TCPEXT}
+    snap.update({"Tcp." + k: pairs.get("Tcp." + k) for k in KNET_TCP})
+    snap["sockstat"] = parse_sockstat_tcp(_read(os.path.join(root, "net/sockstat"), ""))
+    for k in ("nf_conntrack_count", "nf_conntrack_max"):
+        v = _read(os.path.join(root, "sys/net/netfilter", k))
+        snap[k] = int(v) if v and v.strip().isdigit() else None
+    return snap
+
+
+def kernel_net_delta(a, b):
+    """{"d": {counter: delta}, "end": levels at the window's end}. A counter missing in either
+    snapshot is left out of "d" (a gate on it then fails closed: the value does not exist)."""
+    d = {}
+    for k in ("TcpExt." + x for x in KNET_TCPEXT):
+        if a.get(k) is not None and b.get(k) is not None:
+            d[k.split(".", 1)[1]] = b[k] - a[k]
+    for k in ("Tcp." + x for x in KNET_TCP):
+        if a.get(k) is not None and b.get(k) is not None:
+            d[k.split(".", 1)[1]] = b[k] - a[k]
+    end = {"tw": (b.get("sockstat") or {}).get("tw"), "tw_start": (a.get("sockstat") or {}).get("tw"),
+           "conntrack_count": b.get("nf_conntrack_count"), "conntrack_max": b.get("nf_conntrack_max")}
+    if end["conntrack_count"] is not None and end["conntrack_max"]:
+        end["conntrack_fill"] = round(end["conntrack_count"] / float(end["conntrack_max"]), 4)
+    return {"d": d, "end": end}
