@@ -1,0 +1,50 @@
+# Wave studies: measured harness commits and where their code is
+
+`metadata.harness` in each run's `results.json` (and the same string in `summary.md`) names the harness
+commit the run used, as `0.1.0 <id>`, with `(archive)` when the bench box got the harness as a
+`git archive` with a commit file, or `(uncommitted)` when the archive had none. Those commits were made
+on working branches, one per study, that are not published. Their code is in the published history in
+the commits below: the harness features of all three waves in one commit, and each study's configs and
+scripts in its own.
+
+| Measured id (as recorded) | Runs | Published harness | Published configs and scripts |
+|---|---|---|---|
+| `3ee6aa4e61fe` | `statsd-batching/wave1-b/*` | `d49ca12` | `2f4175f` (`examples/wave1-b`) |
+| `274ddc23ce61` | `statsd-batching/v2-confirm/wave1-b-v2c/*` | `d49ca12` | `2f4175f` |
+| `5d10ad3fd39d` (recorded with the branch name) | `ext-proc-xds/*` | `d49ca12` | `b80784b` (`examples/wave1c`); `table.py` as of the tables' rendering, which only changed the tables after the run |
+| `0764feb` | `topdown/td`, `topdown/lbr` | a commit of the stats study, published as `b9b1c9e` (see `docs/stats-data/harness-commit-map.md`) | `170e84e` (`examples/topdown`) |
+| uncommitted: an archive of `bca1e00dbfc7` | `code-layout/prof/*`, `code-layout/prof2/*` | `d49ca12` | `7b4c989` (`examples/wave2`) |
+| uncommitted: an archive of `b4999a6c6382` | `code-layout/ab/*` | `d49ca12` | `7b4c989` |
+| `e0c23f553f01` | `code-layout/w2b/*` | `d49ca12` | `7b4c989` |
+| `6e93287d8ee5` | `connection-churn/e-plain`, `e-tls` and their smokes | `d49ca12` | `f5c6951` (`examples/wave3e`) |
+| `4fd13429a7ab` | `connection-churn/e2/*` | `d49ca12` | `f5c6951` |
+| `168d2571c5a0` | `connection-churn/e2b/*` | `d49ca12` | `f5c6951` |
+| `fd709bd89d5f` | `upstream-protocols/run1/*` | `d49ca12` | `4c89497` (`examples/wave3f`) |
+| `ab9f7b141899` | `upstream-protocols/run2-f2/*` | `d49ca12` | `4c89497` |
+
+The build scripts of the code-layout arms are `1c66f7c` (`tools/code-layout`); the release-asset tools
+and this documentation `85dd1d0` and later.
+
+## What differs between a measured commit and the published code
+
+- **Code of the other studies.** Each measured commit has the harness features of its own study and of
+  the studies before it on its branch; the published harness has all of them. A feature is used only
+  when a config sets it, so a published config runs the code paths its measured commit ran.
+- **Two places where two studies touched the same code**, joined in the published harness: the
+  listener's TLS settings take the key-exchange groups (connection churn) and the client-certificate
+  settings (mTLS) together; the client arguments take the arm-level settings (connection churn) and the
+  request body from a file (gRPC) together. xDS arms now refuse `upstream_tls` and an `origin_server` other than
+  the plain one, which no xDS run used.
+- **One fix, after the first `upstream-protocols` session**: `ab9f7b1` removed a local import in
+  `Origin.start` that made the gRPC shape's start fail; the published harness has the fix. The runs of
+  `run1` did not reach that line (their gRPC smoke is the one that stopped on it).
+- **Wording only**, in comments, docstrings and fixed strings: references to planning and review
+  documents that are not published, and to who decided a short run, were replaced by what they decided
+  ("short run: 6 fixed rounds (large effects: stop when the answer is clear)", "fixed before the run");
+  the `short_run_note` of the `ext-proc-xds` and `upstream-protocols` configs changed with them (see
+  `WHAT-WAS-CHANGED.md`). The default `perf` of `examples/wave2/perf-lbr.sh` is `perf` on the path
+  instead of a kernel-specific path.
+- **The analysis scripts** of the top-down and code-layout studies print other labels for their
+  decision rows; the numbers are the same (`WHAT-WAS-CHANGED.md`, "Rendered again").
+- **Tests**: one source check of `tests/test_latency.py` reads the datagram-class flag of the statsd
+  runs as well.
