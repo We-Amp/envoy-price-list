@@ -180,6 +180,13 @@ SETTINGS = {
                      "the first hop of a two-hop arm",
     "runtime": "a layered_runtime static layer: {key: value} (e.g. envoy.reloadable_features.http2_use_oghttp2)",
     "grpc_stats": "grpc_stats filter before the router: {stats_for_all_methods: bool}",
+    "quic": "a second listener, HTTP/3 over QUIC on UDP at the TCP listener's address and port number, with the "
+            "same routes and filters and the listener's `tls` certificate: {gso: true (Envoy's default: the GSO "
+            "batch writer when the kernel supports it) | false (the default sendmsg writer), prefer_gro: bool "
+            "(unset = Envoy's listener default, false), resumption: bool, early_data: bool (unset = Envoy's "
+            "defaults, both on without client-certificate validation), ticket_keys: true (one fixed 80-byte "
+            "session-ticket key on the QUIC TLS context; used only with the quic_session_ticket_support "
+            "runtime guard on)}. Needs tls; the TCP listener stays as it is",
 }
 
 # The oghttp2 switch of v1.40.2 (runtime_features.cc:326, default false)
@@ -801,10 +808,81 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         raise ValueError("xds_update needs xds")
     if envoy_cfg.get("xds"):
         _xds_bootstrap(out, hcm, shapes, envoy_cfg)
+    if envoy_cfg.get("quic") is not None:
+        if envoy_cfg.get("listener_fanout") is not None:
+            raise ValueError("quic and listener_fanout: not supported together")
+        out["static_resources"]["listeners"].append(quic_listener(envoy_cfg, hcm, cert_dir))
     return out
 
 
 ORIGIN_SERVERS = ("plain", "h2c", "tls")
+
+QUIC_DTS = "type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicDownstreamTransport"
+UDP_DEFAULT_WRITER = "type.googleapis.com/envoy.extensions.udp_packet_writer.v3.UdpDefaultWriterFactory"
+QUIC_KEYS = {"gso", "prefer_gro", "resumption", "early_data", "ticket_keys"}
+# The v1.40.2 guard that switches QUIC to Envoy's own handshaker and session-ticket keys
+# (runtime_features.cc:248-249, FALSE_RUNTIME_GUARD, "Flip to true once QUIC session ticket support is
+# stable"). Off: QUICHE's handshaker, no ticket crypter (EnvoyQuicProofSourceBase::GetTicketCrypter
+# returns nullptr), so BoringSSL's own ticket keys, one SSL_CTX per worker's QuicCryptoServerConfig.
+QUIC_TICKET_GUARD = "envoy.reloadable_features.quic_session_ticket_support"
+# A fixed bench session-ticket key (80 bytes, as Envoy requires): not a secret, it protects nothing.
+QUIC_TICKET_KEY = bytes(range(80))
+
+
+def quic_listener(envoy_cfg, hcm, cert_dir):
+    """The HTTP/3 listener of the `quic` setting: UDP at the TCP listener's address and port, the same
+    HCM (routes, filters, stat_prefix) with codec HTTP3, the listener's TLS certificate."""
+    import base64
+    q = envoy_cfg["quic"]
+    if q is True:
+        q = {}
+    if not isinstance(q, dict):
+        raise ValueError("quic takes {} or {%s}" % ", ".join(sorted(QUIC_KEYS)))
+    bad = sorted(set(q) - QUIC_KEYS)
+    if bad:
+        raise ValueError("quic: unknown keys %s" % bad)
+    for k in ("gso", "prefer_gro", "resumption", "early_data", "ticket_keys"):
+        if k in q and q[k] not in (True, False):
+            raise ValueError("quic.%s must be true or false" % k)
+    if q.get("ticket_keys") is False:
+        raise ValueError("quic.ticket_keys: leave it out for none")
+    tls = envoy_cfg.get("tls")
+    if not tls:
+        raise ValueError("quic needs tls (the listener's certificate)")
+    if set(tls) - {"cert"}:
+        # the TCP knobs (resumption off, groups, client certificates) would mean something else here
+        raise ValueError("quic uses only tls.cert; set resumption through quic.resumption")
+    if q.get("early_data") and q.get("resumption") is False:
+        raise ValueError("quic.early_data needs resumption (Envoy refuses the config)")
+    dtls = tls_socket({"cert": tls.get("cert", "rsa2048")}, cert_dir)["typed_config"]
+    dtls.pop("@type")
+    if q.get("ticket_keys"):
+        dtls["session_ticket_keys"] = {"keys": [{"inline_bytes": base64.b64encode(QUIC_TICKET_KEY).decode()}]}
+    ts = {"@type": QUIC_DTS, "downstream_tls_context": dtls}
+    if "resumption" in q:
+        ts["enable_resumption"] = q["resumption"]
+    if "early_data" in q:
+        ts["enable_early_data"] = q["early_data"]
+    h3 = copy.deepcopy(hcm)
+    h3["codec_type"] = "HTTP3"
+    h3.pop("http2_protocol_options", None)
+    h3["http3_protocol_options"] = {}
+    udp = {"quic_options": {}}
+    if "prefer_gro" in q:
+        udp["downstream_socket_config"] = {"prefer_gro": q["prefer_gro"]}
+    if q.get("gso", True) is False:
+        # an explicit writer: Envoy then never installs the GSO batch writer (listener_impl.cc:785)
+        udp["udp_packet_packet_writer_config"] = {"name": "envoy.udp_packet_writer.default",
+                                                  "typed_config": {"@type": UDP_DEFAULT_WRITER}}
+    return {
+        "name": "listener_quic",
+        "address": {"socket_address": {"protocol": "UDP", "address": envoy_cfg.get("listener_address", "127.0.0.1"),
+                                       "port_value": int(envoy_cfg["listener_port"])}},
+        "udp_listener_config": udp,
+        "filter_chains": [{"transport_socket": {"name": "envoy.transport_sockets.quic", "typed_config": ts},
+                           "filters": [{"name": "envoy.filters.network.http_connection_manager",
+                                        "typed_config": h3}]}],
+    }
 
 
 XDS_EXCLUSIVE = ("two_hop", "buffer_limit_bytes", "upstream_http", "upstream_pool_per_downstream", "stats_clusters",

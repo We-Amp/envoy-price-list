@@ -739,6 +739,10 @@ def cpuidle_residency(a, b, window_s):
 KNET_TCPEXT = ("ListenOverflows", "ListenDrops", "TCPTimeWaitOverflow", "TCPSynRetrans", "TCPReqQFullDrop",
                "TCPReqQFullDoCookies", "SyncookiesSent", "TCPAbortOnData", "TCPAbortOnClose", "TCPDeferAcceptDrop")
 KNET_TCP = ("ActiveOpens", "PassiveOpens", "AttemptFails", "EstabResets", "RetransSegs", "OutRsts", "InErrs")
+# UDP (/proc/net/snmp Udp:), for QUIC legs: drops at a full socket buffer, datagrams to no socket. In "d"
+# their names carry a Udp prefix (UdpRcvbufErrors), since Tcp and Udp share field names.
+KNET_UDP = ("InDatagrams", "NoPorts", "InErrors", "OutDatagrams", "RcvbufErrors", "SndbufErrors", "InCsumErrors",
+            "MemErrors")
 
 
 def parse_proc_net_pairs(text):
@@ -773,6 +777,7 @@ def kernel_net(root="/proc"):
         pairs.update(parse_proc_net_pairs(_read(os.path.join(root, f), "")))
     snap = {"TcpExt." + k: pairs.get("TcpExt." + k) for k in KNET_TCPEXT}
     snap.update({"Tcp." + k: pairs.get("Tcp." + k) for k in KNET_TCP})
+    snap.update({"Udp." + k: pairs.get("Udp." + k) for k in KNET_UDP})
     snap["sockstat"] = parse_sockstat_tcp(_read(os.path.join(root, "net/sockstat"), ""))
     for k in ("nf_conntrack_count", "nf_conntrack_max"):
         v = _read(os.path.join(root, "sys/net/netfilter", k))
@@ -790,6 +795,9 @@ def kernel_net_delta(a, b):
     for k in ("Tcp." + x for x in KNET_TCP):
         if a.get(k) is not None and b.get(k) is not None:
             d[k.split(".", 1)[1]] = b[k] - a[k]
+    for k in KNET_UDP:
+        if a.get("Udp." + k) is not None and b.get("Udp." + k) is not None:
+            d["Udp" + k] = b["Udp." + k] - a["Udp." + k]
     end = {"tw": (b.get("sockstat") or {}).get("tw"), "tw_start": (a.get("sockstat") or {}).get("tw"),
            "conntrack_count": b.get("nf_conntrack_count"), "conntrack_max": b.get("nf_conntrack_max")}
     if end["conntrack_count"] is not None and end["conntrack_max"]:
