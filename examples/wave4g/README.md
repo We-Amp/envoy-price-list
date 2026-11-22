@@ -28,8 +28,9 @@ release (`python3 tools/fetch-wave-data.py http3`, see [`docs/wave-studies.md`](
 - Warm upstream pool gate: at most 0.001 new origin connections per request in keep-alive arms; 0.005 in the
   reconnect arms (set once, before the `g2s-resume` run, after a smoke whose evidence freeze failed: requests
   held for a new handshake reach the origin together and the pool sometimes grows inside the window).
-- Order: Williams squares (8 rounds = two 4-arm squares), paired rounds; effect = mean per-round log ratio
-  with the 95% t and the widened 1.96 x sqrt(SE^2 + 0.34^2) half-widths, the wider one quoted. UDP kernel
+- Order: Williams squares (8 rounds = two 4-arm squares), paired rounds; the mean per-round log ratio
+  with the 95% t and the widened 1.96 x sqrt(SE^2 + 0.34^2) half-widths, the wider one quoted, shown as a
+  percent change (`effect %`) and in log-%. UDP kernel
   counters are recorded per window (a reading, and `UdpInErrors` an evidence item).
 
 ## Runs

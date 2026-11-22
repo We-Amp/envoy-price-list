@@ -177,8 +177,8 @@ H=$D/http3
   python3 ../../../examples/wave4g/table.py wave4g-s3/g2s-resume > wave4g-s3/tables.md )
 ```
 
-Per row, paired by round: the effect on cycles (user + kernel) per request with the quoted interval, the
-t and widened half-widths, rounds up, the deltas in total, user, kernel cycles and user instructions,
+Per row, paired by round: the effect on cycles (user + kernel) per request as a percent change with the
+quoted interval, the same as a log ratio (log-%), the t and widened half-widths (log-%), rounds up, the deltas in total, user, kernel cycles and user instructions,
 connections per request, UDP datagrams out per request (box-wide, a reading), the arm's cycles per request
 and the busiest worker's share range. `g1-proto`: HTTP/3 against HTTP/2 over TLS and the GSO writer, per
 request. `g2s-resume` (labelled `g2-resume`): per QUIC connection, (`h3r` - `h3-ka`) x 10, with the v1.40.2

@@ -3,6 +3,7 @@ counters, and the run configs (arms differ only as named, loopback only, William
 import base64
 import copy
 import json
+import math
 import os
 import tempfile
 import unittest
@@ -261,6 +262,41 @@ class ConfigsTest(unittest.TestCase):
         m4["kernel_net"]["d"]["UdpRcvbufErrors"] = 3
         self.assertFalse(evidence.evaluate(m4, arms["h3"]["evidence"])["ok"])
 
+
+
+class TableEffectIsAPercentTest(unittest.TestCase):
+    """The table's `effect %` is the log ratio turned back into a percent change, not 100 ln(ratio)."""
+
+    def load(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("w4g_table", os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples", "wave4g", "table.py"))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_conversion(self):
+        t = self.load()
+        self.assertAlmostEqual(t.pct(100.0 * math.log(1.748)), 74.8, places=9)
+        self.assertAlmostEqual(t.pct(0.0), 0.0)
+
+    def test_the_published_row(self):
+        # HTTP/3 vs HTTP/2 over TLS in g1-proto: log-% +55.83 [+54.33, +57.33] is +74.8% [+72.2, +77.4]
+        t = self.load()
+        self.assertEqual("%+.1f" % t.pct(55.83), "+74.8")
+        self.assertEqual("%+.1f" % t.pct(54.33), "+72.2")
+        self.assertEqual("%+.1f" % t.pct(57.33), "+77.4")
+
+    def test_the_rendered_row_when_the_data_is_there(self):
+        run = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "data", "waves", "http3", "wave4g", "g1-proto")
+        if not os.path.isfile(os.path.join(run, "legs.jsonl")):
+            self.skipTest("data/waves/http3 not fetched")
+        _, _, rows = self.load().rows(run)
+        r = [o for o in rows if o["row"] == "HTTP/3 vs HTTP/2 over TLS"][0]
+        self.assertEqual("%+.1f [%+.1f, %+.1f]" % (r["effect_pct"], r["interval"][0], r["interval"][1]),
+                         "+74.8 [+72.2, +77.4]")
+        self.assertEqual("%+.2f" % r["log_pct"], "+55.83")
 
 if __name__ == "__main__":
     unittest.main()

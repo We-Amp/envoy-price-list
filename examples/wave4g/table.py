@@ -4,9 +4,10 @@
     python3 examples/wave4g/table.py RUN_DIR [RUN_DIR ...]
 
 Per row, paired by round over the rounds with a valid leg of both arms:
-  effect      mean per-round log ratio of the primary metric (cycles u+k per request), in %, with the
-              95% t half-width and the widened half-width 1.96*sqrt(SE^2 + 0.34^2); the quoted interval
-              is the wider of the two (the price list's method)
+  log-%       mean per-round log ratio of the primary metric (cycles u+k per request), 100 ln(arm/ref),
+              with the 95% t half-width and the widened half-width 1.96*sqrt(SE^2 + 0.34^2), both in
+              log-%; the quoted interval is the wider of the two (the price list's method)
+  effect %    the same mean and interval turned back into a percent change, 100 (exp(log-%/100) - 1)
   delta       the same pairs as differences in cycles per request: total, user, kernel, user instructions
 In g2 the reconnect arms open one connection per 10 requests, so (h3r - h3-ka) * 10 is the price of one
 QUIC connection with the v1.40.2 defaults, in cycles; the cx/req column shows the measured ratio. The
@@ -56,6 +57,11 @@ def ci(xs):
     return mu, T95.get(n - 1, 1.96) * se, 1.96 * math.sqrt(se ** 2 + FLOOR ** 2)
 
 
+def pct(log_pct):
+    """A log ratio in log-% (100 ln(a/b)) as a percent change: 100 (a/b - 1)."""
+    return math.expm1(log_pct / 100.0) * 100.0
+
+
 def per_req(m, stat, scope="sut_stats_window"):
     r = m.get("responses_raw") or m.get("responses") or 0
     v = (m.get(scope) or {}).get(stat)
@@ -100,8 +106,10 @@ def rows(run_dir):
                 shr.append(a["envoy_worker_max_share"])
         mu, t, w = ci(lr)
         hw = max(t, w) if lr else float("nan")
-        out.append({"row": label, "arm": arm, "ref": ref, "n": len(lr), "effect_pct": mu, "t_hw": t, "widened_hw": w,
-                    "interval": (mu - hw, mu + hw), "excludes_0": bool(lr) and (mu - hw > 0 or mu + hw < 0),
+        # the mean and the interval are on log ratios (log-%); the effect is that turned back into a ratio
+        out.append({"row": label, "arm": arm, "ref": ref, "n": len(lr), "log_pct": mu, "effect_pct": pct(mu),
+                    "t_hw": t, "widened_hw": w, "log_interval": (mu - hw, mu + hw),
+                    "interval": (pct(mu - hw), pct(mu + hw)), "excludes_0": bool(lr) and (mu - hw > 0 or mu + hw < 0),
                     "pairs_up": sum(1 for x in lr if x > 0),
                     "delta": {k: ci(d[k])[:2] for k in METRICS if d[k]}, "scale": scale,
                     "cx_per_req": sum(cx) / len(cx) if cx else None,
@@ -114,9 +122,9 @@ def rows(run_dir):
 def table(run_dir):
     name, rounds, out = rows(run_dir)
     print("# %s (%s): %d rounds with valid legs" % (name, run_dir, len(rounds)))
-    print("| Row | n | effect % [quoted interval] | t hw | widened hw | up | delta total | user | kernel | "
-          "ins:u | cx/req | UDP out/req | arm cyc/req | busiest worker share |")
-    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    print("| Row | n | effect % [quoted interval] | log-% [quoted interval] | t hw (log-%) | widened hw (log-%) | up | "
+          "delta total | user | kernel | ins:u | cx/req | UDP out/req | arm cyc/req | busiest worker share |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for o in out:
         unit = "/cx" if o["scale"] != 1 else "/req"
         cells = []
@@ -124,8 +132,9 @@ def table(run_dir):
             mu, hw = o["delta"].get(k, (float("nan"), float("nan")))
             cells.append("%+.1fk +/- %.1fk%s" % (mu / 1e3, hw / 1e3, unit if k == "cycles_total" else ""))
         f = lambda x, p="%.3f": (p % x) if x is not None else "-"  # noqa: E731
-        print("| %s | %d | %+.2f [%+.2f, %+.2f] | %.2f | %.2f | %d/%d | %s | %s | %s | %.1fk | %s |" % (
-            o["row"], o["n"], o["effect_pct"], o["interval"][0], o["interval"][1], o["t_hw"], o["widened_hw"],
+        print("| %s | %d | %+.2f [%+.2f, %+.2f] | %+.2f [%+.2f, %+.2f] | %.2f | %.2f | %d/%d | %s | %s | %s | %.1fk | %s |" % (
+            o["row"], o["n"], o["effect_pct"], o["interval"][0], o["interval"][1],
+            o["log_pct"], o["log_interval"][0], o["log_interval"][1], o["t_hw"], o["widened_hw"],
             o["pairs_up"], o["n"], " | ".join(cells), f(o["cx_per_req"]), f(o["udp_out_per_req"], "%.2f"),
             (o["arm_level"] or float("nan")) / 1e3,
             "%.3f-%.3f" % o["max_share"] if o["max_share"] else "-"))
