@@ -1,0 +1,281 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/wave1c",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 27,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "per_thread": true,
+  "thread_set_check": true,
+  "stat_filter_extra": "cluster_manager\\.(cds\\.|cluster_added|cluster_modified|cluster_removed|cluster_updated|cluster_updated_via_merge|update_merge_cancelled|update_out_of_merge_window|active_clusters|warming_clusters)|cluster\\.epl-eds\\.(update_|membership_)|cluster\\.origin\\.",
+  "origin_accepts": true
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8,
+  "stub_status": true
+ },
+ "rounds": 6,
+ "rounds_block": 6,
+ "rounds_max": 6,
+ "stop": {
+  "target_half_width_pct": 1.5
+ },
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "order_seed": 31,
+ "name": "c-xds-large",
+ "adaptive": false,
+ "order": "rotate",
+ "rotation_block": 6,
+ "short_run_note": "short run: 6 fixed rounds (large effects: stop when the answer is clear); the rotation does not complete, so each arm takes 6 distinct positions; run with --allow-short",
+ "validity": {
+  "max_main_busy": 0.5
+ },
+ "base_arm": "ref",
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "ref",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.epl-eds.membership_change",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "rds",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "rds",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "rds-same",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "rds_same",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "cds",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "cds",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 20,
+     "tol_abs": 0,
+     "label": "one cluster modified per update"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "cds-same",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "cds_same",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "unchanged clusters are not modified"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "cds-active",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "cds_active",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 20,
+     "tol_abs": 0,
+     "label": "the origin cluster modified per update"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "eds",
+   "settings": {
+    "xds": {
+     "routes": 2000,
+     "clusters": 500,
+     "eds_endpoints": 1000
+    },
+    "xds_update": {
+     "kind": "eds",
+     "rate_hz": 1.0,
+     "guard_s": 0.5
+    }
+   },
+   "evidence": [
+    {
+     "stat": "cluster.epl-eds.membership_change",
+     "scope": "window",
+     "equals": 20,
+     "tol_abs": 0,
+     "label": "one membership change per update"
+    },
+    {
+     "stat": "cluster_manager.cluster_modified",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "s",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200
+  },
+  {
+   "name": "s-lo",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 400,
+   "client_concurrency": 4,
+   "client_connections_per_worker": 8
+  }
+ ]
+}
