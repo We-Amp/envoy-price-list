@@ -21,11 +21,21 @@ scripts in its own.
 | `168d2571c5a0` | `connection-churn/e2b/*` | `d49ca12` | `f5c6951` |
 | `fd709bd89d5f` | `upstream-protocols/run1/*` | `d49ca12` | `4c89497` (`examples/wave3f`) |
 | `ab9f7b141899` | `upstream-protocols/run2-f2/*` | `d49ca12` | `4c89497` |
+| `772807bfa1f5` | `http3/wave4g/*` | `d49ca12` + `e88e2bc` | `8a4fa01` (`examples/wave4g`) |
+| `3dcbe9602e1d` | `http3/wave4g-s/*`, `http3/wave4g-s2/*` | `d49ca12` + `e88e2bc` | `8a4fa01` |
+| `577f19528e39` | `http3/wave4g-s3/*` | `d49ca12` + `e88e2bc` | `8a4fa01` |
 
 The build scripts of the code-layout arms are `1c66f7c` (`tools/code-layout`); the release-asset tools
 and this documentation `85dd1d0` and later.
 
 ## What differs between a measured commit and the published code
+
+- **Wave 4 (HTTP/3).** Its working branch joined the connection-churn harness into the upstream-protocols
+  harness on its own; the published history carries only what that branch added on top (`e88e2bc`: the
+  HTTP/3 listener, `{cert_dir}` in client arguments, the UDP kernel counters), joined with the published
+  harness at the same client-argument code as above. The examples' wording changed as for the other
+  studies (who decided a short run, references to unpublished documents). Its data is the asset of the
+  second release, `waves-2026-11b` (`f49effc`).
 
 - **Code of the other studies.** Each measured commit has the harness features of its own study and of
   the studies before it on its branch; the published harness has all of them. A feature is used only
