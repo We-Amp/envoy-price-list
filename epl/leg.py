@@ -29,7 +29,7 @@ import urllib.parse
 
 from . import envoy_config
 from . import experiment as _exp
-from . import latency, nighthawk, statsrow, sysprobe, validity
+from . import latency, nighthawk, statsrow, sysprobe, validity, xds
 
 PERF_EVENTS = "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations"
 BASE_EVENT_NAMES = ("instructions:u", "cycles:u", "cycles:k", "instructions:k", "cycles", "task-clock",
@@ -811,6 +811,18 @@ def client_kw(ccfg):
     return {"preexec_fn": _nofile_preexec(int(ccfg["nofile"]))} if ccfg.get("nofile") else {}
 
 
+ARM_CLIENT_KEYS = ("base_args", "extra_args", "multi_target")
+
+
+def arm_client(arm):
+    """An arm's own client settings (`client`), checked: only ARM_CLIENT_KEYS."""
+    acl = arm.get("client") or {}
+    bad = sorted(set(acl) - set(ARM_CLIENT_KEYS))
+    if bad:
+        raise ValueError("arm %s: unknown client keys %s" % (arm.get("name"), bad))
+    return acl
+
+
 def client_for(ccfg, shape):
     """A rung fixes the client's workers and connections per worker (`client_concurrency`,
     `client_connections_per_worker`), so connections per Envoy worker are the same at every rung."""
@@ -832,6 +844,50 @@ def parse_stub_status(text):
             except (IndexError, ValueError):
                 return None
     return None
+
+
+def parse_stub_accepts(text):
+    """`accepts` of an nginx stub_status page (the first number of its counters line)."""
+    lines = (text or "").splitlines()
+    for i, ln in enumerate(lines):
+        if ln.strip().startswith("server accepts handled requests") and i + 1 < len(lines):
+            try:
+                return int(lines[i + 1].split()[0])
+            except (IndexError, ValueError):
+                return None
+    return None
+
+
+def origin_accepts(e):
+    try:
+        st, body = admin_get(e["origin"]["port"], envoy_config.ORIGIN_STATUS_PATH, timeout=5.0)
+    except OSError:
+        return None
+    return parse_stub_accepts(body) if st == 200 else None
+
+
+def thread_cycles(per_thread, pid):
+    """Cycles (user + kernel) in the window by thread class: the main thread (tid = pid), the
+    workers (wrk:*), and every other thread by name."""
+    out = {"main": 0.0, "workers": 0.0, "other": 0.0, "other_by_comm": {}}
+    for tid, v in per_thread.items():
+        c = v.get("cycles", v.get("cycles:u", 0.0) + v.get("cycles:k", 0.0))
+        if int(tid) == int(pid):
+            out["main"] += c
+        elif v.get("comm", "").startswith("wrk:"):
+            out["workers"] += c
+        else:
+            out["other"] += c
+            k = v.get("comm", "?")
+            out["other_by_comm"][k] = out["other_by_comm"].get(k, 0.0) + c
+    return out
+
+
+def thread_set(before, after):
+    """Envoy's thread ids before and after the window: {before, after, unchanged, new, gone}."""
+    b, a = set(before), set(after)
+    return {"before": len(b), "after": len(a), "unchanged": b == a and bool(b),
+            "new": sorted(after[t][0] for t in a - b)[:8], "gone": sorted(before[t][0] for t in b - a)[:8]}
 
 
 def origin_requests(e):
@@ -909,7 +965,8 @@ class RealBackend:
         A container whose cgroup could not be read is recorded as such and fails the gate."""
         self.side = []
         self.side_expected = []
-        for name, svc in (("origin", origin), ("collector", collector)):
+        svcs = [("origin", origin), ("collector", collector)] + list(getattr(origin, "companions", None) or [])
+        for name, svc in svcs:
             if svc is None or not getattr(svc, "container_id", None):
                 continue
             self.side_expected.append(name)
@@ -1023,6 +1080,13 @@ class RealBackend:
             aenv.get("stats_clusters") and _primes(arm, shape)) else []
         if aenv.get("ext_authz"):
             must_open.append(aenv["authz_grpc_port"] if aenv["ext_authz"] == "grpc" else aenv["authz_port"])
+        # the origin server the origin cluster targets (the second hop's, in a two-hop arm)
+        for src in ((_exp.hop2_envoy(e, arm),) if two_hop else (aenv,)):
+            srv = src.get("origin_server", "plain")
+            if srv != "plain" and shape["kind"] == "proxied":
+                must_open.append(int(e["origin"][srv + "_port"]))
+        if aenv.get("ext_proc"):
+            must_open.append(aenv["ext_proc_port"])
         if aenv.get("tracing") or (aenv.get("stats_sink") or {}).get("kind") == "otlp":
             must_open.append(aenv["collector_port"])
             if e["collector"].get("metrics_port"):
@@ -1042,6 +1106,12 @@ class RealBackend:
         envoy = None
         hop_b = None
         sink = sink_out = sampler = None
+        # xDS arms: the file state, the update spec and the two updaters (epl/xds.py)
+        xst = _exp.xds_state(e, arm, self.run_dir) if aenv.get("xds") else None
+        xup = aenv.get("xds_update") if xst is not None else None
+        xpre = xwin = xq_start = None
+        x_counter = [1]
+        x_n = int(round(float(mcfg["window_s"]) * float(xup["rate_hz"]))) if xup else 0
         adm_t = float(shape.get("admin_timeout_s", 5.0))
         sfx = mcfg.get("stat_filter_extra")
         scp = mcfg.get("stat_count_prefix")
@@ -1075,6 +1145,8 @@ class RealBackend:
                 pin_ok = sysprobe.parse_cpuset(m["hop2_cpus_allowed"]) == hop2_set
             elog_path = os.path.join(self.run_dir, "logs", leg_id + ".envoy.log")
             sink, sink_out = self._sink_start(aenv, leg_id)
+            if xst is not None:
+                xds.write_initial(xst)  # every leg starts from update 0
             # a rung starts Envoy on the main core only (its stats are allocated there, at config
             # load) and moves the workers to their set once they exist
             envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, rung["start_cpus"], workers,
@@ -1092,6 +1164,12 @@ class RealBackend:
                 lim = statsrow.parse_limits(statsrow.read("/proc/%d/limits" % envoy.pid))
                 m["nofile_soft"], m["nofile_hard"] = lim if lim else (None, None)
             self._prime(m, arm, shape, aenv)
+            if xst is not None:
+                xq_start = admin_stats(ecfg["admin_port"], adm_t, sfx)
+                if xup:
+                    # steady churn from here through the warm-up and the lead-in
+                    xpre = xds.Updater(xst, xup["kind"], xup["rate_hz"], x_counter)
+                    xpre.start()
             sut_cpus = sysprobe.cpus_allowed(envoy.pid)
             m["sut_cpus_allowed"] = sut_cpus
             if rung["main_cpu"] is not None:
@@ -1100,14 +1178,27 @@ class RealBackend:
                 pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
             ccfg = client_for(ccfg, shape)
             scheme = "https" if aenv.get("tls") else "http"
-            url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], shape["path"])
-            cextra = list(shape.get("client_extra_args") or [])
+            # an arm may carry client settings of its own (`client`: base_args replaces the shape's or
+            # the experiment's base arguments, extra_args is appended, multi_target spreads the
+            # connections over several loopback destinations): the connection-churn arms
+            acl = arm_client(arm)
+            mt = acl.get("multi_target", shape.get("multi_target"))
+            if mt:
+                url = nighthawk.multi_target_args(scheme, ecfg["listener_port"], shape["path"], mt)
+            else:
+                url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], shape["path"])
+            m["client_targets"] = (mt or {}).get("count", 1)
+            cextra = list(shape.get("client_extra_args") or []) + list(acl.get("extra_args") or [])
+            if shape.get("request_body_file"):
+                # the request body's bytes from the harness, checked against their sha256 per leg
+                cextra += ["--request-body-file", _exp.request_body_path(shape)]
+            cbase = acl["base_args"] if "base_args" in acl else shape.get("client_base_args")
             nh = ccfg["binary"]
             # 4. warm-up (a shape may set its own length: the JIT warm-up check)
             warm_s = shape["warmup_s"] if shape.get("warmup_s") is not None else ccfg.get("warmup_s", 0)
             if warm_s > 0:
                 wa = nighthawk.client_args(ccfg, shape["rps"], url, warm_s, False, cextra,
-                                             shape.get("client_base_args"))
+                                             cbase)
                 w = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + wa,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **client_kw(ccfg))
                 try:
@@ -1129,7 +1220,7 @@ class RealBackend:
                 m["lat_client_duration_s"] = dur
             nh_json = os.path.join(self.run_dir, "nighthawk", leg_id + ".json")
             ma = nighthawk.client_args(ccfg, shape["rps"], url, dur, True, cextra,
-                                         shape.get("client_base_args"))
+                                         cbase)
             m["client_args"] = ma
             with open(nh_json, "w") as out, open(os.path.join(self.run_dir, "logs", leg_id + ".client.log"), "w") as cerr:
                 cl = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + ma, stdout=out, stderr=cerr,
@@ -1142,6 +1233,11 @@ class RealBackend:
                     c0 = sysprobe.proc_threads_cpu(cl.pid)
                     e0 = sysprobe.proc_threads_detail(envoy.pid)
                     b0 = sysprobe.proc_threads_detail(hop_b.pid) if hop_b else None
+                    if xpre is not None:
+                        # no update in flight when the window's first read starts
+                        xpre.stop()
+                        time.sleep(float(xup.get("guard_s", 0.5)))
+                    acc0 = origin_accepts(e) if mcfg.get("origin_accepts") else None
                     # smoke-only probe (measure.stat_ops_probe): every store stat around the window
                     t_reads0 = time.monotonic()
                     sp0 = admin_prometheus(ecfg["admin_port"], adm_t) if mcfg.get("stat_ops_probe") else None
@@ -1161,14 +1257,18 @@ class RealBackend:
                         # before the window opens (the response count still brackets q0..q1)
                         time.sleep(settle)
                     u0 = statsrow.udp_counters(e["stats_sink"]["port"]) if sink else None
-                    qb0 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
+                    qb0 = admin_stats(e["hop2"]["admin_port"], adm_t, sfx) if hop_b else None
                     p0 = sysprobe.per_cpu_times()
                     k0 = sysprobe.proc_run_ns(envoy.pid)
                     kb0 = sysprobe.proc_run_ns(hop_b.pid) if hop_b else 0
                     r0, rwhy0 = sysprobe.cpu_run_ns()
                     side_u0 = {svc.name: svc.usage_us() for svc in self.side}
                     i0 = sysprobe.cpuidle_counts(sut_set)
+                    kn0 = sysprobe.kernel_net() if mcfg.get("kernel_net") else None
                     t0 = time.monotonic()
+                    if xup:
+                        xwin = xds.Updater(xst, xup["kind"], xup["rate_hz"], x_counter, anchor=t0, count=x_n)
+                        xwin.start()
                     events = perf_events(mcfg, rnd)
                     if events != PERF_EVENTS:
                         m["perf_events"] = events
@@ -1204,6 +1304,9 @@ class RealBackend:
                             tl.stop_evt.set()
                             tl.join(timeout=30)
                     t1 = time.monotonic()
+                    wall_t1 = time.time()
+                    if xwin is not None:
+                        xwin.stop()
                     if sampler:
                         sampler.stop_evt.set()
                         sampler.join(timeout=10)
@@ -1225,6 +1328,10 @@ class RealBackend:
                         if not tl.burst or tl.burst.get("error"):
                             raise RuntimeError("burst not applied: %s" % (tl.burst or "never reached"))
                     i1 = sysprobe.cpuidle_counts(sut_set)
+                    if kn0 is not None:
+                        # box-wide TCP counters over the window (churn shapes; evidence gates read
+                        # kernel_net.d.* and kernel_net.end.*)
+                        m["kernel_net"] = sysprobe.kernel_net_delta(kn0, sysprobe.kernel_net())
                     m["cpuidle_residency"] = sysprobe.cpuidle_residency(i0, i1, t1 - t0)
                     r1, rwhy1 = sysprobe.cpu_run_ns()
                     side_u1 = {svc.name: svc.usage_us() for svc in self.side}
@@ -1234,9 +1341,18 @@ class RealBackend:
                     t_q1 = time.monotonic()
                     q1 = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     t_q1_end = time.monotonic()
+                    acc1 = origin_accepts(e) if mcfg.get("origin_accepts") else None
+                    if xst is not None:
+                        m["xds"] = xds.window_record(xup["kind"] if xup else None, xq_start, q0, q1, xpre, xwin,
+                                                     t0, t1, wall_t1, x_n, eds=bool(xst.n_eds))
+                    if mcfg.get("origin_accepts"):
+                        # connections the origin accepted in the window (the second status read's own
+                        # connection taken off); fails closed to None on a failed read
+                        m["origin_accepts_window"] = (acc1 - acc0 - 1) if acc0 is not None and acc1 is not None \
+                            else None
                     o1 = origin_requests(e) if from_origin else None
                     st1 = sysprobe_steal()
-                    qb1 = admin_stats(e["hop2"]["admin_port"]) if hop_b else None
+                    qb1 = admin_stats(e["hop2"]["admin_port"], adm_t, sfx) if hop_b else None
                     # the response count's time base ends with the last count read, before
                     # anything slow (thread checks, numastat) runs
                     t2 = time.monotonic()
@@ -1328,6 +1444,11 @@ class RealBackend:
             m["sut_cpu_busy_pct"] = {str(k): round(v, 1)
                                      for k, v in sysprobe.per_cpu_busy_pct(p0, p1, sut_set | sib_set).items()}
             m["envoy_threads"] = sysprobe.threads_summary(e0, e1, t2 - t0)
+            if mcfg.get("thread_set_check"):
+                m["envoy_thread_set"] = thread_set(e0, e1)
+            if mcfg.get("per_thread"):
+                mt = m["envoy_threads"].get(str(envoy.pid))
+                m["envoy_main_busy"] = round(mt["busy"], 4) if mt else None
             ws = _worker_share(m["envoy_threads"], int(workers), envoy.pid)
             m.update(ws)
             m.update({"envoy_" + k: v for k, v in _worker_busy(m["envoy_threads"]).items()})
@@ -1357,6 +1478,7 @@ class RealBackend:
                 m["workers_perf_threads"], m["workers_expected"] = len(wk), int(workers)
                 if wk and resp > 0:
                     m["workers_cycles_per_req"] = sum(cyc(v) for v in wk) / resp
+                m["thread_cycles"] = thread_cycles(pt, envoy.pid)
             if sampler:
                 from . import statsrow as _sr
                 bursts = _sr.find_bursts(sampler.samples, float(shape.get("burst_min_busy", 0.2)),
@@ -1384,6 +1506,9 @@ class RealBackend:
                             for c in ("1xx", "3xx", "4xx", "5xx"))
                 m["hop2_stats_delta"] = _stat_deltas(qb0, qb1)
                 m["hop2_stats_end"] = _stat_end(qb1)
+                # for evidence (scope hop2_window): every filtered stat's change, zeros included
+                m["hop2_stats_window"] = _stat_window(qb0, qb1)
+                m["hop2_stats_window_ok"] = True
                 m["hop2_responses_raw"] = _delta(qb0, qb1, "http.ingress_http.downstream_rq_2xx")
             busy = sysprobe.threads_busy(c0, c1, win)
             maxb = max(busy.values()) if busy else None
@@ -1474,6 +1599,9 @@ class RealBackend:
         except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg
             m["error"] = "%s: %s" % (type(ex).__name__, ex)
         finally:
+            for u in (xpre, xwin):
+                if u is not None:
+                    u.stop()
             if envoy is not None and envoy.poll() is None:
                 # end-of-leg snapshot: cumulative counters over the whole leg, just before the stop
                 try:
@@ -1519,6 +1647,13 @@ class RealBackend:
             if sink is not None:
                 m["udpsink"] = statsrow.stop_udpsink(self.own, sink, sink_out)
             if hop_b is not None:
+                if hop_b.poll() is None:
+                    # the second hop's end-of-leg snapshot (evidence scope hop2_leg)
+                    try:
+                        m["hop2_stats_leg_end"] = admin_stats(e["hop2"]["admin_port"], adm_t, sfx)
+                        m["hop2_stats_leg_end_ok"] = True
+                    except (OSError, RuntimeError) as ex:
+                        m["leg_end_snapshot_error"] = m.get("leg_end_snapshot_error") or "hop2: %s" % ex
                 st = self._stop_envoy(hop_b, belog, blog)
                 m["hop2_exit"] = st["exit"]
                 if st["exit"] not in (0, None) and m.get("envoy_exit") in (0, None):
@@ -1770,7 +1905,8 @@ class RealBackend:
         out = os.path.join(d, leg_id + ".json")
         p = statsrow.start_udpsink(self.own, self.exp["cpus"]["origin"], int(sc["port"]), int(sc["rcvbuf"]), out,
                                    int(sc.get("sample_every", 1)),
-                                   classes=bool(self.exp["measure"].get("latency")))
+                                   classes=bool(self.exp["measure"].get("latency")
+                                                or self.exp["measure"].get("udp_classes")))
         return p, out
 
     def _prime(self, m, arm, shape, aenv):

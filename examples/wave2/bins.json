@@ -1,0 +1,42 @@
+{
+ "opt": {
+  "binary": "~/epl/bin/envoy-1.40.2",
+  "source": "own build of tag v1.40.2 (b2d89e0ae5), release options; byte-identical to the official release asset",
+  "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+ },
+ "order": {
+  "binary": "~/epl/bins/wave2/envoy-order",
+  "source": "opt objects relinked with an lld call-graph ordering file (cdsort) from track A's LBR legs of the official binary",
+  "source_sha256": "d994883cc2369eac1f4008ece5bc29619887168b20480c0e40de9c0a3f1105f2"
+ },
+ "autofdo": {
+  "binary": "~/epl/bins/wave2/envoy-autofdo-v2",
+  "source": "v1.40.2 + ThinLTO + -fprofile-sample-use (llvm-profgen 22.1.8 on the lbr-w2-opt legs: 6 x 30 s, period 20,003, about 15x track A's samples), v2",
+  "source_sha256": "c706fe0aedfaa33988324d519f6de90bc5a24c3f5ca87c041628f795e5f4d0a3"
+ },
+ "pgolto": {
+  "binary": "~/epl/bins/wave2/envoy-pgolto",
+  "source": "v1.40.2 + instrumented PGO (pgo-recipe-v1 nine-leg trainer) + ThinLTO",
+  "source_sha256": "d1b4f16e650345957eca97ef690adf149f19ae0ca1d4a1388d6154312270487d"
+ },
+ "pgolto-relocs": {
+  "binary": "~/epl/bins/wave2/envoy-pgolto-relocs",
+  "source": "pgolto relinked with --emit-relocs, debug info stripped (BOLT input); same .text address, size and symbols as pgolto, .rodata placed after .eh_frame (rip-relative displacements differ)",
+  "source_sha256": "3fac5852e2da501909fe236b9edec6058e43b5680a79684bfa30bd1cb1c13738"
+ },
+ "bolt": {
+  "binary": "~/epl/bins/wave2/envoy-bolt",
+  "source": "llvm-bolt 22.1.8 on pgolto-relocs with the lbr-w2 profile (6 legs, 2.9M samples): ext-tsp, cdsort, split functions, icf, tcmalloc rseq skips",
+  "source_sha256": "94dd191d62d599e6866cdf839dde8cc6ba913e9d96fd8bfab1cecf23dc6c511e"
+ },
+ "autofdo-v1": {
+  "binary": "~/epl/bins/wave2/envoy-autofdo",
+  "source": "v1.40.2 + ThinLTO + -fprofile-sample-use (llvm-profgen 22.1.8 on track A's LBR legs of the official binary), v1 (not in any run; superseded by v2)",
+  "source_sha256": "0f7c6c3223045854f1fb9ed545d3a3b59850688d6206de76a883d9178d629a7a"
+ },
+ "autofdo-order": {
+  "binary": "~/epl/bins/wave2/envoy-autofdo-order",
+  "source": "autofdo v2 objects (rebuild reproduced c706fe0a) relinked with the order file (track A's cg.txt, 887 names not found) + cdsort; packing gate 315 -> 204 pages (0.65, limit 0.70)",
+  "source_sha256": "80381f60de59cb18f2b72212957577f2a465acaa035bee4d77dbfd9b69f53a3c"
+ }
+}

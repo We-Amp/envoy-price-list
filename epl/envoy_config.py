@@ -12,7 +12,10 @@ exactly one generic setting (see `SETTINGS`). Every setting defaults to off,
 which is the baseline config.
 
 Shape kinds:
-  proxied         GET <path> proxied to the origin, which serves body_bytes.
+  proxied         GET <path> proxied to the origin, which serves body_bytes;
+                  optionally with N request and M response headers added by
+                  the route (request_headers_added, response_headers_added),
+                  so the added request headers are encoded upstream.
   direct_headers  direct_response of body_bytes, with N request headers and
                   M response headers added by the route (header-map work
                   without an upstream).
@@ -33,6 +36,12 @@ HCM = "type.googleapis.com/envoy.extensions.filters.network.http_connection_mana
 ROUTER = "type.googleapis.com/envoy.extensions.filters.http.router.v3.Router"
 DTLS = "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext"
 EXT_AUTHZ = "type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz"
+EXT_PROC = "type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExternalProcessor"
+GRPC_CLIENTS = ("envoy_grpc", "google_grpc")
+# ext_proc processing modes an arm may name: the filter's defaults (request and response headers
+# sent, bodies and trailers not), or request headers only
+EXT_PROC_MODES = {"default": None,
+                  "request_headers": {"request_header_mode": "SEND", "response_header_mode": "SKIP"}}
 OTEL = "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
 FILE_LOG = "type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog"
 STATS_LOG = "type.googleapis.com/envoy.extensions.access_loggers.stats.v3.Config"
@@ -91,13 +100,26 @@ STATS_LOG_MAX_COUNTERS = 1024
 # settings; none is off by default in the sense of costing work.
 SETTINGS = {
     "tls": "TLS on the listener: {cert: rsa2048|ecdsa-p256, resumption: true (Envoy default) | false "
-           "(stateless and stateful session resumption disabled)}",
+           "(stateless and stateful session resumption disabled), groups: [X25519MLKEM768|X25519|P-256, ...] "
+           "(tls_params.ecdh_curves; unset = Envoy's default X25519MLKEM768:X25519:P-256)}",
     "hpack_table_size": "HTTP/2 HPACK dynamic table size in bytes (http2_protocol_options); unset = default",
     "tracing": "OpenTelemetry tracer over gRPC to the local collector: {sampling_pct: 0..100}",
     "access_log": "file access log: {format: text (Envoy's default format) | json (the same fields)}; the "
                   "harness sets the path",
     "ext_authz": "ext_authz filter against the local allow service in the origin container: true or \"http\" "
                  "(HTTP service, authz_port) | \"grpc\" (gRPC service over h2c, authz_grpc_port)",
+    "grpc_client": "the gRPC client of the side-service filters (ext_authz \"grpc\", ext_proc): envoy_grpc "
+                   "(the default: Envoy's own client over an HTTP/2 cluster) | google_grpc (the gRPC C++ client, "
+                   "target 127.0.0.1:<port>, insecure channel, stat_prefix = the filter's name)",
+    "ext_proc": "ext_proc filter before the router against the harness's ext_proc test service (origin."
+                "ext_proc_port), failure_mode_allow false, every other field at its default: {mode: default "
+                "(request and response headers sent: two messages per request on one stream) | request_headers "
+                "(request headers only), observability_mode: true (optional)}",
+    "xds": "routes, clusters and an optional EDS cluster from watched files (epl/xds.py): {routes: filler routes, "
+           "clusters: filler clusters, eds_endpoints: endpoints of the filler EDS cluster (0 = none)}; the origin "
+           "cluster comes by CDS; the harness sets the directory",
+    "xds_update": "updates during the leg (no bootstrap change): {kind: rds | rds_same | cds | cds_same | "
+                  "cds_active | eds, rate_hz}",
     "retries": "retry policy on proxied routes (retry_on 5xx,reset,connect-failure; 2 retries); none triggers",
     "buffer_limit_bytes": "per_connection_buffer_limit_bytes on the listener and the origin cluster",
     "two_hop": "client -> this Envoy -> a second Envoy (cpus.hop2, hop2 ports, baseline config) -> origin",
@@ -133,6 +155,12 @@ SETTINGS = {
     "listener_address": "the listener's address: 127.0.0.1 (the harness default: every accepted connection's local "
                         "address is the listener's one address object) | 0.0.0.0 (the wildcard address: Envoy reads "
                         "each accepted connection's local address into its own object); the client targets loopback",
+    "tcp_defer_accept_s": "N: TCP_DEFER_ACCEPT on the listen socket(s) (listener socket_options), N seconds",
+    "reuse_port": "false: enable_reuse_port false, one listen socket shared by every worker (default: one socket per "
+                  "worker with SO_REUSEPORT)",
+    "listener_fanout": "N: the listener also listens on the next N-1 loopback addresses after listener_address "
+                       "(additional_addresses: one listener, one filter chain, one TLS context), for clients "
+                       "that spread connections over several destinations (multi_target)",
     "stats_access_log": "stats access logger on the HCM (envoy.access_loggers.stats): {counters: K, tag: "
                         "%DOWNSTREAM_LOCAL_PORT% (one counter object per counter) | %DOWNSTREAM_REMOTE_PORT% (one "
                         "per counter and downstream connection)}: K counters dose.c000.. each incremented by 1 "
@@ -142,7 +170,22 @@ SETTINGS = {
     "stats_reject_all": "true: stats_config.stats_matcher.reject_all (every stat becomes a null object)",
     "upstream_http": "HTTP/1 pool limits on the origin cluster (HttpProtocolOptions "
                      "common_http_protocol_options): {idle_timeout_s, max_requests, max_connection_duration_s}",
+    "upstream_http2": "true: the origin cluster speaks HTTP/2 (explicit http2_protocol_options; cleartext "
+                      "with prior knowledge, or over upstream_tls with ALPN h2)",
+    "upstream_tls": "TLS on the origin cluster (UpstreamTlsContext): {ca: cert kind the peer is verified "
+                    "against, sni, san (exact DNS SAN match, optional), cert: client cert kind (mTLS, optional), "
+                    "alpn: [protocols] (optional), max_session_keys (optional)}",
+    "origin_server": "which origin server the origin cluster targets: plain (the default, HTTP/1.1) | h2c "
+                     "(origin.h2c_port) | tls (origin.tls_port, TLS with ALPN h2 and http/1.1); ignored by "
+                     "the first hop of a two-hop arm",
+    "runtime": "a layered_runtime static layer: {key: value} (e.g. envoy.reloadable_features.http2_use_oghttp2)",
+    "grpc_stats": "grpc_stats filter before the router: {stats_for_all_methods: bool}",
 }
+
+# The oghttp2 switch of v1.40.2 (runtime_features.cc:326, default false)
+OGHTTP2_KEY = "envoy.reloadable_features.http2_use_oghttp2"
+UTLS = "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext"
+GRPC_STATS = "type.googleapis.com/envoy.extensions.filters.http.grpc_stats.v3.FilterConfig"
 
 # Envoy's default access-log fields, as JSON with the same content.
 JSON_LOG_FIELDS = {
@@ -172,6 +215,10 @@ def route_for(shape, cluster="origin", envoy_cfg=None):
         r["route"] = {"cluster": cluster}
         if (envoy_cfg or {}).get("retries"):
             r["route"]["retry_policy"] = {"retry_on": "5xx,reset,connect-failure", "num_retries": 2}
+        if shape.get("request_headers_added"):
+            r["request_headers_to_add"] = _headers("req", int(shape["request_headers_added"]))
+        if shape.get("response_headers_added"):
+            r["response_headers_to_add"] = _headers("rsp", int(shape["response_headers_added"]))
     elif kind == "direct_headers":
         r["direct_response"] = {"status": 200,
                                 "body": {"inline_string": "a" * int(shape.get("body_bytes", 128))}}
@@ -362,8 +409,12 @@ def stats_sink(sk, envoy_cfg):
         addr = {"socket_address": {"protocol": "UDP", "address": "127.0.0.1",
                                    "port_value": int(envoy_cfg["stats_sink_port"])}}
         if kind == "statsd":
-            bad = sorted(set(sk) - {"kind", "prefix"})
+            # max_bytes_per_datagram on StatsdSink exists only in own builds that add it (a release
+            # rejects the field), so an arm sets it only with such a binary
+            bad = sorted(set(sk) - {"kind", "prefix", "max_bytes_per_datagram"})
             tc = {"@type": STATSD, "address": addr, "prefix": sk.get("prefix", "envoy")}
+            if sk.get("max_bytes_per_datagram"):
+                tc["max_bytes_per_datagram"] = int(sk["max_bytes_per_datagram"])
             name = "envoy.stat_sinks.statsd"
         else:
             bad = sorted(set(sk) - {"kind", "prefix", "max_bytes_per_datagram"})
@@ -429,25 +480,106 @@ def _static_cluster(name, port, http2=False):
     return c
 
 
-def tls_socket(tls, cert_dir):
-    kind = tls.get("cert", "rsa2048")
+TLS_KEYS = {"cert", "resumption", "groups", "client_ca", "client_san"}
+
+
+def _cert_kind(kind, what):
     if kind not in CERT_KINDS:
-        raise ValueError("tls.cert must be one of %s" % sorted(CERT_KINDS))
+        raise ValueError("%s must be one of %s" % (what, sorted(CERT_KINDS)))
+    return kind
+
+
+def _validation(ca, san, cert_dir):
+    v = {"trusted_ca": {"filename": os.path.join(cert_dir, ca + ".crt")}}
+    if san:
+        v["match_typed_subject_alt_names"] = [{"san_type": "DNS", "matcher": {"exact": san}}]
+    return v
+
+
+def tls_socket(tls, cert_dir):
+    """Listener TLS. With client_ca the listener requires a client certificate, verified against
+    that cert kind (and its DNS SAN when client_san is set): the mTLS server side."""
+    bad = sorted(set(tls) - TLS_KEYS)
+    if bad:
+        raise ValueError("tls: unknown keys %s" % bad)
+    kind = _cert_kind(tls.get("cert", "rsa2048"), "tls.cert")
     ctx = {"@type": DTLS, "common_tls_context": {"tls_certificates": [{
         "certificate_chain": {"filename": os.path.join(cert_dir, kind + ".crt")},
         "private_key": {"filename": os.path.join(cert_dir, kind + ".key")}}]}}
     if tls.get("resumption", True) is False:
         ctx["disable_stateless_session_resumption"] = True
         ctx["disable_stateful_session_resumption"] = True
+    groups = tls.get("groups")
+    if groups is not None:
+        # the key-exchange groups the listener accepts (tls_params.ecdh_curves); unset = Envoy's
+        # default, X25519MLKEM768:X25519:P-256 in v1.40.2
+        if not (isinstance(groups, list) and groups and all(g in TLS_GROUPS for g in groups)):
+            raise ValueError("tls.groups must be a non-empty list of %s" % sorted(TLS_GROUPS))
+        ctx["common_tls_context"]["tls_params"] = {"ecdh_curves": list(groups)}
+    if tls.get("client_ca"):
+        ctx["require_client_certificate"] = True
+        ctx["common_tls_context"]["validation_context"] = _validation(
+            _cert_kind(tls["client_ca"], "tls.client_ca"), tls.get("client_san"), cert_dir)
+    elif tls.get("client_san"):
+        raise ValueError("tls.client_san needs tls.client_ca")
     return {"name": "envoy.transport_sockets.tls", "typed_config": ctx}
 
+
+UTLS_KEYS = {"ca", "sni", "san", "cert", "alpn", "max_session_keys"}
+
+
+def upstream_tls_socket(ut, cert_dir):
+    """Origin-cluster TLS: the peer is verified against cert kind `ca` (and its DNS SAN); with
+    `cert`, a client certificate is presented (mTLS)."""
+    if not isinstance(ut, dict) or not ut.get("ca"):
+        raise ValueError("upstream_tls needs ca (the cert kind the peer is verified against)")
+    bad = sorted(set(ut) - UTLS_KEYS)
+    if bad:
+        raise ValueError("upstream_tls: unknown keys %s" % bad)
+    ctc = {"validation_context": _validation(_cert_kind(ut["ca"], "upstream_tls.ca"), ut.get("san"), cert_dir)}
+    if ut.get("cert"):
+        k = _cert_kind(ut["cert"], "upstream_tls.cert")
+        ctc["tls_certificates"] = [{"certificate_chain": {"filename": os.path.join(cert_dir, k + ".crt")},
+                                    "private_key": {"filename": os.path.join(cert_dir, k + ".key")}}]
+    if ut.get("alpn"):
+        ctc["alpn_protocols"] = list(ut["alpn"])
+    ctx = {"@type": UTLS, "common_tls_context": ctc}
+    if ut.get("sni"):
+        ctx["sni"] = ut["sni"]
+    if ut.get("max_session_keys") is not None:
+        ctx["max_session_keys"] = int(ut["max_session_keys"])
+    return {"name": "envoy.transport_sockets.tls", "typed_config": ctx}
+
+
+def cert_kinds_of(envoy_cfg):
+    """Every cert kind an envoy section (listener and origin cluster) names."""
+    out = set()
+    t = envoy_cfg.get("tls") or {}
+    if t:
+        out.add(t.get("cert", "rsa2048"))
+        if t.get("client_ca"):
+            out.add(t["client_ca"])
+    u = envoy_cfg.get("upstream_tls") or {}
+    out.update(x for x in (u.get("ca"), u.get("cert")) if x)
+    return out
+
+
+TLS_GROUPS = {"X25519MLKEM768", "X25519", "P-256"}
 
 CERT_KINDS = {
     # openssl genpkey arguments for the key of a self-signed leaf; generated per run
     # directory (named curve: BoringSSL rejects explicit curve parameters)
     "rsa2048": ["-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048"],
     "ecdsa-p256": ["-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:P-256", "-pkeyopt", "ec_param_enc:named_curve"],
+    # the same key type with a DNS SAN (cert_san below): an origin or a second hop that is verified
+    # by name, and the client certificate of an mTLS hop
+    "ecdsa-p256-san": ["-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:P-256", "-pkeyopt",
+                       "ec_param_enc:named_curve"],
+    "ecdsa-p256-client": ["-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:P-256", "-pkeyopt",
+                          "ec_param_enc:named_curve"],
 }
+# DNS subjectAltName written into these kinds' certificates (the older kinds have none, unchanged)
+CERT_SAN = {"ecdsa-p256-san": "bench.local", "ecdsa-p256-client": "client.bench.local"}
 
 
 def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
@@ -506,20 +638,31 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
     if envoy_cfg.get("stats_access_log"):
         hcm.setdefault("access_log", []).append(stats_access_log(envoy_cfg["stats_access_log"]))
     az = envoy_cfg.get("ext_authz")
+    gc = envoy_cfg.get("grpc_client", "envoy_grpc")
+    if gc not in GRPC_CLIENTS:
+        raise ValueError("grpc_client must be one of %s" % (GRPC_CLIENTS,))
+    if gc != "envoy_grpc" and not (az == "grpc" or envoy_cfg.get("ext_proc")):
+        raise ValueError("grpc_client applies to ext_authz \"grpc\" and ext_proc only")
     if az:
         if az not in (True, "http", "grpc"):
             raise ValueError("ext_authz must be true, \"http\" or \"grpc\"")
         cfg = {"@type": EXT_AUTHZ, "transport_api_version": "V3", "failure_mode_allow": False}
         if az == "grpc":
             port = int(envoy_cfg["authz_grpc_port"])
-            cfg["grpc_service"] = {"envoy_grpc": {"cluster_name": "ext_authz"}, "timeout": "0.5s"}
-            clusters.append(_static_cluster("ext_authz", port, http2=True))
+            cfg["grpc_service"] = grpc_service(gc, "ext_authz", port, timeout="0.5s")
+            if gc == "envoy_grpc":
+                clusters.append(_static_cluster("ext_authz", port, http2=True))
         else:
             port = int(envoy_cfg["authz_port"])
             cfg["http_service"] = {"server_uri": {"uri": "http://127.0.0.1:%d" % port, "cluster": "ext_authz",
                                                   "timeout": "0.5s"}}
             clusters.append(_static_cluster("ext_authz", port))
         hcm["http_filters"].insert(0, {"name": "envoy.filters.http.ext_authz", "typed_config": cfg})
+    ep = envoy_cfg.get("ext_proc")
+    if ep:
+        hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, ext_proc_filter(ep, gc, envoy_cfg))
+        if gc == "envoy_grpc":
+            clusters.append(_static_cluster("ext_proc", int(envoy_cfg["ext_proc_port"]), http2=True))
     if envoy_cfg.get("jwt_authn"):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, jwt_filter(envoy_cfg["jwt_authn"]))
     if envoy_cfg.get("local_ratelimit"):
@@ -548,6 +691,31 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
                                        "port_value": int(envoy_cfg["listener_port"])}},
         "filter_chains": [chain],
     }
+    fan = envoy_cfg.get("listener_fanout")
+    if fan is not None:
+        # one listener (one filter chain, one TLS context, one session-ticket key) on N loopback
+        # addresses: the listener's address plus additional_addresses, the next N-1 addresses
+        import ipaddress
+        n = int(fan)
+        first = ipaddress.IPv4Address(envoy_cfg.get("listener_address", "127.0.0.1"))
+        if n < 2 or first not in ipaddress.IPv4Network("127.0.0.0/8") \
+                or first + (n - 1) not in ipaddress.IPv4Network("127.0.0.0/8"):
+            raise ValueError("listener_fanout needs N >= 2 addresses inside 127.0.0.0/8 from listener_address")
+        listener["additional_addresses"] = [
+            {"address": {"socket_address": {"address": str(first + i), "port_value": int(envoy_cfg["listener_port"])}}}
+            for i in range(1, n)]
+    if envoy_cfg.get("tcp_defer_accept_s") is not None:
+        # TCP_DEFER_ACCEPT (IPPROTO_TCP 6, option 9) on the listen socket(s): the kernel hands a
+        # connection to accept() only once data has arrived; the additional addresses inherit it
+        v = int(envoy_cfg["tcp_defer_accept_s"])
+        if v < 1:
+            raise ValueError("tcp_defer_accept_s must be at least 1")
+        listener["socket_options"] = [{"description": "TCP_DEFER_ACCEPT", "level": 6, "name": 9, "int_value": v,
+                                       "state": "STATE_PREBIND"}]
+    if envoy_cfg.get("reuse_port") is not None:
+        if envoy_cfg["reuse_port"] is not False:
+            raise ValueError("reuse_port takes false (one listen socket shared by every worker); unset = default")
+        listener["enable_reuse_port"] = False
     if envoy_cfg.get("exact_balance", True):
         listener["connection_balance_config"] = {"exact_balance": {}}
     if envoy_cfg.get("buffer_limit_bytes") is not None:
@@ -569,6 +737,30 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
             "envoy.extensions.upstreams.http.v3.HttpProtocolOptions": {
                 "@type": UPSTREAM_HTTP, "common_http_protocol_options": cho,
                 "explicit_http_config": {"http_protocol_options": {}}}}
+    h2u = envoy_cfg.get("upstream_http2")
+    if h2u:
+        if h2u is not True:
+            raise ValueError("upstream_http2 must be true")
+        if uh:
+            raise ValueError("upstream_http2 and upstream_http both set the origin cluster's protocol options")
+        clusters[0]["typed_extension_protocol_options"] = {
+            "envoy.extensions.upstreams.http.v3.HttpProtocolOptions": {
+                "@type": UPSTREAM_HTTP, "explicit_http_config": {"http2_protocol_options": {}}}}
+    if envoy_cfg.get("upstream_tls") is not None:
+        if not cert_dir:
+            raise ValueError("upstream_tls needs a certificate directory")
+        clusters[0]["transport_socket"] = upstream_tls_socket(envoy_cfg["upstream_tls"], cert_dir)
+    if envoy_cfg.get("origin_server", "plain") not in ORIGIN_SERVERS:
+        raise ValueError("origin_server must be one of %s" % (ORIGIN_SERVERS,))
+    gs = envoy_cfg.get("grpc_stats")
+    if gs is not None:
+        if not isinstance(gs, dict) or set(gs) - {"stats_for_all_methods"}:
+            raise ValueError("grpc_stats takes {stats_for_all_methods: bool}")
+        f = {"@type": GRPC_STATS}
+        if "stats_for_all_methods" in gs:
+            f["stats_for_all_methods"] = bool(gs["stats_for_all_methods"])
+        hcm["http_filters"].insert(len(hcm["http_filters"]) - 1,
+                                   {"name": "envoy.filters.http.grpc_stats", "typed_config": f})
     if envoy_cfg.get("upstream_pool_per_downstream"):
         clusters[0]["connection_pool_per_downstream_connection"] = True
     out = {
@@ -599,7 +791,86 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
             clusters.append(_static_cluster("otel_collector", envoy_cfg["collector_port"], http2=True))
     if envoy_cfg.get("stats_reject_all"):
         out["stats_config"] = {"stats_matcher": {"reject_all": True}}
+    rt = envoy_cfg.get("runtime")
+    if rt is not None:
+        if not isinstance(rt, dict) or not rt or not all(
+                isinstance(v, (bool, int, float, str)) for v in rt.values()):
+            raise ValueError("runtime takes a non-empty {key: bool | number | string}")
+        out["layered_runtime"] = {"layers": [{"name": "epl-static", "static_layer": dict(rt)}]}
+    if envoy_cfg.get("xds_update") and not envoy_cfg.get("xds"):
+        raise ValueError("xds_update needs xds")
+    if envoy_cfg.get("xds"):
+        _xds_bootstrap(out, hcm, shapes, envoy_cfg)
     return out
+
+
+ORIGIN_SERVERS = ("plain", "h2c", "tls")
+
+
+XDS_EXCLUSIVE = ("two_hop", "buffer_limit_bytes", "upstream_http", "upstream_pool_per_downstream", "stats_clusters",
+                 "circuit_breakers_max", "upstream_port", "upstream_tls")
+
+
+def _xds_bootstrap(out, hcm, shapes, envoy_cfg):
+    """Routes by RDS and the origin (with the filler clusters) by CDS, each from its own file."""
+    from . import xds
+    x = envoy_cfg["xds"]
+    xds.check_size(x)
+    if not x.get("dir"):
+        raise ValueError("xds needs a directory (the harness sets xds.dir)")
+    bad = [k for k in XDS_EXCLUSIVE if envoy_cfg.get(k)]
+    if envoy_cfg.get("origin_server", "plain") != "plain":
+        bad.append("origin_server")
+    if bad or vhost_fields(shapes):
+        raise ValueError("xds cannot be combined with %s" % (bad or ["route_table.vhost"]))
+    up = envoy_cfg.get("xds_update")
+    if up:
+        xds.kind_type(up.get("kind"))
+        if float(up.get("rate_hz", 0)) <= 0:
+            raise ValueError("xds_update.rate_hz must be > 0")
+        if up["kind"] == "eds" and not int(x.get("eds_endpoints", 0)):
+            raise ValueError("an eds update needs xds.eds_endpoints")
+    p = xds.paths(x["dir"])
+    del hcm["route_config"]
+    hcm["rds"] = {"route_config_name": xds.ROUTE_NAME, "config_source": xds.config_source(p["rds"])}
+    out["static_resources"]["clusters"] = [c for c in out["static_resources"]["clusters"] if c["name"] != "origin"]
+    if not out["static_resources"]["clusters"]:
+        del out["static_resources"]["clusters"]
+    out["dynamic_resources"] = {"cds_config": xds.config_source(p["cds"])}
+    out["node"] = {"id": "epl", "cluster": "epl"}
+
+
+def grpc_service(client, name, port, timeout=None):
+    """GrpcService for a side service on 127.0.0.1:port: envoy_grpc through the static cluster
+    `name` (HTTP/2), or google_grpc straight to the address (insecure channel: no credentials
+    set; the client's stats under grpc.<name>.)."""
+    if client == "envoy_grpc":
+        gs = {"envoy_grpc": {"cluster_name": name}}
+    elif client == "google_grpc":
+        gs = {"google_grpc": {"target_uri": "127.0.0.1:%d" % int(port), "stat_prefix": name}}
+    else:
+        raise ValueError("grpc_client must be one of %s" % (GRPC_CLIENTS,))
+    if timeout:
+        gs["timeout"] = timeout
+    return gs
+
+
+def ext_proc_filter(ep, client, envoy_cfg):
+    if ep is True:
+        ep = {}
+    bad = sorted(set(ep) - {"mode", "observability_mode"})
+    if bad:
+        raise ValueError("ext_proc takes mode and observability_mode (got %s)" % bad)
+    mode = ep.get("mode", "default")
+    if mode not in EXT_PROC_MODES:
+        raise ValueError("ext_proc.mode must be one of %s" % sorted(EXT_PROC_MODES))
+    cfg = {"@type": EXT_PROC, "grpc_service": grpc_service(client, "ext_proc", envoy_cfg["ext_proc_port"]),
+           "failure_mode_allow": False}
+    if EXT_PROC_MODES[mode]:
+        cfg["processing_mode"] = dict(EXT_PROC_MODES[mode])
+    if ep.get("observability_mode"):
+        cfg["observability_mode"] = True
+    return {"name": "envoy.filters.http.ext_proc", "typed_config": cfg}
 
 
 # keys that look like settings but are not (typos of the real ones)
@@ -615,7 +886,7 @@ def origin_files(shapes):
     """{relative path under www: size} for proxied shapes."""
     out = {}
     for s in shapes:
-        if s["kind"] == "proxied":
+        if s["kind"] == "proxied" and not s.get("grpc"):  # a gRPC shape's body is grpc_files'
             out[s["path"].lstrip("/")] = int(s["body_bytes"])
     return out
 
@@ -661,10 +932,71 @@ AUTHZ_GRPC_FILE = "_authz/ok.grpc"
 AUTHZ_GRPC_BODY = b"\x00\x00\x00\x00\x00"
 
 
+GRPC_DIR = "_grpc"
+
+
+def _varint(n):
+    out = bytearray()
+    while True:
+        b = n & 0x7F
+        n >>= 7
+        out.append(b | (0x80 if n else 0))
+        if not n:
+            return bytes(out)
+
+
+def grpc_frame(total):
+    """One uncompressed gRPC length-prefixed message of exactly `total` bytes (5-byte prefix
+    included): a protobuf message with one bytes field (field 1) of 'a's."""
+    if total < 7:
+        raise ValueError("a gRPC frame with a one-field message needs at least 7 bytes")
+    m = total - 5
+    for pad in (b"", b"\x12\x00"):  # where the varint length steps up, an empty field 2 fills the gap
+        n = m - len(pad) - 2
+        while n > 0 and 1 + len(_varint(n)) + n > m - len(pad):
+            n -= 1
+        msg = b"\x0a" + _varint(n) + b"a" * n + pad
+        if len(msg) == m:
+            return b"\x00" + m.to_bytes(4, "big") + msg
+    raise ValueError("cannot make a %d-byte gRPC frame" % total)
+
+
+def grpc_files(shapes):
+    """{origin path: (file under www, bytes)} of the gRPC unary responder, one per gRPC shape."""
+    out = {}
+    for s in shapes:
+        if s.get("grpc"):
+            out[s["path"]] = ("%s/%s.grpc" % (GRPC_DIR, s["name"]), grpc_frame(int(s["body_bytes"])))
+    return out
+
+
+def _grpc_locations(grpc):
+    """nginx locations of the gRPC unary responder: the ext_authz gRPC pattern (a POST gets 405,
+    error_page turns it into an internal GET of the message file, served with the trailer)."""
+    out = ""
+    for path, (rel, _) in sorted((grpc or {}).items()):
+        out += ("\n    location = %s { error_page 405 =200 /%s; return 405; }"
+                "\n    location = /%s { internal; types { } default_type application/grpc;"
+                " add_trailer grpc-status 0 always; }" % (path, rel, rel))
+    return out
+
+
 def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_timeout_s=600,
                keepalive_requests=10000000, types=None, worker_connections=8192, worker_rlimit_nofile=None,
-               stub_status=False):
+               stub_status=False, h2c_port=None, tls_port=None, tls_cert=None, grpc=None):
     authz = ("  server { listen 127.0.0.1:%d; location / { return 200; } }\n" % int(authz_port)) if authz_port else ""
+    tloc = "".join("\n    location = %s { types { } default_type %s; }" % (p, t) for p, t in sorted((types or {}).items()))
+    if h2c_port:
+        # HTTP/2 cleartext with prior knowledge (http2 on a plaintext listener), same content
+        authz += "  server { listen 127.0.0.1:%d; http2 on; root /www;%s%s\n  }\n" % (
+            int(h2c_port), tloc, _grpc_locations(grpc))
+    if tls_port:
+        if not tls_cert:
+            raise ValueError("origin tls_port needs tls_cert")
+        # TLS with ALPN h2 and http/1.1 (the client's ALPN list picks); certificate from /certs
+        authz += ("  server { listen 127.0.0.1:%d ssl; http2 on; root /www;\n"
+                  "    ssl_certificate /certs/%s.crt; ssl_certificate_key /certs/%s.key;%s%s\n  }\n" % (
+                      int(tls_port), tls_cert, tls_cert, tloc, _grpc_locations(grpc)))
     if authz_grpc_port:
         authz += ("  server { listen 127.0.0.1:%d; http2 on; root /www;\n"
                   "    location / { error_page 405 =200 /%s; return 405; }\n"

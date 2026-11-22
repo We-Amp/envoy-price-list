@@ -184,8 +184,14 @@ def arm_envoy(exp, arm, run_dir=""):
         e["authz_grpc_port"] = exp["origin"]["authz_grpc_port"]
     elif e.get("ext_authz"):
         e["authz_port"] = exp["origin"]["authz_port"]
+    if e.get("ext_proc"):
+        e["ext_proc_port"] = exp["origin"].get("ext_proc_port")
+    if e.get("xds"):
+        e["xds"] = dict(e["xds"], dir=os.path.join(run_dir, "xds", arm["name"]))
     if e.get("two_hop"):
         e["upstream_port"] = exp["hop2"]["listener_port"]
+    else:
+        _origin_server_port(exp, e)
     if e.get("wasm") and e["wasm"].get("file"):
         e["wasm"] = dict(e["wasm"], file=os.path.join(HARNESS_ROOT, e["wasm"]["file"]))
     return e
@@ -225,7 +231,46 @@ def hop2_envoy(exp, arm=None):
     # the second hop always listens on loopback (the first hop's upstream is 127.0.0.1)
     over.update(listener_port=exp["hop2"]["listener_port"], admin_port=exp["hop2"]["admin_port"],
                 listener_address="127.0.0.1")
-    return _merge(exp["envoy"], over)
+    e = _merge(exp["envoy"], over)
+    _origin_server_port(exp, e)
+    return e
+
+
+def _origin_server_port(exp, e):
+    """Point the origin cluster at the origin server the section names (origin_server h2c / tls)."""
+    srv = e.get("origin_server", "plain")
+    if srv in ("h2c", "tls"):
+        port = exp["origin"].get(srv + "_port")
+        if not port:
+            raise ValueError("origin_server %s needs origin.%s_port" % (srv, srv))
+        e["upstream_port"] = int(port)
+
+
+def request_body_path(shape):
+    """Absolute path of a shape's request body file (relative to the harness), checked against its
+    request_body_sha256: the client sends these bytes verbatim (--request-body-file)."""
+    p = os.path.join(HARNESS_ROOT, shape["request_body_file"])
+    want = shape.get("request_body_sha256")
+    if not want:
+        raise ValueError("request_body_file needs request_body_sha256")
+    got = sysprobe.file_hashes(p)["sha256"]
+    if got != want:
+        raise ValueError("%s sha256 %s != request_body_sha256 %s" % (shape["request_body_file"], got, want))
+    return p
+
+
+def cert_kinds(exp):
+    """Every certificate kind the run needs: listeners and origin clusters of every arm and second
+    hop, and the origin's TLS server."""
+    out = set()
+    for a in exp["arms"]:
+        out |= envoy_config.cert_kinds_of(arm_envoy(exp, a))
+        if arm_settings(a).get("two_hop"):
+            out |= envoy_config.cert_kinds_of(hop2_envoy(exp, a))
+    out |= envoy_config.cert_kinds_of(exp["envoy"])
+    if exp["origin"].get("tls_port"):
+        out.add(exp["origin"].get("tls_cert", "ecdsa-p256-san"))
+    return sorted(out)
 
 
 def hop2_key(arm):
@@ -239,6 +284,19 @@ def small_clusters(aenv, n=2):
     if sc and int(sc.get("count", 0)) > n:
         aenv = dict(aenv, stats_clusters=dict(sc, count=n))
     return aenv
+
+
+def xds_state(exp, arm, run_dir):
+    """The xDS file state of an arm at update 0 (None for an arm without the xds setting)."""
+    e = arm_envoy(exp, arm, run_dir)
+    if not e.get("xds"):
+        return None
+    from . import xds
+    return xds.State(envoy_config.routes(exp["shapes"], e), e["xds"], exp["origin"]["port"], e["xds"]["dir"])
+
+
+def needs_ext_proc(exp):
+    return uses(exp, "ext_proc")
 
 
 def needs_collector(exp):
@@ -257,9 +315,8 @@ def prepare_bootstraps(exp, run_dir, log=lambda m: None, make_certs=True):
     ({arm name: path, "_hop2:<arm>": path}, {arm name: bootstrap text}, cert metadata)."""
     certs = None
     cert_dir = os.path.join(run_dir, "certs")
-    if uses(exp, "tls"):
-        kinds = sorted({(arm_envoy(exp, a).get("tls") or {}).get("cert", "rsa2048")
-                        for a in exp["arms"] if arm_envoy(exp, a).get("tls")})
+    kinds = cert_kinds(exp)
+    if kinds:
         if make_certs:
             from .origin import make_certs as mk
             certs = mk(cert_dir, kinds, log)
@@ -270,6 +327,11 @@ def prepare_bootstraps(exp, run_dir, log=lambda m: None, make_certs=True):
     paths, texts = {}, {}
     plain = not any(arm_settings(a) for a in exp["arms"])
     for a in exp["arms"]:
+        st = xds_state(exp, a, run_dir)
+        if st is not None:
+            # the files Envoy reads at start (validation reads them too); every leg rewrites them
+            from . import xds
+            xds.write_initial(st)
         t = envoy_config.bootstrap_text(exp["shapes"], arm_envoy(exp, a, run_dir), exp["origin"]["port"], cert_dir)
         p = os.path.join(run_dir, "envoy-bootstrap.json" if plain else "envoy-bootstrap-%s.json" % a["name"])
         with open(p, "w") as f:
@@ -360,6 +422,10 @@ def order_period(exp):
         return int(exp["rotation_block"])
     if o == "fixed":
         return 1
+    if o == "williams":
+        # a Williams square: k rounds for an even arm count, 2k (the square and its mirror) for an odd one
+        k = len(exp["arms"])
+        return k if k % 2 == 0 else 2 * k
     if o == "latin" and restricted(exp):
         per = 1
         for sh in exp.get("shapes", []):
@@ -384,8 +450,12 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm name %r must be [A-Za-z0-9._-]+" % n)
     if exp.get("base_arm", names[0] if names else None) not in names:
         errs.append("base_arm not among arms")
-    if exp["order"] not in ("auto", "abba", "rotate", "latin", "fixed"):
-        errs.append("order must be auto, abba, rotate, latin or fixed")
+    if exp["order"] not in ("auto", "abba", "rotate", "latin", "fixed", "williams"):
+        errs.append("order must be auto, abba, rotate, latin, williams or fixed")
+    elif exp["order"] == "williams" and (cell_mode(exp) or _arm_shapes(exp)):
+        errs.append("order williams needs every arm in every shape (no per-arm shapes or cells)")
+    if int(exp.get("warmup_legs", 0) or 0) not in (0, 1):
+        errs.append("warmup_legs must be 0 or 1 (one unscored leg of the base arm before each shape block)")
     elif exp["order"] == "fixed" and not exp.get("smoke"):
         # arms in the configured order every round: nothing is balanced, so no comparison may rest on it
         errs.append("order fixed is for a smoke (a pilot) only")
@@ -410,13 +480,13 @@ def validate(exp, allow_short=False, check_rounds=True):
         for sh in exp.get("shapes", []):
             if not any(s2["name"] == sh["name"] for s2, _ in cells(exp)):
                 errs.append("shape %s: no arm runs on it" % sh.get("name"))
-    if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate", "latin"):
+    if check_rounds and len(arms) >= 2 and exp["order"] in ("auto", "abba", "rotate", "latin", "williams"):
         per = order_period(exp)
         rmin, rmax, blk = exp["rounds"], exp["rounds_max"], exp["rounds_block"]
         if rmin < 12 and not allow_short:
             errs.append("rounds must be >= 12 (method rule); use --allow-short only for smoke runs")
         for label, v in (("rounds", rmin), ("rounds_max", rmax), ("rounds_block", blk)):
-            if effective_order(exp) != "latin" and (v < 2 or v % 2):
+            if effective_order(exp) not in ("latin", "williams") and (v < 2 or v % 2):
                 # abba and rotate pair a forward with a reversed round; a Latin square does not
                 errs.append("%s must be even (got %d)" % (label, v))
             elif v % per:
@@ -468,6 +538,18 @@ def validate(exp, allow_short=False, check_rounds=True):
                     envoy_config.origin_bodies([s], HARNESS_ROOT)
                 except (OSError, ValueError) as e:
                     errs.append("shape %s: %s" % (s.get("name"), e))
+        if s.get("request_body_file"):
+            try:
+                request_body_path(s)
+            except (OSError, ValueError) as e:
+                errs.append("shape %s: %s" % (s.get("name"), e))
+        if s.get("grpc"):
+            if s.get("kind") != "proxied" or s.get("body_file") or int(s.get("body_bytes", 0)) < 5:
+                errs.append("shape %s: grpc needs a proxied shape with body_bytes >= 5 and no body_file"
+                            % s.get("name"))
+            if not (exp["origin"].get("h2c_port") or exp["origin"].get("tls_port")):
+                errs.append("shape %s: the gRPC responder runs on origin.h2c_port / origin.tls_port"
+                            % s.get("name"))
         if s.get("warmup_s") is not None and not (isinstance(s["warmup_s"], (int, float)) and s["warmup_s"] >= 0):
             errs.append("shape %s: warmup_s must be a number >= 0" % s.get("name"))
         if int(s.get("rps", 0)) % int(exp["client"]["concurrency"]) != 0:
@@ -524,6 +606,22 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arm %s: a gRPC ext_authz arm needs origin.authz_grpc_port" % a.get("name"))
         elif az and az != "grpc" and not exp["origin"].get("authz_port"):
             errs.append("arm %s: an HTTP ext_authz arm needs origin.authz_port" % a.get("name"))
+        if arm_settings(a).get("ext_proc"):
+            o = exp["origin"]
+            if not (o.get("ext_proc_port") and o.get("ext_proc_binary") and o.get("ext_proc_sha256")):
+                errs.append("arm %s: an ext_proc arm needs origin.ext_proc_port, ext_proc_binary and "
+                            "ext_proc_sha256" % a.get("name"))
+            if o.get("mode", "docker") != "docker":
+                errs.append("arm %s: the ext_proc service runs only with origin.mode docker" % a.get("name"))
+        up = arm_settings(a).get("xds_update")
+        if up and float(up.get("rate_hz") or 0) > 0:
+            n = float(exp["measure"]["window_s"]) * float(up["rate_hz"])
+            if abs(n - round(n)) > 1e-9:
+                errs.append("arm %s: window_s x xds_update.rate_hz must be a whole number of updates"
+                            % a.get("name"))
+            if not exp["measure"].get("per_thread"):
+                errs.append("arm %s: an xds_update arm needs measure.per_thread (main against workers)"
+                            % a.get("name"))
         try:
             envoy_config.bootstrap(exp.get("shapes", []), small_clusters(arm_envoy(exp, a, "/r")),
                                    exp["origin"]["port"], "/r/c")
@@ -538,6 +636,30 @@ def validate(exp, allow_short=False, check_rounds=True):
                 errs.append("arm %s: hop2_settings cannot contain %s" % (a.get("name"), bad))
         if not isinstance(a.get("validity", {}), dict):
             errs.append("arm %s: validity must be an object" % a.get("name"))
+        acl = a.get("client")
+        if acl is not None:
+            from . import nighthawk
+            if not isinstance(acl, dict):
+                errs.append("arm %s: client must be an object" % a.get("name"))
+            else:
+                bad = sorted(set(acl) - {"base_args", "extra_args", "multi_target"})
+                if bad:
+                    errs.append("arm %s: unknown client keys %s" % (a.get("name"), bad))
+                for k in ("base_args", "extra_args"):
+                    if k in acl and not (isinstance(acl[k], list) and all(isinstance(x, str) for x in acl[k])):
+                        errs.append("arm %s: client.%s must be a list of strings" % (a.get("name"), k))
+                if acl.get("multi_target"):
+                    try:
+                        nighthawk.multi_target_args("http", 1, "/", acl["multi_target"])
+                    except (ValueError, TypeError) as e:
+                        errs.append("arm %s: %s" % (a.get("name"), e))
+                    ae = arm_envoy(exp, a)
+                    n = int(acl["multi_target"].get("count", 1))
+                    if n > 1 and ae.get("listener_address", "127.0.0.1") != "0.0.0.0" and (
+                            int(ae.get("listener_fanout") or 1) < n
+                            or acl["multi_target"].get("base", "127.0.0.1") != ae.get("listener_address", "127.0.0.1")):
+                        errs.append("arm %s: multi_target over %d addresses needs listener_fanout >= %d from the "
+                                    "same first address (or listener_address 0.0.0.0)" % (a.get("name"), n, n))
     if exp.get("primary_metric") in ("cycles_total_all", "cycles_total_per_hop") and not uses(exp, "two_hop"):
         errs.append("primary metric %s needs a two_hop arm" % exp["primary_metric"])
     m = exp["measure"]
@@ -654,6 +776,27 @@ def quiet_wait(windows, now):
     return wait
 
 
+def williams_sequence(k, r, seed=1):
+    """Arm indices of round r (1-based) in a Williams design for k arms: every arm in every position once
+    and every arm directly after every other arm exactly once per period (k rounds for an even k; for an odd
+    k, rounds k+1..2k run the mirrored sequences, so the balance holds over 2k rounds). The arm labels are
+    permuted by a seeded shuffle, so which arm follows which is not the configured list order."""
+    base, lo, hi = [0], 1, k - 1
+    while len(base) < k:
+        base.append(lo)
+        lo += 1
+        if len(base) < k:
+            base.append(hi)
+            hi -= 1
+    perm = list(range(k))
+    random.Random("epl-williams:%s" % seed).shuffle(perm)
+    i = (r - 1) % (k if k % 2 == 0 else 2 * k)
+    seq = [(b + i % k) % k for b in base]
+    if k % 2 and i >= k:
+        seq.reverse()
+    return [perm[x] for x in seq]
+
+
 def _coin(seed, pair):
     return random.Random("epl-order:%s:%d" % (seed, pair)).random() < 0.5
 
@@ -673,6 +816,8 @@ def round_order(exp, r):
     if effective_order(exp) == "fixed":
         # the configured order, every round (a pilot that must reach its deciding legs first)
         return list(arms)
+    if effective_order(exp) == "williams":
+        return [arms[i] for i in williams_sequence(k, r, exp.get("order_seed", 1))]
     if effective_order(exp) == "latin":
         # one Latin square: round r starts at arm r-1 (mod k); k rounds put every arm in every
         # position once (a seeded rotation offset, no reversed rounds)
@@ -1027,7 +1172,8 @@ def analyse(exp, legs, floor=None):
             valid = [m for m in mine if m.get("verdict", {}).get("valid")]
             summ = {"legs": len(mine), "valid": len(valid),
                     "superseded": len([m for m in legs if m["shape"] == s and m["arm"] == an
-                                       and m.get("superseded")])}
+                                       and m.get("superseded") and not m.get("warmup")]),
+                    "warmup": len([m for m in legs if m["shape"] == s and m["arm"] == an and m.get("warmup")])}
             for key, _, get in METRICS:
                 vals = [v for v in (_value(m, key, get, vcfg) for m in valid) if v is not None]
                 if vals:
@@ -1278,6 +1424,17 @@ class Runner:
                 raise RuntimeError("%d consecutive invalid legs; giving up" % self._invalid_streak)
         return m
 
+    def _warmup(self, legs, r, sh, bpath):
+        """One unscored leg of the base arm before a shape block (`warmup_legs: 1`). It is recorded with
+        `warmup` and `superseded` set, so no comparison, rerun or validity streak ever counts it."""
+        base = next(a for a in self.exp["arms"] if a["name"] == self.exp.get("base_arm", self.exp["arms"][0]["name"]))
+        lid = "r%02d-%s-warmup-%s" % (r, sh["name"], base["name"])
+        m = self.backend.run_leg(base, sh, r, bpath, lid)
+        m.update(attempt=0, warmup=True, superseded=True)
+        legs.append(m)
+        self._record(m)
+        self.log("%s warm-up (unscored) %s" % (lid, "valid" if m["verdict"]["valid"] else "invalid"))
+
     def _rerun_invalid(self, legs, first, last, bpath):
         """Re-run, at the end of a block, every (round, shape) in it that has an invalid leg:
         all arms again, in the round's own order, so the round stays balanced."""
@@ -1392,6 +1549,8 @@ class Runner:
             while True:
                 plan = schedule(exp, done + 1, target)
                 for i, (r, sh, a) in enumerate(plan):
+                    if exp.get("warmup_legs") and (i == 0 or plan[i - 1][:2] != (r, sh)):
+                        self._warmup(legs, r, sh, bpath)
                     self.status(state="running", rounds_done=done, rounds_target=target,
                                 rounds_max=exp["rounds_max"], legs_done=len(legs),
                                 current=leg_id(r, sh, a),

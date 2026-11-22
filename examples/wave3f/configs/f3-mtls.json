@@ -1,0 +1,298 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no TLS between the hops",
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.handshake"
+    }
+   ],
+   "name": "one-ppd",
+   "settings": {
+    "upstream_pool_per_downstream": true
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no TLS between the hops",
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.handshake"
+    },
+    {
+     "absent": true,
+     "label": "hop B: plaintext listener",
+     "scope": "hop2_leg",
+     "stat": "listener.127.0.0.1_10120.ssl.handshake"
+    },
+    {
+     "per_request": 1.0,
+     "scope": "hop2_window",
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    }
+   ],
+   "name": "pair",
+   "settings": {
+    "hop2_settings": {
+     "upstream_pool_per_downstream": true
+    },
+    "two_hop": true,
+    "upstream_pool_per_downstream": true
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no TLS between the hops",
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.handshake"
+    },
+    {
+     "absent": true,
+     "label": "hop B: plaintext listener",
+     "scope": "hop2_leg",
+     "stat": "listener.127.0.0.1_10120.ssl.handshake"
+    },
+    {
+     "per_request": 1.0,
+     "scope": "hop2_window",
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    }
+   ],
+   "name": "pair-A2",
+   "settings": {
+    "hop2_settings": {
+     "upstream_pool_per_downstream": true
+    },
+    "two_hop": true,
+    "upstream_pool_per_downstream": true
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "hop A: one TLS connection per client connection",
+     "min": 512,
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.handshake"
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.connection_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.fail_verify_san",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.ssl.fail_verify_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "hop A: no handshake in the window (warm)",
+     "scope": "window",
+     "stat": "cluster.origin.ssl.handshake",
+     "tol_abs": 0
+    },
+    {
+     "per_request": 1.0,
+     "scope": "hop2_window",
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "hop B: TLS handshakes",
+     "min": 512,
+     "scope": "hop2_leg",
+     "stat": "listener.127.0.0.1_10120.ssl.handshake"
+    },
+    {
+     "equals": 0,
+     "label": "hop B: no handshake in the window",
+     "scope": "hop2_window",
+     "stat": "listener.127.0.0.1_10120.ssl.handshake",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "hop2_window",
+     "stat": "listener.127.0.0.1_10120.ssl.connection_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "hop2_window",
+     "stat": "listener.127.0.0.1_10120.ssl.no_certificate",
+     "tol_abs": 0
+    },
+    {
+     "label": "hop B: TLS 1.2 (hop A's client default)",
+     "min": 512,
+     "scope": "hop2_leg",
+     "stat": "listener.127.0.0.1_10120.ssl.versions.TLSv1.2"
+    }
+   ],
+   "name": "pair-mtls",
+   "settings": {
+    "hop2_settings": {
+     "tls": {
+      "cert": "ecdsa-p256-san",
+      "client_ca": "ecdsa-p256-client",
+      "client_san": "client.bench.local"
+     },
+     "upstream_pool_per_downstream": true
+    },
+    "two_hop": true,
+    "upstream_pool_per_downstream": true,
+    "upstream_tls": {
+     "ca": "ecdsa-p256-san",
+     "cert": "ecdsa-p256-client",
+     "san": "bench.local",
+     "sni": "bench.local"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "pair",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "all_pairs",
+ "cpus": {
+  "client": "20-31,60-71",
+  "hop2": "4-7",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "stat_filter_extra": "cluster\\.origin\\.(ssl\\.(handshake|connection_error|session_reused|fail_verify_san|fail_verify_error|versions\\.|ciphers\\.|curves\\.)|upstream_cx_http[123]_total|http2\\.(nghttp2|oghttp2)_upstream_connections|grpc\\.)|^http2\\.(nghttp2|oghttp2)_downstream_connections",
+  "window_s": 20
+ },
+ "name": "f3-mtls",
+ "order": "williams",
+ "order_seed": 73,
+ "origin": {
+  "h2c_port": 8096,
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "tls_cert": "ecdsa-p256-san",
+  "tls_port": 8097,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total_all",
+ "rounds": 8,
+ "rounds_block": 8,
+ "rounds_max": 8,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  }
+ ],
+ "short_run_note": "short run: 8 fixed rounds in Williams order, run with --allow-short",
+ "workdir": "~/epl/runs/wave3f"
+}

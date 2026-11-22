@@ -1,0 +1,528 @@
+{
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "workdir": "~/epl/runs/wave1c",
+ "envoy": {
+  "workers": 4,
+  "listener_port": 10110,
+  "admin_port": 9921,
+  "exact_balance": true
+ },
+ "cpus": {
+  "sut": "0-3",
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79"
+ },
+ "client": {
+  "binary": "~/nighthawk/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "warmup_s": 5,
+  "duration_s": 25,
+  "idle_strategy": "poll",
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ]
+ },
+ "measure": {
+  "lead_in_s": 2,
+  "window_s": 20,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "per_thread": true,
+  "thread_set_check": true,
+  "stat_filter_extra": "cluster\\.ext_proc\\.upstream_(rq_total|cx_total)$|grpc\\.(ext_proc|ext_authz)\\."
+ },
+ "idle": {
+  "max_load1": 8.0,
+  "max_busy_pct": 2.0
+ },
+ "origin": {
+  "mode": "docker",
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "port": 8092,
+  "workers": 8,
+  "authz_grpc_port": 8094,
+  "ext_proc_port": 8095,
+  "ext_proc_binary": "tools/extproc/out/epl-extproc-linux-amd64",
+  "ext_proc_sha256": "f7cd3826960405c5aeeeaaf577ce21807b161f463dece7e85253ce2fc5215177"
+ },
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "stop": {
+  "target_half_width_pct": 1.5
+ },
+ "primary_metric": "cycles_total",
+ "comparisons": "base",
+ "order_seed": 31,
+ "name": "smoke-c-extproc",
+ "adaptive": false,
+ "order": "fixed",
+ "base_arm": "off",
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "off",
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_authz.ok",
+     "absent": true,
+     "label": "no ext_authz counters"
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "absent": true,
+     "label": "no ext_proc counters"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "off-A2",
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_authz.ok",
+     "absent": true,
+     "label": "no ext_authz counters"
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "absent": true,
+     "label": "no ext_proc counters"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "authz-grpc",
+   "settings": {
+    "ext_authz": "grpc"
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_authz.ok",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.denied",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.error",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.ext_authz.upstream_rq_timeout",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.ext_authz.upstream_rq_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_authz.upstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no new connection to the service in the window"
+    },
+    {
+     "stat": "grpc.ext_authz.streams_total",
+     "absent": true,
+     "label": "no google_grpc client"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "xp-default",
+   "settings": {
+    "ext_proc": {
+     "mode": "default"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_sent",
+     "per_request": 2.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_received",
+     "per_request": 2.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_failed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.spurious_msgs_received",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.message_timeouts",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.immediate_responses_sent",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.rejected_header_mutations",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_rq_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no new connection to the service in the window"
+    },
+    {
+     "stat": "grpc.ext_proc.streams_total",
+     "absent": true,
+     "label": "no google_grpc client"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "xp-reqhdr",
+   "settings": {
+    "ext_proc": {
+     "mode": "request_headers"
+    }
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_sent",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_received",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_failed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.spurious_msgs_received",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.message_timeouts",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.immediate_responses_sent",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.rejected_header_mutations",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_rq_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_cx_total",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0,
+     "label": "no new connection to the service in the window"
+    },
+    {
+     "stat": "grpc.ext_proc.streams_total",
+     "absent": true,
+     "label": "no google_grpc client"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "authz-grpc-google",
+   "settings": {
+    "ext_authz": "grpc",
+    "grpc_client": "google_grpc"
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_authz.ok",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.denied",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.error",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_authz.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "grpc.ext_authz.streams_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_authz.upstream_rq_total",
+     "absent": true,
+     "label": "no ext_authz cluster"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "xp-default-google",
+   "settings": {
+    "ext_proc": {
+     "mode": "default"
+    },
+    "grpc_client": "google_grpc"
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_sent",
+     "per_request": 2.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_received",
+     "per_request": 2.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_failed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.spurious_msgs_received",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.message_timeouts",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.immediate_responses_sent",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.rejected_header_mutations",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "grpc.ext_proc.streams_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_rq_total",
+     "absent": true,
+     "label": "no ext_proc cluster"
+    }
+   ]
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "name": "xp-reqhdr-google",
+   "settings": {
+    "ext_proc": {
+     "mode": "request_headers"
+    },
+    "grpc_client": "google_grpc"
+   },
+   "evidence": [
+    {
+     "stat": "http.ingress_http.ext_proc.streams_started",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_sent",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.stream_msgs_received",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.streams_failed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.spurious_msgs_received",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.failure_mode_allowed",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.message_timeouts",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.immediate_responses_sent",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "http.ingress_http.ext_proc.rejected_header_mutations",
+     "scope": "window",
+     "equals": 0,
+     "tol_abs": 0
+    },
+    {
+     "stat": "grpc.ext_proc.streams_total",
+     "per_request": 1.0,
+     "tol": 0.002
+    },
+    {
+     "stat": "cluster.ext_proc.upstream_rq_total",
+     "absent": true,
+     "label": "no ext_proc cluster"
+    }
+   ]
+  }
+ ],
+ "shapes": [
+  {
+   "name": "s",
+   "path": "/s",
+   "kind": "proxied",
+   "body_bytes": 4096,
+   "rps": 5200
+  }
+ ],
+ "smoke": true,
+ "evidence_mode": "record"
+}

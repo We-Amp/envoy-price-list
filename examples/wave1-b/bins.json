@@ -1,0 +1,22 @@
+{
+ "control": {
+  "binary": "~/epl/bin/envoy-1.40.2",
+  "source": "own build of tag v1.40.2 (b2d89e0ae5), release options; byte-identical to the official release asset",
+  "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+ },
+ "p1": {
+  "binary": "~/epl/bins/wave1b/envoy-p1",
+  "source": "own build of wave1/statsd-batch (7979fa6063) on v1.40.2, release options",
+  "source_sha256": "dee6e59fbbe43c293b548a9295c6853d9fef701c9ff72c82b80b9ff5714aedbe"
+ },
+ "p2": {
+  "binary": "~/epl/bins/wave1b/envoy-p2",
+  "source": "own build of wave1/hdr-validate-ceiling (af3172d385) on v1.40.2, release options; MEASUREMENT ONLY",
+  "source_sha256": "93973b80b1ff6965bebd44027a4bc296e09f5663bdc7891f0125cd18e82ede64"
+ },
+ "v2": {
+  "binary": "~/epl/bins/wave1b/envoy-v2",
+  "source": "own build of wave1/statsd-batch-v2 (ee71e0583f) on v1.40.2, release options",
+  "source_sha256": "1307eec23d599459670705dc0a05bd4e3ed570a42d65c92ccbb1277ec08e7eb8"
+ }
+}

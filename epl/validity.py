@@ -53,6 +53,12 @@ DEFAULTS = {
     # disable flag) must match the one recorded at the start of the run.
     "require_cpuidle_unchanged": True,
     "require_perf_unmultiplexed": True,
+    # Envoy's thread set (tids) must be the same before and after the window (checked where the
+    # leg records it): perf -p does not follow a thread created after it attached.
+    "require_envoy_threads_unchanged": True,
+    # Main thread busy over the window, a fraction of one core (None: not gated). The xDS rows
+    # set it, so updates never queue behind each other on the main thread.
+    "max_main_busy": None,
     "min_eff_ghz": None,         # optional: effective clock under perf
     # Latency columns only: a leg whose client max request-to-response exceeds
     # this keeps its CPU numbers but drops out of the latency comparisons.
@@ -192,6 +198,18 @@ def verdict(m, cfg=None):
                                                  or m.get("workers_cycles_per_req") is None):
         reasons.append("worker-only cycles cover %s of %d worker threads" % (
             m.get("workers_perf_threads"), m["workers_expected"]))
+    xr = m.get("xds")
+    if xr is not None and not xr.get("ok"):
+        bad = sorted(k for k, v in (xr.get("checks") or {}).items() if not v) or [xr.get("error") or "no record"]
+        reasons.append("xds: %s" % ", ".join(bad))
+    th = m.get("envoy_thread_set")
+    if th is not None and c.get("require_envoy_threads_unchanged", True) and not th.get("unchanged"):
+        # perf -p counts the threads that exist when it attaches: a thread created inside the
+        # window (a gRPC client pool growing) would run uncounted
+        reasons.append("Envoy threads changed during the window (%s)" % th)
+    mb = m.get("envoy_main_busy")
+    if c.get("max_main_busy") is not None and mb is not None and mb > c["max_main_busy"]:
+        reasons.append("main thread busy %.3f of a core (limit %.2f)" % (mb, c["max_main_busy"]))
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]

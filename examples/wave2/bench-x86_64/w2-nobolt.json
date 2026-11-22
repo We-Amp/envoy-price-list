@@ -1,0 +1,832 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "opt",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "opt",
+   "source": "own build of tag v1.40.2 (b2d89e0ae5), release options; byte-identical to the official release asset",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "opt",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "opt-A2",
+   "source": "own build of tag v1.40.2 (b2d89e0ae5), release options; byte-identical to the official release asset",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bins/wave2/envoy-order",
+   "build": "order",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "order",
+   "source": "opt objects relinked with an lld call-graph ordering file (cdsort) from track A's LBR legs of the official binary",
+   "source_sha256": "d994883cc2369eac1f4008ece5bc29619887168b20480c0e40de9c0a3f1105f2"
+  },
+  {
+   "binary": "~/epl/bins/wave2/envoy-autofdo-v2",
+   "build": "autofdo",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "autofdo",
+   "source": "v1.40.2 + ThinLTO + -fprofile-sample-use (llvm-profgen 22.1.8 on the lbr-w2-opt legs: 6 x 30 s, period 20,003, about 15x track A's samples), v2",
+   "source_sha256": "c706fe0aedfaa33988324d519f6de90bc5a24c3f5ca87c041628f795e5f4d0a3"
+  },
+  {
+   "binary": "~/epl/bins/wave2/envoy-pgolto",
+   "build": "pgolto",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "pgolto",
+   "source": "v1.40.2 + instrumented PGO (pgo-recipe-v1 nine-leg trainer) + ThinLTO",
+   "source_sha256": "d1b4f16e650345957eca97ef690adf149f19ae0ca1d4a1388d6154312270487d"
+  }
+ ],
+ "base_arm": "opt",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "comparisons": "all_pairs",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "perf_event_groups": [
+   "instructions:u,cycles:u,cycles:k,idq_uops_not_delivered.core:u,uops_issued.any:u,uops_retired.retire_slots:u",
+   "instructions:u,cycles:u,cycles:k,icache.misses:u,icache.ifdata_stall:u,baclears.any:u"
+  ],
+  "window_s": 20
+ },
+ "name": "w2-nobolt",
+ "order": "latin",
+ "order_seed": 52,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rotation_block": 6,
+ "rounds": 6,
+ "rounds_block": 6,
+ "rounds_max": 6,
+ "shape_order": "latin",
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  },
+  {
+   "body_bytes": 128,
+   "kind": "direct_headers",
+   "name": "fh",
+   "path": "/fh",
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000
+  },
+  {
+   "kind": "routes",
+   "name": "fl",
+   "path": "/fl",
+   "route_table": {
+    "routes": [
+     {
+      "match": {
+       "path": "/fl"
+      },
+      "request_headers_to_add": [
+       {
+        "header": {
+         "key": "x-req-00",
+         "value": "req-value-00-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-01",
+         "value": "req-value-01-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-02",
+         "value": "req-value-02-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-03",
+         "value": "req-value-03-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-04",
+         "value": "req-value-04-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-05",
+         "value": "req-value-05-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-06",
+         "value": "req-value-06-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-07",
+         "value": "req-value-07-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-08",
+         "value": "req-value-08-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-09",
+         "value": "req-value-09-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-10",
+         "value": "req-value-10-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-11",
+         "value": "req-value-11-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-12",
+         "value": "req-value-12-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-13",
+         "value": "req-value-13-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-14",
+         "value": "req-value-14-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-15",
+         "value": "req-value-15-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-16",
+         "value": "req-value-16-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-17",
+         "value": "req-value-17-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-18",
+         "value": "req-value-18-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-19",
+         "value": "req-value-19-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-20",
+         "value": "req-value-20-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-21",
+         "value": "req-value-21-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-22",
+         "value": "req-value-22-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-23",
+         "value": "req-value-23-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-24",
+         "value": "req-value-24-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-25",
+         "value": "req-value-25-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-26",
+         "value": "req-value-26-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-27",
+         "value": "req-value-27-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-28",
+         "value": "req-value-28-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-29",
+         "value": "req-value-29-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-30",
+         "value": "req-value-30-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-31",
+         "value": "req-value-31-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-32",
+         "value": "req-value-32-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-33",
+         "value": "req-value-33-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-34",
+         "value": "req-value-34-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-35",
+         "value": "req-value-35-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-36",
+         "value": "req-value-36-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-37",
+         "value": "req-value-37-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-38",
+         "value": "req-value-38-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-39",
+         "value": "req-value-39-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-40",
+         "value": "req-value-40-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-41",
+         "value": "req-value-41-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-42",
+         "value": "req-value-42-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-43",
+         "value": "req-value-43-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-44",
+         "value": "req-value-44-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-45",
+         "value": "req-value-45-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-46",
+         "value": "req-value-46-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-47",
+         "value": "req-value-47-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-48",
+         "value": "req-value-48-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-49",
+         "value": "req-value-49-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-50",
+         "value": "req-value-50-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-51",
+         "value": "req-value-51-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-52",
+         "value": "req-value-52-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-53",
+         "value": "req-value-53-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-54",
+         "value": "req-value-54-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-55",
+         "value": "req-value-55-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-req-56",
+         "value": "req-value-56-xxxxxxxxxxx"
+        }
+       }
+      ],
+      "response_headers_to_add": [
+       {
+        "header": {
+         "key": "x-rsp-00",
+         "value": "rsp-value-00-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-01",
+         "value": "rsp-value-01-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-02",
+         "value": "rsp-value-02-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-03",
+         "value": "rsp-value-03-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-04",
+         "value": "rsp-value-04-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-05",
+         "value": "rsp-value-05-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-06",
+         "value": "rsp-value-06-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-07",
+         "value": "rsp-value-07-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-08",
+         "value": "rsp-value-08-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-09",
+         "value": "rsp-value-09-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-10",
+         "value": "rsp-value-10-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-11",
+         "value": "rsp-value-11-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-12",
+         "value": "rsp-value-12-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-13",
+         "value": "rsp-value-13-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-14",
+         "value": "rsp-value-14-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-15",
+         "value": "rsp-value-15-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-16",
+         "value": "rsp-value-16-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-17",
+         "value": "rsp-value-17-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-18",
+         "value": "rsp-value-18-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-19",
+         "value": "rsp-value-19-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-20",
+         "value": "rsp-value-20-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-21",
+         "value": "rsp-value-21-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-22",
+         "value": "rsp-value-22-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-23",
+         "value": "rsp-value-23-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-24",
+         "value": "rsp-value-24-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-25",
+         "value": "rsp-value-25-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-26",
+         "value": "rsp-value-26-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-27",
+         "value": "rsp-value-27-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-28",
+         "value": "rsp-value-28-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-29",
+         "value": "rsp-value-29-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-30",
+         "value": "rsp-value-30-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-31",
+         "value": "rsp-value-31-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-32",
+         "value": "rsp-value-32-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-33",
+         "value": "rsp-value-33-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-34",
+         "value": "rsp-value-34-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-35",
+         "value": "rsp-value-35-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-36",
+         "value": "rsp-value-36-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-37",
+         "value": "rsp-value-37-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-38",
+         "value": "rsp-value-38-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-39",
+         "value": "rsp-value-39-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-40",
+         "value": "rsp-value-40-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-41",
+         "value": "rsp-value-41-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-42",
+         "value": "rsp-value-42-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-43",
+         "value": "rsp-value-43-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-44",
+         "value": "rsp-value-44-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-45",
+         "value": "rsp-value-45-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-46",
+         "value": "rsp-value-46-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-47",
+         "value": "rsp-value-47-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-48",
+         "value": "rsp-value-48-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-49",
+         "value": "rsp-value-49-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-50",
+         "value": "rsp-value-50-xxxxxxxxxxx"
+        }
+       },
+       {
+        "header": {
+         "key": "x-rsp-51",
+         "value": "rsp-value-51-xxxxxxxxxxx"
+        }
+       }
+      ],
+      "route": {
+       "cluster": "origin",
+       "prefix_rewrite": "/s"
+      }
+     }
+    ]
+   },
+   "rps": 5200
+  }
+ ],
+ "workdir": "~/epl/runs/wave2"
+}

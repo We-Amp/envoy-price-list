@@ -36,6 +36,9 @@ Scopes:
   field   a value of the leg record, by dotted path (`access_log_lines`,
           `collector_delta.accepted_spans`, `tcmalloc_percpu_slab_bytes`,
           `stat_count.start_n`: the stats under measure.stat_count_prefix before the window)
+  hop2_window, hop2_leg   the same as window and leg, on the second hop of a two-hop arm
+          (`hop2_stats_window`, `hop2_stats_leg_end`); the default denominators are the first
+          hop's (its 2xx responses in the window, its completed requests over the leg)
   config  the arm's /config_dump, saved at the arm's first start: every occurrence
           of the key NAME, anywhere in the dump; `equals` needs all of them equal
           to X (and at least one), `present` at least one, `absent` none.
@@ -49,9 +52,10 @@ import json
 import math
 import os
 
-SCOPES = ("window", "leg", "field", "config")
+SCOPES = ("window", "leg", "field", "config", "hop2_window", "hop2_leg")
 KINDS = ("per_request", "equals", "min", "max", "absent", "present")
-DEFAULT_PER = {"window": "field:responses_raw", "leg": "leg:http.ingress_http.downstream_rq_completed"}
+DEFAULT_PER = {"window": "field:responses_raw", "leg": "leg:http.ingress_http.downstream_rq_completed",
+               "hop2_window": "field:responses_raw", "hop2_leg": "leg:http.ingress_http.downstream_rq_completed"}
 
 
 def validate_items(items, arm_names=()):
@@ -105,7 +109,8 @@ def _path(m, dotted):
     return v
 
 
-SNAPSHOT = {"window": "sut_stats_window", "leg": "sut_stats_leg_end"}
+SNAPSHOT = {"window": "sut_stats_window", "leg": "sut_stats_leg_end",
+            "hop2_window": "hop2_stats_window", "hop2_leg": "hop2_stats_leg_end"}
 
 
 def snapshot_missing(m, scope):
@@ -120,10 +125,8 @@ def snapshot_missing(m, scope):
 
 def lookup(m, scope, name):
     """The value an item reads, or None when it does not exist."""
-    if scope == "window":
-        return (m.get("sut_stats_window") or {}).get(name)
-    if scope == "leg":
-        return (m.get("sut_stats_leg_end") or {}).get(name)
+    if scope in SNAPSHOT:
+        return (m.get(SNAPSHOT[scope]) or {}).get(name)
     if scope == "field":
         return _path(m, name)
     raise ValueError("scope %s has no plain lookup" % scope)

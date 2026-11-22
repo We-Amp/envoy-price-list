@@ -146,6 +146,33 @@ class SharedPathTest(unittest.TestCase):
             envoy_config.bootstrap(S + [dict(S[0], name="d", kind="direct_headers")], E, 8092)
 
 
+class ProxiedHeadersTest(unittest.TestCase):
+    def test_proxied_shape_adds_headers_on_its_route(self):
+        fl = [{"name": "fl", "path": "/fl", "kind": "proxied", "body_bytes": 65536, "rps": 1000,
+               "request_headers_added": 57, "response_headers_added": 52}]
+        r = hcm(envoy_config.bootstrap(fl, E, 8092))["route_config"]["virtual_hosts"][0]["routes"][0]
+        self.assertEqual(r["route"], {"cluster": "origin"})
+        self.assertEqual(len(r["request_headers_to_add"]), 57)
+        self.assertEqual(len(r["response_headers_to_add"]), 52)
+        self.assertEqual(r["request_headers_to_add"][0]["header"]["key"], "x-req-00")
+        self.assertEqual(envoy_config.origin_files(fl), {"fl": 65536})
+        # a plain proxied shape stays as it was
+        r = hcm(envoy_config.bootstrap(S, E, 8092))["route_config"]["virtual_hosts"][0]["routes"][0]
+        self.assertNotIn("request_headers_to_add", r)
+        self.assertNotIn("response_headers_to_add", r)
+
+
+class StatsdMaxBytesTest(unittest.TestCase):
+    def test_statsd_sink_may_set_max_bytes_per_datagram(self):
+        e = dict(E, stats_sink_port=8125)
+        tc = envoy_config.stats_sink({"kind": "statsd", "max_bytes_per_datagram": 512}, e)["typed_config"]
+        self.assertEqual(tc["max_bytes_per_datagram"], 512)
+        tc = envoy_config.stats_sink({"kind": "statsd"}, e)["typed_config"]
+        self.assertNotIn("max_bytes_per_datagram", tc)
+        with self.assertRaises(ValueError):
+            envoy_config.stats_sink({"kind": "statsd", "bogus": 1}, e)
+
+
 class FloorArmTest(unittest.TestCase):
     def test_floor_from_one_arm_only(self):
         p = lambda lo, hi: {"paired": {"half_width_pct": (hi - lo) / 2, "log_lo_pct": lo, "log_hi_pct": hi}}  # noqa
