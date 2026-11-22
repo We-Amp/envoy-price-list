@@ -96,6 +96,14 @@ class FetchTest(Base):
         self.assertIn("not at", r.stderr)
         self.assertIn("unknown study", self.fetch("--from", self.assets, "nope").stderr)
 
+    def test_tag_selects_a_release(self):
+        r = self.fetch("--tag", "waves-2026-11b", "--from", self.assets)
+        self.assertNotEqual(r.returncode, 0)          # the synthetic manifest has no study of that release
+        self.assertIn("no study", r.stderr)
+        r = self.fetch("--tag", "waves-2026-11", "--from", self.assets)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("unknown tag", self.fetch("--tag", "nope").stderr)
+
     def test_list_names_the_wave(self):
         out = self.fetch("--list").stdout
         self.assertIn("connection-churn     wave 3", out)
@@ -153,6 +161,27 @@ class BuildTest(Base):
         self.assertIn("blob.bin is not text", r.stderr)
 
 
+class SecondReleaseBuildTest(Base):
+    STUDY = "http3"
+
+    def test_its_readme_sits_in_the_study_directory(self):
+        r = self.build()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        out = os.path.join(self.d, "out")
+        self.assertEqual(sorted(os.listdir(out)), ["SHA256SUMS", "waves-2026-11b-data-http3.tar.gz"])
+        with tarfile.open(os.path.join(out, "waves-2026-11b-data-http3.tar.gz")) as tar:
+            names = tar.getnames()
+        self.assertIn("http3/README.md", names)
+        self.assertIn("http3/WHAT-WAS-CHANGED.md", names)
+        self.assertNotIn("README.md", names)
+
+    def test_a_tree_file_at_a_top_file_name_is_refused(self):
+        write(os.path.join(self.tree, self.STUDY, "README.md"), "mine\n")
+        r = self.build()
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("takes from docs/", r.stderr)
+
+
 class RepositoryListsTest(unittest.TestCase):
     """What git keeps about the archives is consistent with itself and with the docs."""
 
@@ -161,14 +190,14 @@ class RepositoryListsTest(unittest.TestCase):
         self.sums = wd.read_sums()
 
     def test_one_asset_per_study(self):
-        self.assertEqual(sorted(self.sums), sorted(wd.ASSET % s for s in wd.STUDIES))
+        self.assertEqual(sorted(self.sums), sorted(wd.asset(s) for s in wd.STUDIES))
         self.assertEqual({m[2] for m in self.manifest}, set(wd.STUDIES))
         for h in list(self.sums.values()) + [m[0] for m in self.manifest]:
             self.assertRegex(h, "^[0-9a-f]{64}$")
 
     def test_paths_are_inside_their_study_or_the_two_top_files(self):
-        top = {dst for _, dst in wd.TOP_FILES}
         for _, _, study, rel in self.manifest:
+            top = {dst for _, dst in wd.TOP_FILES_OF[wd.tag_of(study)]}
             self.assertTrue(rel in top or rel.startswith(study + "/"), rel)
             self.assertNotIn("..", rel.split("/"))
 
@@ -179,10 +208,27 @@ class RepositoryListsTest(unittest.TestCase):
             self.assertFalse(parts[-1].endswith((".key", ".pem", ".crt", ".p12", ".data")), rel)
 
     def test_top_files_are_the_ones_in_the_repository(self):
-        for src, dst in wd.TOP_FILES:
-            want = wd.sha256_file(os.path.join(HERE, src))
-            got = {m[0] for m in self.manifest if m[3] == dst}
-            self.assertEqual(got, {want}, "%s changed after the archives were built: build them again" % src)
+        for tag, tops in wd.TOP_FILES_OF.items():
+            for src, dst in tops:
+                want = wd.sha256_file(os.path.join(HERE, src))
+                got = {m[0] for m in self.manifest if m[3] == dst and wd.tag_of(m[2]) == tag}
+                self.assertEqual(got, {want}, "%s changed after the archives were built: build them again" % src)
+
+    def test_the_first_release_is_unchanged_by_the_second(self):
+        # a published release keeps its bytes: its archives' checksums stay what they were published with
+        first = {"waves-2026-11-data-code-layout.tar.gz": "a5e56f6209a59e7bfa106b525bb7c4a9d9c3d04406c264f36a6d98ebcfa893f7",
+                 "waves-2026-11-data-connection-churn.tar.gz": "9f6d79dbe6e03fe8563901e53374142c57f7196aa03a744cdfb7c3016758ff79",
+                 "waves-2026-11-data-ext-proc-xds.tar.gz": "257b7b4bcf86815324e85c0110e15a0527f81e6d0d0c7887c2b8015be99f0ee5",
+                 "waves-2026-11-data-statsd-batching.tar.gz": "16732dc00e06811e1a8aba41d443fdcf0d67e3393a4a65d89c5f1d5331f3822a",
+                 "waves-2026-11-data-topdown.tar.gz": "6a29af2f107f0c513912200cbe2ce60fbfa4efcd446cacc8017454e30d759199",
+                 "waves-2026-11-data-upstream-protocols.tar.gz": "4a585966ddd92d8bae559ab9e32e67d4c13ffee9892a79a72c45e36cb7675e7c"}
+        self.assertEqual({k: v for k, v in self.sums.items() if k.startswith("waves-2026-11-data-")}, first)
+
+    def test_each_study_has_its_release(self):
+        self.assertEqual(wd.asset("http3"), "waves-2026-11b-data-http3.tar.gz")
+        self.assertEqual(wd.base_url("http3"), "https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11b/")
+        self.assertEqual(wd.asset("topdown"), "waves-2026-11-data-topdown.tar.gz")
+        self.assertEqual(set(wd.TAG_OF.values()) | {wd.TAG}, set(wd.TOP_FILES_OF))
 
     def test_tables_in_git_are_the_ones_in_the_archives(self):
         by = {m[3]: m[0] for m in self.manifest}
