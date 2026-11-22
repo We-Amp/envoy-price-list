@@ -19,7 +19,10 @@ second version of the statsd change. Data: the `statsd-batching` archive of the 
   - `p2`: request-header re-validation on the upstream encode path switched off (a ceiling for what
     that check costs, measurement only);
   - `v2`: the statsd change as an opt-in setting (`max_bytes_per_datagram` on the plain statsd sink).
-  The Envoy patches themselves are not part of this repository; the records name their commit ids.
+  The source of `v2` is public: tag `statsd-batch-2026-11/v2` of https://github.com/We-Amp/envoy (branch
+  `statsd-batch/v2`, commits `77fdeb8484` and `ee71e0583f`). The sources of the `p1` build (`7979fa6063`,
+  superseded by `v2`) and of the `p2` header-validation ceiling (`af3172d385`, measurement only, its
+  result dropped) are not published; the records name their commit ids and the configs pin their sha256.
 - Shapes, from the stats study ([`examples/stats-flush`](../stats-flush)):
   - `sw`: 1,000 primed clusters (about 118k stats), 4 KB proxied at 5,200 req/s, default 5 s flush
     interval, plain statsd sink to the harness's discard sink (which counts datagrams by kind);

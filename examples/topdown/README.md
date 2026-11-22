@@ -15,6 +15,9 @@ input of the `order` and `autofdo` arms there.
 - Client: Nighthawk, open loop, 16 workers x 32 connections, 5 s warm-up, 25 s duration; the
   harness counts a 20 s window after a 2 s lead-in. Origin: `nginx:alpine` (pinned digest) in
   Docker, 8 workers. Idle gate: load1 at most 8, other CPU use at most 2%.
+- CPU vulnerability mitigations: the box's `/sys/devices/system/cpu/vulnerabilities/*` state
+  (stock kernel defaults, PTI on) is a run condition, because mitigations change cycle counts;
+  `chain.sh` records it, and the data archive has it as `topdown/vulnerabilities.txt`.
 - Arms:
   - `stock`: the official `envoy-1.40.2-linux-x86_64` release asset (sha256 `1d64506e…f03cc`),
     at `~/epl/bin/envoy-1.40.2`.

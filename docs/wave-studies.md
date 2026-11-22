@@ -16,6 +16,12 @@ data. The studies:
 Each example directory has a README with the conditions of its runs (box, CPUs, binaries, shapes,
 rates, rounds, order). This page has what is common and the commands.
 
+Envoy patch sources: the `v2` statsd batching build of the statsd-batching study is tag
+`statsd-batch-2026-11/v2` of https://github.com/We-Amp/envoy (branch `statsd-batch/v2`, commits
+`77fdeb8484` and `ee71e0583f`). The sources of the first batching build (`7979fa6063`, superseded by v2)
+and of the header-validation ceiling build (`af3172d385`, measurement only, result dropped) are not
+published. The code-layout arms are builds of tag v1.40.2 (`tools/code-layout`).
+
 ## Get the data first
 
 The raw records (about 570 MB unpacked) are not in git. They are assets of the release of tag
