@@ -1,6 +1,6 @@
 # The wave studies: how to run them again
 
-Waves 1 to 3 of the price list, and the code-layout work of wave 2: what each study needs to be
+Waves 1 to 4 of the price list, and the code-layout work of wave 2: what each study needs to be
 reproduced, where its configs and scripts are, and the commands that render every table from our
 data. The studies:
 
@@ -12,6 +12,7 @@ data. The studies:
 | Code layout | 2 | call-graph order, AutoFDO, instrumented PGO + ThinLTO, BOLT, on v1.40.2 | [`examples/wave2`](../examples/wave2), [`tools/code-layout`](../tools/code-layout) | `code-layout` |
 | Connection churn | 3 | one new connection, plaintext and TLS 1.3; listener accept settings under churn | [`examples/wave3e`](../examples/wave3e) | `connection-churn` |
 | Upstream protocols | 3 | HTTP/2 (nghttp2, oghttp2) and TLS upstreams; unary gRPC and grpc_stats; mTLS between two hops | [`examples/wave3f`](../examples/wave3f) | `upstream-protocols` |
+| HTTP/3 | 4 | HTTP/3 (QUIC) against HTTP/2 over TLS per request; the GSO writer; one new QUIC connection and the session-ticket default | [`examples/wave4g`](../examples/wave4g) | `http3` (second release) |
 
 Each example directory has a README with the conditions of its runs (box, CPUs, binaries, shapes,
 rates, rounds, order). This page has what is common and the commands.
@@ -24,17 +25,20 @@ published. The code-layout arms are builds of tag v1.40.2 (`tools/code-layout`).
 
 ## Get the data first
 
-The raw records (about 570 MB unpacked) are not in git. They are assets of the release of tag
-`waves-2026-11`, one archive per study:
+The raw records (about 650 MB unpacked) are not in git. They are assets of two releases, one archive
+per study: tag `waves-2026-11` (waves 1 to 3 and the code-layout work) and tag `waves-2026-11b`
+(wave 4, HTTP/3):
 
 ```
 python3 tools/fetch-wave-data.py                      # every study
 python3 tools/fetch-wave-data.py connection-churn     # or only the studies you name
+python3 tools/fetch-wave-data.py --tag waves-2026-11b # or only the studies of one release
 python3 tools/fetch-wave-data.py --list               # the studies, their sizes and asset names
 ```
 
-The script downloads `waves-2026-11-data-<study>.tar.gz` from
-`https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11/`, checks each archive
+The script downloads `<tag>-data-<study>.tar.gz` from
+`https://github.com/We-Amp/envoy-price-list/releases/download/<tag>/` (each study from its own
+release), checks each archive
 against `data/wave-data.SHA256SUMS`, unpacks into `data/waves/` (ignored by git) and checks every file
 against `data/wave-data.manifest`. `--from DIR` takes archives you already have; `--verify` checks the
 unpacked tree again, for example after rendering the tables into it. The assets, sizes and checksums:
@@ -164,6 +168,21 @@ Every paired comparison of the primary metric (total cycles per request; for `f3
 both hops), with the t interval, the widened interval, Holm p and rounds won, and the confirmatory rows
 fixed before the run with Holm-adjusted p. Add metric names (for example `cycles_user`) to print them
 too.
+
+### HTTP/3 (`http3`)
+
+```
+H=$D/http3
+( cd $H && python3 ../../../examples/wave4g/table.py wave4g/g1-proto > wave4g/tables.md &&
+  python3 ../../../examples/wave4g/table.py wave4g-s3/g2s-resume > wave4g-s3/tables.md )
+```
+
+Per row, paired by round: the effect on cycles (user + kernel) per request as a percent change with the
+quoted interval, the same as a log ratio (log-%), the t and widened half-widths (log-%), rounds up, the deltas in total, user, kernel cycles and user instructions,
+connections per request, UDP datagrams out per request (box-wide, a reading), the arm's cycles per request
+and the busiest worker's share range. `g1-proto`: HTTP/3 against HTTP/2 over TLS and the GSO writer, per
+request. `g2s-resume` (labelled `g2-resume`): per QUIC connection, (`h3r` - `h3-ka`) x 10, with the v1.40.2
+session-ticket default and with the guard on. The data's own `README.md` is `$D/http3/README.md`.
 
 ### Per-run summaries
 

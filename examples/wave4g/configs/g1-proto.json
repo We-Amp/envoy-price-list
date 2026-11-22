@@ -1,0 +1,492 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000"
+    ],
+    "extra_args": [
+     "--protocol",
+     "http2",
+     "--transport-socket",
+     "{\"name\":\"envoy.transport_sockets.tls\",\"typed_config\":{\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",\"common_tls_context\":{\"tls_params\":{\"tls_minimum_protocol_version\":\"TLSv1_2\",\"tls_maximum_protocol_version\":\"TLSv1_3\"}}}}"
+    ]
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpRcvbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpSndbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpInErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "label": "downstream http2 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total"
+    },
+    {
+     "equals": 0,
+     "label": "no http3 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http3_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "GSO batch writer installed",
+     "min": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.total_bytes_sent"
+    },
+    {
+     "label": "keep-alive: no new connection in the window",
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    },
+    {
+     "min": 16,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.ssl.versions.TLSv1.3"
+    },
+    {
+     "absent": true,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.ssl.versions.TLSv1.2"
+    },
+    {
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.ssl.handshake",
+     "tol_abs": 0.001
+    }
+   ],
+   "name": "h2tls",
+   "settings": {
+    "quic": {},
+    "runtime": {
+     "envoy.reloadable_features.quic_session_ticket_support": false
+    },
+    "tls": {
+     "cert": "ecdsa-p256-san"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "validity": {
+    "max_pending_total": 1024
+   }
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000"
+    ],
+    "extra_args": [
+     "--protocol",
+     "http3",
+     "--transport-socket",
+     "{\"name\":\"envoy.transport_sockets.quic\",\"typed_config\":{\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport\",\"upstream_tls_context\":{\"sni\":\"bench.local\",\"common_tls_context\":{\"validation_context\":{\"trusted_ca\":{\"filename\":\"{cert_dir}/ecdsa-p256-san.crt\"}}}}}}"
+    ]
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpRcvbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpSndbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpInErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "label": "downstream http3 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http3_total"
+    },
+    {
+     "equals": 0,
+     "label": "no http2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "GSO batch writer installed",
+     "min": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.total_bytes_sent"
+    },
+    {
+     "label": "keep-alive: no new connection in the window",
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    }
+   ],
+   "name": "h3",
+   "settings": {
+    "quic": {},
+    "runtime": {
+     "envoy.reloadable_features.quic_session_ticket_support": false
+    },
+    "tls": {
+     "cert": "ecdsa-p256-san"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "validity": {
+    "max_pending_total": 1024,
+    "max_worker_share_factor": 2.0,
+    "min_worker_share_factor": null
+   }
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000"
+    ],
+    "extra_args": [
+     "--protocol",
+     "http3",
+     "--transport-socket",
+     "{\"name\":\"envoy.transport_sockets.quic\",\"typed_config\":{\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport\",\"upstream_tls_context\":{\"sni\":\"bench.local\",\"common_tls_context\":{\"validation_context\":{\"trusted_ca\":{\"filename\":\"{cert_dir}/ecdsa-p256-san.crt\"}}}}}}"
+    ]
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpRcvbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpSndbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpInErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "label": "downstream http3 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http3_total"
+    },
+    {
+     "equals": 0,
+     "label": "no http2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "GSO batch writer installed",
+     "min": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.total_bytes_sent"
+    },
+    {
+     "label": "keep-alive: no new connection in the window",
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    }
+   ],
+   "name": "h3-A2",
+   "settings": {
+    "quic": {},
+    "runtime": {
+     "envoy.reloadable_features.quic_session_ticket_support": false
+    },
+    "tls": {
+     "cert": "ecdsa-p256-san"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "validity": {
+    "max_pending_total": 1024,
+    "max_worker_share_factor": 2.0,
+    "min_worker_share_factor": null
+   }
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000"
+    ],
+    "extra_args": [
+     "--protocol",
+     "http3",
+     "--transport-socket",
+     "{\"name\":\"envoy.transport_sockets.quic\",\"typed_config\":{\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport\",\"upstream_tls_context\":{\"sni\":\"bench.local\",\"common_tls_context\":{\"validation_context\":{\"trusted_ca\":{\"filename\":\"{cert_dir}/ecdsa-p256-san.crt\"}}}}}}"
+    ]
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpRcvbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpSndbufErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.UdpInErrors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "label": "downstream http3 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http3_total"
+    },
+    {
+     "equals": 0,
+     "label": "no http2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "default writer: no GSO batch writer",
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.total_bytes_sent"
+    },
+    {
+     "label": "keep-alive: no new connection in the window",
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    }
+   ],
+   "name": "h3-nogso",
+   "settings": {
+    "quic": {
+     "gso": false
+    },
+    "runtime": {
+     "envoy.reloadable_features.quic_session_ticket_support": false
+    },
+    "tls": {
+     "cert": "ecdsa-p256-san"
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "validity": {
+    "max_pending_total": 1024,
+    "max_worker_share_factor": 2.0,
+    "min_worker_share_factor": null
+   }
+  }
+ ],
+ "base_arm": "h2tls",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "all_pairs",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP2",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "kernel_net": true,
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "stat_filter_extra": "listener\\..*\\.total_bytes_sent$|^http3\\.downstream\\.",
+  "window_s": 20
+ },
+ "name": "g1-proto",
+ "order": "williams",
+ "order_seed": 81,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 8,
+ "rounds_block": 8,
+ "rounds_max": 8,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 2000
+  }
+ ],
+ "short_run_note": "short run: 8 fixed rounds in Williams order, run with --allow-short",
+ "workdir": "~/epl/runs/wave4g"
+}

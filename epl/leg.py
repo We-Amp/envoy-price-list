@@ -823,6 +823,14 @@ def arm_client(arm):
     return acl
 
 
+def sub_cert_dir(args, run_dir):
+    """Client arguments with "{cert_dir}" replaced by the run's certificate directory."""
+    if args is None:
+        return None
+    d = os.path.join(run_dir, "certs")
+    return [a.replace("{cert_dir}", d) if isinstance(a, str) else a for a in args]
+
+
 def client_for(ccfg, shape):
     """A rung fixes the client's workers and connections per worker (`client_concurrency`,
     `client_connections_per_worker`), so connections per Envoy worker are the same at every rung."""
@@ -1193,6 +1201,9 @@ class RealBackend:
                 # the request body's bytes from the harness, checked against their sha256 per leg
                 cextra += ["--request-body-file", _exp.request_body_path(shape)]
             cbase = acl["base_args"] if "base_args" in acl else shape.get("client_base_args")
+            # "{cert_dir}" in a client argument names this run's certificate directory (the HTTP/3
+            # client's transport socket trusts the listener's certificate there)
+            cextra, cbase = sub_cert_dir(cextra, self.run_dir), sub_cert_dir(cbase, self.run_dir)
             nh = ccfg["binary"]
             # 4. warm-up (a shape may set its own length: the JIT warm-up check)
             warm_s = shape["warmup_s"] if shape.get("warmup_s") is not None else ccfg.get("warmup_s", 0)

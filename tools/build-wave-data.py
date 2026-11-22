@@ -12,8 +12,8 @@ TREE holds one directory per study (the layout of data/waves: statsd-batching/, 
   private names and strings the scrub was given, which stay outside the tree), when a file is not
   text or gzip of text (except the gRPC bodies of wave_data.BINARY_OK), and when a file holds a
   private key or sits in a certs/ directory;
-- writes OUT_DIR/waves-2026-11-data-<study>.tar.gz: the study's directory plus README.md and
-  WHAT-WAS-CHANGED.md from docs/wave-data/ at the top level. The archive is reproducible: the
+- writes OUT_DIR/<tag>-data-<study>.tar.gz (the tag of the study's release, wave_data.TAG_OF): the
+  study's directory plus the release's README.md and WHAT-WAS-CHANGED.md (wave_data.TOP_FILES_OF). The archive is reproducible: the
   same tree gives the same bytes;
 - and, unless --no-write, rewrites data/wave-data.manifest (every file of every archive: sha256,
   size, study, path), data/wave-data.SHA256SUMS (the archives), docs/wave-data/ASSETS.md (the
@@ -100,16 +100,21 @@ def main():
         probs = check_tree(a.tree, study, names, replace)
         if probs:
             sys.exit("not publishable, nothing written for %s:\n  %s" % (study, "\n  ".join(probs[:20])))
-        members = [(dst, os.path.join(wd.REPO, src)) for src, dst in wd.TOP_FILES]
+        tops = wd.TOP_FILES_OF[wd.tag_of(study)]
+        members = [(dst, os.path.join(wd.REPO, src)) for src, dst in tops]
         root = os.path.join(a.tree, study)
+        clash = sorted({dst for _, dst in tops} & {study + "/" + rel for rel in wd.tree_files(root)})
+        if clash:
+            sys.exit("%s: the tree has files the archive takes from docs/: %s" % (study, clash))
         members += [(study + "/" + rel, os.path.join(root, rel)) for rel in wd.tree_files(root)]
-        name = wd.ASSET % study
+        name = wd.asset(study)
         wd.write_archive(os.path.join(a.out, name), members)
         sums.append((wd.sha256_file(os.path.join(a.out, name)), name))
         for arc, src in sorted(members):
             size = os.path.getsize(src)
             manifest.append((wd.sha256_file(src), size, study, arc))
-            if arc.startswith(study + "/") and is_table(arc) and size <= TABLE_MAX:
+            if arc.startswith(study + "/") and is_table(arc) and size <= TABLE_MAX and \
+                    arc not in {dst for _, dst in tops}:
                 tables.append((arc, src))
         print("%s  %d files  %.1f MB" % (name, len(members), os.path.getsize(os.path.join(a.out, name)) / 1e6))
     with open(os.path.join(a.out, "SHA256SUMS"), "w") as f:
@@ -117,11 +122,12 @@ def main():
     if partial:
         return
     with open(wd.SUMS, "w") as f:
-        f.write("# sha256 of the release assets of tag %s (tools/build-wave-data.py)\n" % wd.TAG)
+        f.write("# sha256 of the release assets of tags %s (tools/build-wave-data.py)\n" % ", ".join(sorted(wd.TOP_FILES_OF)))
         f.write("".join("%s  %s\n" % s for s in sums))
     with open(wd.MANIFEST, "w") as f:
-        f.write("# every file of the release assets of tag %s: sha256, size in bytes, study (the asset\n"
-                "# %s), path inside the asset. Written by tools/build-wave-data.py.\n" % (wd.TAG, wd.ASSET % "<study>"))
+        f.write("# every file of the release assets of tags %s: sha256, size in bytes, study (the asset\n"
+                "# <tag>-data-<study>.tar.gz), path inside the asset. Written by tools/build-wave-data.py.\n" % (
+                    ", ".join(sorted(wd.TOP_FILES_OF))))
         f.write("".join("%s  %d  %s  %s\n" % m for m in manifest))
     if os.path.isdir(TABLES_DIR):
         shutil.rmtree(TABLES_DIR)
@@ -131,16 +137,17 @@ def main():
         shutil.copyfile(src, dst)
     with open(os.path.join(wd.REPO, "docs", "wave-data", "ASSETS.md"), "w") as f:
         f.write("# Wave studies data: the release assets\n\n"
-                "Assets of the release of tag `%s` (`%s<asset>`), written by\n"
+                "Assets of the releases of tags %s (`%s<asset>`), written by\n"
                 "`tools/build-wave-data.py`. `python3 tools/fetch-wave-data.py` downloads, checks and unpacks them.\n\n"
-                "| Asset | Wave | Size | Files | Unpacked | sha256 |\n|---|---|---|---|---|---|\n" % (wd.TAG, wd.BASE_URL))
+                "| Asset | Release | Wave | Size | Files | Unpacked | sha256 |\n|---|---|---|---|---|---|---|\n" % (
+                    ", ".join("`%s`" % t for t in sorted(wd.TOP_FILES_OF)), wd.RELEASE_URL % "<tag>"))
         for (h, name), study in zip(sums, studies):
             mine = [m for m in manifest if m[2] == study]
-            f.write("| `%s` | %s | %.1f MB | %d | %.1f MB | `%s` |\n" % (
-                name, wd.STUDIES[study][0], os.path.getsize(os.path.join(a.out, name)) / 1e6, len(mine),
-                sum(m[1] for m in mine) / 1e6, h))
-        f.write("\nTogether: %.0f MB to download, %.0f MB unpacked, %d files (two of them, `README.md` and\n"
-                "`WHAT-WAS-CHANGED.md`, are in every archive). The same checksums are in `data/wave-data.SHA256SUMS`;\n"
+            f.write("| `%s` | `%s` | %s | %.1f MB | %d | %.1f MB | `%s` |\n" % (
+                name, wd.tag_of(study), wd.STUDIES[study][0], os.path.getsize(os.path.join(a.out, name)) / 1e6,
+                len(mine), sum(m[1] for m in mine) / 1e6, h))
+        f.write("\nTogether: %.0f MB to download, %.0f MB unpacked, %d files (`README.md` and `WHAT-WAS-CHANGED.md`\n"
+                "are in every archive: at the top in those of `waves-2026-11`, under `http3/` in that of `waves-2026-11b`). The same checksums are in `data/wave-data.SHA256SUMS`;\n"
                 "every file of every archive is in `data/wave-data.manifest` with its size and sha256.\n" % (
                     sum(os.path.getsize(os.path.join(a.out, n)) for _, n in sums) / 1e6, sum(m[1] for m in manifest) / 1e6,
                     len(manifest)))
