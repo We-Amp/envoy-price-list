@@ -1,0 +1,25 @@
+{
+ "name": "c4-32",
+ "arch": "x86_64",
+ "label": "cloud-vm-x86",
+ "machine_label": "a current Intel server CPU in a cloud VM (16 cores x 2 SMT, KVM guest), default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "cpus": {
+  "sut": "0-3",
+  "client": "4-11,20-27",
+  "origin": "12-15,28-30",
+  "harness": "31"
+ },
+ "perf": "/usr/lib/linux-tools/7.0.0-1017-cloud/perf",
+ "perf_events": "instructions:u,cycles:u,cycles:k,instructions:k,task-clock",
+ "client_binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+ "image_platform": "linux/amd64",
+ "binaries": {
+  "x86_64": {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ },
+ "note": "Track K (wave 6): the three-boot mitigation price on a current x86 CPU. The harness runs on CPU 31 (the sibling of an origin core), because the default (every CPU no set uses) would be the SUT's SMT siblings on 32 CPUs."
+}
