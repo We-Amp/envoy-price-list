@@ -14,7 +14,7 @@ data. The studies:
 | Upstream protocols | 3 | HTTP/2 (nghttp2, oghttp2) and TLS upstreams; unary gRPC and grpc_stats; mTLS between two hops | [`examples/wave3f`](../examples/wave3f) | `upstream-protocols` |
 | HTTP/3 | 4 | HTTP/3 (QUIC) against HTTP/2 over TLS per request; the GSO writer; one new QUIC connection and the session-ticket default | [`examples/wave4g`](../examples/wave4g) | `http3` (second release) |
 | Mitigations | 5 | the kernel's CPU-vulnerability mitigations across three boots; the prctl speculation arms; TCP_DEFER_ACCEPT against idle states | [`examples/wave5h`](../examples/wave5h) | `mitigations` (third release) |
-| Arm code layout, cloud VM | 5 | ordering file and PGO + ThinLTO (and `-mcpu`) on arm64, Neoverse V2 class VM | [`examples/wave5i`](../examples/wave5i), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-vm-layout` (third release) |
+| Arm code layout, cloud VM | 5 | PGO + ThinLTO (and `-mcpu`) on arm64, Neoverse V2 class VM; its ordering-file figure is held (no file control) | [`examples/wave5i`](../examples/wave5i), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-vm-layout` (third release) |
 | Arm code layout, bare metal | 6 | the same plus AutoFDO and BOLT from SPE profiles, with a file control, Neoverse N3 | [`examples/wave6j`](../examples/wave6j), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-metal-layout` (third release) |
 | Mitigations, cloud VM | 6 | the mitigation price on a current x86 CPU in a cloud VM, four boots | [`examples/wave6k`](../examples/wave6k) | `mitigations-cloud` (third release) |
 
@@ -224,7 +224,10 @@ python3 examples/wave5i/analysis/analyse_w5i.py $D/arm-vm-layout/epl/runs/wave5i
 ```
 
 Per shape: cycles (user + kernel) per response against `official` (the A/A, `order`, `pgolto`, `pgolto-v2`),
-with the t and widened intervals as percent changes, and the decision rules fixed before the run.
+with the t and widened intervals as percent changes, and the decision rules fixed before the run. **The
+`order` figures of this run are held, not confirmed:** the control (the same code in a separate file, where no
+effect is expected) was not run on this host; on bare metal the control was null and the ordering file gave
+4-7%. They stay in the data; we do not quote them as a result.
 
 ### Arm code layout, bare metal (`arm-metal-layout`)
 

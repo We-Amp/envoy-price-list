@@ -5,19 +5,21 @@ Primary metric `cycles_total` per response. Effect = mean paired log ratio as a 
 | comparison | s | fh | fl |
 |---|---|---|---|
 | official-A2 vs official | +0.34% [-0.58, +1.27] (widened) 3/10 won | +0.98% [-0.06, +2.03] (widened) 2/10 won | +0.10% [-0.86, +1.06] (widened) 4/10 won |
-| order vs official | -34.07% [-35.51, -32.60] (t) 10/10 won | -27.50% [-29.21, -25.75] (t) 10/10 won | -30.41% [-31.11, -29.70] (widened) 10/10 won |
+| order vs official (HELD, not confirmed) | -34.07% [-35.51, -32.60] (t) 10/10 won | -27.50% [-29.21, -25.75] (t) 10/10 won | -30.41% [-31.11, -29.70] (widened) 10/10 won |
 | pgolto vs official | -38.22% [-39.15, -37.28] (t) 10/10 won | -33.68% [-34.58, -32.76] (t) 10/10 won | -35.49% [-36.20, -34.77] (widened) 10/10 won |
 | pgolto-v2 vs official | -38.00% [-39.27, -36.72] (t) 10/10 won | -35.34% [-36.85, -33.80] (t) 10/10 won | -35.42% [-36.61, -34.22] (t) 10/10 won |
 | pgolto-v2 vs pgolto | +0.35% [-1.47, +2.20] (t) 4/10 won | -2.51% [-4.81, -0.16] (t) 7/10 won | +0.10% [-2.28, +2.53] (t) 5/10 won |
 
-A/A reach (|mean| + t half-width of official-A2 vs official, log-%%): s 1.07%, fh 1.89%, fl 0.89%
+**Held, not confirmed: the `order` rows.** The control (the same code in a separate file, where no effect is expected) was not run on this host: `order` and `official` are different files made in different ways, so this run cannot tell a code-layout effect from a file-placement effect. On bare metal (wave 6 track J) the file control was null and the ordering file gave 4-7%. The figures here stay in the data; we do not quote them as a result.
+
+A/A reach (|mean| + t half-width of official-A2 vs official, log-%): s 1.07, fh 1.89, fl 0.89
 
 ## Rules (fixed before the run)
 
 - run validity: official-A2 vs official within +-1% and interval contains 0 on every shape -> OK
 - pgolto validity: gain 38.2% vs official on s; band 20-50% -> OK
   pgolto gain vs official: s 38.2%, fh 33.7%, fl 35.5%
-- order: gain vs official s 34.07%, fh 27.50% (fl 30.41%); kill if under 3% on s AND fh -> KEEP
+- order: gain vs official s 34.07%, fh 27.50% (fl 30.41%); kill if under 3% on s AND fh -> HELD (above the kill line, but not confirmed: no file control on this host; see the note above)
 - pgolto-v2 vs pgolto s: +0.35% [-1.47, +2.20] (t) 4/10 won -> no resolved difference; at most 2.2%
 - pgolto-v2 vs pgolto fh: -2.51% [-4.81, -0.16] (t) 7/10 won -> CLAIM
 - pgolto-v2 vs pgolto fl: +0.10% [-2.28, +2.53] (t) 5/10 won -> no resolved difference; at most 2.5%

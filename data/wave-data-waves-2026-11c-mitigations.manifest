@@ -1601,7 +1601,7 @@ ebe834fcdf3055b39bbc1471efc4d8111dcdc998172c81b67387d50e6f76877c  3475  mitigati
 0cee13975a6b189dd943873585100bb6a9b198968db61b017544b4b81a7a4524  141  mitigations  mitigations/C/smoke/smoke-h-spec/status.json
 2c912a95b8a532b8702978764dc457d2ff467b98c628f5342fdb3feb7fdf6a52  4532  mitigations  mitigations/C/smoke/smoke-h-spec/summary.md
 c62a01c401ee793a0b7f125469ef21487043dce8e335ee5056f682262debbd4f  3401  mitigations  mitigations/H0-defer.json
-ffcb66c28eadf8458834202c1bde2160cbdf6184e80d1c9dbc8fd00f82f28577  815  mitigations  mitigations/H0-defer.md
+468b0c5271d7b29634243a88757489082bb46903e07a81351d5f3f0f06a615f4  1034  mitigations  mitigations/H0-defer.md
 bf5e8b236fe5f3a27746ee8facef85f6a0a965ead393e8a3004d9eef78847c30  1478  mitigations  mitigations/H0/chain-h.log
 a1775c821631b33ed5ab3370186ab9a7613a0ec31732038c99466513d367cd0f  2743  mitigations  mitigations/H0/chain-h.out
 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  2  mitigations  mitigations/H0/chain-h.rc
@@ -2013,13 +2013,13 @@ e0d435e67ea2678defbbd4ce1e420f928b46a6e84c497c1d4fdeac6f39e3a205  3434  mitigati
 eff90799883f1d6a6a0e3a8aefe48421faa6cf0d36b7abc33b80d7aa1daf3578  3410  mitigations  mitigations/H0/smoke/smoke-h-defer-deep/stats/c1.txt.gz
 36d6411716524991d899e2ef29d9ba3922fab76afbe6a83de63c75d552bdbd3c  143  mitigations  mitigations/H0/smoke/smoke-h-defer-deep/status.json
 f43e7ef9eedd73d108afbb1ca30d0339b4cde32040871a8528a546a763024171  4553  mitigations  mitigations/H0/smoke/smoke-h-defer-deep/summary.md
-da86957f07fb28820d491d4ea74c4d2ba4693af86bdf4cdba3b173c49791f92f  3105  mitigations  mitigations/README.md
-071583a5917d18a5a621dad4b5ab0667b707e6166687f1bfb50bc3cea19d10b6  3352  mitigations  mitigations/WHAT-WAS-CHANGED.md
+8aaa678be3038dc9526404919a2e00a931f61d428c3fdda8b5f8b1f570b2a40d  3293  mitigations  mitigations/README.md
+a96aa5f5ed4ac1bfcf3c6b18c01c5c4bc66a9af2864cb01348d7003bbf8fed0e  4169  mitigations  mitigations/WHAT-WAS-CHANGED.md
 edce2a067a62c51c3208f0b9cbb5fbaf9c92ef9aa15ffdadb684369adc303db1  3285  mitigations  mitigations/bootstate-A.json
 bd6c529d493b69435e9d68e16617db7818d390cdc2046118dd1d052e7d8993ae  3105  mitigations  mitigations/bootstate-B.json
 cd4cc020ded17d5029d2fdf995d3aef05235abfb289250e0d8ffe793d26cf6fc  3285  mitigations  mitigations/bootstate-C.json
 a328a791691e6fc93930d6c177f395ee376ac031d0bef0f74e07eaa64a954589  3285  mitigations  mitigations/bootstate-H0.json
 718574863d5960fdd0ca294c0ffbaa77014a7ad8a907e2566e3443cb3b8ec605  16368  mitigations  mitigations/cross.json
 956e7cbaba6ecfe53374af9ca2c36d2ebef730e59763d75a7821b6ee4ebd2726  2889  mitigations  mitigations/cross.md
-fd3a1d137441e9f4788892cfec213de3fd5c0bedea3f2db16d1db19642ede6c7  2392  mitigations  mitigations/grub-install.txt
+918cb92d5de122e10e21546989620db65cca615a1b99c88e0ca87670475a2f32  2316  mitigations  mitigations/grub-install.txt
 4873f1084db7a588b5667b50f2603b161cb159af8425e1e90171d2934b26af21  263  mitigations  mitigations/grub-remove.txt

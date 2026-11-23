@@ -23,7 +23,7 @@ listed here. No measured value was changed: every change is inside a text string
 
 ## What was changed
 
-135 of the published files differ from the files the runs wrote.
+136 of the published files differ from the files the runs wrote (the rendered tables below not counted).
 
 - **Home directory prefixes** are written `~` (569 places in 58 files).
 - **The kernel release of the two cloud VMs** is written `7.0.0-1017-cloud`; the image's flavour suffix is
@@ -32,6 +32,10 @@ listed here. No measured value was changed: every change is inside a text string
 - **The cloud VM's instance id** in `mitigations-cloud/host-gate.txt` (the check, before every block, that the
   VM was the same instance and had not been restarted or moved) is written `<instance id>` (5 places in 1 file);
   the start times beside it are unchanged.
+- **Disk identifiers** in the boot records are written `<filesystem uuid>` (the bench server's and the cloud VM's
+  root filesystem, in the GRUB entries of `grub-install.txt`) and `<partition uuid>` (the cloud VM's root
+  `PARTUUID` on the kernel command line, in `boot-*.txt`, `bootstate-*.json` and `grub-install.txt`). Boot ids stay:
+  they are random per boot and are the evidence that a reboot happened.
 
 ## Rendered again or written for the publication
 
@@ -42,9 +46,13 @@ listed here. No measured value was changed: every change is inside a text string
   mitigations as a price-list row"), block D's directory is named `D` instead of a full path, and the table code
   of the first run did not yet write the `pl_off` field. Every number and verdict is the same.
 - `mitigations/H0-defer.json` is as rendered when the run was analysed; `mitigations/H0-defer.md` (the printed
-  table) was written for the publication.
-- `arm-vm-layout/analysis-w5i.md` and `arm-metal-layout/analysis-w6j.md` are as rendered when the runs were
-  analysed; the scripts of the repository render them again byte for byte.
+  table) was written for the publication, with its unit (log points) stated and the latency effects also as a
+  percent change.
+- `arm-vm-layout/analysis-w5i.md` was rendered again with `examples/wave5i/analysis/analyse_w5i.py`: its `order`
+  rows and the ordering-file rule line are now marked **held, not confirmed** (no file control ran on that host),
+  and the A/A reach line prints its log-% values without a stray `%`. Every number is the same.
+- `arm-metal-layout/analysis-w6j.md` is as rendered when the run was analysed; the script of the repository
+  renders it again byte for byte.
 
 ## Commit ids
 
