@@ -1,8 +1,8 @@
 # Wave 5, track I: code layout on arm64 (cloud VM)
 
 The code-layout question of wave 2 ([`examples/wave2`](../wave2)) on arm64: what the official arm64 v1.40.2
-release gives up to an ordering file and to instrumented PGO + ThinLTO, on a current Arm server core in a
-cloud VM. Data: the `arm-vm-layout` archive of the third wave release
+release gives up to instrumented PGO + ThinLTO (and an ordering file, held: see below), on a current Arm server
+core in a cloud VM. Data: the `arm-vm-layout` archive of the third wave release
 (`python3 tools/fetch-wave-data.py arm-vm-layout`, see [`docs/wave-studies.md`](../../docs/wave-studies.md)).
 Build scripts: [`tools/code-layout/arm`](../../tools/code-layout/arm).
 
@@ -27,6 +27,8 @@ Build scripts: [`tools/code-layout/arm`](../../tools/code-layout/arm).
 - Method: Williams order, 10 rounds (5 s client warm-up per leg); paired per-round log ratios with the
   95% t and widened 1.96 x sqrt(SE^2 + 0.34^2) intervals, the wider one deciding.
 
+**Held, not confirmed: the ordering-file (`order`) figures of this run.** The control (the same code in a separate file, where no effect is expected) was not run on this host, so the run cannot tell a code-layout effect from a file-placement effect. On bare metal ([`examples/wave6j`](../wave6j)) the file control was null and the ordering file gave 4-7%. The VM figures stay in the data; we do not quote them as a result.
+
 ## Runs
 
 | Config | Arms | Rounds |
@@ -39,8 +41,10 @@ Build scripts: [`tools/code-layout/arm`](../../tools/code-layout/arm).
 ## Files
 
 - `make.py` writes the configs (`--box`, `--bins`).
-- `run-w5i.sh`, `chain-w5i.sh`: the sessions. On a cloud VM the A/B chain powers the VM off 20 minutes after it
-  ends unless a `KEEP` file exists (so a finished run never leaves a VM billing); remove that step elsewhere.
+- `run-w5i.sh`, `chain-w5i.sh`: the sessions. With `SELF_SHUTDOWN=1` (opt-in, default off; needs passwordless
+  sudo) the A/B chain powers the machine off 20 minutes after it ends unless `~/w5i/KEEP` exists, so a rented VM
+  does not idle and bill.
 - `perf-fp.sh`: the perf wrapper of the profiling legs (`perf record --call-graph=fp` for the window).
 - `fp2order.py edges|span`: frame-pointer call chains to the ordering file and the hot-set page span.
-- `analysis/analyse_w5i.py RUN_DIR OUT_MD`: the table and the decision rules fixed before the run.
+- `analysis/analyse_w5i.py RUN_DIR OUT_MD`: the table and the decision rules fixed before the run; it marks the
+  `order` rows as held.

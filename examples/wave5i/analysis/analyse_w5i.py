@@ -58,6 +58,14 @@ def stats(m):
             "x": x, "wide": max(hw, whw)}
 
 
+# The ordering-file rows of this run are held: we do not quote them as a result.
+HELD_NOTE = ("**Held, not confirmed: the `order` rows.** The control (the same code in a separate file, where no "
+             "effect is expected) was not run on this host: `order` and `official` are different files made in different "
+             "ways, so this run cannot tell a code-layout effect from a file-placement effect. On bare metal (wave 6 "
+             "track J) the file control was null and the ordering file gave 4-7%. The figures here stay in the data; we "
+             "do not quote them as a result.")
+
+
 def pc(x):  # log-% -> %
     return (math.exp(x / 100) - 1) * 100
 
@@ -98,12 +106,14 @@ for a, r in pairs:
         s = stats(m)
         S[(a, r, sh)] = s
         row.append(fmt(s))
-    L.append("| %s vs %s | %s |" % (a, r, " | ".join(row)))
+    held = " (HELD, not confirmed)" if a == "order" else ""
+    L.append("| %s vs %s%s | %s |" % (a, r, held, " | ".join(row)))
 L.append("")
+L.append(HELD_NOTE + "\n")
 aa = {sh: S.get(("official-A2", "official", sh)) for sh in SHAPES}
 reach = {sh: abs(aa[sh]["mu"]) + aa[sh]["hw"] for sh in SHAPES if aa[sh]}
-L.append("A/A reach (|mean| + t half-width of official-A2 vs official, log-%%): " + ", ".join(
-    "%s %.2f%%" % (sh, reach[sh]) for sh in SHAPES if sh in reach) + "\n")
+L.append("A/A reach (|mean| + t half-width of official-A2 vs official, log-%): " + ", ".join(
+    "%s %.2f" % (sh, reach[sh]) for sh in SHAPES if sh in reach) + "\n")
 L.append("## Rules (fixed before the run)\n")
 
 
@@ -122,7 +132,8 @@ v.append("- pgolto validity: gain %.1f%% vs official on s; band 20-50%% -> %s" %
 v.append("  pgolto gain vs official: " + ", ".join("%s %.1f%%" % (sh, gain("pgolto", "official", sh)) for sh in SHAPES))
 o = {sh: gain("order", OREF, sh) for sh in SHAPES}
 v.append("- order: gain vs %s s %.2f%%, fh %.2f%% (fl %.2f%%); kill if under 3%% on s AND fh -> %s"
-         % (OREF, o["s"], o["fh"], o["fl"], "KILL" if (o["s"] < 3 and o["fh"] < 3) else "KEEP"))
+         % (OREF, o["s"], o["fh"], o["fl"], "KILL" if (o["s"] < 3 and o["fh"] < 3) else
+            "HELD (above the kill line, but not confirmed: no file control on this host; see the note above)"))
 for sh in SHAPES:
     s = S.get(("pgolto-v2", "pgolto", sh))
     if not s:
