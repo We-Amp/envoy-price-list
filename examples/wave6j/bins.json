@@ -1,0 +1,37 @@
+{
+ "official": {
+  "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+  "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64 (downloaded on the host)",
+  "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+ },
+ "opt-file": {
+  "binary": "~/w6j/bins/envoy-opt",
+  "source": "track I's own -c opt build (byte-identical to official), a separate file copied to the host beside order (file control)",
+  "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+ },
+ "order": {
+  "binary": "~/w6j/bins/envoy-order",
+  "source": "track I's order (opt objects relinked with an lld ordering file from frame-pointer chains on the V2 VM, cdsort)",
+  "source_sha256": "b623d72ed8ae89c9fca7f018c07768b381c46650ea1800f86f36fd3ca95c10b6"
+ },
+ "pgolto": {
+  "binary": "~/w6j/bins/envoy-pgolto",
+  "source": "track I's pgolto (nine-leg trainer on the V2 VM + ThinLTO)",
+  "source_sha256": "916d83419433552ef07fc5024af4d4ae65aa9578e681d06b19462a853010e8ea"
+ },
+ "pgolto-relocs": {
+  "binary": "~/w6j/bins/envoy-pgolto-relocs",
+  "source": "track I's pgolto relinked with --emit-relocs, debug stripped (BOLT input; profiled only)",
+  "source_sha256": "41baf40c590e6bb8dd149a2f471a44731858f798894c34c38cb0578c272cc843"
+ },
+ "autofdo": {
+  "binary": "~/w6j/bins/envoy-autofdo",
+  "source": "v1.40.2 + ThinLTO + -fprofile-sample-use (create_llvm_prof --profiler=perf_spe, google/autofdo f95d1a170dfe, on 6 SPE legs of official on this host; llvm-profgen gave no body samples)",
+  "source_sha256": "ab47f18b3af29aa6384004681f359c360f89235590e2db1195004ee6c4b67000"
+ },
+ "bolt": {
+  "binary": "~/w6j/bins/envoy-bolt",
+  "source": "llvm-bolt 22.1.8 on pgolto-relocs with the SPE profile from this host",
+  "source_sha256": "f6476336b34f632dc2e6bbc95c902a5f4c2927bc482502ed275b611905ecb63c"
+ }
+}
