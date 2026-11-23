@@ -1,0 +1,274 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000",
+     "--experimental-h1-connection-reuse-strategy",
+     "lru"
+    ],
+    "extra_args": []
+   },
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    },
+    {
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPTimeWaitOverflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPReqQFullDrop",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.AttemptFails",
+     "tol_abs": 0
+    }
+   ],
+   "name": "ka",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--prefetch-connections",
+     "--max-pending-requests",
+     "1000",
+     "--experimental-h1-connection-reuse-strategy",
+     "lru"
+    ],
+    "extra_args": []
+   },
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    },
+    {
+     "per_request": 0.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0.001
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPTimeWaitOverflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPReqQFullDrop",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.AttemptFails",
+     "tol_abs": 0
+    }
+   ],
+   "name": "ka-A2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "client": {
+    "base_args": [
+     "--max-pending-requests",
+     "1000"
+    ],
+    "extra_args": [
+     "--max-requests-per-connection",
+     "1"
+    ],
+    "multi_target": {
+     "base": "127.0.0.1",
+     "count": 16
+    }
+   },
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    },
+    {
+     "per_request": 1.0,
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol": 0.02
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenOverflows",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.ListenDrops",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPTimeWaitOverflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPReqQFullDrop",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.AttemptFails",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "field",
+     "stat": "kernel_net.d.TCPSynRetrans",
+     "tol_abs": 0
+    },
+    {
+     "max": 0.75,
+     "scope": "field",
+     "stat": "kernel_net.end.conntrack_fill"
+    },
+    {
+     "max": 1.03,
+     "min": 0.97,
+     "per": "field:responses_raw",
+     "scope": "field",
+     "stat": "kernel_net.d.PassiveOpens"
+    }
+   ],
+   "name": "c1",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc",
+   "validity": {
+    "max_pending_total": "client_cx"
+   }
+  }
+ ],
+ "base_arm": "ka",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": false,
+  "listener_address": "127.0.0.1",
+  "listener_fanout": 16,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "kernel_net": true,
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "window_s": 20
+ },
+ "name": "h-c1",
+ "order": "williams",
+ "order_seed": 102,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 6,
+ "rounds_block": 6,
+ "rounds_max": 6,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 1600
+  }
+ ],
+ "warmup_legs": 1,
+ "workdir": "~/epl/runs/wave5h"
+}
