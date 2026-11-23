@@ -24,11 +24,25 @@ scripts in its own.
 | `772807bfa1f5` | `http3/wave4g/*` | `d49ca12` + `e88e2bc` | `8a4fa01` (`examples/wave4g`) |
 | `3dcbe9602e1d` | `http3/wave4g-s/*`, `http3/wave4g-s2/*` | `d49ca12` + `e88e2bc` | `8a4fa01` |
 | `577f19528e39` | `http3/wave4g-s3/*` | `d49ca12` + `e88e2bc` | `8a4fa01` |
+| `0bac1592ad9a` | `mitigations/*` | `d49ca12` + `e88e2bc` + `d9940fc` | `984912a` (`examples/wave5h`) |
+| `e38cd3cb21f6` | `mitigations-cloud/A`, `B`, `C` | `d49ca12` + `e88e2bc` + `d9940fc` | `e3de128` (`examples/wave6k`) |
+| `91d3fbad2097` | `mitigations-cloud/D` | `d49ca12` + `e88e2bc` + `d9940fc` | `e3de128` |
+| `a5f1b348607a` | `arm-vm-layout/epl/runs/wave5i-prof/fp-w5i` | `d49ca12` + `e88e2bc` + `d9940fc` | `4cef65e` (`examples/wave5i`) |
+| `773e4a0363f2`, `5814d60a7dc5` | `arm-vm-layout/epl/runs/wave5i/smoke/smoke-w5i.<time>` (the two smokes replaced by a later one) | `d49ca12` + `e88e2bc` + `d9940fc` | `4cef65e` |
+| `33b56817cdae` | `arm-vm-layout/epl/runs/wave5i/w5i` and its smoke | `d49ca12` + `e88e2bc` + `d9940fc` | `4cef65e` |
+| `145e52d51d5c` | `arm-metal-layout/epl/runs/wave6j/*` | `d49ca12` + `e88e2bc` + `d9940fc` | `1fb9a4f` (`examples/wave6j`) |
 
 The build scripts of the code-layout arms are `1c66f7c` (`tools/code-layout`); the release-asset tools
 and this documentation `85dd1d0` and later.
 
 ## What differs between a measured commit and the published code
+
+- **Waves 5 and 6.** Their working branches followed each other (wave 5 H, then the arm64 branches I and J
+  on top of it; K on top of H); the published history takes their harness changes in one commit
+  (`d9940fc`: per-task speculation control, boot-state records, the dry run's steal time). In the examples,
+  references to unpublished planning documents and one internal item number in the mitigation tables'
+  verdict line were replaced by what they stand for, and the cloud kernel's flavour suffix in the K box
+  description reads `cloud`. Their data is the assets of the third release, `waves-2026-11c` (`f1e8b5f`).
 
 - **Wave 4 (HTTP/3).** Its working branch joined the connection-churn harness into the upstream-protocols
   harness on its own; the published history carries only what that branch added on top (`e88e2bc`: the
