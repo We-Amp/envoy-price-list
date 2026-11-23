@@ -12,14 +12,20 @@
 #   oneshot-boot.sh install          back up grub.cfg, add /etc/grub.d/42_epl_oneshot, run update-grub,
 #                                    show the diff (only the two entries may be new) and verify
 #   oneshot-boot.sh next on|off      boot that entry ONCE at the next reboot (grub-reboot); GRUB clears
-#                                    the choice before the kernel starts, so every later boot is the default
+#                                    the choice before the kernel starts, where it can write grubenv (below)
 #   oneshot-boot.sh status           pending one-shot choice, the running command line and mitigation state
-#   oneshot-boot.sh remove           delete the entries again (rm + update-grub) and diff against the backup
+#   oneshot-boot.sh remove           clear a pending one-shot choice (next_entry), delete the entries again
+#                                    (rm + update-grub) and diff against the backup
 #
 # The entries are copies of the first menu entry of the current grub.cfg (the default boot: same
 # kernel, initrd, root and module loads), with their own title and id; `off` appends mitigations=off
 # to the kernel line and is otherwise identical to `on`. The default entry (GRUB_DEFAULT) is never
 # touched, so a power cycle or any reboot without `next` boots the default with mitigations on.
+#
+# CAVEAT: that holds only where GRUB can write its environment block (grubenv). With /boot on LVM, software
+# RAID, btrfs or ZFS, GRUB cannot write it (a documented GRUB limitation; not tested by us): next_entry then
+# stays set and EVERY later boot comes up with mitigations=off until it is cleared. After the one-shot boot,
+# run `status` and confirm next_entry is empty; if not, run `grub-editenv - unset next_entry` (or `remove`).
 set -eu
 CFG=${GRUB_CFG:-/boot/grub/grub.cfg}
 SNIP=${GRUB_SNIPPET:-/etc/grub.d/42_epl_oneshot}
@@ -89,6 +95,8 @@ case "${1:-}" in
     ;;
   remove)
     need_root remove
+    # a pending one-shot choice must not outlive the entries (and on a /boot GRUB cannot write, it would stick)
+    grub-editenv - unset next_entry || true
     rm -f "$SNIP"
     update-grub
     if [ -f "$BACKUP" ]; then
@@ -98,7 +106,7 @@ case "${1:-}" in
     grub-editenv list
     ;;
   *)
-    sed -n '2,15p' "$0"
+    sed -n '2,/^set -eu$/p' "$0" | sed '$d'
     exit 2
     ;;
 esac

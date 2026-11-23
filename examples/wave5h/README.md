@@ -26,14 +26,18 @@ and paired rounds across them are impossible. The same configs therefore run unc
   inconclusive. User instructions per request must agree across the three boots (the workload is the
   same).
 - `bootstate.py` records each boot (boot id, mitigation state, command line, microcode, frequency and
-  idle-state setup, a few sysctls) and the chain refuses to run when the mitigation state is not the
+  idle-state setup, a few sysctls; the `physical_host` field is always null: no cloud metadata is queried) and the chain refuses to run when the mitigation state is not the
   expected one, when anything else differs from block A, or when no reboot happened.
 - **Warning:** `oneshot-boot.sh` changes the boot loader and can boot the machine with the CPU-vulnerability
   mitigations off. Use it only on a dedicated, isolated bench machine with console access, read its
   `entries` output before `install`, and `remove` the entries afterwards.
 - `oneshot-boot.sh` (run by the operator, as root) adds two GRUB entries that copy the default entry,
   one with `mitigations=off`, and selects one for the next boot only (`grub-reboot`). GRUB clears the
-  choice before the kernel starts, so any later boot, a power cycle included, is the default one.
+  choice before the kernel starts, so any later boot, a power cycle included, is the default one, **but only
+  where GRUB can write its environment block**: with `/boot` on LVM, software RAID, btrfs or ZFS it cannot (a
+  documented GRUB limitation, not tested by us), the choice stays set and every later boot is
+  `mitigations=off`. After the one-shot boot run `oneshot-boot.sh status` and confirm `next_entry` is empty,
+  else `grub-editenv - unset next_entry`; `remove` clears a pending choice too.
 
 ## Runs
 

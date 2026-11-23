@@ -77,18 +77,6 @@ def cpu_identity(root="/"):
     return out
 
 
-def physical_host():
-    """The cloud metadata server's physical host attribute, if it offers one (else None: not gated)."""
-    import urllib.request
-    try:
-        rq = urllib.request.Request("http://metadata.google.internal/computeMetadata/v1/instance/attributes/physical_host",
-                                    headers={"Metadata-Flavor": "Google"})
-        with urllib.request.urlopen(rq, timeout=2) as r:
-            return r.read().decode()[:200] if r.status == 200 else None
-    except Exception:
-        return None
-
-
 def record(root="/"):
     cpu = os.path.join(root, "sys/devices/system/cpu")
     bs = sysprobe.boot_state(root)
@@ -103,7 +91,8 @@ def record(root="/"):
         "kernel_cmdline_mitigation_args": bs["kernel_cmdline_mitigation_args"],
         "microcode": bs["microcode"],
         "cpu": cpu_identity(root),
-        "physical_host": physical_host() if root == "/" else None,
+        # no cloud metadata is queried; the field stays in the record format, always null
+        "physical_host": None,
         "online": _r("sys/devices/system/cpu/online", root),
         "smt_control": _r("sys/devices/system/cpu/smt/control", root),
         "cpufreq": {
