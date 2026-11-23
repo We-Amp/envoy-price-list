@@ -1015,14 +1015,19 @@ class RealBackend:
         return self.own.pids()
 
     def _start_envoy(self, binary, bootstrap, cpus, workers, admin_port, env, extra, log_path, ready_timeout_s=60,
-                     nofile=None):
-        """nofile: soft RLIMIT_NOFILE for this child only (set before exec; never a system change)."""
+                     nofile=None, spec_ctrl=None):
+        """nofile: soft RLIMIT_NOFILE for this child only (set before exec; never a system change).
+        spec_ctrl: the arm's per-task speculation control ({"store_bypass": "disable", ...}), applied
+        with prctl in the child before exec; Envoy and every thread it starts inherit it."""
         elog = open(log_path, "w")
         cmd = ["taskset", "-c", cpus, binary, "-c", bootstrap, "--concurrency", str(workers),
                "--use-dynamic-base-id", "-l", self.exp["envoy"].get("log_level", "warn")] + list(extra)
         kw = {}
-        if nofile:
-            kw["preexec_fn"] = _nofile_preexec(int(nofile))
+        pre = _nofile_preexec(int(nofile)) if nofile else None
+        if spec_ctrl:
+            pre = sysprobe.spec_ctrl_preexec(spec_ctrl, then=pre)
+        if pre:
+            kw["preexec_fn"] = pre
         p = self.own.start(cmd, stdout=elog, stderr=subprocess.STDOUT, env=dict(os.environ, **env), **kw)
         if not wait_ready(admin_port, ready_timeout_s, p):
             raise RuntimeError("envoy (%s) not ready (exit %s)" % (os.path.basename(bootstrap), p.poll()))
@@ -1160,7 +1165,7 @@ class RealBackend:
             envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, rung["start_cpus"], workers,
                                             ecfg["admin_port"], env, arm.get("extra_args", []), elog_path,
                                             ready_timeout_s=float(shape.get("ready_timeout_s", 60)),
-                                            nofile=nofile_for(aenv, e))
+                                            nofile=nofile_for(aenv, e), spec_ctrl=arm.get("spec_ctrl"))
             m["envoy_pid"] = envoy.pid
             if rung["main_cpu"] is not None:
                 m["rung_pin"] = pin_rung(envoy.pid, rung["main_cpu"], rung["worker_set"], workers,
@@ -1455,6 +1460,9 @@ class RealBackend:
             m["sut_cpu_busy_pct"] = {str(k): round(v, 1)
                                      for k, v in sysprobe.per_cpu_busy_pct(p0, p1, sut_set | sib_set).items()}
             m["envoy_threads"] = sysprobe.threads_summary(e0, e1, t2 - t0)
+            # per-task speculation control of every Envoy thread, read after the window (evidence for
+            # a spec_ctrl arm: every thread mitigated; the default elsewhere)
+            m["envoy_speculation"] = sysprobe.speculation_status(envoy.pid)
             if mcfg.get("thread_set_check"):
                 m["envoy_thread_set"] = thread_set(e0, e1)
             if mcfg.get("per_thread"):
@@ -1967,7 +1975,8 @@ class RealBackend:
             t_s = time.monotonic()
             envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, e["cpus"]["sut"], ecfg["workers"],
                                             ecfg["admin_port"], dict(arm.get("env") or {}), arm.get("extra_args", []),
-                                            elog_path, ready_timeout_s=ready_t, nofile=nofile_for(aenv, e))
+                                            elog_path, ready_timeout_s=ready_t, nofile=nofile_for(aenv, e),
+                                            spec_ctrl=arm.get("spec_ctrl"))
             pid = envoy.pid
             m["envoy_pid"] = pid
             m["start_s"] = round(time.monotonic() - t_s, 2)

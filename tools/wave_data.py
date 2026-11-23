@@ -1,6 +1,6 @@
-"""The data of the wave studies (waves 1 to 4 and the code-layout work) as release assets: shared
-pieces of build-wave-data.py and fetch-wave-data.py. Two releases: waves-2026-11 (waves 1 to 3, code
-layout) and waves-2026-11b (wave 4, HTTP/3).
+"""The data of the wave studies (waves 1 to 6 and the code-layout work) as release assets: shared
+pieces of build-wave-data.py and fetch-wave-data.py. Three releases: waves-2026-11 (waves 1 to 3, code
+layout), waves-2026-11b (wave 4, HTTP/3) and waves-2026-11c (waves 5 and 6).
 
 The raw records of these studies (about 650 MB unpacked) are not in git. They are published as one
 gzip-compressed tar archive per study on the release of the tag below, in the same form as the
@@ -18,12 +18,15 @@ from stats_data import sha256_file, tree_files, write_archive  # noqa: E402,F401
 
 TAG = "waves-2026-11"           # the first release: waves 1 to 3 and the code-layout work
 TAG_B = "waves-2026-11b"        # the second release: wave 4 (HTTP/3)
+TAG_C = "waves-2026-11c"        # the third release: waves 5 and 6 (mitigations, arm64 code layout)
 RELEASE_URL = "https://github.com/We-Amp/envoy-price-list/releases/download/%s/"
 BASE_URL = RELEASE_URL % TAG
 ASSET = TAG + "-data-%s.tar.gz"
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(REPO, "data", "wave-data.manifest")
+# from the third release on, one manifest file per study (data/wave-data-<tag>-<study>.manifest), so that no
+# file in git grows past 1 MB
 SUMS = os.path.join(REPO, "data", "wave-data.SHA256SUMS")
 DEST = os.path.join(REPO, "data", "waves")
 # files of the repository that go into every archive, at its top level
@@ -34,9 +37,14 @@ TOP_FILES = [("docs/wave-data/README.md", "README.md"),
 # release's files at the top of data/waves/)
 TOP_FILES_OF = {TAG: TOP_FILES,
                 TAG_B: [("docs/wave-data/http3/README.md", "http3/README.md"),
-                        ("docs/wave-data/http3/WHAT-WAS-CHANGED.md", "http3/WHAT-WAS-CHANGED.md")]}
-# every study ran on the one bench box; its records carry this machine label
+                        ("docs/wave-data/http3/WHAT-WAS-CHANGED.md", "http3/WHAT-WAS-CHANGED.md")],
+                # one README and one WHAT-WAS-CHANGED for the release, in each of its studies' directories
+                TAG_C: [("docs/wave-data/waves-2026-11c/README.md", "{study}/README.md"),
+                        ("docs/wave-data/waves-2026-11c/WHAT-WAS-CHANGED.md", "{study}/WHAT-WAS-CHANGED.md")]}
+# the machine label of the bench box that most studies ran on
 HOST_LABEL = "bench-x86_64"
+# the studies that ran elsewhere carry their own machine label
+HOST_LABEL_OF = {"mitigations-cloud": "cloud-vm-x86", "arm-vm-layout": "arm-vm", "arm-metal-layout": "arm-metal"}
 
 # study directory -> (wave, what it prices, the example directory of its configs and scripts)
 STUDIES = {
@@ -49,9 +57,20 @@ STUDIES = {
     "upstream-protocols": ("3", "HTTP/2, gRPC and TLS upstreams, mTLS between hops", "examples/wave3f"),
     "http3": ("4", "HTTP/3 (QUIC) against HTTP/2 over TLS: per request, GSO, per connection, resumption",
               "examples/wave4g"),
+    "mitigations": ("5", "the kernel's CPU-vulnerability mitigations across boots, prctl arms, TCP_DEFER_ACCEPT and idle states",
+                    "examples/wave5h"),
+    "arm-vm-layout": ("5", "code layout on arm64 in a cloud VM: ordering file, PGO + ThinLTO, -mcpu", "examples/wave5i"),
+    "arm-metal-layout": ("6", "code layout on arm64 bare metal: SPE AutoFDO and BOLT, file control", "examples/wave6j"),
+    "mitigations-cloud": ("6", "the mitigation price on a current x86 CPU in a cloud VM", "examples/wave6k"),
 }
 # the release each study's archive belongs to (default: the first one)
-TAG_OF = {"http3": TAG_B}
+TAG_OF = {"http3": TAG_B, "mitigations": TAG_C, "arm-vm-layout": TAG_C, "arm-metal-layout": TAG_C,
+          "mitigations-cloud": TAG_C}
+
+
+def top_files(study):
+    """[(repository path, path inside the study's archive)] of the files every archive of its release carries."""
+    return [(src, dst.format(study=study)) for src, dst in TOP_FILES_OF[tag_of(study)]]
 
 
 def tag_of(study):
@@ -71,8 +90,23 @@ def base_url(study):
 BINARY_OK = ("/origin/www/_authz/", "/origin/www/_grpc/")
 
 
-def read_manifest(path=MANIFEST):
-    return _read_manifest(path)
+def manifest_of(study):
+    """The manifest file that lists a study's archive."""
+    tag = tag_of(study)
+    if tag in (TAG, TAG_B):
+        return MANIFEST
+    return os.path.join(REPO, "data", "wave-data-%s-%s.manifest" % (tag, study))
+
+
+def manifests():
+    return sorted({manifest_of(s) for s in STUDIES})
+
+
+def read_manifest(path=None):
+    """[(sha256, size, study, path)] of one manifest file, or of every release's when path is None."""
+    if path is not None:
+        return _read_manifest(path)
+    return [m for p in manifests() for m in _read_manifest(p)]
 
 
 def read_sums(path=SUMS):

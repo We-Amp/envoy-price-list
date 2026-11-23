@@ -1,0 +1,114 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "base",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "min": 1,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_2xx"
+    }
+   ],
+   "name": "base-A2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "base",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "open_loop": true,
+  "warmup_s": 5
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "4-11,20-27",
+  "harness": "31",
+  "origin": "12-15,28-30",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "codec_type": "HTTP1",
+  "exact_balance": true,
+  "listener_port": 10110,
+  "log_level": "warn",
+  "workers": 4
+ },
+ "evidence_mode": "record",
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "a current Intel server CPU in a cloud VM (16 cores x 2 SMT, KVM guest), default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "kernel_net": true,
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/7.0.0-1017-cloud/perf",
+  "window_s": 20
+ },
+ "name": "smoke-h-pl",
+ "order": "fixed",
+ "order_seed": 611,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "platform": "linux/amd64",
+  "port": 8092,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  },
+  {
+   "body_bytes": 128,
+   "kind": "direct_headers",
+   "name": "fh",
+   "path": "/fh",
+   "request_headers_added": 57,
+   "response_headers_added": 52,
+   "rps": 8000
+  }
+ ],
+ "smoke": true,
+ "validity": {
+  "max_steal_share": 0.02
+ },
+ "warmup_legs": 1,
+ "workdir": "~/epl/runs/wave6k"
+}

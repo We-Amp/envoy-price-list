@@ -606,6 +606,9 @@ def machine_metadata(cpusets, record_hostname=False):
         "python": platform.python_version(),
         "mem_total_kb": None,
     }
+    # boot id, CPU-vulnerability mitigation state, mitigation arguments and microcode: runs on
+    # different boots (a kernel command line arm) say which boot and which state they ran in
+    md.update(boot_state())
     m = re.search(r"MemTotal:\s+(\d+)", _read("/proc/meminfo", "") or "")
     if m:
         md["mem_total_kb"] = int(m.group(1))
@@ -694,6 +697,102 @@ def scrub_tree(root):
                     f.write(new)
                 changed.append(os.path.relpath(p, root))
     return changed
+
+
+# Per-task speculation control (Linux prctl PR_SET_SPECULATION_CTRL): the request value of each
+# feature an arm may set (`spec_ctrl`), and the /proc/<pid>/status line that shows the result.
+PR_SET_SPECULATION_CTRL = 53
+PR_SPEC_DISABLE = 4  # "disable the speculation feature", i.e. turn the mitigation ON for this task
+SPEC_FEATURES = {"store_bypass": (0, "Speculation_Store_Bypass"),
+                 "indirect_branch": (1, "SpeculationIndirectBranch")}
+SPEC_VALUES = {"disable": PR_SPEC_DISABLE}
+
+
+def spec_ctrl_calls(spec):
+    """[(PR_SET_SPECULATION_CTRL, feature, value)] for an arm's spec_ctrl {feature: "disable"}, in a
+    fixed order. Raises ValueError on an unknown feature or value (config errors fail early)."""
+    out = []
+    for k in sorted(spec or {}):
+        if k not in SPEC_FEATURES:
+            raise ValueError("spec_ctrl: unknown feature %r (known: %s)" % (k, sorted(SPEC_FEATURES)))
+        if spec[k] not in SPEC_VALUES:
+            raise ValueError("spec_ctrl.%s: value must be one of %s" % (k, sorted(SPEC_VALUES)))
+        out.append((PR_SET_SPECULATION_CTRL, SPEC_FEATURES[k][0], SPEC_VALUES[spec[k]]))
+    return out
+
+
+def spec_ctrl_preexec(spec, then=None):
+    """A preexec_fn that applies spec_ctrl in the child before exec (the setting is inherited by
+    threads and kept across execve), then runs `then`. A refused prctl raises, so the child never
+    starts with a setting other than the one asked for."""
+    calls = spec_ctrl_calls(spec)
+
+    def f():
+        if calls:
+            import ctypes
+            libc = ctypes.CDLL(None, use_errno=True)
+            for opt, feat, val in calls:
+                if libc.prctl(opt, feat, val, 0, 0) != 0:
+                    raise OSError(ctypes.get_errno(), "prctl(PR_SET_SPECULATION_CTRL, %d, %d) refused" % (feat, val))
+        if then:
+            then()
+    return f
+
+
+def parse_speculation_status(text):
+    """{feature: value} from the Speculation lines of a /proc status file."""
+    out = {}
+    for ln in (text or "").splitlines():
+        for k, (_, label) in SPEC_FEATURES.items():
+            if ln.startswith(label + ":"):
+                out[k] = ln.split(":", 1)[1].strip()
+    return out
+
+
+def speculation_status(pid, root="/proc"):
+    """Speculation control state of every thread of pid: {feature: value} when all threads agree,
+    "mixed: a | b" when they do not, "unreadable" when no thread could be read."""
+    vals = {}
+    tdir = os.path.join(root, str(pid), "task")
+    try:
+        tids = sorted(os.listdir(tdir))
+    except OSError:
+        tids = []
+    for t in tids:
+        st = parse_speculation_status(_read(os.path.join(tdir, t, "status"), ""))
+        for k, v in st.items():
+            vals.setdefault(k, set()).add(v)
+    out = {}
+    for k in SPEC_FEATURES:
+        v = vals.get(k)
+        out[k] = "unreadable" if not v else (next(iter(v)) if len(v) == 1 else "mixed: " + " | ".join(sorted(v)))
+    out["threads"] = len(tids)
+    return out
+
+
+MITIGATION_ARG = re.compile(r"^(mitigations|nopti|pti|nospectre_v[12]|spectre_v2(_user)?|spec_store_bypass_disable|"
+                            r"nospec_store_bypass_disable|mds|tsx_async_abort|mmio_stale_data|retbleed|l1tf|"
+                            r"srbds|gather_data_sampling|reg_file_data_sampling|spectre_bhi|vmscape|tsx|"
+                            r"indirect_target_selection|spec_rstack_overflow|nosmt|ibrs|ibpb)(=|$)")
+
+
+def boot_state(root="/"):
+    """What a reboot can change and a run must name: the boot id, the kernel's mitigation state
+    (/sys/devices/system/cpu/vulnerabilities), the mitigation arguments of the kernel command line,
+    and the microcode revision."""
+    vd = os.path.join(root, "sys/devices/system/cpu/vulnerabilities")
+    vul = {}
+    try:
+        for n in sorted(os.listdir(vd)):
+            vul[n] = _read(os.path.join(vd, n))
+    except OSError:
+        pass
+    cmd = _read(os.path.join(root, "proc/cmdline"), "") or ""
+    mc = re.search(r"^microcode\s*:\s*(\S+)", _read(os.path.join(root, "proc/cpuinfo"), "") or "", re.M)
+    return {"boot_id": _read(os.path.join(root, "proc/sys/kernel/random/boot_id")),
+            "cpu_vulnerabilities": vul,
+            "kernel_cmdline_mitigation_args": [t for t in cmd.split() if MITIGATION_ARG.match(t)],
+            "microcode": mc.group(1) if mc else None}
 
 
 def cpuidle_counts(cpus):

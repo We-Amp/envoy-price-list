@@ -62,7 +62,7 @@ def check_tree(tree, study, names=(), replace=()):
     root = os.path.join(tree, study)
     if not os.path.isdir(root):
         return ["%s: missing" % root]
-    rep = pubscrub.scrub_publish_tree(root, host_label=wd.HOST_LABEL, names=names, replace=replace, check=True)
+    rep = pubscrub.scrub_publish_tree(root, host_label=wd.HOST_LABEL_OF.get(study, wd.HOST_LABEL), names=names, replace=replace, check=True)
     probs = ["%s/%s would change: %s" % (study, p, c) for p, c in sorted(rep["changed"].items())]
     probs += ["%s/%s is not text" % (study, p) for p in rep["binary"]
               if not any(b in "/" + p.replace(os.sep, "/") for b in wd.BINARY_OK)]
@@ -100,7 +100,7 @@ def main():
         probs = check_tree(a.tree, study, names, replace)
         if probs:
             sys.exit("not publishable, nothing written for %s:\n  %s" % (study, "\n  ".join(probs[:20])))
-        tops = wd.TOP_FILES_OF[wd.tag_of(study)]
+        tops = wd.top_files(study)
         members = [(dst, os.path.join(wd.REPO, src)) for src, dst in tops]
         root = os.path.join(a.tree, study)
         clash = sorted({dst for _, dst in tops} & {study + "/" + rel for rel in wd.tree_files(root)})
@@ -124,11 +124,13 @@ def main():
     with open(wd.SUMS, "w") as f:
         f.write("# sha256 of the release assets of tags %s (tools/build-wave-data.py)\n" % ", ".join(sorted(wd.TOP_FILES_OF)))
         f.write("".join("%s  %s\n" % s for s in sums))
-    with open(wd.MANIFEST, "w") as f:
-        f.write("# every file of the release assets of tags %s: sha256, size in bytes, study (the asset\n"
-                "# <tag>-data-<study>.tar.gz), path inside the asset. Written by tools/build-wave-data.py.\n" % (
-                    ", ".join(sorted(wd.TOP_FILES_OF))))
-        f.write("".join("%s  %d  %s  %s\n" % m for m in manifest))
+    for path in wd.manifests():
+        tags = sorted({wd.tag_of(st) for st in wd.STUDIES if wd.manifest_of(st) == path})
+        with open(path, "w") as f:
+            f.write("# every file of the release assets of tags %s: sha256, size in bytes, study (the asset\n"
+                    "# <tag>-data-<study>.tar.gz), path inside the asset. Written by tools/build-wave-data.py.\n" % (
+                        ", ".join(tags)))
+            f.write("".join("%s  %d  %s  %s\n" % m for m in manifest if wd.manifest_of(m[2]) == path))
     if os.path.isdir(TABLES_DIR):
         shutil.rmtree(TABLES_DIR)
     for arc, src in tables:
@@ -147,8 +149,9 @@ def main():
                 name, wd.tag_of(study), wd.STUDIES[study][0], os.path.getsize(os.path.join(a.out, name)) / 1e6,
                 len(mine), sum(m[1] for m in mine) / 1e6, h))
         f.write("\nTogether: %.0f MB to download, %.0f MB unpacked, %d files (`README.md` and `WHAT-WAS-CHANGED.md`\n"
-                "are in every archive: at the top in those of `waves-2026-11`, under `http3/` in that of `waves-2026-11b`). The same checksums are in `data/wave-data.SHA256SUMS`;\n"
-                "every file of every archive is in `data/wave-data.manifest` with its size and sha256.\n" % (
+                "are in every archive: at the top in those of `waves-2026-11`, in the study's directory in the later ones). The same checksums are in `data/wave-data.SHA256SUMS`;\n"
+                "every file of every archive is in a manifest in `data/` (`wave-data.manifest`, and one per study of the later releases)\n"
+                "with its size and sha256.\n" % (
                     sum(os.path.getsize(os.path.join(a.out, n)) for _, n in sums) / 1e6, sum(m[1] for m in manifest) / 1e6,
                     len(manifest)))
     print("manifest: %d files, %.1f MB; tables kept in git: %d files, %.2f MB" % (

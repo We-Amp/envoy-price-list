@@ -16,7 +16,7 @@ HTTP/3); each study's archive is fetched from its own release:
 --tag TAG takes only the studies of that release. --from names another base URL for every
 archive, or a directory that already holds the archives. Each archive is
 checked against data/wave-data.SHA256SUMS before anything is unpacked, and every unpacked file
-against data/wave-data.manifest (sha256 and size). --verify checks an unpacked tree again, for
+against the manifests in data/ (sha256 and size). --verify checks an unpacked tree again, for
 example after rendering the tables from it. --keep DIR keeps the downloaded archives.
 
 An archive that the release does not have (HTTP 404, or no such file in the directory) is not an
@@ -52,7 +52,7 @@ def main():
     ap.add_argument("--keep")
     ap.add_argument("--verify", action="store_true")
     ap.add_argument("--list", action="store_true")
-    ap.add_argument("--manifest", default=wd.MANIFEST, help=argparse.SUPPRESS)
+    ap.add_argument("--manifest", help=argparse.SUPPRESS)
     ap.add_argument("--sums", default=wd.SUMS, help=argparse.SUPPRESS)
     a = ap.parse_args()
     manifest, sums = wd.read_manifest(a.manifest), wd.read_sums(a.sums)

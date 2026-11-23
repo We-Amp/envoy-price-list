@@ -109,6 +109,8 @@ class SimBackend:
         elif fault == "non2xx":
             m["client_non2xx"] = {"benchmark.http_5xx": 2}
             m["sut_non2xx"] = 2
+        # a dry run has no steal time to read; report none, so a steal gate (cloud VMs) passes as on an idle host
+        m.setdefault("steal_share", 0.0)
         if arm.get("evidence") is not None:
             # no counters in a dry run: evidence is recorded as not evaluated, never gated,
             # unless the fault "evidence" asks for a failing item

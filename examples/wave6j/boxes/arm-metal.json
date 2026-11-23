@@ -1,0 +1,12 @@
+{
+ "name": "arm-metal",
+ "arch": "aarch64",
+ "label": "arm-metal",
+ "machine_label": "a current Arm server core, bare metal, 96 cores (one socket, one NUMA node, no SMT); Envoy 4 workers on 4 cores, client and origin on the next 12, the rest idle",
+ "cpus": {"sut": "0-3", "client": "4-11", "origin": "12-15"},
+ "perf": "/usr/bin/perf",
+ "client_binary": "~/w6j/bins/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7",
+ "image_platform": "linux/arm64",
+ "note": "The track J host reports Neoverse N3 (CPU part 0xd8e). perf_event_paranoid -1 at runtime. Harness unpinned."
+}

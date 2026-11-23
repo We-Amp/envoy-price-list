@@ -1,0 +1,12 @@
+{
+ "name": "arm-vm-w5i",
+ "arch": "aarch64",
+ "label": "arm-vm",
+ "machine_label": "a current Arm server core in a cloud VM, 16 vCPU (16 cores, no SMT), spot, PMU on; Envoy 4 workers on 4 cores, client and origin on the other 12",
+ "cpus": {"sut": "0-3", "client": "4-11", "origin": "12-15"},
+ "perf": "/usr/bin/perf",
+ "client_binary": "~/nighthawk/bazel-bin/nighthawk_client",
+ "origin_image": "nginx:alpine@sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7",
+ "image_platform": "linux/arm64",
+ "note": "perf_event_paranoid set to -1 at runtime on the VM (own VM, resets at boot), so perf runs without sudo. Harness unpinned (no core left)."
+}

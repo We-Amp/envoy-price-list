@@ -1,0 +1,28 @@
+{
+ "official": {
+  "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+  "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-aarch_64",
+  "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf"
+ },
+ "opt": {
+  "binary": "~/epl/bin/envoy-1.40.2-aarch64",
+  "source": "own build of tag v1.40.2 (b2d89e0ae5), release options; byte-identical to the official arm64 release asset (checked on the VM 2026-11-22), so the official file is used",
+  "source_sha256": "b9d6d1e06dd5838a3506de9f4deebad3de9a2ce6cadb87cd76222ca286213baf",
+  "identical_to_official": true
+ },
+ "order": {
+  "binary": "~/w5i/bins/envoy-order",
+  "source": "opt objects relinked with an lld call-graph ordering file (cdsort) from frame-pointer call chains of opt",
+  "source_sha256": "b623d72ed8ae89c9fca7f018c07768b381c46650ea1800f86f36fd3ca95c10b6"
+ },
+ "pgolto": {
+  "binary": "~/w5i/bins/envoy-pgolto",
+  "source": "v1.40.2 + instrumented PGO (pgo-recipe-v1 nine-leg trainer, on this VM) + ThinLTO",
+  "source_sha256": "916d83419433552ef07fc5024af4d4ae65aa9578e681d06b19462a853010e8ea"
+ },
+ "pgolto-v2": {
+  "binary": "~/w5i/bins/envoy-pgolto-v2",
+  "source": "pgolto + -mcpu=neoverse-v2 (same profile)",
+  "source_sha256": "ac77cdc728d196742a084db36d9ba7e700b8e16f9f140a3d08702760ae5caaa0"
+ }
+}
