@@ -568,6 +568,17 @@ def validate(exp, allow_short=False, check_rounds=True):
             errs.append("arms must agree on TLS on or off (the client URL is per experiment)")
         if not isinstance(a.get("env", {}), dict):
             errs.append("arm %s: env must be an object" % a.get("name"))
+        if "spec_ctrl" in a:
+            sc = a["spec_ctrl"]
+            if not isinstance(sc, dict) or not sc:
+                errs.append("arm %s: spec_ctrl must be a non-empty object {feature: \"disable\"}" % a.get("name"))
+            else:
+                try:
+                    sysprobe.spec_ctrl_calls(sc)
+                except ValueError as ex:
+                    errs.append("arm %s: %s" % (a.get("name"), ex))
+            if arm_settings(a).get("two_hop"):
+                errs.append("arm %s: spec_ctrl applies to the first hop only; not with two_hop" % a.get("name"))
         if not isinstance(a.get("hop2_env", {}), dict):
             errs.append("arm %s: hop2_env must be an object" % a.get("name"))
         if "hop2_env" in a and not arm_settings(a).get("two_hop"):
@@ -943,7 +954,7 @@ def collect_metadata(exp, bootstrap_text, texts=None):
         md["arms"][a["name"]] = dict(h, path=a["binary"], version=vm.group(1) if vm else ver[-200:],
                                      source=a.get("source"), source_sha256=a.get("source_sha256"),
                                      extra_args=a.get("extra_args", []), settings=arm_settings(a),
-                                     env=a.get("env", {}))
+                                     env=a.get("env", {}), spec_ctrl=a.get("spec_ctrl"))
     nh = exp["client"]["binary"]
     vtxt = _cmd_out([nh, "--version"])
     vline = ([x for x in vtxt.splitlines() if x.strip()] or [""])[-1]
