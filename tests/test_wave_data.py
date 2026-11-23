@@ -112,7 +112,7 @@ class FetchTest(Base):
 
 class BuildTest(Base):
     def test_a_clean_tree_builds_and_nothing_in_the_repository_changes(self):
-        before = {p: wd.sha256_file(p) for p in (wd.MANIFEST, wd.SUMS)}
+        before = {p: wd.sha256_file(p) for p in wd.manifests() + [wd.SUMS]}
         r = self.build()
         self.assertEqual(r.returncode, 0, r.stderr)
         out = os.path.join(self.d, "out")
@@ -121,7 +121,7 @@ class BuildTest(Base):
             names = tar.getnames()
         self.assertEqual(names[:2], ["README.md", "WHAT-WAS-CHANGED.md"])
         self.assertIn("connection-churn/e-plain/legs.jsonl", names)
-        self.assertEqual({p: wd.sha256_file(p) for p in (wd.MANIFEST, wd.SUMS)}, before)
+        self.assertEqual({p: wd.sha256_file(p) for p in wd.manifests() + [wd.SUMS]}, before)
 
     def test_a_home_path_is_refused(self):
         write(os.path.join(self.tree, self.STUDY, "queue.log"), "cd /home/bob/epl\n")
@@ -197,7 +197,7 @@ class RepositoryListsTest(unittest.TestCase):
 
     def test_paths_are_inside_their_study_or_the_two_top_files(self):
         for _, _, study, rel in self.manifest:
-            top = {dst for _, dst in wd.TOP_FILES_OF[wd.tag_of(study)]}
+            top = {dst for _, dst in wd.top_files(study)}
             self.assertTrue(rel in top or rel.startswith(study + "/"), rel)
             self.assertNotIn("..", rel.split("/"))
 
@@ -208,10 +208,10 @@ class RepositoryListsTest(unittest.TestCase):
             self.assertFalse(parts[-1].endswith((".key", ".pem", ".crt", ".p12", ".data")), rel)
 
     def test_top_files_are_the_ones_in_the_repository(self):
-        for tag, tops in wd.TOP_FILES_OF.items():
-            for src, dst in tops:
+        for study in wd.STUDIES:
+            for src, dst in wd.top_files(study):
                 want = wd.sha256_file(os.path.join(HERE, src))
-                got = {m[0] for m in self.manifest if m[3] == dst and wd.tag_of(m[2]) == tag}
+                got = {m[0] for m in self.manifest if m[3] == dst and m[2] == study}
                 self.assertEqual(got, {want}, "%s changed after the archives were built: build them again" % src)
 
     def test_the_first_release_is_unchanged_by_the_second(self):
@@ -229,6 +229,16 @@ class RepositoryListsTest(unittest.TestCase):
         self.assertEqual(wd.base_url("http3"), "https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11b/")
         self.assertEqual(wd.asset("topdown"), "waves-2026-11-data-topdown.tar.gz")
         self.assertEqual(set(wd.TAG_OF.values()) | {wd.TAG}, set(wd.TOP_FILES_OF))
+        self.assertEqual(wd.asset("arm-metal-layout"), "waves-2026-11c-data-arm-metal-layout.tar.gz")
+        self.assertEqual(wd.top_files("mitigations")[0][1], "mitigations/README.md")
+
+    def test_no_manifest_file_over_1_mb(self):
+        for p in wd.manifests():
+            self.assertLess(os.path.getsize(p), 1000000, p)
+
+    def test_the_second_release_is_unchanged_by_the_third(self):
+        self.assertEqual(self.sums.get("waves-2026-11b-data-http3.tar.gz"),
+                         "f422feb18ecf5265588d2a9c0703d9925e0e3e2a489841457bec6fe9f28590d2")
 
     def test_tables_in_git_are_the_ones_in_the_archives(self):
         by = {m[3]: m[0] for m in self.manifest}

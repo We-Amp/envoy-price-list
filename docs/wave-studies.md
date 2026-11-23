@@ -1,6 +1,6 @@
 # The wave studies: how to run them again
 
-Waves 1 to 4 of the price list, and the code-layout work of wave 2: what each study needs to be
+Waves 1 to 6 of the price list, and the code-layout work of waves 2, 5 and 6: what each study needs to be
 reproduced, where its configs and scripts are, and the commands that render every table from our
 data. The studies:
 
@@ -13,21 +13,25 @@ data. The studies:
 | Connection churn | 3 | one new connection, plaintext and TLS 1.3; listener accept settings under churn | [`examples/wave3e`](../examples/wave3e) | `connection-churn` |
 | Upstream protocols | 3 | HTTP/2 (nghttp2, oghttp2) and TLS upstreams; unary gRPC and grpc_stats; mTLS between two hops | [`examples/wave3f`](../examples/wave3f) | `upstream-protocols` |
 | HTTP/3 | 4 | HTTP/3 (QUIC) against HTTP/2 over TLS per request; the GSO writer; one new QUIC connection and the session-ticket default | [`examples/wave4g`](../examples/wave4g) | `http3` (second release) |
+| Mitigations | 5 | the kernel's CPU-vulnerability mitigations across three boots; the prctl speculation arms; TCP_DEFER_ACCEPT against idle states | [`examples/wave5h`](../examples/wave5h) | `mitigations` (third release) |
+| Arm code layout, cloud VM | 5 | ordering file and PGO + ThinLTO (and `-mcpu`) on arm64, Neoverse V2 class VM | [`examples/wave5i`](../examples/wave5i), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-vm-layout` (third release) |
+| Arm code layout, bare metal | 6 | the same plus AutoFDO and BOLT from SPE profiles, with a file control, Neoverse N3 | [`examples/wave6j`](../examples/wave6j), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-metal-layout` (third release) |
+| Mitigations, cloud VM | 6 | the mitigation price on a current x86 CPU in a cloud VM, four boots | [`examples/wave6k`](../examples/wave6k) | `mitigations-cloud` (third release) |
 
 Each example directory has a README with the conditions of its runs (box, CPUs, binaries, shapes,
 rates, rounds, order). This page has what is common and the commands.
 
 Envoy patch sources: the `v2` statsd batching build of the statsd-batching study is tag
 `statsd-batch-2026-11/v2` of https://github.com/We-Amp/envoy (branch `statsd-batch/v2`, commits
-`77fdeb8484` and `ee71e0583f`). The sources of the first batching build (`7979fa6063`, superseded by v2)
-and of the header-validation ceiling build (`af3172d385`, measurement only, result dropped) are not
-published. The code-layout arms are builds of tag v1.40.2 (`tools/code-layout`).
+`77fdeb8484` and `ee71e0583f`). The first batching build (`7979fa6063`, superseded by v2) is tag
+`statsd-batch-2026-11/v1` (branch `candidates/statsd-batch-v1`) of the same repository. The source of the
+header-validation ceiling build (`af3172d385`, measurement only, result dropped) is not published. The code-layout arms are builds of tag v1.40.2 (`tools/code-layout`).
 
 ## Get the data first
 
-The raw records (about 650 MB unpacked) are not in git. They are assets of two releases, one archive
-per study: tag `waves-2026-11` (waves 1 to 3 and the code-layout work) and tag `waves-2026-11b`
-(wave 4, HTTP/3):
+The raw records (about 1.2 GB unpacked) are not in git. They are assets of three releases, one archive
+per study: tag `waves-2026-11` (waves 1 to 3 and the code-layout work), tag `waves-2026-11b` (wave 4,
+HTTP/3) and tag `waves-2026-11c` (waves 5 and 6):
 
 ```
 python3 tools/fetch-wave-data.py                      # every study
@@ -183,6 +187,54 @@ connections per request, UDP datagrams out per request (box-wide, a reading), th
 and the busiest worker's share range. `g1-proto`: HTTP/3 against HTTP/2 over TLS and the GSO writer, per
 request. `g2s-resume` (labelled `g2-resume`): per QUIC connection, (`h3r` - `h3-ka`) x 10, with the v1.40.2
 session-ticket default and with the guard on. The data's own `README.md` is `$D/http3/README.md`.
+
+### Mitigations (`mitigations`)
+
+```
+M=$D/mitigations
+( cd $M && python3 ../../../examples/wave5h/table.py cross A B C --json cross.json > cross.md &&
+  python3 ../../../examples/wave5h/table.py defer H0 --json H0-defer.json > H0-defer.md )
+python3 examples/wave5h/table.py block $M/A        # and B, C: the same-boot rows of one block (printed)
+```
+
+`cross`: per run and shape the level of each boot (mean over rounds of the per-round mean of 100 ln(cycles
+per request) over the A/A pair), P = (A + C)/2 - B, the price of the boot-time mitigations ("on minus off"),
+A - C as the boot-to-boot floor, user instructions per request across the boots, and the verdicts by the
+rules fixed before the runs. `defer`: the median-latency effect of `TCP_DEFER_ACCEPT` against `c1` with
+default idle states and with C1 only on Envoy's CPUs, their difference and the verdict. `block`: the A/A of
+every run and shape, `c1 - ka` per connection and, in C, `ssbd` and `ibp` against `base`. The boot records are
+`bootstate-*.json` (written by `examples/wave5h/bootstate.py record`).
+
+### Mitigations, cloud VM (`mitigations-cloud`)
+
+```
+K=$D/mitigations-cloud
+( cd $K && python3 ../../../examples/wave5h/table.py cross A B C --json cross-plain-ABC.json > cross-plain-ABC.md &&
+  python3 ../../../examples/wave5h/table.py cross A B C --pl-off D --json cross.json > cross-D-for-B-hpl.md )
+```
+
+The same tables as `mitigations`: `cross-plain-ABC` as the blocks were planned (B's `h-pl` A/A failed),
+and with block D's `h-pl` in place of B's. On this VM the clock moved between blocks (cycles over task-clock
+per leg, in `legs.jsonl`); read the levels with it.
+
+### Arm code layout, cloud VM (`arm-vm-layout`)
+
+```
+python3 examples/wave5i/analysis/analyse_w5i.py $D/arm-vm-layout/epl/runs/wave5i/w5i $D/arm-vm-layout/analysis-w5i.md
+```
+
+Per shape: cycles (user + kernel) per response against `official` (the A/A, `order`, `pgolto`, `pgolto-v2`),
+with the t and widened intervals as percent changes, and the decision rules fixed before the run.
+
+### Arm code layout, bare metal (`arm-metal-layout`)
+
+```
+python3 examples/wave6j/analysis/analyse_w6j.py $D/arm-metal-layout/epl/runs/wave6j/w6j $D/arm-metal-layout/analysis-w6j.md
+```
+
+Per shape: the file control (`opt-file` against `official`), the layout row, `order`, `autofdo`, `pgolto`,
+`bolt`, the AutoFDO share of the PGO gain, and the decision rules fixed before the run. The arms' builds:
+[`tools/code-layout/arm/README.md`](../tools/code-layout/arm/README.md).
 
 ### Per-run summaries
 
