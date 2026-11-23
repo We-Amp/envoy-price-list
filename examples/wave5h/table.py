@@ -334,12 +334,21 @@ def md_cross(x):
     print("- the mitigations as a price-list row: %s" % x["kill"])
 
 
+def fmt_pct(row, unit=""):
+    """fmt() plus the effect and its interval as a percent change."""
+    h = hw(row)
+    return "%s = %+.1f%% [%+.1f, %+.1f]" % (fmt(row, unit), pct(row["effect"]), pct(row["effect"] - h),
+                                           pct(row["effect"] + h))
+
+
 def md_defer(d):
     print("## TCP_DEFER_ACCEPT against the idle states\n")
+    print("Effects in log points (100 ln ratio) [95%] (n, rounds up; paired raw difference); the latency rows also"
+          " as a percent change.\n")
     for run, r in d["runs"].items():
         print("- %s: A/A cycles %s (%s); A/A p50 %s; defer p50 %s; defer p99 %s; defer cycles %s; c1 p50 %.0f us, "
               "c1 cycles %.0fk" % (run, fmt(r["aa_cycles"]), "pass" if r["aa_pass"] else "FAIL", fmt(r["aa_p50"], " us"),
-                                   fmt(r["defer_p50"], " us"), fmt(r["defer_p99"], " us"), fmt(r["defer_cycles"]),
+                                   fmt_pct(r["defer_p50"], " us"), fmt_pct(r["defer_p99"], " us"), fmt(r["defer_cycles"]),
                                    r["c1_p50_us"], r["c1_cycles"] / 1e3))
     print("\nVerdict: %s" % d["verdict"])
 
