@@ -2014,7 +2014,7 @@ eff90799883f1d6a6a0e3a8aefe48421faa6cf0d36b7abc33b80d7aa1daf3578  3410  mitigati
 36d6411716524991d899e2ef29d9ba3922fab76afbe6a83de63c75d552bdbd3c  143  mitigations  mitigations/H0/smoke/smoke-h-defer-deep/status.json
 f43e7ef9eedd73d108afbb1ca30d0339b4cde32040871a8528a546a763024171  4553  mitigations  mitigations/H0/smoke/smoke-h-defer-deep/summary.md
 da86957f07fb28820d491d4ea74c4d2ba4693af86bdf4cdba3b173c49791f92f  3105  mitigations  mitigations/README.md
-356177e40d37163a4e65c50b0f67ac9ff037dfc3a4f5f59d5a4b555968b75a04  3085  mitigations  mitigations/WHAT-WAS-CHANGED.md
+071583a5917d18a5a621dad4b5ab0667b707e6166687f1bfb50bc3cea19d10b6  3352  mitigations  mitigations/WHAT-WAS-CHANGED.md
 edce2a067a62c51c3208f0b9cbb5fbaf9c92ef9aa15ffdadb684369adc303db1  3285  mitigations  mitigations/bootstate-A.json
 bd6c529d493b69435e9d68e16617db7818d390cdc2046118dd1d052e7d8993ae  3105  mitigations  mitigations/bootstate-B.json
 cd4cc020ded17d5029d2fdf995d3aef05235abfb289250e0d8ffe793d26cf6fc  3285  mitigations  mitigations/bootstate-C.json

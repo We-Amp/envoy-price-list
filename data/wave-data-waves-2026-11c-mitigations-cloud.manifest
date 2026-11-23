@@ -1863,7 +1863,7 @@ d2758e5485e600f0a144b363e1cd0da831cc9cf1d920279838f2105291855129  3481  mitigati
 0a41410b4fb034e19edca1fd80d1244ec7c2695165953b17c801579497b84503  141  mitigations-cloud  mitigations-cloud/D/smoke/smoke-h-pl/status.json
 49ec6d41e12e65de3f04f9a7a3158987e15501b3a1551279f74070e5a4659e8a  5333  mitigations-cloud  mitigations-cloud/D/smoke/smoke-h-pl/summary.md
 da86957f07fb28820d491d4ea74c4d2ba4693af86bdf4cdba3b173c49791f92f  3105  mitigations-cloud  mitigations-cloud/README.md
-356177e40d37163a4e65c50b0f67ac9ff037dfc3a4f5f59d5a4b555968b75a04  3085  mitigations-cloud  mitigations-cloud/WHAT-WAS-CHANGED.md
+071583a5917d18a5a621dad4b5ab0667b707e6166687f1bfb50bc3cea19d10b6  3352  mitigations-cloud  mitigations-cloud/WHAT-WAS-CHANGED.md
 cdcfa65cc65b97302a4cfe66746fe57aaa8c9370142dcf7d778009508bd8e34f  853  mitigations-cloud  mitigations-cloud/boot-A.txt
 dd120ef58d8c6b435dac926ff03c34a9e4a322463f6fdb1714f10b7c57624e4c  973  mitigations-cloud  mitigations-cloud/boot-B.txt
 d8aa7fe33d572130ddd8a57ee2c17eb3b301f857f3a1116fb45724a92107f2c8  838  mitigations-cloud  mitigations-cloud/boot-C.txt
@@ -1878,4 +1878,4 @@ a26600f32b531952b802ec09cb5e101ceb18f7d72e3622892cb23736c7213b24  16496  mitigat
 7544d2e21c967c2c6d209dab46783a8b73a95cca7a710274de07b6b619b51203  2884  mitigations-cloud  mitigations-cloud/cross-plain-ABC.md
 be67ddd363313c4b410ca08480170c94e3876c18ef006b414f498af3b84134ab  16418  mitigations-cloud  mitigations-cloud/cross.json
 6964c1f38182c0fdccdae6edeee19de17ab2e425a44358679d7fa1d7f087244c  3250  mitigations-cloud  mitigations-cloud/grub-install.txt
-6948e7238811b26dbd37a3584456bbd40406a7860d75f8142575c6523850b839  442  mitigations-cloud  mitigations-cloud/host-gate.txt
+f61301e97cd01976f1db347218d9a6fb53dcff5078cbee94b0c6c3a1c413594f  417  mitigations-cloud  mitigations-cloud/host-gate.txt

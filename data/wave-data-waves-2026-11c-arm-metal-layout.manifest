@@ -2,7 +2,7 @@
 # <tag>-data-<study>.tar.gz), path inside the asset. Written by tools/build-wave-data.py.
 f860e74bb396bca72a9b8fa23e51de48eb5dc1529e19ebcc5ae2ecea9a652612  314  arm-metal-layout  arm-metal-layout/J-bins.SHA256SUMS
 da86957f07fb28820d491d4ea74c4d2ba4693af86bdf4cdba3b173c49791f92f  3105  arm-metal-layout  arm-metal-layout/README.md
-356177e40d37163a4e65c50b0f67ac9ff037dfc3a4f5f59d5a4b555968b75a04  3085  arm-metal-layout  arm-metal-layout/WHAT-WAS-CHANGED.md
+071583a5917d18a5a621dad4b5ab0667b707e6166687f1bfb50bc3cea19d10b6  3352  arm-metal-layout  arm-metal-layout/WHAT-WAS-CHANGED.md
 ec97d7d40ba61d11b4910cc1885eaa77b78d22a4bbf97cff310b212f1295543e  5461  arm-metal-layout  arm-metal-layout/analysis-w6j.md
 db09cc1c031263dec858fad44fe57f40acc7eb8f945397f981ab7128c29b704b  477  arm-metal-layout  arm-metal-layout/epl/runs/wave6j/chain-prof.log
 9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  2  arm-metal-layout  arm-metal-layout/epl/runs/wave6j/chain-prof.rc

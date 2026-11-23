@@ -23,12 +23,15 @@ listed here. No measured value was changed: every change is inside a text string
 
 ## What was changed
 
-134 of the published files differ from the files the runs wrote.
+135 of the published files differ from the files the runs wrote.
 
 - **Home directory prefixes** are written `~` (569 places in 58 files).
 - **The kernel release of the two cloud VMs** is written `7.0.0-1017-cloud`; the image's flavour suffix is
   replaced (139 places in 84 files: kernel and platform strings, the perf path, the boot image name), as in the
   stats study's data.
+- **The cloud VM's instance id** in `mitigations-cloud/host-gate.txt` (the check, before every block, that the
+  VM was the same instance and had not been restarted or moved) is written `<instance id>` (5 places in 1 file);
+  the start times beside it are unchanged.
 
 ## Rendered again or written for the publication
 
