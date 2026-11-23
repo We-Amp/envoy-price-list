@@ -39,8 +39,9 @@ Build scripts: [`tools/code-layout/arm`](../../tools/code-layout/arm).
 
 ## Files
 
-- `make.py` writes the configs; `run-w6j.sh`, `chain-w6j.sh` the sessions (the A/B chain powers the host off 20
-  minutes after it ends unless a `KEEP` file exists; remove that step on a machine you keep).
+- `make.py` writes the configs; `run-w6j.sh`, `chain-w6j.sh` the sessions. With `SELF_SHUTDOWN=1` (opt-in,
+  default off; needs passwordless sudo) the A/B chain powers the host off 20 minutes after it ends unless
+  `~/w6j/KEEP` exists.
 - `perf-spe.sh`: the perf wrapper of the SPE legs. `fp2order.py`: as in track I.
 - `analysis/analyse_w6j.py RUN_DIR OUT_MD`: the table (file control, layout row, AutoFDO share of the PGO gain,
   BOLT) and the decision rules fixed before the run.

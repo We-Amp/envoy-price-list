@@ -15,8 +15,9 @@ L=$R/chain-$KIND.log
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$L"; }
 fin() {
   log "chain end rc=$1"; echo "$1" > "$R/chain-$KIND.rc"
-  # a finished A/B chain powers the VM off 20 min later unless ~/w5i/KEEP exists (a cloud VM must not idle)
-  if [ "$KIND" = ab ] && [ ! -e "$HOME/w5i/KEEP" ]; then log "self-shutdown in 20 min"; sudo shutdown -h +20 >/dev/null 2>&1; fi
+  # opt-in (SELF_SHUTDOWN=1, default off): a finished A/B chain powers the VM off 20 min later, unless
+  # ~/w5i/KEEP exists, so a rented machine does not idle; it needs passwordless sudo
+  if [ "${SELF_SHUTDOWN:-0}" = 1 ] && [ "$KIND" = ab ] && [ ! -e "$HOME/w5i/KEEP" ]; then log "self-shutdown in 20 min"; sudo shutdown -h +20 >/dev/null 2>&1; fi
   exit "$1"
 }
 log "chain $KIND start pid $$ harness $H ($(git -C "$H" rev-parse --short HEAD 2>/dev/null || cat "$H/HARNESS_COMMIT" 2>/dev/null))"
