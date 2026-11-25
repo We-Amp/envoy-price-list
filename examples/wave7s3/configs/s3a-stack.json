@@ -1,0 +1,1271 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "absent": true,
+     "label": "no access log file",
+     "scope": "field",
+     "stat": "access_log_lines"
+    },
+    {
+     "absent": true,
+     "label": "no tracer stats",
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no compressor stats",
+     "stat": "http.ingress_http.compressor.*"
+    },
+    {
+     "absent": true,
+     "label": "no jwt_authn stats",
+     "stat": "http.ingress_http.jwt_authn.*"
+    },
+    {
+     "absent": true,
+     "label": "no local rate-limit stats",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.*"
+    },
+    {
+     "absent": true,
+     "label": "no retry policy",
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "absent": true,
+     "label": "no stats sink configured",
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "no statsd traffic: box-wide UDP datagrams sent per request at most 0.01",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "field",
+     "stat": "kernel_net.d.UdpOutDatagrams"
+    }
+   ],
+   "name": "bare",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "absent": true,
+     "label": "no access log file",
+     "scope": "field",
+     "stat": "access_log_lines"
+    },
+    {
+     "absent": true,
+     "label": "no tracer stats",
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no compressor stats",
+     "stat": "http.ingress_http.compressor.*"
+    },
+    {
+     "absent": true,
+     "label": "no jwt_authn stats",
+     "stat": "http.ingress_http.jwt_authn.*"
+    },
+    {
+     "absent": true,
+     "label": "no local rate-limit stats",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.*"
+    },
+    {
+     "absent": true,
+     "label": "no retry policy",
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "absent": true,
+     "label": "no stats sink configured",
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "no statsd traffic: box-wide UDP datagrams sent per request at most 0.01",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "field",
+     "stat": "kernel_net.d.UdpOutDatagrams"
+    }
+   ],
+   "name": "bare-A2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "label": "access-log lines per request completed over the leg",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "access_log_lines",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.write_failed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.reopen_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes per line recorded",
+     "min": 1,
+     "scope": "field",
+     "stat": "access_log_bytes_per_line"
+    },
+    {
+     "equals": true,
+     "label": "first and last 100 access-log lines parse as JSON",
+     "scope": "field",
+     "stat": "access_log_json_ok"
+    },
+    {
+     "label": "access log with a json_format",
+     "present": true,
+     "scope": "config",
+     "stat": "json_format"
+    },
+    {
+     "label": "sampled share within 4 binomial SD of 1%",
+     "per_request": 0.01,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_binomial_sd": 4
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "spans sent per sampled request over the leg",
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.05
+    },
+    {
+     "label": "collector accepted >= 95% of spans sent",
+     "min": 0.95,
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "spans accepted by the collector about 1% of requests (0.7% to 1.3%)",
+     "max": 0.013,
+     "min": 0.007,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "compressor: not_compressed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "compressor: nothing compressed",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "compressor: every request carried accept-encoding",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.no_accept_header",
+     "tol_abs": 0
+    },
+    {
+     "label": "compressor: the accept-encoding header was read on every response (content type not compressible)",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.header_not_valid",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: allowed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.allowed",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: token cache hit 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.jwt_cache_hit",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: nothing denied",
+     "scope": "window",
+     "stat": "http.ingress_http.jwt_authn.denied",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_success",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no failed JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "jwt_authn: the token cache is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "jwt_cache_config"
+    },
+    {
+     "label": "local rate limit: enabled 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.enabled",
+     "tol": 0.002
+    },
+    {
+     "label": "local rate limit: ok 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.ok",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "local rate limit: nothing limited",
+     "scope": "window",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.rate_limited",
+     "tol_abs": 0
+    },
+    {
+     "label": "the route carries the retry policy",
+     "present": true,
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "equals": 0,
+     "label": "no retry in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "label": "statsd datagrams per request over the window: 3.0 +/- 0.5 (kernel UDP counters of the harness's sink)",
+     "max": 3.5,
+     "min": 2.5,
+     "scope": "field",
+     "stat": "udp.datagrams_per_request"
+    },
+    {
+     "label": "a stats sink is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "the sink is the plain statsd sink",
+     "present": true,
+     "scope": "config",
+     "stat": "@type",
+     "where": {
+      "@type": "type.googleapis.com/envoy.config.metrics.v3.StatsdSink"
+     }
+    }
+   ],
+   "name": "typical",
+   "settings": {
+    "access_log": {
+     "format": "json"
+    },
+    "compressor": {
+     "library": "gzip"
+    },
+    "jwt_authn": {
+     "audience": "epl",
+     "cache": true,
+     "issuer": "https://epl.example",
+     "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\"epl-rs256\",\"n\":\"4v6b8g1uk3VASPZdasPLD5sptAXVBQyRu8tcnyhrcRQXG92HmDg8r9PD365tzF2kImLYTfI-tAG869ndxTZugB4_GodvSAEz3IDBTHR86sx820HSLse6XiHSjvLWS49m9zl706gh0rdJFFUgm4opiEP561Bz8MGAuh_fmZD2QYigjXIk4OooG4Vu_ZL_oIXwqfT5auT-RNDsELOwN22TiX2Tote2pkRQvw8QIyp15wge4r0jTZst8qaDiUGdv7o2V7ij3PCcWDBxosz3UnHB-lmhI-BD3s5xqc-_w5xs2LGiCEE9MdPWOVVTZFb-HL9mM1C5d9RtHBygOrHyLvOiRw\",\"e\":\"AQAB\"}]}"
+    },
+    "local_ratelimit": {
+     "tokens_per_s": 100000
+    },
+    "retries": true,
+    "stats_sink": {
+     "kind": "statsd"
+    },
+    "tracing": {
+     "sampling_pct": 1
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "label": "access-log lines per request completed over the leg",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "access_log_lines",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.write_failed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.reopen_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes per line recorded",
+     "min": 1,
+     "scope": "field",
+     "stat": "access_log_bytes_per_line"
+    },
+    {
+     "equals": true,
+     "label": "first and last 100 access-log lines parse as JSON",
+     "scope": "field",
+     "stat": "access_log_json_ok"
+    },
+    {
+     "label": "access log with a json_format",
+     "present": true,
+     "scope": "config",
+     "stat": "json_format"
+    },
+    {
+     "label": "sampled share within 4 binomial SD of 1%",
+     "per_request": 0.01,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_binomial_sd": 4
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "spans sent per sampled request over the leg",
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.05
+    },
+    {
+     "label": "collector accepted >= 95% of spans sent",
+     "min": 0.95,
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "spans accepted by the collector about 1% of requests (0.7% to 1.3%)",
+     "max": 0.013,
+     "min": 0.007,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "compressor: not_compressed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "compressor: nothing compressed",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "compressor: every request carried accept-encoding",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.no_accept_header",
+     "tol_abs": 0
+    },
+    {
+     "label": "compressor: the accept-encoding header was read on every response (content type not compressible)",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.header_not_valid",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: allowed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.allowed",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: token cache hit 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.jwt_cache_hit",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: nothing denied",
+     "scope": "window",
+     "stat": "http.ingress_http.jwt_authn.denied",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_success",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no failed JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "jwt_authn: the token cache is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "jwt_cache_config"
+    },
+    {
+     "label": "local rate limit: enabled 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.enabled",
+     "tol": 0.002
+    },
+    {
+     "label": "local rate limit: ok 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.ok",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "local rate limit: nothing limited",
+     "scope": "window",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.rate_limited",
+     "tol_abs": 0
+    },
+    {
+     "label": "the route carries the retry policy",
+     "present": true,
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "equals": 0,
+     "label": "no retry in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "label": "statsd datagrams per request over the window: 3.0 +/- 0.5 (kernel UDP counters of the harness's sink)",
+     "max": 3.5,
+     "min": 2.5,
+     "scope": "field",
+     "stat": "udp.datagrams_per_request"
+    },
+    {
+     "label": "a stats sink is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "the sink is the plain statsd sink",
+     "present": true,
+     "scope": "config",
+     "stat": "@type",
+     "where": {
+      "@type": "type.googleapis.com/envoy.config.metrics.v3.StatsdSink"
+     }
+    }
+   ],
+   "name": "typical-A2",
+   "settings": {
+    "access_log": {
+     "format": "json"
+    },
+    "compressor": {
+     "library": "gzip"
+    },
+    "jwt_authn": {
+     "audience": "epl",
+     "cache": true,
+     "issuer": "https://epl.example",
+     "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\"epl-rs256\",\"n\":\"4v6b8g1uk3VASPZdasPLD5sptAXVBQyRu8tcnyhrcRQXG92HmDg8r9PD365tzF2kImLYTfI-tAG869ndxTZugB4_GodvSAEz3IDBTHR86sx820HSLse6XiHSjvLWS49m9zl706gh0rdJFFUgm4opiEP561Bz8MGAuh_fmZD2QYigjXIk4OooG4Vu_ZL_oIXwqfT5auT-RNDsELOwN22TiX2Tote2pkRQvw8QIyp15wge4r0jTZst8qaDiUGdv7o2V7ij3PCcWDBxosz3UnHB-lmhI-BD3s5xqc-_w5xs2LGiCEE9MdPWOVVTZFb-HL9mM1C5d9RtHBygOrHyLvOiRw\",\"e\":\"AQAB\"}]}"
+    },
+    "local_ratelimit": {
+     "tokens_per_s": 100000
+    },
+    "retries": true,
+    "stats_sink": {
+     "kind": "statsd"
+    },
+    "tracing": {
+     "sampling_pct": 1
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "label": "access-log lines per request completed over the leg",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "access_log_lines",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.write_failed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.reopen_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes per line recorded",
+     "min": 1,
+     "scope": "field",
+     "stat": "access_log_bytes_per_line"
+    },
+    {
+     "equals": true,
+     "label": "first and last 100 access-log lines parse as JSON",
+     "scope": "field",
+     "stat": "access_log_json_ok"
+    },
+    {
+     "label": "access log with a json_format",
+     "present": true,
+     "scope": "config",
+     "stat": "json_format"
+    },
+    {
+     "label": "sampled share within 4 binomial SD of 1%",
+     "per_request": 0.01,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_binomial_sd": 4
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "spans sent per sampled request over the leg",
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.05
+    },
+    {
+     "label": "collector accepted >= 95% of spans sent",
+     "min": 0.95,
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "spans accepted by the collector about 1% of requests (0.7% to 1.3%)",
+     "max": 0.013,
+     "min": 0.007,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "compressor: not_compressed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "compressor: nothing compressed",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "compressor: every request carried accept-encoding",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.no_accept_header",
+     "tol_abs": 0
+    },
+    {
+     "label": "compressor: the accept-encoding header was read on every response (content type not compressible)",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.header_not_valid",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: allowed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.allowed",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: token cache hit 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.jwt_cache_hit",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: nothing denied",
+     "scope": "window",
+     "stat": "http.ingress_http.jwt_authn.denied",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_success",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no failed JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "jwt_authn: the token cache is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "jwt_cache_config"
+    },
+    {
+     "label": "local rate limit: enabled 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.enabled",
+     "tol": 0.002
+    },
+    {
+     "label": "local rate limit: ok 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.ok",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "local rate limit: nothing limited",
+     "scope": "window",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.rate_limited",
+     "tol_abs": 0
+    },
+    {
+     "label": "the route carries the retry policy",
+     "present": true,
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "equals": 0,
+     "label": "no retry in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no stats sink configured",
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "no statsd traffic: box-wide UDP datagrams sent per request at most 0.01",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "field",
+     "stat": "kernel_net.d.UdpOutDatagrams"
+    }
+   ],
+   "name": "typical-nosink",
+   "settings": {
+    "access_log": {
+     "format": "json"
+    },
+    "compressor": {
+     "library": "gzip"
+    },
+    "jwt_authn": {
+     "audience": "epl",
+     "cache": true,
+     "issuer": "https://epl.example",
+     "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\"epl-rs256\",\"n\":\"4v6b8g1uk3VASPZdasPLD5sptAXVBQyRu8tcnyhrcRQXG92HmDg8r9PD365tzF2kImLYTfI-tAG869ndxTZugB4_GodvSAEz3IDBTHR86sx820HSLse6XiHSjvLWS49m9zl706gh0rdJFFUgm4opiEP561Bz8MGAuh_fmZD2QYigjXIk4OooG4Vu_ZL_oIXwqfT5auT-RNDsELOwN22TiX2Tote2pkRQvw8QIyp15wge4r0jTZst8qaDiUGdv7o2V7ij3PCcWDBxosz3UnHB-lmhI-BD3s5xqc-_w5xs2LGiCEE9MdPWOVVTZFb-HL9mM1C5d9RtHBygOrHyLvOiRw\",\"e\":\"AQAB\"}]}"
+    },
+    "local_ratelimit": {
+     "tokens_per_s": 100000
+    },
+    "retries": true,
+    "tracing": {
+     "sampling_pct": 1
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "no generated clusters (no priming route)",
+     "scope": "config",
+     "stat": "cluster_header"
+    },
+    {
+     "label": "access-log lines per request completed over the leg",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "access_log_lines",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.write_failed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "filesystem.reopen_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "bytes per line recorded",
+     "min": 1,
+     "scope": "field",
+     "stat": "access_log_bytes_per_line"
+    },
+    {
+     "absent": true,
+     "label": "access log in Envoy's default text format (no json_format)",
+     "scope": "config",
+     "stat": "json_format"
+    },
+    {
+     "label": "sampled share within 4 binomial SD of 1%",
+     "per_request": 0.01,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol_binomial_sd": 4
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "spans sent per sampled request over the leg",
+     "per": "leg:http.ingress_http.tracing.random_sampling",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.05
+    },
+    {
+     "label": "collector accepted >= 95% of spans sent",
+     "min": 0.95,
+     "per": "leg:tracing.opentelemetry.spans_sent",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "spans accepted by the collector about 1% of requests (0.7% to 1.3%)",
+     "max": 0.013,
+     "min": 0.007,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "compressor: not_compressed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.response.not_compressed",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "compressor: nothing compressed",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.response.compressed",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "compressor: every request carried accept-encoding",
+     "scope": "window",
+     "stat": "http.ingress_http.compressor.epl.gzip.no_accept_header",
+     "tol_abs": 0
+    },
+    {
+     "label": "compressor: the accept-encoding header was read on every response (content type not compressible)",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.compressor.epl.gzip.header_not_valid",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: allowed 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.allowed",
+     "tol": 0.002
+    },
+    {
+     "label": "jwt_authn: token cache hit 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.jwt_authn.jwt_cache_hit",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: nothing denied",
+     "scope": "window",
+     "stat": "http.ingress_http.jwt_authn.denied",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_success",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "jwt_authn: no failed JWKS fetch",
+     "scope": "leg",
+     "stat": "http.ingress_http.jwt_authn.jwks_fetch_failed",
+     "tol_abs": 0
+    },
+    {
+     "label": "jwt_authn: the token cache is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "jwt_cache_config"
+    },
+    {
+     "label": "local rate limit: enabled 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.enabled",
+     "tol": 0.002
+    },
+    {
+     "label": "local rate limit: ok 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http_local_rate_limiter.http_local_rate_limit.ok",
+     "tol": 0.002
+    },
+    {
+     "equals": 0,
+     "label": "local rate limit: nothing limited",
+     "scope": "window",
+     "stat": "http_local_rate_limiter.http_local_rate_limit.rate_limited",
+     "tol_abs": 0
+    },
+    {
+     "label": "the route carries the retry policy",
+     "present": true,
+     "scope": "config",
+     "stat": "retry_policy"
+    },
+    {
+     "equals": 0,
+     "label": "no retry in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "label": "a stats sink is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "stats_sinks"
+    },
+    {
+     "label": "the sink is the OpenTelemetry sink",
+     "present": true,
+     "scope": "config",
+     "stat": "@type",
+     "where": {
+      "@type": "type.googleapis.com/envoy.extensions.stat_sinks.open_telemetry.v3.SinkConfig"
+     }
+    },
+    {
+     "label": "the collector accepted metric points over the leg (> 0)",
+     "min": 1,
+     "scope": "field",
+     "stat": "collector_delta.accepted_metric_points"
+    },
+    {
+     "label": "the collector refused no metric point",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_metric_points"
+    },
+    {
+     "label": "no statsd traffic: box-wide UDP datagrams sent per request at most 0.01",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "field",
+     "stat": "kernel_net.d.UdpOutDatagrams"
+    }
+   ],
+   "name": "lean",
+   "settings": {
+    "access_log": {
+     "format": "text"
+    },
+    "compressor": {
+     "library": "gzip"
+    },
+    "jwt_authn": {
+     "audience": "epl",
+     "cache": true,
+     "issuer": "https://epl.example",
+     "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\"epl-rs256\",\"n\":\"4v6b8g1uk3VASPZdasPLD5sptAXVBQyRu8tcnyhrcRQXG92HmDg8r9PD365tzF2kImLYTfI-tAG869ndxTZugB4_GodvSAEz3IDBTHR86sx820HSLse6XiHSjvLWS49m9zl706gh0rdJFFUgm4opiEP561Bz8MGAuh_fmZD2QYigjXIk4OooG4Vu_ZL_oIXwqfT5auT-RNDsELOwN22TiX2Tote2pkRQvw8QIyp15wge4r0jTZst8qaDiUGdv7o2V7ij3PCcWDBxosz3UnHB-lmhI-BD3s5xqc-_w5xs2LGiCEE9MdPWOVVTZFb-HL9mM1C5d9RtHBygOrHyLvOiRw\",\"e\":\"AQAB\"}]}"
+    },
+    "local_ratelimit": {
+     "tokens_per_s": 100000
+    },
+    "retries": true,
+    "stats_sink": {
+     "kind": "otlp"
+    },
+    "tracing": {
+     "sampling_pct": 1
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "bare",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "collector": {
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:1daa4312b48312dbae2d543e67b77e897dd5d9c48e7651d1416cdb417026ad06",
+  "metrics": true,
+  "metrics_port": 8888,
+  "port": 4317
+ },
+ "comparisons": "all_pairs",
+ "confirmatory": [
+  [
+   "typical",
+   "bare"
+  ],
+  [
+   "typical-nosink",
+   "bare"
+  ],
+  [
+   "lean",
+   "bare"
+  ],
+  [
+   "lean",
+   "typical"
+  ]
+ ],
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "kernel_net": true,
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "window_s": 20
+ },
+ "name": "s3a-stack",
+ "order": "williams",
+ "order_seed": 721,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 6,
+ "rounds_block": 6,
+ "rounds_max": 6,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "client_extra_args": [
+    "--request-header",
+    "accept-encoding:gzip, br, zstd",
+    "--request-header",
+    "authorization:Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImVwbC1yczI1NiJ9.eyJpc3MiOiJodHRwczovL2VwbC5leGFtcGxlIiwic3ViIjoiZXBsLWNsaWVudCIsImF1ZCI6ImVwbCIsImlhdCI6MTc2MzE2NDgwMCwiZXhwIjo0MTAyNDQ0ODAwfQ.EqF0KNtAyDQTkRxYeE40jn_l6xFb9iYH0wFx6gEAsHevkJsfMdop0f_uISWNWFw_n7yEEQ5wp47Dl0c0eUFy7UHsrup9a1moiL8C99wGlPbiW4ZA1XYDcT-i8LotVesGApalJxY0b0ICwmYh-Ky3AWN9wqHjhWLmgoUBmIWmtaMnAup3h4l6aZ63pSzbHmO_yz96eScnKZEwWSsBr23cYpECmGbF1RzWa8R1q7l7i2nZbAPXnCR0j93v9IErB6n0FDRMdb5lCJEuKdhADzORu4qa-PkzfwT9DADWIsw5bhm4yj2FtrlpulpR1dY9pVxRlI3RWrbNjnd5EBoe2awPig"
+   ],
+   "kind": "proxied",
+   "name": "sx",
+   "path": "/s",
+   "rps": 5200
+  }
+ ],
+ "short_run_note": "short run: 6 fixed rounds in Williams order, run with --allow-short",
+ "stats_sink": {
+  "port": 8125,
+  "rcvbuf": 268435456,
+  "sample_every": 1
+ },
+ "workdir": "~/epl/runs/wave7s3"
+}
