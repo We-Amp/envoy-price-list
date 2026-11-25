@@ -1,0 +1,2901 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "official",
+   "client": {
+    "paths": {
+     "b1m": "/chunked?bytes=1048576&chunk=8192",
+     "b64k": "/chunked?bytes=65536&chunk=8192"
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65692 (head, body, chunk framing)",
+     "per_request": 65692,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1049692 (head, body, chunk framing)",
+     "per_request": 1049692,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is not set",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is not set",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is not set",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is not set",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is not set",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is not set",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer in the config",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "equals": 0,
+     "label": "runtime.num_keys 0",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "official-ch8k",
+   "settings": {
+    "origin_server": "stream"
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "official",
+   "client": {
+    "paths": {
+     "b1m": "/chunked?bytes=1048576&chunk=8192",
+     "b64k": "/chunked?bytes=65536&chunk=8192"
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65692 (head, body, chunk framing)",
+     "per_request": 65692,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1049692 (head, body, chunk framing)",
+     "per_request": 1049692,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is not set",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is not set",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is not set",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is not set",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is not set",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is not set",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer in the config",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "equals": 0,
+     "label": "runtime.num_keys 0",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "official-ch8k-A2",
+   "settings": {
+    "origin_server": "stream"
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bins/wave8w1/envoy-w8-A",
+   "build": "w8-A",
+   "client": {
+    "paths": {
+     "b1m": "/chunked?bytes=1048576&chunk=8192",
+     "b64k": "/chunked?bytes=65536&chunk=8192"
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65692 (head, body, chunk framing)",
+     "per_request": 65692,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1049692 (head, body, chunk framing)",
+     "per_request": 1049692,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is false",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is false",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets envoy.reloadable_features.http1_zero_copy_body_fragments false",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.http1_zero_copy_body_fragments"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_recvmmsg_reuse_buffers true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_recvmmsg_reuse_buffers"
+    },
+    {
+     "equals": 3,
+     "label": "runtime.num_keys 3",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "off-ch8k",
+   "settings": {
+    "origin_server": "stream",
+    "runtime": {
+     "envoy.reloadable_features.http1_zero_copy_body_fragments": false,
+     "envoy.reloadable_features.udp_recvmmsg_reuse_buffers": true,
+     "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg": true
+    }
+   },
+   "source": "own build of v1.40.2 + five local commits (HTTP/1 chunked body handed on as fragments; UDP: stop reading after a short recvmmsg batch; UDP: keep the receive buffers recvmmsg did not fill), three runtime guards, release options; an unpatched twin of the same recipe is byte-identical to the official binary",
+   "source_sha256": "46c98673eddc4f480cfc79cf8b6cfb620b6fec97245dcc0332535d43475d3971"
+  },
+  {
+   "binary": "~/epl/bins/wave8w1/envoy-w8-A",
+   "build": "w8-A",
+   "client": {
+    "paths": {
+     "b1m": "/chunked?bytes=1048576&chunk=8192",
+     "b64k": "/chunked?bytes=65536&chunk=8192"
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65692 (head, body, chunk framing)",
+     "per_request": 65692,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1049692 (head, body, chunk framing)",
+     "per_request": 1049692,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is true",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is true",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.http1_zero_copy_body_fragments true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.http1_zero_copy_body_fragments"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_recvmmsg_reuse_buffers true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_recvmmsg_reuse_buffers"
+    },
+    {
+     "equals": 3,
+     "label": "runtime.num_keys 3",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the official-ch8k arm's in the smoke",
+     "ref": {
+      "arm": "official-ch8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "frag-on-ch8k",
+   "settings": {
+    "origin_server": "stream",
+    "runtime": {
+     "envoy.reloadable_features.http1_zero_copy_body_fragments": true,
+     "envoy.reloadable_features.udp_recvmmsg_reuse_buffers": true,
+     "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg": true
+    }
+   },
+   "source": "own build of v1.40.2 + five local commits (HTTP/1 chunked body handed on as fragments; UDP: stop reading after a short recvmmsg batch; UDP: keep the receive buffers recvmmsg did not fill), three runtime guards, release options; an unpatched twin of the same recipe is byte-identical to the official binary",
+   "source_sha256": "46c98673eddc4f480cfc79cf8b6cfb620b6fec97245dcc0332535d43475d3971"
+  },
+  {
+   "binary": "~/epl/bins/wave8w1/envoy-w8-A",
+   "build": "w8-A",
+   "client": {
+    "paths": {
+     "b1m": "/cl?bytes=1048576&chunk=8192&pad=",
+     "b64k": "/cl?bytes=65536&chunk=8192&pad="
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 0",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 0.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol_abs": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65618 (head, body, chunk framing)",
+     "per_request": 65618,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 0",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 0.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol_abs": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1048660 (head, body, chunk framing)",
+     "per_request": 1048660,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is false",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is false",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets envoy.reloadable_features.http1_zero_copy_body_fragments false",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.http1_zero_copy_body_fragments"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_recvmmsg_reuse_buffers true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_recvmmsg_reuse_buffers"
+    },
+    {
+     "equals": 3,
+     "label": "runtime.num_keys 3",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "off-cl8k",
+   "settings": {
+    "origin_server": "stream",
+    "runtime": {
+     "envoy.reloadable_features.http1_zero_copy_body_fragments": false,
+     "envoy.reloadable_features.udp_recvmmsg_reuse_buffers": true,
+     "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg": true
+    }
+   },
+   "source": "own build of v1.40.2 + five local commits (HTTP/1 chunked body handed on as fragments; UDP: stop reading after a short recvmmsg batch; UDP: keep the receive buffers recvmmsg did not fill), three runtime guards, release options; an unpatched twin of the same recipe is byte-identical to the official binary",
+   "source_sha256": "46c98673eddc4f480cfc79cf8b6cfb620b6fec97245dcc0332535d43475d3971"
+  },
+  {
+   "binary": "~/epl/bins/wave8w1/envoy-w8-A",
+   "build": "w8-A",
+   "client": {
+    "paths": {
+     "b1m": "/cl?bytes=1048576&chunk=8192&pad=",
+     "b64k": "/cl?bytes=65536&chunk=8192&pad="
+    }
+   },
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "warm upstream pool: at most 0.001 new connections per request in the window",
+     "max": 0.001,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 65536",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 65536.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 8",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 8.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 0",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 0.0,
+     "scope": "field",
+     "shape": "b64k",
+     "stat": "stream_origin.d.chunks",
+     "tol_abs": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 65618 (head, body, chunk framing)",
+     "per_request": 65618,
+     "shape": "b64k",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.005 new connections per request in the window",
+     "max": 0.005,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "origin: body_bytes per response 1.04858e+06",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1048576.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: write_calls per response 128",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 128.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: chunks per response 0",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 0.0,
+     "scope": "field",
+     "shape": "b1m",
+     "stat": "stream_origin.d.chunks",
+     "tol_abs": 0.001
+    },
+    {
+     "label": "upstream bytes read per request: 1048660 (head, body, chunk framing)",
+     "per_request": 1048660,
+     "shape": "b1m",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.002
+    },
+    {
+     "label": "HTTP/1.1 to the origin",
+     "min": 1,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "no HTTP/2 connection to the origin",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: every response on its HTTP/1.1 port",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 1.0,
+     "scope": "field",
+     "stat": "stream_origin.d.h1_responses",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_pending_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_retry",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "label": "client hop: HTTP/1.1 connections",
+     "min": 16,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http1_total"
+    },
+    {
+     "equals": 0,
+     "label": "client hop: no HTTP/2 connection",
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_http2_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.http1_zero_copy_body_fragments is true",
+     "scope": "field",
+     "stat": "runtime_start.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_start.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_start.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.http1_zero_copy_body_fragments is true",
+     "scope": "field",
+     "stat": "runtime_end.ch",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg is true",
+     "scope": "field",
+     "stat": "runtime_end.st",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.udp_recvmmsg_reuse_buffers is true",
+     "scope": "field",
+     "stat": "runtime_end.ru",
+     "tol_abs": 0
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.http1_zero_copy_body_fragments true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.http1_zero_copy_body_fragments"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets envoy.reloadable_features.udp_recvmmsg_reuse_buffers true",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.udp_recvmmsg_reuse_buffers"
+    },
+    {
+     "equals": 3,
+     "label": "runtime.num_keys 3",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    },
+    {
+     "label": "client to Envoy bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to origin bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "origin to Envoy bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "Envoy to client bytes per request within 0.5% of the off-cl8k arm's in the smoke",
+     "ref": {
+      "arm": "off-cl8k",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    }
+   ],
+   "name": "frag-on-cl8k",
+   "settings": {
+    "origin_server": "stream",
+    "runtime": {
+     "envoy.reloadable_features.http1_zero_copy_body_fragments": true,
+     "envoy.reloadable_features.udp_recvmmsg_reuse_buffers": true,
+     "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg": true
+    }
+   },
+   "source": "own build of v1.40.2 + five local commits (HTTP/1 chunked body handed on as fragments; UDP: stop reading after a short recvmmsg batch; UDP: keep the receive buffers recvmmsg did not fill), three runtime guards, release options; an unpatched twin of the same recipe is byte-identical to the official binary",
+   "source_sha256": "46c98673eddc4f480cfc79cf8b6cfb620b6fec97245dcc0332535d43475d3971"
+  }
+ ],
+ "base_arm": "official-ch8k",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "all_pairs",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "evidence_mode": "record",
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "leg_binary_sha256": true,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "runtime_keys": {
+   "ch": "envoy.reloadable_features.http1_zero_copy_body_fragments",
+   "ru": "envoy.reloadable_features.udp_recvmmsg_reuse_buffers",
+   "st": "envoy.reloadable_features.udp_stop_reading_on_short_recvmmsg"
+  },
+  "stat_filter_extra": "^runtime\\.|^listener\\.127\\.0\\.0\\.1_10110\\.downstream_cx_(destroy|overflow|overload_reject|transport_socket_connect_timeout)$|^listener\\.127\\.0\\.0\\.1_10110\\.ssl\\.|^cluster\\.origin\\.upstream_(cx_connect_timeout|rq_rx_reset|rq_tx_reset|cx_http1_total|cx_http2_total|rq_completed)$|^server\\.(envoy_bug_failures|debug_assertion_failures|memory_allocated|memory_heap_size|memory_physical_size)$",
+  "window_s": 20
+ },
+ "name": "smoke-a-hh",
+ "order": "fixed",
+ "order_seed": 811,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stream_binary": "tools/streamorigin/out/epl-streamorigin-linux-amd64",
+  "stream_h2_port": 8099,
+  "stream_port": 8098,
+  "stream_sha256": "bcbe933cff4661d044d1cacef2bfe58855d4e38affeccd3f38fbb3e7b07dcf7a",
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rerun_invalid": 1,
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 65536,
+   "kind": "proxied",
+   "name": "b64k",
+   "path": "/b64k",
+   "route_match": {
+    "prefix": "/c"
+   },
+   "rps": 2000,
+   "stream": true
+  },
+  {
+   "body_bytes": 1048576,
+   "kind": "proxied",
+   "name": "b1m",
+   "path": "/b1m",
+   "route_match": {
+    "prefix": "/c"
+   },
+   "rps": 400,
+   "stream": true
+  }
+ ],
+ "smoke": true,
+ "workdir": "~/epl/runs/wave8w1"
+}

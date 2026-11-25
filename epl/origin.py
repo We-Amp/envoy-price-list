@@ -104,7 +104,18 @@ class Origin:
                                        self.cfg.get("worker_connections", 8192), self.cfg.get("worker_rlimit_nofile"),
                                        bool(self.cfg.get("stub_status")),
                                        h2c_port=self.cfg.get("h2c_port"), tls_port=self.cfg.get("tls_port"),
-                                       tls_cert=self.cfg.get("tls_cert", "ecdsa-p256-san"), grpc=grpc)
+                                       tls_cert=self.cfg.get("tls_cert", "ecdsa-p256-san"), grpc=grpc,
+                                       inline=envoy_config.inline_bodies(self.shapes),
+                                       uds="/uds/origin.sock" if self.cfg.get("uds") else None,
+                                       chunked=envoy_config.chunked_paths(self.shapes))
+        uds_dir = None
+        if self.cfg.get("uds"):
+            # the origin's Unix socket: a directory of this run (mode 0700), bind-mounted read-write
+            from .experiment import origin_uds_dir, origin_uds_path
+            uds_dir = origin_uds_dir(self.run_dir)
+            os.makedirs(uds_dir, mode=0o700, exist_ok=True)
+            if os.path.lexists(origin_uds_path(self.run_dir)):
+                os.unlink(origin_uds_path(self.run_dir))
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(conf)
         image = self.cfg.get("image", "nginx:alpine")
@@ -114,7 +125,8 @@ class Origin:
                 "-v", "%s:/etc/nginx/nginx.conf:ro" % os.path.join(od, "nginx.conf"),
                 "-v", "%s:/www:ro" % www] + (
                 # the TLS server's certificate, from the run's certificate directory (read-only)
-                ["-v", "%s:/certs:ro" % os.path.join(self.run_dir, "certs")] if self.cfg.get("tls_port") else []) + [
+                ["-v", "%s:/certs:ro" % os.path.join(self.run_dir, "certs")] if self.cfg.get("tls_port") else []) + (
+                ["-v", "%s:/uds" % uds_dir] if uds_dir else []) + [
                 image]
         r = subprocess.run(args, capture_output=True, text=True, timeout=120)
         if r.returncode != 0:
@@ -126,6 +138,15 @@ class Origin:
             if not sysprobe.wait_port("127.0.0.1", p, 30):
                 self.stop()
                 raise RuntimeError("origin did not open port %d" % p)
+        if uds_dir:
+            from .experiment import origin_uds_path
+            end = time.monotonic() + 30
+            while not os.path.exists(origin_uds_path(self.run_dir)) and time.monotonic() < end:
+                time.sleep(0.1)
+            if not os.path.exists(origin_uds_path(self.run_dir)):
+                self.stop()
+                raise RuntimeError("origin did not create its Unix socket")
+            self.meta["uds"] = origin_uds_path(self.run_dir)
         img = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}} {{index .RepoDigests 0}}", image],
                              capture_output=True, text=True, timeout=30).stdout.strip()
         self.side = side_service("origin", self.container_id, self.cpus, self.log)
@@ -146,6 +167,15 @@ class Origin:
                 self.stop()
                 raise
             self.companions.append(("ext_proc", xp))
+        if self.cfg.get("stream_port"):
+            so = StreamOrigin(self.cfg, self.cpus, self.log)
+            try:
+                self.meta["stream_origin"] = so.start()
+            except Exception:
+                so.stop()
+                self.stop()
+                raise
+            self.companions.append(("stream_origin", so))
         time.sleep(0.5)
         return self.meta
 
@@ -158,6 +188,12 @@ class Origin:
                            capture_output=True, text=True, timeout=60)
             self.log("origin container %s stopped" % self.container_id[:12])
             self.container_id = None
+            if self.cfg.get("uds"):
+                from .experiment import origin_uds_path
+                try:
+                    os.unlink(origin_uds_path(self.run_dir))  # nginx leaves it behind on a fast stop
+                except OSError:
+                    pass
 
 
 def ext_proc_binary(cfg):
@@ -234,6 +270,94 @@ class ExtProcService:
             self.container_id = None
 
 
+def stream_binary(cfg):
+    from .experiment import HARNESS_ROOT
+    p = os.path.expanduser(cfg["stream_binary"])
+    return p if os.path.isabs(p) else os.path.join(HARNESS_ROOT, p)
+
+
+def stream_args(cfg, cpus, name, binary):
+    """docker run arguments of the stream origin (tools/streamorigin): the static binary bind-mounted
+    into the origin's pinned image as its entrypoint, host network, the origin's CPUs, both listeners
+    on loopback."""
+    return (["docker", "run", "-d", "--rm", "--name", name, "--network", "host", "--cpuset-cpus", cpus]
+            + (["--platform", cfg["platform"]] if cfg.get("platform") else [])
+            + ["-v", "%s:/epl-streamorigin:ro" % binary, "--entrypoint", "/epl-streamorigin",
+               cfg.get("image", "nginx:alpine"), "-h1", "127.0.0.1:%d" % int(cfg["stream_port"]),
+               "-h2", "127.0.0.1:%d" % int(cfg["stream_h2_port"])])
+
+
+class StreamOrigin:
+    """The stream origin (tools/streamorigin): bodies in a chosen write pattern (content-length in one
+    write or in flushed writes, chunked with one chunk per write, timed events). One container the
+    harness starts and stops by the ID `docker run` returned, pinned to the origin's CPUs; the binary's
+    sha256 must match origin.stream_sha256, or nothing starts. Its CPU time is read from its cgroup per
+    leg (the side-service gate) and its own counters (GET /epl-stats) outside the window."""
+
+    def __init__(self, cfg, cpus, log):
+        self.cfg, self.cpus, self.log = cfg, cpus, log
+        self.container_id = None
+        self.side = None
+        self.port = int(cfg["stream_port"])
+        self.h2_port = int(cfg["stream_h2_port"])
+
+    def start(self):
+        binary = stream_binary(self.cfg)
+        got = sysprobe.file_hashes(binary)["sha256"]
+        if got != self.cfg.get("stream_sha256"):
+            raise RuntimeError("stream origin binary %s sha256 %s != %s" % (binary, got, self.cfg.get("stream_sha256")))
+        for p in (self.port, self.h2_port):
+            if sysprobe.port_open("127.0.0.1", p):
+                raise RuntimeError("stream origin port %d already in use" % p)
+        name = "epl-streamorigin-%d" % os.getpid()
+        r = subprocess.run(stream_args(self.cfg, self.cpus, name, binary), capture_output=True, text=True,
+                           timeout=120)
+        if r.returncode != 0:
+            raise RuntimeError("docker run (stream origin) failed: %s" % r.stderr.strip()[:300])
+        self.container_id = r.stdout.strip()
+        self.log("stream origin container %s (%s) started" % (self.container_id[:12], name))
+        for p in (self.port, self.h2_port):
+            if not sysprobe.wait_port("127.0.0.1", p, 30):
+                self.stop()
+                raise RuntimeError("stream origin did not open port %d" % p)
+        self.side = side_service("stream_origin", self.container_id, self.cpus, self.log)
+        return {"port": self.port, "h2_port": self.h2_port, "binary_sha256": got, "container_name": name}
+
+    def stats(self):
+        """The origin's own counters (GET /epl-stats on its HTTP/1.1 port), or None; never inside a window."""
+        return stream_stats(self.port)
+
+    def stop(self):
+        if self.container_id:
+            subprocess.run(["docker", "stop", "-t", "5", self.container_id], capture_output=True, text=True,
+                           timeout=60)
+            self.log("stream origin container %s stopped" % self.container_id[:12])
+            self.container_id = None
+
+
+def stream_stats(port):
+    try:
+        c = http.client.HTTPConnection("127.0.0.1", int(port), timeout=5.0)
+        try:
+            c.request("GET", "/epl-stats")
+            r = c.getresponse()
+            body = r.read().decode(errors="replace")
+        finally:
+            c.close()
+        import json
+        return json.loads(body) if r.status == 200 else None
+    except (OSError, http.client.HTTPException, ValueError):
+        return None
+
+
+def stream_window(s0, s1):
+    """The stream origin's counters over a window: {ok, d: {counter: delta}, max_late_us}."""
+    if not isinstance(s0, dict) or not isinstance(s1, dict):
+        return {"ok": False, "error": "stream origin counters unreadable"}
+    d = {k: s1[k] - s0.get(k, 0) for k in s1 if k != "max_late_us"}
+    return {"ok": True, "d": d, "max_late_us": s1.get("max_late_us")}
+
+
 COLLECTOR_CONF = """receivers:
   otlp:
     protocols:
@@ -241,14 +365,21 @@ COLLECTOR_CONF = """receivers:
         endpoint: 127.0.0.1:%d
 %sexporters:
   nop:
-service:
+%sservice:
   telemetry:
     metrics:
 %s  pipelines:
     traces:
       receivers: [otlp]
-      exporters: [nop]
+      exporters: [%s]
 %s"""
+# debug_spans: the traces pipeline also prints every span it receives to the collector's own log (the
+# `debug` exporter at verbosity detailed, every batch), for a non-scored leg that compares exported spans
+DEBUG_EXPORTER = """  debug:
+    verbosity: detailed
+    sampling_initial: 1000000
+    sampling_thereafter: 1
+"""
 METRICS_PIPELINE = """    metrics:
       receivers: [otlp]
       exporters: [nop]
@@ -269,14 +400,15 @@ TELEMETRY_BASIC = ("      level: basic\n"
                    "                port: %d\n")
 
 
-def collector_conf(port, metrics_port=None, metrics=False, max_recv_msg_size_mib=None):
+def collector_conf(port, metrics_port=None, metrics=False, max_recv_msg_size_mib=None, debug_spans=False):
     """metrics: also a metrics pipeline (OTLP receiver, nop exporter) for the stats sink.
     max_recv_msg_size_mib: the gRPC receiver's message limit (the collector's default is 4 MiB;
     an OTLP stats export of 10,000 histogram points is about 4.5 MB and is refused below the
     receiver, visible only as a stream reset on Envoy's side)."""
     tel = TELEMETRY_BASIC % int(metrics_port) if metrics_port else TELEMETRY_NONE
     lim = "        max_recv_msg_size_mib: %d\n" % int(max_recv_msg_size_mib) if max_recv_msg_size_mib else ""
-    return COLLECTOR_CONF % (int(port), lim, tel, METRICS_PIPELINE if metrics else "")
+    return COLLECTOR_CONF % (int(port), lim, DEBUG_EXPORTER if debug_spans else "", tel,
+                             "nop, debug" if debug_spans else "nop", METRICS_PIPELINE if metrics else "")
 
 
 SPANS_RE = re.compile(r"^otelcol_receiver_(accepted|refused)_(spans|metric_points)(?:_total)?(?:\{[^}]*\})?"
@@ -347,7 +479,7 @@ class Collector:
         d = os.path.join(self.run_dir, "collector")
         os.makedirs(d, exist_ok=True)
         conf = collector_conf(port, self.metrics_port, bool(self.cfg.get("metrics")),
-                              self.cfg.get("max_recv_msg_size_mib"))
+                              self.cfg.get("max_recv_msg_size_mib"), bool(self.cfg.get("debug_spans")))
         with open(os.path.join(d, "config.yaml"), "w") as f:
             f.write(conf)
         name = "epl-collector-%d" % os.getpid()
@@ -368,7 +500,7 @@ class Collector:
                               self.cfg["image"]], capture_output=True, text=True, timeout=30).stdout.strip()
         self.side = side_service("collector", self.container_id, self.cpus, self.log)
         self.meta.update(image_id=img, container_name=name, config_sha256=sysprobe.text_sha256(conf),
-                         exporter="nop", max_recv_msg_size_mib=self.cfg.get("max_recv_msg_size_mib"))
+                         exporter="nop, debug" if self.cfg.get("debug_spans") else "nop", max_recv_msg_size_mib=self.cfg.get("max_recv_msg_size_mib"))
         return self.meta
 
     def save_log_since(self, since_epoch_s, path):
@@ -377,7 +509,7 @@ class Collector:
             return {"error": "collector not running"}
         since = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(since_epoch_s - 1)) + "Z"
         r = subprocess.run(["docker", "logs", "--since", since, self.container_id], capture_output=True, text=True,
-                           timeout=60)
+                           timeout=120)
         text = (r.stdout or "") + (r.stderr or "")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:

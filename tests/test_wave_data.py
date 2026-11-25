@@ -240,6 +240,15 @@ class RepositoryListsTest(unittest.TestCase):
         self.assertEqual(self.sums.get("waves-2026-11b-data-http3.tar.gz"),
                          "f422feb18ecf5265588d2a9c0703d9925e0e3e2a489841457bec6fe9f28590d2")
 
+    def test_the_third_release_is_unchanged_by_the_fourth(self):
+        want = {"waves-2026-11c-data-mitigations.tar.gz": "f6f965a7009f8fafc4de89314badbe75f48ca631a3f36f2c0d2951b9a61b2373",
+                "waves-2026-11c-data-mitigations-cloud.tar.gz": "00691c641568b37260d940ed1a62be42fc15dde5dddd2e436f4c8d4d1a234ab2",
+                "waves-2026-11c-data-arm-vm-layout.tar.gz": "e483e80a86e44f19ca1f8ad5b370676c55a92816cabfd3dc5bd8086a9625042a",
+                "waves-2026-11c-data-arm-metal-layout.tar.gz": "2b908558f090f8b651f428f59102600794714ef31c63ba87e5779f41e7d2731a"}
+        self.assertEqual({k: self.sums.get(k) for k in want}, want)
+        self.assertEqual(wd.asset("second-hop"), "waves-2026-11d-data-second-hop.tar.gz")
+        self.assertEqual(wd.top_files("http3-receive")[1][1], "http3-receive/WHAT-WAS-CHANGED.md")
+
     def test_tables_in_git_are_the_ones_in_the_archives(self):
         by = {m[3]: m[0] for m in self.manifest}
         root = os.path.join(HERE, "docs", "wave-tables")

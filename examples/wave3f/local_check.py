@@ -125,7 +125,8 @@ class Net:
                 f.write(body)
         with open(os.path.join(od, "nginx.conf"), "w") as f:
             f.write(envoy_config.nginx_conf(o["port"], 2, stub_status=True, h2c_port=o.get("h2c_port"),
-                                            tls_port=o.get("tls_port"), tls_cert=o.get("tls_cert"), grpc=grpc))
+                                            tls_port=o.get("tls_port"), tls_cert=o.get("tls_cert"), grpc=grpc,
+                                            chunked=envoy_config.chunked_paths(exp["shapes"])))
         r = sh(["docker", "run", "-d", "--rm", "-v", "%s/nginx.conf:/etc/nginx/nginx.conf:ro" % od,
                 "-v", "%s:/www:ro" % www, "-v", "%s:/certs:ro" % os.path.join(rd, "certs"), NGINX])
         if r.returncode:

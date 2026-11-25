@@ -1,0 +1,1977 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "official",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is not set",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is not set",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is not set",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is not set",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer in the config",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "equals": 0,
+     "label": "runtime.num_keys 0",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "official",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "official",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is not set",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is not set",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is not set",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": -1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is not set",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer in the config",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "equals": 0,
+     "label": "runtime.num_keys 0",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "official-A2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bins/wave7s5/envoy-relay-sc",
+   "build": "relay-sc",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is false",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is false",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is false",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is false",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets the short-read guard False",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read"
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets the write guard False",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.connection_write_in_current_iteration"
+    },
+    {
+     "equals": 2,
+     "label": "runtime.num_keys 2",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "patched-off",
+   "settings": {
+    "runtime": {
+     "envoy.reloadable_features.connection_write_in_current_iteration": false,
+     "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false
+    }
+   },
+   "source": "own build of v1.40.2 + two local commits (stop reading a TCP socket after a short read; write in the event loop iteration that wrote to the connection), each behind a runtime guard, release options; the unpatched twin of this build is byte-identical to the official binary",
+   "source_sha256": "778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"
+  },
+  {
+   "binary": "~/epl/bins/wave7s5/envoy-relay-sc",
+   "build": "relay-sc",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is true",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is false",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is true",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is false",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets the short-read guard True",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read"
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets the write guard False",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.connection_write_in_current_iteration"
+    },
+    {
+     "equals": 2,
+     "label": "runtime.num_keys 2",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "read-only",
+   "settings": {
+    "runtime": {
+     "envoy.reloadable_features.connection_write_in_current_iteration": false,
+     "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true
+    }
+   },
+   "source": "own build of v1.40.2 + two local commits (stop reading a TCP socket after a short read; write in the event loop iteration that wrote to the connection), each behind a runtime guard, release options; the unpatched twin of this build is byte-identical to the official binary",
+   "source_sha256": "778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"
+  },
+  {
+   "binary": "~/epl/bins/wave7s5/envoy-relay-sc",
+   "build": "relay-sc",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is false",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is true",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is false",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is true",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": false,
+     "label": "the static runtime layer sets the short-read guard False",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets the write guard True",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.connection_write_in_current_iteration"
+    },
+    {
+     "equals": 2,
+     "label": "runtime.num_keys 2",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "write-only",
+   "settings": {
+    "runtime": {
+     "envoy.reloadable_features.connection_write_in_current_iteration": true,
+     "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false
+    }
+   },
+   "source": "own build of v1.40.2 + two local commits (stop reading a TCP socket after a short read; write in the event loop iteration that wrote to the connection), each behind a runtime guard, release options; the unpatched twin of this build is byte-identical to the official binary",
+   "source_sha256": "778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"
+  },
+  {
+   "binary": "~/epl/bins/wave7s5/envoy-relay-sc",
+   "build": "relay-sc",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "request-side (client to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (Envoy to client) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "request-side (Envoy to origin) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_tx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "label": "response-side (origin to Envoy) bytes per request within 0.5% of the official arm's smoke",
+     "ref": {
+      "arm": "official",
+      "offset": 0
+     },
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.005
+    },
+    {
+     "absent": true,
+     "label": "no tcp_proxy stats",
+     "scope": "leg",
+     "stat": "tcp.relay.*"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_delayed_close_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_5xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "http.ingress_http.downstream_rq_4xx",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "http.ingress_http.downstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_rx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_tx_reset",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection created in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connection destroyed in the window",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_remote",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_destroy_local",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no upstream connect failure over the leg",
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_connect_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_cx_protocol_error",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "cluster.origin.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_paused_reading_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.origin.upstream_flow_control_backed_up_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection destroyed in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_destroy",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "no client connection accepted in the window",
+     "scope": "window",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_total",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overflow",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "listener.127.0.0.1_10110.downstream_cx_overload_reject",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.envoy_bug_failures",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "leg",
+     "stat": "server.debug_assertion_failures",
+     "tol_abs": 0
+    },
+    {
+     "label": "client: 2xx responses per second within 1% of the target rate (open loop, fixed rate)",
+     "max": 1.01,
+     "min": 0.99,
+     "per": "field:target_rps",
+     "scope": "field",
+     "stat": "client_rate_2xx"
+    },
+    {
+     "equals": 0,
+     "label": "Envoy exit code 0",
+     "scope": "field",
+     "stat": "envoy_exit",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is true",
+     "scope": "field",
+     "stat": "runtime_start.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's start: envoy.reloadable_features.connection_write_in_current_iteration is true",
+     "scope": "field",
+     "stat": "runtime_start.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.raw_buffer_socket_stop_on_short_read is true",
+     "scope": "field",
+     "stat": "runtime_end.sr",
+     "tol_abs": 0
+    },
+    {
+     "equals": 1,
+     "label": "admin /runtime at the leg's end: envoy.reloadable_features.connection_write_in_current_iteration is true",
+     "scope": "field",
+     "stat": "runtime_end.wr",
+     "tol_abs": 0
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets the short-read guard True",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read"
+    },
+    {
+     "equals": true,
+     "label": "the static runtime layer sets the write guard True",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.connection_write_in_current_iteration"
+    },
+    {
+     "equals": 2,
+     "label": "runtime.num_keys 2",
+     "scope": "leg",
+     "stat": "runtime.num_keys",
+     "tol_abs": 0
+    }
+   ],
+   "name": "both-on",
+   "settings": {
+    "runtime": {
+     "envoy.reloadable_features.connection_write_in_current_iteration": true,
+     "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true
+    }
+   },
+   "source": "own build of v1.40.2 + two local commits (stop reading a TCP socket after a short read; write in the event loop iteration that wrote to the connection), each behind a runtime guard, release options; the unpatched twin of this build is byte-identical to the official binary",
+   "source_sha256": "778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"
+  }
+ ],
+ "base_arm": "official",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "all_pairs",
+ "confirmatory": [
+  [
+   "both-on",
+   "patched-off"
+  ]
+ ],
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "leg_binary_sha256": true,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "runtime_keys": {
+   "sr": "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read",
+   "wr": "envoy.reloadable_features.connection_write_in_current_iteration"
+  },
+  "stat_filter_extra": "^tcp\\.relay\\.|^runtime\\.|^listener\\.127\\.0\\.0\\.1_10110\\.downstream_cx_(destroy|overflow|overload_reject|transport_socket_connect_timeout)$|^cluster\\.origin\\.upstream_(cx_connect_timeout|rq_rx_reset|rq_tx_reset|cx_http1_total|cx_http2_total)$|^server\\.(envoy_bug_failures|debug_assertion_failures)$",
+  "window_s": 20
+ },
+ "name": "http-2",
+ "order": "williams",
+ "order_seed": 754,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 6,
+ "rounds_block": 6,
+ "rounds_max": 6,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  }
+ ],
+ "short_run_note": "short run: 6 fixed rounds in Williams order, run with --allow-short",
+ "workdir": "~/epl/runs/wave7s5"
+}

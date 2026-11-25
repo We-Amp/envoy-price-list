@@ -1,8 +1,8 @@
-"""The data of the wave studies (waves 1 to 6 and the code-layout work) as release assets: shared
-pieces of build-wave-data.py and fetch-wave-data.py. Three releases: waves-2026-11 (waves 1 to 3, code
-layout), waves-2026-11b (wave 4, HTTP/3) and waves-2026-11c (waves 5 and 6).
+"""The data of the wave studies (waves 1 to 8 and the code-layout work) as release assets: shared
+pieces of build-wave-data.py and fetch-wave-data.py. Four releases: waves-2026-11 (waves 1 to 3, code
+layout), waves-2026-11b (wave 4, HTTP/3), waves-2026-11c (waves 5 and 6) and waves-2026-11d (waves 7 and 8).
 
-The raw records of these studies (about 650 MB unpacked) are not in git. They are published as one
+The raw records of these studies (about 2.3 GB unpacked) are not in git. They are published as one
 gzip-compressed tar archive per study on the release of the tag below, in the same form as the
 stats study's data (tools/stats_data.py, whose archive and list helpers are used here). Git keeps
 the manifest (every file of every archive with its size and SHA-256) and the checksums of the
@@ -19,6 +19,7 @@ from stats_data import sha256_file, tree_files, write_archive  # noqa: E402,F401
 TAG = "waves-2026-11"           # the first release: waves 1 to 3 and the code-layout work
 TAG_B = "waves-2026-11b"        # the second release: wave 4 (HTTP/3)
 TAG_C = "waves-2026-11c"        # the third release: waves 5 and 6 (mitigations, arm64 code layout)
+TAG_D = "waves-2026-11d"        # the fourth release: waves 7 and 8 (second hop, feature stack, patch experiments)
 RELEASE_URL = "https://github.com/We-Amp/envoy-price-list/releases/download/%s/"
 BASE_URL = RELEASE_URL % TAG
 ASSET = TAG + "-data-%s.tar.gz"
@@ -40,7 +41,9 @@ TOP_FILES_OF = {TAG: TOP_FILES,
                         ("docs/wave-data/http3/WHAT-WAS-CHANGED.md", "http3/WHAT-WAS-CHANGED.md")],
                 # one README and one WHAT-WAS-CHANGED for the release, in each of its studies' directories
                 TAG_C: [("docs/wave-data/waves-2026-11c/README.md", "{study}/README.md"),
-                        ("docs/wave-data/waves-2026-11c/WHAT-WAS-CHANGED.md", "{study}/WHAT-WAS-CHANGED.md")]}
+                        ("docs/wave-data/waves-2026-11c/WHAT-WAS-CHANGED.md", "{study}/WHAT-WAS-CHANGED.md")],
+                TAG_D: [("docs/wave-data/waves-2026-11d/README.md", "{study}/README.md"),
+                        ("docs/wave-data/waves-2026-11d/WHAT-WAS-CHANGED.md", "{study}/WHAT-WAS-CHANGED.md")]}
 # the machine label of the bench box that most studies ran on
 HOST_LABEL = "bench-x86_64"
 # the studies that ran elsewhere carry their own machine label
@@ -62,10 +65,25 @@ STUDIES = {
     "arm-vm-layout": ("5", "code layout on arm64 in a cloud VM: ordering file, PGO + ThinLTO, -mcpu", "examples/wave5i"),
     "arm-metal-layout": ("6", "code layout on arm64 bare metal: SPE AutoFDO and BOLT, file control", "examples/wave6j"),
     "mitigations-cloud": ("6", "the mitigation price on a current x86 CPU in a cloud VM", "examples/wave6k"),
+    "second-hop": ("7", "a second proxy hop: HTTP against a TCP relay, Unix sockets between hops", "examples/wave7s1"),
+    "bodies-streams": ("7", "chunked bodies, streamed events, a buffer limit, HTTP/3 at 0 B and 4 KB",
+                       "examples/wave7s2"),
+    "feature-stack": ("7", "a typical feature stack against the lean config, ten inert filters, idle timers",
+                      "examples/wave7s3"),
+    "tracing-tests-profile": ("7", "a deferred tracing span at 0% sampling; PGO trained on Envoy's own tests",
+                              "examples/wave7s4"),
+    "tests-profile-integration": ("7", "PGO trained on Envoy's integration tests alone", "examples/wave7s4b"),
+    "relay-syscalls": ("7", "two empty kernel calls per relayed message removed (an experiment patch)",
+                       "examples/wave7s5"),
+    "chunked-copy": ("8", "an HTTP/1 chunked body as fragments instead of a copy (an experiment patch)",
+                     "examples/wave8w1"),
+    "http3-receive": ("8", "the HTTP/3 receive path: stop guard and buffer reuse, server retransmission counts",
+                      "examples/wave8w2"),
 }
 # the release each study's archive belongs to (default: the first one)
 TAG_OF = {"http3": TAG_B, "mitigations": TAG_C, "arm-vm-layout": TAG_C, "arm-metal-layout": TAG_C,
           "mitigations-cloud": TAG_C}
+TAG_OF.update((s, TAG_D) for s, v in STUDIES.items() if v[0] in ("7", "8"))
 
 
 def top_files(study):

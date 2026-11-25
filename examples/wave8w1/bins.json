@@ -1,0 +1,12 @@
+{
+ "official": {
+  "binary": "~/epl/bin/envoy-1.40.2",
+  "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+  "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+ },
+ "w8-A": {
+  "binary": "~/epl/bins/wave8w1/envoy-w8-A",
+  "source": "own build of v1.40.2 + five local commits (HTTP/1 chunked body handed on as fragments; UDP: stop reading after a short recvmmsg batch; UDP: keep the receive buffers recvmmsg did not fill), three runtime guards, release options; an unpatched twin of the same recipe is byte-identical to the official binary",
+  "source_sha256": "46c98673eddc4f480cfc79cf8b6cfb620b6fec97245dcc0332535d43475d3971"
+ }
+}

@@ -31,6 +31,7 @@ Shape kinds:
 import copy
 import json
 import os
+import re
 
 HCM = "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager"
 ROUTER = "type.googleapis.com/envoy.extensions.filters.http.router.v3.Router"
@@ -101,7 +102,8 @@ STATS_LOG_MAX_COUNTERS = 1024
 SETTINGS = {
     "tls": "TLS on the listener: {cert: rsa2048|ecdsa-p256, resumption: true (Envoy default) | false "
            "(stateless and stateful session resumption disabled), groups: [X25519MLKEM768|X25519|P-256, ...] "
-           "(tls_params.ecdh_curves; unset = Envoy's default X25519MLKEM768:X25519:P-256)}",
+           "(tls_params.ecdh_curves; unset = Envoy's default X25519MLKEM768:X25519:P-256), alpn: [protocols] "
+           "(common_tls_context.alpn_protocols, e.g. [h2]; unset = the listener offers none)}",
     "hpack_table_size": "HTTP/2 HPACK dynamic table size in bytes (http2_protocol_options); unset = default",
     "tracing": "OpenTelemetry tracer over gRPC to the local collector: {sampling_pct: 0..100}",
     "access_log": "file access log: {format: text (Envoy's default format) | json (the same fields)}; the "
@@ -176,17 +178,32 @@ SETTINGS = {
                     "against, sni, san (exact DNS SAN match, optional), cert: client cert kind (mTLS, optional), "
                     "alpn: [protocols] (optional), max_session_keys (optional)}",
     "origin_server": "which origin server the origin cluster targets: plain (the default, HTTP/1.1) | h2c "
-                     "(origin.h2c_port) | tls (origin.tls_port, TLS with ALPN h2 and http/1.1); ignored by "
-                     "the first hop of a two-hop arm",
+                     "(origin.h2c_port) | tls (origin.tls_port, TLS with ALPN h2 and http/1.1) | stream (the "
+                     "stream origin's HTTP/1.1 port, origin.stream_port) | stream_h2 (its HTTP/2 cleartext port, "
+                     "origin.stream_h2_port; with upstream_http2); ignored by the first hop of a two-hop arm",
     "runtime": "a layered_runtime static layer: {key: value} (e.g. envoy.reloadable_features.http2_use_oghttp2)",
     "grpc_stats": "grpc_stats filter before the router: {stats_for_all_methods: bool}",
+    "tcp_proxy": "the listener carries a tcp_proxy network filter to the origin cluster instead of the HTTP "
+                 "connection manager (stat_prefix relay; no HTTP stats, routes or HTTP filters): true (the "
+                 "filter's defaults, idle timeout 1 h) | {idle_timeout_s: N} (0 disables the idle timer)",
+    "hop_uds": "true, on a two-hop arm: the hop between the two Envoys is a Unix socket in the run directory "
+               "(the first hop's origin cluster and the second hop's listener both use a pipe address)",
+    "origin_uds": "true: the origin cluster targets the origin's Unix socket (origin.uds: a second nginx server "
+                  "that listens on a socket in a directory of the run, bind-mounted into the origin container)",
+    "inert_filters": "the ten core HTTP filters of INERT_FILTERS before the router, each in its documented "
+                     "do-nothing state: true | {disabled: true} (every entry carries `disabled: true`: the "
+                     "filters are configured and not instantiated on a request)",
+    "route_timeout_s": "the route timeout of every proxied route in seconds (0 disables it; unset = Envoy's "
+                       "default of 15 s)",
     "quic": "a second listener, HTTP/3 over QUIC on UDP at the TCP listener's address and port number, with the "
             "same routes and filters and the listener's `tls` certificate: {gso: true (Envoy's default: the GSO "
             "batch writer when the kernel supports it) | false (the default sendmsg writer), prefer_gro: bool "
             "(unset = Envoy's listener default, false), resumption: bool, early_data: bool (unset = Envoy's "
             "defaults, both on without client-certificate validation), ticket_keys: true (one fixed 80-byte "
             "session-ticket key on the QUIC TLS context; used only with the quic_session_ticket_support "
-            "runtime guard on)}. Needs tls; the TCP listener stays as it is",
+            "runtime guard on), stats: true (the quic_stats connection debug visitor: packet and "
+            "retransmission counters per listener, written when a connection closes)}. Needs tls; the TCP "
+            "listener stays as it is",
 }
 
 # The oghttp2 switch of v1.40.2 (runtime_features.cc:326, default false)
@@ -217,11 +234,15 @@ def _headers(prefix, n, value_len=24):
 
 def route_for(shape, cluster="origin", envoy_cfg=None):
     kind = shape["kind"]
-    r = {"match": {"path": shape["path"]}}
+    # `route_match` (a proxied shape whose client path differs per arm, or carries a query): the
+    # route's match object as written; default: the exact path
+    r = {"match": copy.deepcopy(shape["route_match"]) if shape.get("route_match") else {"path": shape["path"]}}
     if kind == "proxied":
         r["route"] = {"cluster": cluster}
         if (envoy_cfg or {}).get("retries"):
             r["route"]["retry_policy"] = {"retry_on": "5xx,reset,connect-failure", "num_retries": 2}
+        if (envoy_cfg or {}).get("route_timeout_s") is not None:
+            r["route"]["timeout"] = "%gs" % float(envoy_cfg["route_timeout_s"])
         if shape.get("request_headers_added"):
             r["request_headers_to_add"] = _headers("req", int(shape["request_headers_added"]))
         if shape.get("response_headers_added"):
@@ -259,7 +280,7 @@ def shape_routes(shape, envoy_cfg=None):
 def routes(shapes, envoy_cfg=None):
     """One route (or route table) per path: shapes that share a path (the same request at
     two rates) share its routes; they must then agree on everything the routes are built from."""
-    out, seen = [], {}
+    out, seen, seen_rm = [], {}, []
     for s in shapes:
         r = shape_routes(s, envoy_cfg)
         if s["path"] in seen:
@@ -267,6 +288,10 @@ def routes(shapes, envoy_cfg=None):
                 raise ValueError("shapes on path %s differ in their route" % s["path"])
             continue
         seen[s["path"]] = r
+        if s.get("route_match") and any(r == x for x in seen_rm):
+            continue  # shapes that share one `route_match` share its route
+        if s.get("route_match"):
+            seen_rm.append(r)
         out.extend(r)
     return out
 
@@ -410,6 +435,50 @@ def stats_access_log(sl):
                      for name in ([stats_access_log_names(1)[0]] * n if sl.get("hot") else stats_access_log_names(n))]}}
 
 
+_HF = "type.googleapis.com/envoy.extensions.filters.http."
+# Ten core (non-contrib) HTTP filters, each in a state in which it does nothing to a request of the
+# measured shapes (protos read at v1.40.2; the fields validation requires are written out):
+# cors without a policy on the route, fault without a fault, rbac without rules, a health check on a
+# path the load never requests, header_mutation without mutations, csrf enabled for 0% of requests,
+# grpc_web (acts on grpc-web content types only), stateful_session without a session state,
+# bandwidth_limit in its DISABLED mode, grpc_http1_bridge (acts on gRPC content types only). The tenth was
+# planned as kill_request: that filter is not in the official binary (extensions_build_config.bzl at the
+# tag: "Disabled by default. kill_request is not built into most prebuilt images"; `--mode validate`
+# rejects its type).
+INERT_HEALTH_PATH = "/epl-inert-healthz"
+INERT_FILTERS = (
+    ("envoy.filters.http.cors", {"@type": _HF + "cors.v3.Cors"}),
+    ("envoy.filters.http.fault", {"@type": _HF + "fault.v3.HTTPFault"}),
+    ("envoy.filters.http.rbac", {"@type": _HF + "rbac.v3.RBAC"}),
+    ("envoy.filters.http.health_check", {"@type": _HF + "health_check.v3.HealthCheck", "pass_through_mode": False,
+                                         "headers": [{"name": ":path",
+                                                      "string_match": {"exact": INERT_HEALTH_PATH}}]}),
+    ("envoy.filters.http.header_mutation", {"@type": _HF + "header_mutation.v3.HeaderMutation"}),
+    ("envoy.filters.http.csrf", {"@type": _HF + "csrf.v3.CsrfPolicy",
+                                 "filter_enabled": {"default_value": {"numerator": 0, "denominator": "HUNDRED"}}}),
+    ("envoy.filters.http.grpc_web", {"@type": _HF + "grpc_web.v3.GrpcWeb"}),
+    ("envoy.filters.http.stateful_session", {"@type": _HF + "stateful_session.v3.StatefulSession"}),
+    ("envoy.filters.http.bandwidth_limit", {"@type": _HF + "bandwidth_limit.v3.BandwidthLimit",
+                                            "stat_prefix": "epl_inert", "enable_mode": "DISABLED"}),
+    ("envoy.filters.http.grpc_http1_bridge", {"@type": _HF + "grpc_http1_bridge.v3.Config"}),
+)
+
+
+def inert_filters(spec):
+    """The HCM filter entries of the `inert_filters` setting, in INERT_FILTERS order."""
+    if spec is True:
+        spec = {}
+    if not isinstance(spec, dict) or set(spec) - {"disabled"} or spec.get("disabled", True) is not True:
+        raise ValueError("inert_filters takes true or {disabled: true}")
+    out = []
+    for name, cfg in INERT_FILTERS:
+        f = {"name": name, "typed_config": copy.deepcopy(cfg)}
+        if spec.get("disabled"):
+            f["disabled"] = True
+        out.append(f)
+    return out
+
+
 def stats_sink(sk, envoy_cfg):
     kind = sk.get("kind")
     if kind in ("statsd", "dog_statsd"):
@@ -477,17 +546,27 @@ def audit_mt_s(b):
     return probs
 
 
-def _static_cluster(name, port, http2=False):
+UDS_MAX_PATH = 107  # sun_path holds 108 bytes with the terminator
+
+
+def pipe_address(path):
+    if not path or not os.path.isabs(path) or len(path.encode()) > UDS_MAX_PATH:
+        raise ValueError("a Unix socket path must be absolute and at most %d bytes: %r" % (UDS_MAX_PATH, path))
+    return {"pipe": {"path": path}}
+
+
+def _static_cluster(name, port, http2=False, pipe=None):
+    addr = pipe_address(pipe) if pipe else {"socket_address": {"address": "127.0.0.1", "port_value": int(port)}}
     c = {"name": name, "connect_timeout": "1s", "type": "STATIC", "lb_policy": "ROUND_ROBIN",
          "load_assignment": {"cluster_name": name, "endpoints": [{"lb_endpoints": [{
-             "endpoint": {"address": {"socket_address": {"address": "127.0.0.1", "port_value": int(port)}}}}]}]}}
+             "endpoint": {"address": addr}}]}]}}
     if http2:
         c["typed_extension_protocol_options"] = {"envoy.extensions.upstreams.http.v3.HttpProtocolOptions": {
             "@type": UPSTREAM_HTTP, "explicit_http_config": {"http2_protocol_options": {}}}}
     return c
 
 
-TLS_KEYS = {"cert", "resumption", "groups", "client_ca", "client_san"}
+TLS_KEYS = {"cert", "resumption", "groups", "client_ca", "client_san", "alpn"}
 
 
 def _cert_kind(kind, what):
@@ -523,6 +602,12 @@ def tls_socket(tls, cert_dir):
         if not (isinstance(groups, list) and groups and all(g in TLS_GROUPS for g in groups)):
             raise ValueError("tls.groups must be a non-empty list of %s" % sorted(TLS_GROUPS))
         ctx["common_tls_context"]["tls_params"] = {"ecdh_curves": list(groups)}
+    alpn = tls.get("alpn")
+    if alpn is not None:
+        # the protocols the listener offers in ALPN (common_tls_context.alpn_protocols); unset = none offered
+        if not (isinstance(alpn, list) and alpn and all(isinstance(x, str) and x for x in alpn)):
+            raise ValueError("tls.alpn must be a non-empty list of protocol names")
+        ctx["common_tls_context"]["alpn_protocols"] = list(alpn)
     if tls.get("client_ca"):
         ctx["require_client_certificate"] = True
         ctx["common_tls_context"]["validation_context"] = _validation(
@@ -607,7 +692,8 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         },
         "http_filters": [{"name": "envoy.filters.http.router", "typed_config": {"@type": ROUTER}}],
     }
-    clusters = [_static_cluster("origin", envoy_cfg.get("upstream_port") or origin_port)]
+    clusters = [_static_cluster("origin", envoy_cfg.get("upstream_port") or origin_port,
+                                pipe=envoy_cfg.get("upstream_pipe"))]
     ka = envoy_cfg.get("downstream_keepalive")
     if ka:
         cho = {}
@@ -680,7 +766,12 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, wasm_filter(envoy_cfg["wasm"]))
     if envoy_cfg.get("compressor"):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, compressor_filter(envoy_cfg["compressor"]))
+    if envoy_cfg.get("inert_filters"):
+        hcm["http_filters"][-1:-1] = inert_filters(envoy_cfg["inert_filters"])
     chain = {"filters": [{"name": "envoy.filters.network.http_connection_manager", "typed_config": hcm}]}
+    tp = envoy_cfg.get("tcp_proxy")
+    if tp:
+        chain = {"filters": [tcp_proxy_filter(tp, envoy_cfg)]}
     if envoy_cfg.get("tls"):
         if not cert_dir:
             raise ValueError("tls needs a certificate directory")
@@ -698,6 +789,11 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
                                        "port_value": int(envoy_cfg["listener_port"])}},
         "filter_chains": [chain],
     }
+    if envoy_cfg.get("listener_pipe"):
+        # a Unix socket in the run directory (the harness sets the path): no TCP listener at all
+        if envoy_cfg.get("listener_fanout") is not None or envoy_cfg.get("quic") is not None:
+            raise ValueError("a pipe listener cannot be combined with listener_fanout or quic")
+        listener["address"] = pipe_address(envoy_cfg["listener_pipe"])
     fan = envoy_cfg.get("listener_fanout")
     if fan is not None:
         # one listener (one filter chain, one TLS context, one session-ticket key) on N loopback
@@ -815,11 +911,12 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
     return out
 
 
-ORIGIN_SERVERS = ("plain", "h2c", "tls")
+ORIGIN_SERVERS = ("plain", "h2c", "tls", "stream", "stream_h2")
 
 QUIC_DTS = "type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicDownstreamTransport"
 UDP_DEFAULT_WRITER = "type.googleapis.com/envoy.extensions.udp_packet_writer.v3.UdpDefaultWriterFactory"
-QUIC_KEYS = {"gso", "prefer_gro", "resumption", "early_data", "ticket_keys"}
+QUIC_KEYS = {"gso", "prefer_gro", "resumption", "early_data", "ticket_keys", "stats", "stats_update_period_ms"}
+QUIC_STATS = "type.googleapis.com/envoy.extensions.quic.connection_debug_visitor.quic_stats.v3.Config"
 # The v1.40.2 guard that switches QUIC to Envoy's own handshaker and session-ticket keys
 # (runtime_features.cc:248-249, FALSE_RUNTIME_GUARD, "Flip to true once QUIC session ticket support is
 # stable"). Off: QUICHE's handshaker, no ticket crypter (EnvoyQuicProofSourceBase::GetTicketCrypter
@@ -841,9 +938,11 @@ def quic_listener(envoy_cfg, hcm, cert_dir):
     bad = sorted(set(q) - QUIC_KEYS)
     if bad:
         raise ValueError("quic: unknown keys %s" % bad)
-    for k in ("gso", "prefer_gro", "resumption", "early_data", "ticket_keys"):
+    for k in ("gso", "prefer_gro", "resumption", "early_data", "ticket_keys", "stats"):
         if k in q and q[k] not in (True, False):
             raise ValueError("quic.%s must be true or false" % k)
+    if q.get("stats_update_period_ms") is not None and not q.get("stats"):
+        raise ValueError("quic.stats_update_period_ms needs quic.stats")
     if q.get("ticket_keys") is False:
         raise ValueError("quic.ticket_keys: leave it out for none")
     tls = envoy_cfg.get("tls")
@@ -868,6 +967,19 @@ def quic_listener(envoy_cfg, hcm, cert_dir):
     h3.pop("http2_protocol_options", None)
     h3["http3_protocol_options"] = {}
     udp = {"quic_options": {}}
+    if q.get("stats"):
+        # Envoy's per-listener QUIC connection statistics (listener.<address>.quic_stats.*: packets sent,
+        # received and retransmitted, written when a connection closes). Off unless asked for: it adds a
+        # visitor to every QUIC connection, so no scored arm sets it.
+        qs = {"@type": QUIC_STATS}
+        if q.get("stats_update_period_ms") is not None:
+            # the visitor also writes the counters of open connections every update_period (default: only at close)
+            n = q["stats_update_period_ms"]
+            if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+                raise ValueError("quic.stats_update_period_ms must be a positive integer")
+            qs["update_period"] = "%.3fs" % (n / 1000.0)
+        udp["quic_options"]["connection_debug_visitor_config"] = {
+            "name": "envoy.quic.connection_debug_visitor.quic_stats", "typed_config": qs}
     if "prefer_gro" in q:
         udp["downstream_socket_config"] = {"prefer_gro": q["prefer_gro"]}
     if q.get("gso", True) is False:
@@ -918,6 +1030,29 @@ def _xds_bootstrap(out, hcm, shapes, envoy_cfg):
     out["node"] = {"id": "epl", "cluster": "epl"}
 
 
+TCP_PROXY = "type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy"
+# settings that live in the HTTP connection manager: meaningless on a listener that only relays bytes
+TCP_PROXY_EXCLUSIVE = ("tracing", "access_log", "stats_access_log", "ext_authz", "ext_proc", "jwt_authn",
+                       "local_ratelimit", "lua", "wasm", "compressor", "grpc_stats", "retries", "xds", "quic",
+                       "downstream_keepalive", "idle_timers_off", "hpack_table_size", "stats_clusters",
+                       "upstream_http", "upstream_http2", "inert_filters", "route_timeout_s")
+
+
+def tcp_proxy_filter(tp, envoy_cfg):
+    """The listener's only network filter of a `tcp_proxy` arm: bytes relayed to the origin cluster."""
+    if tp is True:
+        tp = {}
+    if not isinstance(tp, dict) or set(tp) - {"idle_timeout_s"}:
+        raise ValueError("tcp_proxy takes true or {idle_timeout_s}")
+    bad = [k for k in TCP_PROXY_EXCLUSIVE if envoy_cfg.get(k)]
+    if bad:
+        raise ValueError("tcp_proxy cannot be combined with %s" % bad)
+    cfg = {"@type": TCP_PROXY, "stat_prefix": "relay", "cluster": "origin"}
+    if tp.get("idle_timeout_s") is not None:
+        cfg["idle_timeout"] = "%ds" % int(tp["idle_timeout_s"])
+    return {"name": "envoy.filters.network.tcp_proxy", "typed_config": cfg}
+
+
 def grpc_service(client, name, port, timeout=None):
     """GrpcService for a side service on 127.0.0.1:port: envoy_grpc through the static cluster
     `name` (HTTP/2), or google_grpc straight to the address (insecure channel: no credentials
@@ -964,9 +1099,38 @@ def origin_files(shapes):
     """{relative path under www: size} for proxied shapes."""
     out = {}
     for s in shapes:
-        if s["kind"] == "proxied" and not s.get("grpc"):  # a gRPC shape's body is grpc_files'
+        if s["kind"] == "proxied" and not s.get("grpc") and not s.get("origin_inline") and not s.get("stream"):
+            # a gRPC shape's body is grpc_files'; an inline shape's body is in nginx.conf
             out[s["path"].lstrip("/")] = int(s["body_bytes"])
     return out
+
+
+def inline_bodies(shapes):
+    """{path: body bytes count} of the proxied shapes the origin answers from memory (`origin_inline`:
+    nginx `return 200 "<body>"`, headers and body in one write)."""
+    out = {}
+    for s in shapes:
+        if s["kind"] == "proxied" and s.get("origin_inline"):
+            n = int(s["body_bytes"])
+            if not 1 <= n <= 4096 or not re.match(r"^/[A-Za-z0-9_-]+$", s["path"]):
+                raise ValueError("shape %s: origin_inline needs 1..4096 body bytes and a plain path" % s.get("name"))
+            out[s["path"]] = n
+    return out
+
+
+def chunked_paths(shapes):
+    """Paths of the proxied shapes the nginx origin sends chunked (`origin_chunked`)."""
+    out = []
+    for s in shapes:
+        if s["kind"] == "proxied" and s.get("origin_chunked"):
+            if not re.match(r"^/[A-Za-z0-9_-]+$", s["path"]):
+                raise ValueError("shape %s: origin_chunked needs a plain path" % s.get("name"))
+            out.append(s["path"])
+    return sorted(set(out))
+
+
+def _inline_locations(inline):
+    return "".join("\n    location = %s { return 200 \"%s\"; }" % (p, "a" * n) for p, n in sorted((inline or {}).items()))
 
 
 def body_path(shape, root):
@@ -1061,7 +1225,8 @@ def _grpc_locations(grpc):
 
 def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_timeout_s=600,
                keepalive_requests=10000000, types=None, worker_connections=8192, worker_rlimit_nofile=None,
-               stub_status=False, h2c_port=None, tls_port=None, tls_cert=None, grpc=None):
+               stub_status=False, h2c_port=None, tls_port=None, tls_cert=None, grpc=None, inline=None,
+               uds=None, chunked=None):
     authz = ("  server { listen 127.0.0.1:%d; location / { return 200; } }\n" % int(authz_port)) if authz_port else ""
     tloc = "".join("\n    location = %s { types { } default_type %s; }" % (p, t) for p, t in sorted((types or {}).items()))
     if h2c_port:
@@ -1081,6 +1246,13 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
                   "    location = /%s { internal; types { } default_type application/grpc;\n"
                   "      add_trailer grpc-status 0 always; }\n"
                   "  }\n" % (int(authz_grpc_port), AUTHZ_GRPC_FILE, AUTHZ_GRPC_FILE))
+    iloc = _inline_locations(inline)
+    # a file the origin itself sends chunked (`origin_chunked` shapes): the SSI filter takes the response
+    # through memory buffers and drops its Content-Length, so nginx frames it with its own chunk sizes
+    iloc += "".join("\n    location = %s { ssi on; ssi_types *; }" % p for p in sorted(chunked or ()))
+    if uds:
+        # the same content on a Unix socket (the path as the container sees it)
+        authz += "  server { listen unix:%s; root /www;%s%s\n  }\n" % (uds, tloc, iloc)
     head = ("worker_processes %d;\n"
             "pid /tmp/nginx.pid;\n"
             "error_log stderr warn;\n" % int(workers)
@@ -1100,5 +1272,6 @@ def nginx_conf(port, workers, authz_port=None, authz_grpc_port=None, keepalive_t
                  "".join("\n    location = %s { types { } default_type %s; }" % (p, t)
                          for p, t in sorted((types or {}).items()))
                  + ("\n    location = %s { stub_status; }" % ORIGIN_STATUS_PATH if stub_status else "")
-                 + ("\n " if (types or stub_status) else ""), authz)
+                 + iloc
+                 + ("\n " if (types or stub_status or iloc) else ""), authz)
     )

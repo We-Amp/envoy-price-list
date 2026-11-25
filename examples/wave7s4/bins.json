@@ -1,0 +1,27 @@
+{
+ "official": {
+  "binary": "~/epl/bin/envoy-1.40.2",
+  "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+  "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+ },
+ "dfs": {
+  "binary": "~/epl/bins/wave7s4/envoy-otel-dfs",
+  "source": "own build of v1.40.2 + the OpenTelemetry deferred-span patch (local commit ec7206bbb33a), release options; the unpatched twin of this build is byte-identical to the official binary",
+  "source_sha256": "88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d"
+ },
+ "dfs-sym": {
+  "binary": "~/epl/bins/wave7s4/envoy-otel-dfs.unstripped",
+  "source": "the dfs link before stripping (strip-all of it gives the dfs file); evidence legs only, never scored",
+  "source_sha256": "95937f692a631f6d6562ec49ee530e9885c81fe337e37fb4d40153b600bc8873"
+ },
+ "trainer": {
+  "binary": "~/epl/bins/wave7s4/envoy-pgolto",
+  "source": "wave 2: v1.40.2 + instrumented PGO (pgo-recipe-v1 nine-leg trainer) + ThinLTO",
+  "source_sha256": "d1b4f16e650345957eca97ef690adf149f19ae0ca1d4a1388d6154312270487d"
+ },
+ "tests": {
+  "binary": "~/epl/bins/wave7s4/envoy-pgolto-tests",
+  "source": "v1.40.2 + instrumented PGO from 12 integration tests and 10 benchmark tests of Envoy's own suite + ThinLTO, the wave 2 options",
+  "source_sha256": "7a47b051a37c4f9db0e2866c0125605e027b9b2c58563630afec046f493b8760"
+ }
+}

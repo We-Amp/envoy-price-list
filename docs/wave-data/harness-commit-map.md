@@ -31,11 +31,36 @@ scripts in its own.
 | `773e4a0363f2`, `5814d60a7dc5` | `arm-vm-layout/epl/runs/wave5i/smoke/smoke-w5i.<time>` (the two smokes replaced by a later one) | `d49ca12` + `e88e2bc` + `d9940fc` | `4cef65e` |
 | `33b56817cdae` | `arm-vm-layout/epl/runs/wave5i/w5i` and its smoke | `d49ca12` + `e88e2bc` + `d9940fc` | `4cef65e` |
 | `145e52d51d5c` | `arm-metal-layout/epl/runs/wave6j/*` | `d49ca12` + `e88e2bc` + `d9940fc` | `1fb9a4f` (`examples/wave6j`) |
+| uncommitted: an archive of `5e2cee4ed28c` | `second-hop/wave7s1/*` except the second chain | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `875ae4f` (`examples/wave7s1`) |
+| uncommitted: an archive of `a3435a1dfd3d` | `second-hop/wave7s1/mech/*-kcg-*` (the second chain, `chain-s1-kcg.*`) | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `875ae4f` |
+| uncommitted: an archive of `f4664f4154c4` | `bodies-streams/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `91accca` (`examples/wave7s2`) |
+| uncommitted: an archive of `109dee8db917` | `feature-stack/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `3d57495` (`examples/wave7s3`) |
+| uncommitted: an archive of `81231c798815` | `tracing-tests-profile/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `97f391e` (`examples/wave7s4`) |
+| uncommitted: an archive of `7b0fe311dc0e` | `tests-profile-integration/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `03e777b` (`examples/wave7s4b`) |
+| uncommitted: an archive of `98046815d123` | `relay-syscalls/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `1a20982` (`examples/wave7s5`) |
+| uncommitted: an archive of `6306f37c0bbb` | `chunked-copy/*`, `http3-receive/tail-w8-1/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `cdb8de9` (`examples/wave8w1`) |
+| uncommitted: an archive of `f2e86dbd29aa` | `http3-receive/visit1/*` (stopped at its signature gate, nothing scored) | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `0d842b4` (`examples/wave8w2`) |
+| uncommitted: an archive of `05b229aacf8b` | `http3-receive/wave8w2/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `0d842b4` |
+| uncommitted: an archive of `26dca714a6ab` | `http3-receive/tail-w8-3/*` | `d49ca12` + `e88e2bc` + `d9940fc` + `5150d55` | `6ffde87` (`examples/wave8tail`) |
 
 The build scripts of the code-layout arms are `1c66f7c` (`tools/code-layout`); the release-asset tools
 and this documentation `85dd1d0` and later.
 
 ## What differs between a measured commit and the published code
+
+- **Waves 7 and 8.** One working branch for both waves, on top of the combined harness of waves 5 and 6; the
+  bench box got each session's harness as a `git archive` without a commit file, so the records read
+  `0.1.0 (uncommitted)` and the measured commit is the one named above. The published history takes the
+  harness changes in one commit (`5150d55`: tcp_proxy listeners, Unix-socket hops, the stream origin, inert
+  filters, route timeouts, ALPN, the QUIC statistics visitor, the runtime read-back) and each session's
+  examples in its own. The tail add-on that ran after session W8-3 is published on its own, as
+  `examples/wave8tail` (its scripts were in the session's example directory; the configs are byte for byte the
+  ones that ran); session W8-3 itself and the gate visit before it are not in this release. In the examples,
+  references to unpublished planning and review documents, and to who decided a rule, were replaced by what
+  they stand for ("plan", "fixed before the run", "not decided by the table"), in the session commits and in
+  `d775885` (comments and docstrings of `examples/wave7s1`, `wave7s2`, `wave8w1` and `wave8tail`); the configs are
+  byte for byte the ones that ran (`make.py` regenerates them). Their data is the
+  assets of the fourth release, `waves-2026-11d` (`874739f`).
 
 - **Waves 5 and 6.** Their working branches followed each other (wave 5 H, then the arm64 branches I and J
   on top of it; K on top of H); the published history takes their harness changes in one commit

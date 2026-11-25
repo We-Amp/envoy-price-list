@@ -1,0 +1,321 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.03
+    },
+    {
+     "label": "origin: 200 events per response",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 200.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.events",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: one write per event (200 per response)",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 200.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: body_bytes per response 40000",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 40000.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: events sent more than 0.5 ms late under 0.1% of events",
+     "max": 0.001,
+     "per": "field:stream_origin.d.events",
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.late_events"
+    },
+    {
+     "label": "warm upstream pool: at most 0.02 new connections per request in the window",
+     "max": 0.02,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "ev200",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "upstream bytes read per request: 41285 (head, 200 framed events)",
+     "per_request": 41285,
+     "shape": "ev200",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.03
+    },
+    {
+     "absent": true,
+     "label": "stream idle timeout at its default",
+     "scope": "config",
+     "stat": "stream_idle_timeout"
+    },
+    {
+     "absent": true,
+     "label": "connection idle timeouts at their defaults",
+     "scope": "config",
+     "stat": "common_http_protocol_options"
+    },
+    {
+     "absent": true,
+     "label": "route timeout at its default (not set)",
+     "scope": "config",
+     "stat": "timeout"
+    }
+   ],
+   "name": "base",
+   "settings": {
+    "origin_server": "stream"
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "equals": true,
+     "label": "origin counters read before and after the window",
+     "scope": "field",
+     "stat": "stream_origin.ok"
+    },
+    {
+     "equals": 0,
+     "label": "origin: no failed write",
+     "scope": "field",
+     "stat": "stream_origin.d.write_errors",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "label": "origin: no rejected request",
+     "scope": "field",
+     "stat": "stream_origin.d.bad_requests",
+     "tol_abs": 0
+    },
+    {
+     "label": "origin: its own response count per request 1.000",
+     "per": "field:responses_raw",
+     "per_request": 1.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.responses",
+     "tol": 0.03
+    },
+    {
+     "label": "origin: 200 events per response",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 200.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.events",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: one write per event (200 per response)",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 200.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.write_calls",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: body_bytes per response 40000",
+     "per": "field:stream_origin.d.responses",
+     "per_request": 40000.0,
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.body_bytes",
+     "tol": 0.001
+    },
+    {
+     "label": "origin: events sent more than 0.5 ms late under 0.1% of events",
+     "max": 0.001,
+     "per": "field:stream_origin.d.events",
+     "scope": "field",
+     "shape": "ev200",
+     "stat": "stream_origin.d.late_events"
+    },
+    {
+     "label": "warm upstream pool: at most 0.02 new connections per request in the window",
+     "max": 0.02,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "shape": "ev200",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "label": "upstream bytes read per request: 41285 (head, 200 framed events)",
+     "per_request": 41285,
+     "shape": "ev200",
+     "stat": "cluster.origin.upstream_cx_rx_bytes_total",
+     "tol": 0.03
+    },
+    {
+     "equals": "0s",
+     "label": "stream idle timeout 0s",
+     "scope": "config",
+     "stat": "stream_idle_timeout"
+    },
+    {
+     "equals": {
+      "idle_timeout": "0s"
+     },
+     "label": "connection idle timeout 0s wherever it is set (listener and origin cluster)",
+     "scope": "config",
+     "stat": "common_http_protocol_options"
+    },
+    {
+     "label": "the origin cluster carries its own protocol options (upstream idle timeout)",
+     "present": true,
+     "scope": "config",
+     "stat": "explicit_http_config"
+    },
+    {
+     "absent": true,
+     "label": "route timeout at its default (not set)",
+     "scope": "config",
+     "stat": "timeout"
+    }
+   ],
+   "name": "idle-off",
+   "settings": {
+    "idle_timers_off": true,
+    "origin_server": "stream",
+    "upstream_http": {
+     "idle_timeout_s": 0
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "base",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "evidence_mode": "record",
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "bash ~/epl/harness-wave7s2/examples/wave7s2/perf-kcg.sh",
+  "window_s": 20
+ },
+ "name": "mech-kcg-stream",
+ "order": "fixed",
+ "order_seed": 712,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stream_binary": "tools/streamorigin/out/epl-streamorigin-linux-amd64",
+  "stream_h2_port": 8099,
+  "stream_port": 8098,
+  "stream_sha256": "bcbe933cff4661d044d1cacef2bfe58855d4e38affeccd3f38fbb3e7b07dcf7a",
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 40000,
+   "client_path": "/sse?events=200&bytes=200&gap_us=1000",
+   "events": 200,
+   "kind": "proxied",
+   "name": "ev200",
+   "path": "/ev200",
+   "route_match": {
+    "prefix": "/sse"
+   },
+   "rps": 208,
+   "stream": true
+  }
+ ],
+ "smoke": true,
+ "validity": {
+  "require_perf_unmultiplexed": false
+ },
+ "workdir": "~/epl/runs/wave7s2"
+}

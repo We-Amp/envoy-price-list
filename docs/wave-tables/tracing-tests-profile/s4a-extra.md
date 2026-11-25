@@ -1,0 +1,74 @@
+
+## shape s
+
+- s: patched-0 vs stock-0-A2 [cycles_total]: -2.11% [-2.85, -1.37] (simple), -2.13 log points; paired difference -11.8k ± 2.4k; up in 0 of 8 rounds
+- s: stock-0-A2 vs notrace [cycles_total]: +5.86% [+4.44, +7.29] (simple), +5.69 log points; paired difference +30.8k ± 7.2k; up in 8 of 8 rounds
+- s: patched-0-guard-off vs stock-0-A2 [cycles_total]: +0.69% [-0.41, +1.80] (simple), +0.68 log points; paired difference +3.8k ± 5.9k; up in 6 of 8 rounds
+- s: stock-0 vs notrace [instructions_u]: +13.03% [+12.28, +13.78] (simple), +12.25 log points; paired difference +21.3k ± 0.1k; up in 8 of 8 rounds
+- s: stock-0 vs notrace [cycles_u]: +9.98% [+8.71, +11.27] (simple), +9.51 log points; paired difference +34.4k ± 4.1k; up in 8 of 8 rounds
+- s: stock-0 vs notrace [cycles_k]: +0.41% [-0.72, +1.56] (simple), +0.41 log points; paired difference +0.7k ± 2.0k; up in 5 of 8 rounds
+- s: patched-0 vs notrace [instructions_u]: +7.87% [+7.15, +8.59] (simple), +7.57 log points; paired difference +12.9k ± 0.1k; up in 8 of 8 rounds
+- s: patched-0 vs notrace [cycles_u]: +5.99% [+4.78, +7.20] (simple), +5.81 log points; paired difference +20.7k ± 3.9k; up in 8 of 8 rounds
+- s: patched-0 vs notrace [cycles_k]: -0.90% [-2.36, +0.58] (simple), -0.90 log points; paired difference -1.6k ± 2.7k; up in 2 of 8 rounds
+- s: patched-0 vs stock-0 [instructions_u]: -4.56% [-5.20, -3.92] (simple), -4.67 log points; paired difference -8.5k ± 0.1k; up in 0 of 8 rounds
+- s: patched-0 vs stock-0 [cycles_u]: -3.63% [-4.40, -2.86] (simple), -3.70 log points; paired difference -13.8k ± 2.0k; up in 0 of 8 rounds
+- s: patched-0 vs stock-0 [cycles_k]: -1.31% [-2.43, -0.17] (simple), -1.32 log points; paired difference -2.4k ± 2.0k; up in 2 of 8 rounds
+- s: patched-0-guard-off vs stock-0 [instructions_u]: +0.25% [-0.42, +0.92] (simple), +0.25 log points; paired difference +0.5k ± 0.1k; up in 8 of 8 rounds
+- s: patched-0-guard-off vs stock-0 [cycles_u]: -0.33% [-1.15, +0.49] (simple), -0.33 log points; paired difference -1.3k ± 2.2k; up in 1 of 8 rounds
+- s: patched-0-guard-off vs stock-0 [cycles_k]: +0.37% [-0.64, +1.39] (simple), +0.37 log points; paired difference +0.7k ± 1.7k; up in 6 of 8 rounds
+- s: patched-1 vs stock-1 [instructions_u]: -4.50% [-5.14, -3.86] (simple), -4.61 log points; paired difference -8.4k ± 0.1k; up in 0 of 8 rounds
+- s: patched-1 vs stock-1 [cycles_u]: -2.81% [-3.58, -2.04] (simple), -2.85 log points; paired difference -10.7k ± 1.9k; up in 0 of 8 rounds
+- s: patched-1 vs stock-1 [cycles_k]: -0.71% [-1.76, +0.35] (simple), -0.71 log points; paired difference -1.3k ± 1.8k; up in 2 of 8 rounds
+- s: patched-notrace vs notrace [instructions_u]: -0.02% [-0.68, +0.65] (simple), -0.02 log points; paired difference -0.0k ± 0.1k; up in 1 of 8 rounds
+- s: patched-notrace vs notrace [cycles_u]: +0.00% [-0.92, +0.93] (simple), +0.00 log points; paired difference +0.0k ± 2.7k; up in 4 of 8 rounds
+- s: patched-notrace vs notrace [cycles_k]: -0.71% [-1.86, +0.45] (simple), -0.71 log points; paired difference -1.3k ± 2.1k; up in 2 of 8 rounds
+- s: patched-0 vs the geometric mean of stock-0 and stock-0-A2: -2.50% [-3.23, -1.76] (simple)
+- s: the 1% increment, (patched-1 vs patched-0) minus (stock-1 vs stock-0): +0.77 log points [-0.09, +1.62]
+- s: patched-0 vs notrace per round, simple %: +4.21 +2.77 +0.44 +3.33 +4.21 +5.46 +4.30 +4.34; mean of the simple ratios +3.63, median +4.21; rounds above +4: 5 of 8
+  - without round 1: +3.54%
+  - without round 2: +3.74%
+  - without round 3: +4.08%
+  - without round 4: +3.66%
+  - without round 5: +3.54%
+  - without round 6: +3.36%
+  - without round 7: +3.53%
+  - without round 8: +3.52%
+- s: points recovered per round (stock-0 minus patched-0, both against notrace): 4.03 4.00 3.54 3.20 1.75 2.90 2.61 2.55; mean 3.07 ± 0.65 (95% t)
+- s: cycles per request by round (k): r1 notrace 523.7 stock-0 566.8 stock-0-A2 554.9 patched-0 545.7 guard-off 564.7; r2 notrace 525.1 stock-0 560.6 stock-0-A2 555.0 patched-0 539.6 guard-off 567.2; r3 notrace 540.1 stock-0 561.6 stock-0-A2 552.2 patched-0 542.5 guard-off 561.0; r4 notrace 526.9 stock-0 561.3 stock-0-A2 556.3 patched-0 544.4 guard-off 560.8; r5 notrace 523.8 stock-0 555.1 stock-0-A2 553.0 patched-0 545.9 guard-off 556.8; r6 notrace 516.7 stock-0 559.9 stock-0-A2 557.3 patched-0 544.9 guard-off 561.7; r7 notrace 525.8 stock-0 562.1 stock-0-A2 563.2 patched-0 548.4 guard-off 555.2; r8 notrace 525.0 stock-0 561.1 stock-0-A2 561.3 patched-0 547.7 guard-off 556.5
+
+## shape fh
+
+- fh: patched-0 vs stock-0-A2 [cycles_total]: -3.43% [-4.48, -2.37] (simple), -3.49 log points; paired difference -10.5k ± 3.1k; up in 0 of 8 rounds
+- fh: stock-0-A2 vs notrace [cycles_total]: +9.12% [+7.36, +10.90] (simple), +8.72 log points; paired difference +25.6k ± 4.7k; up in 8 of 8 rounds
+- fh: patched-0-guard-off vs stock-0-A2 [cycles_total]: -0.64% [-2.16, +0.90] (simple), -0.64 log points; paired difference -1.9k ± 4.7k; up in 4 of 8 rounds
+- fh: stock-0 vs notrace [instructions_u]: +9.10% [+8.37, +9.83] (simple), +8.71 log points; paired difference +15.0k ± 0.0k; up in 8 of 8 rounds
+- fh: stock-0 vs notrace [cycles_u]: +11.61% [+9.94, +13.31] (simple), +10.99 log points; paired difference +23.1k ± 3.1k; up in 8 of 8 rounds
+- fh: stock-0 vs notrace [cycles_k]: +0.67% [-0.63, +1.99] (simple), +0.67 log points; paired difference +0.6k ± 1.1k; up in 5 of 8 rounds
+- fh: patched-0 vs notrace [instructions_u]: +3.35% [+2.66, +4.04] (simple), +3.30 log points; paired difference +5.5k ± 0.0k; up in 8 of 8 rounds
+- fh: patched-0 vs notrace [cycles_u]: +7.50% [+5.99, +9.03] (simple), +7.23 log points; paired difference +14.9k ± 2.9k; up in 8 of 8 rounds
+- fh: patched-0 vs notrace [cycles_k]: +0.25% [-1.27, +1.79] (simple), +0.25 log points; paired difference +0.2k ± 1.3k; up in 3 of 8 rounds
+- fh: patched-0 vs stock-0 [instructions_u]: -5.27% [-5.89, -4.63] (simple), -5.41 log points; paired difference -9.5k ± 0.0k; up in 0 of 8 rounds
+- fh: patched-0 vs stock-0 [cycles_u]: -3.69% [-4.70, -2.65] (simple), -3.75 log points; paired difference -8.2k ± 2.2k; up in 0 of 8 rounds
+- fh: patched-0 vs stock-0 [cycles_k]: -0.42% [-2.05, +1.24] (simple), -0.42 log points; paired difference -0.3k ± 1.4k; up in 3 of 8 rounds
+- fh: patched-0-guard-off vs stock-0 [instructions_u]: +0.22% [-0.45, +0.89] (simple), +0.22 log points; paired difference +0.4k ± 0.0k; up in 8 of 8 rounds
+- fh: patched-0-guard-off vs stock-0 [cycles_u]: +0.15% [-1.23, +1.54] (simple), +0.15 log points; paired difference +0.3k ± 3.1k; up in 4 of 8 rounds
+- fh: patched-0-guard-off vs stock-0 [cycles_k]: -0.33% [-1.85, +1.20] (simple), -0.33 log points; paired difference -0.3k ± 1.3k; up in 3 of 8 rounds
+- fh: patched-1 vs stock-1 [instructions_u]: -5.17% [-5.80, -4.54] (simple), -5.31 log points; paired difference -9.4k ± 0.1k; up in 0 of 8 rounds
+- fh: patched-1 vs stock-1 [cycles_u]: -4.25% [-5.25, -3.24] (simple), -4.34 log points; paired difference -9.6k ± 2.2k; up in 0 of 8 rounds
+- fh: patched-1 vs stock-1 [cycles_k]: -0.95% [-2.14, +0.25] (simple), -0.96 log points; paired difference -0.8k ± 1.0k; up in 2 of 8 rounds
+- fh: patched-notrace vs notrace [instructions_u]: +0.00% [-0.66, +0.67] (simple), +0.00 log points; paired difference +0.0k ± 0.0k; up in 4 of 8 rounds
+- fh: patched-notrace vs notrace [cycles_u]: -0.84% [-2.63, +0.99] (simple), -0.84 log points; paired difference -1.7k ± 3.6k; up in 3 of 8 rounds
+- fh: patched-notrace vs notrace [cycles_k]: -0.47% [-2.10, +1.19] (simple), -0.47 log points; paired difference -0.4k ± 1.4k; up in 4 of 8 rounds
+- fh: patched-0 vs the geometric mean of stock-0 and stock-0-A2: -3.11% [-4.18, -2.04] (simple)
+- fh: the 1% increment, (patched-1 vs patched-0) minus (stock-1 vs stock-0): -0.58 log points [-2.17, +1.02]
+- fh: patched-0 vs notrace per round, simple %: +7.29 +4.40 +4.84 +2.50 +6.57 +7.13 +4.11 +6.22; mean of the simple ratios +5.38, median +5.53; rounds above +4: 7 of 8
+  - without round 1: +5.10%
+  - without round 2: +5.51%
+  - without round 3: +5.45%
+  - without round 4: +5.79%
+  - without round 5: +5.20%
+  - without round 6: +5.12%
+  - without round 7: +5.55%
+  - without round 8: +5.25%
+- fh: points recovered per round (stock-0 minus patched-0, both against notrace): 1.77 4.01 5.30 2.82 4.12 0.72 2.36 3.15; mean 3.03 ± 1.21 (95% t)
+- fh: cycles per request by round (k): r1 notrace 278.1 stock-0 303.3 stock-0-A2 307.8 patched-0 298.4 guard-off 309.4; r2 notrace 283.0 stock-0 306.8 stock-0-A2 306.9 patched-0 295.5 guard-off 310.8; r3 notrace 278.1 stock-0 306.3 stock-0-A2 309.4 patched-0 291.6 guard-off 303.4; r4 notrace 285.8 stock-0 301.0 stock-0-A2 302.3 patched-0 292.9 guard-off 306.6; r5 notrace 278.1 stock-0 307.8 stock-0-A2 309.0 patched-0 296.4 guard-off 301.1; r6 notrace 280.7 stock-0 302.8 stock-0-A2 306.6 patched-0 300.7 guard-off 296.4; r7 notrace 287.2 stock-0 305.8 stock-0-A2 305.6 patched-0 299.0 guard-off 307.3; r8 notrace 279.7 stock-0 305.9 stock-0-A2 308.1 patched-0 297.1 guard-off 305.2

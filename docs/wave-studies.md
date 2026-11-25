@@ -1,6 +1,6 @@
 # The wave studies: how to run them again
 
-Waves 1 to 6 of the price list, and the code-layout work of waves 2, 5 and 6: what each study needs to be
+Waves 1 to 8 of the price list, and the code-layout work of waves 2, 5 and 6: what each study needs to be
 reproduced, where its configs and scripts are, and the commands that render every table from our
 data. The studies:
 
@@ -17,6 +17,14 @@ data. The studies:
 | Arm code layout, cloud VM | 5 | PGO + ThinLTO (and `-mcpu`) on arm64, Neoverse V2 class VM; its ordering-file figure is held (no file control) | [`examples/wave5i`](../examples/wave5i), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-vm-layout` (third release) |
 | Arm code layout, bare metal | 6 | the same plus AutoFDO and BOLT from SPE profiles, with a file control, Neoverse N3 | [`examples/wave6j`](../examples/wave6j), [`tools/code-layout/arm`](../tools/code-layout/arm) | `arm-metal-layout` (third release) |
 | Mitigations, cloud VM | 6 | the mitigation price on a current x86 CPU in a cloud VM, four boots | [`examples/wave6k`](../examples/wave6k) | `mitigations-cloud` (third release) |
+| Second hop | 7 | a second Envoy hop: HTTP against a TCP relay, Unix sockets between hops and to the origin; a relayed small message | [`examples/wave7s1`](../examples/wave7s1) | `second-hop` (fourth release) |
+| Bodies and streams | 7 | chunked bodies against the same bytes with a length, streamed events, a 32 KiB buffer limit, HTTP/3 at 0 B and 4 KB | [`examples/wave7s2`](../examples/wave7s2), [`tools/streamorigin`](../tools/streamorigin) | `bodies-streams` (fourth release) |
+| Feature stack | 7 | seven common features together against the lean config, with and without a statsd sink; ten inert filters; idle timers | [`examples/wave7s3`](../examples/wave7s3) | `feature-stack` (fourth release) |
+| Tracing and tests profile | 7 | a deferred OpenTelemetry span at 0% sampling; PGO + ThinLTO trained on Envoy's own tests | [`examples/wave7s4`](../examples/wave7s4) | `tracing-tests-profile` (fourth release) |
+| Integration-tests profile | 7 | PGO + ThinLTO trained on the integration tests alone | [`examples/wave7s4b`](../examples/wave7s4b) | `tests-profile-integration` (fourth release) |
+| Relay syscalls | 7 | an experiment build without two empty kernel calls per relayed message | [`examples/wave7s5`](../examples/wave7s5) | `relay-syscalls` (fourth release) |
+| Chunked copy | 8 | an HTTP/1 chunked body passed as fragments instead of copied | [`examples/wave8w1`](../examples/wave8w1) | `chunked-copy` (fourth release) |
+| HTTP/3 receive path | 8 | two QUIC receive commits (stop guard, buffer reuse); server-side retransmission counts | [`examples/wave8w2`](../examples/wave8w2), [`examples/wave8tail`](../examples/wave8tail) | `http3-receive` (fourth release) |
 
 Each example directory has a README with the conditions of its runs (box, CPUs, binaries, shapes,
 rates, rounds, order). This page has what is common and the commands.
@@ -26,12 +34,17 @@ Envoy patch sources: the `v2` statsd batching build of the statsd-batching study
 `77fdeb8484` and `ee71e0583f`). The first batching build (`7979fa6063`, superseded by v2) is tag
 `statsd-batch-2026-11/v1` (branch `candidates/statsd-batch-v1`) of the same repository. The source of the
 header-validation ceiling build (`af3172d385`, measurement only, result dropped) is not published. The code-layout arms are builds of tag v1.40.2 (`tools/code-layout`).
+The relay syscall experiment of wave 7 is tag `relay-syscalls-2026-11/v1` of the same repository (an
+experiment, not a proposal); the QUIC receive-buffer reuse commit of wave 8 is branch
+`candidates/quic-udp-reuse`. The sources of the other wave 7 and 8 builds (the deferred span, the
+tests-trained profiles, the chunked fragments, the QUIC stop guard) are not published; their sha256 are in
+the example directories' `bins.json`.
 
 ## Get the data first
 
-The raw records (about 1.2 GB unpacked) are not in git. They are assets of three releases, one archive
+The raw records (about 2.3 GB unpacked) are not in git. They are assets of four releases, one archive
 per study: tag `waves-2026-11` (waves 1 to 3 and the code-layout work), tag `waves-2026-11b` (wave 4,
-HTTP/3) and tag `waves-2026-11c` (waves 5 and 6):
+HTTP/3), tag `waves-2026-11c` (waves 5 and 6) and tag `waves-2026-11d` (waves 7 and 8):
 
 ```
 python3 tools/fetch-wave-data.py                      # every study
@@ -44,7 +57,7 @@ The script downloads `<tag>-data-<study>.tar.gz` from
 `https://github.com/We-Amp/envoy-price-list/releases/download/<tag>/` (each study from its own
 release), checks each archive
 against `data/wave-data.SHA256SUMS`, unpacks into `data/waves/` (ignored by git) and checks every file
-against `data/wave-data.manifest`. `--from DIR` takes archives you already have; `--verify` checks the
+against the manifests in `data/`. `--from DIR` takes archives you already have; `--verify` checks the
 unpacked tree again, for example after rendering the tables into it. The assets, sizes and checksums:
 [`docs/wave-data/ASSETS.md`](wave-data/ASSETS.md). What is in the archives:
 [`docs/wave-data/README.md`](wave-data/README.md) (also at the top of every archive). What was changed
@@ -238,6 +251,119 @@ python3 examples/wave6j/analysis/analyse_w6j.py $D/arm-metal-layout/epl/runs/wav
 Per shape: the file control (`opt-file` against `official`), the layout row, `order`, `autofdo`, `pgolto`,
 `bolt`, the AutoFDO share of the PGO gain, and the decision rules fixed before the run. The arms' builds:
 [`tools/code-layout/arm/README.md`](../tools/code-layout/arm/README.md).
+
+### Second hop (`second-hop`)
+
+```
+S=$D/second-hop
+python3 examples/wave7s1/table.py $S/wave7s1/s1a-hop --json $S/s1a-table.json > $S/s1a-table.md
+python3 examples/wave7s1/table.py $S/wave7s1/s1b-relay --json $S/s1b-table.json > $S/s1b-table.md
+python3 examples/wave7s1/mech_table.py $S/wave7s1/mech --json $S/mech-table.json > $S/mech-table.md
+```
+
+`s1a-hop`: cycles (user + kernel, both Envoys) per request of the pair, the second hop as HTTP against a TCP
+relay, with mTLS on the hop, and with Unix sockets between the hops and to the origin, each against its base with
+its A/A. `s1b-relay`: one Envoy as a TCP relay of small messages. `mech-table`: syscalls per request or message
+and the kernel call-graph shares of the non-scored mechanism legs.
+
+### Bodies and streams (`bodies-streams`)
+
+```
+B=$D/bodies-streams
+for r in s2a-chunked s2b-stream s2c-buf s2d-h3; do
+  python3 examples/wave7s2/table.py $B/wave7s2/$r --json $B/${r%%-*}-table.json > $B/${r%%-*}-table.md; done
+python3 examples/wave7s2/mech_table.py $B/wave7s2/mech --json $B/mech-table.json > $B/mech-table.md
+python3 examples/wave7s2/mech_gates.py $B/wave7s2/mech $B/mech-table.json --json $B/mech-gates.json > $B/mech-gates.md
+```
+
+Chunked bodies against content-length bodies in the same writes (the control for the copy), streamed
+events, the buffer limit and HTTP/3 against HTTP/2 over TLS. Three shapes failed their A/A; their rows are
+decided only by the three-times rule (the table says which). `mech-gates`: the mechanism gates (events,
+buffer limit, the HTTP/3 receive path, the chunked copy).
+
+### Feature stack (`feature-stack`)
+
+```
+F=$D/feature-stack
+for r in s3a-stack s3b-chain; do k=${r%%-*}
+  python3 examples/wave7s3/table.py $F/wave7s3/$r --json $F/$k-table.json > $F/$k-table.md
+  python3 examples/wave7s3/evidence_summary.py $F/wave7s3/$r --json $F/$k-evidence.json > $F/$k-evidence.md; done
+python3 examples/wave7s3/mech_table.py $F/wave7s3/mech --json $F/mech-table.json > $F/mech-table.md
+```
+
+`s3a`: the stack and the lean config against the bare config, and the stack against the sum of the published
+single rows (the compounding claim, with its band fixed before the run). `s3b`: ten inert filters, the same with
+`disabled: true`, and the idle timers off; the kill lines.
+
+### Tracing and tests profile (`tracing-tests-profile`)
+
+```
+T=$D/tracing-tests-profile
+for r in s4a-otel s4b-pgo; do k=${r%%-*}
+  python3 examples/wave7s4/table.py $T/wave7s4/$r --json $T/$k-table.json > $T/$k-table.md
+  python3 examples/wave7s4/evidence_summary.py $T/wave7s4/$r --json $T/$k-evidence.json > $T/$k-evidence.md; done
+python3 examples/wave7s4/extra.py $T/wave7s4/s4a-otel > $T/s4a-extra.md
+```
+
+`s4a`: tracing at 0% sampling with the deferred span against no tracing and against the official binary's
+tracer; the share of the unsampled cost it removes; both build controls. `s4b`: the profile trained on Envoy's
+tests against the trainer profile, as the kept share of the trainer's gain. `s4a-extra.md`: supplementary
+readings of the same run (analysis only).
+
+### Integration-tests profile (`tests-profile-integration`)
+
+```
+I=$D/tests-profile-integration
+python3 examples/wave7s4b/table.py $I/wave7s4b/it-pgo --s4 $D/tracing-tests-profile/s4b-table.json \
+    --json $I/it-pgo-table.json > $I/it-pgo-table.md
+python3 examples/wave7s4/evidence_summary.py $I/wave7s4b/it-pgo --json $I/it-pgo-evidence.json > $I/it-pgo-evidence.md
+```
+
+The kept share of the profile from the integration tests alone; it reads the `s4b` table of
+`tracing-tests-profile` for the trainer's gain (fetch both archives).
+
+### Relay syscalls (`relay-syscalls`)
+
+```
+R=$D/relay-syscalls
+python3 examples/wave7s5/table.py $R/wave7s5 --json $R/s5-table.json > $R/s5-table.md
+python3 examples/wave7s5/mech_table.py $R/wave7s5/mech --json $R/s5-mech.json > $R/s5-mech.md
+python3 examples/wave7s5/evidence_summary.py $R/wave7s5/relay-1 $R/wave7s5/relay-2 $R/wave7s5/http-1 \
+    $R/wave7s5/http-2 --json $R/s5-evidence.json > $R/s5-evidence.md
+```
+
+The experiment build with both guards on against both off (inside one binary) and against the official binary,
+each guard alone, on the 64-byte relay and on 4 KB HTTP; the relay's same-build check missed its floor, so its rows
+are decided by the three-times rule. `s5-mech`: syscalls per relayed message and send calls under load.
+
+### Chunked copy (`chunked-copy`)
+
+```
+C=$D/chunked-copy
+python3 examples/wave8w1/table.py $C/w1/wave8w1 --json $C/w1-table.json > $C/w1-table.md
+python3 examples/wave8w1/evidence_summary.py $C/w1/wave8w1 --json $C/w1-evidence.json > $C/w1-evidence.md
+```
+
+The fragment build's guard on against off at 1 MiB and 64 KiB, an nginx origin sending chunked, and the rider
+rows; user and kernel cycles beside every row; writev calls and iovecs per MiB from the traced legs. The patch is
+killed by the 3% line.
+
+### HTTP/3 receive path (`http3-receive`)
+
+```
+H=$D/http3-receive
+python3 examples/wave8w2/table.py $H/wave8w2 --json $H/w2-table.json > $H/w2-table.md
+python3 examples/wave8w2/mech_table.py $H/wave8w2 --json $H/w2-mech.json > $H/w2-mech.md
+python3 examples/wave8w2/evidence_summary.py $H/wave8w2/s-1 $H/wave8w2/s-2 --json $H/w2-evidence.json > $H/w2-evidence.md
+python3 examples/wave8w1/tail_check.py $H/tail-w8-1/wave8w1/tail --json $H/tail-w8-1/tail-table.json > $H/tail-w8-1/tail-table.md
+python3 examples/wave8tail/tail_check.py $H/tail-w8-3/wave8w3/tail --json $H/tail-w8-3/tail-table.json > $H/tail-w8-3/tail-table.md
+```
+
+`w2`: both commits against the old receive loop, the stop guard alone, at low load; the same-build check and the
+HTTP/3 anchor. `w2-mech`: `recvmmsg` calls per request and the empty share, by arm. The two tails (Exploratory,
+unscored for CPU): server-side QUIC retransmissions per 100,000 packets sent, by arm, and in `tail-w8-3` where the
+stop arm's excess falls in the run and row C4 (the buffer-reuse commit alone). `visit1/` holds the first visit,
+which stopped at its signature gate; nothing in it is scored.
 
 ### Per-run summaries
 
