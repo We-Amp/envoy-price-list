@@ -1,0 +1,458 @@
+# s3b-chain: per-arm success evidence (current legs: 72; superseded: 0)
+
+## fh / f0
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 18
+- responses_window: 160331 to 160432
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7221022708798988
+- worker_max_share: 0.252 to 0.254
+- envoy_cpus_run: 1.008 to 1.040
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## fh / f0-A2
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 18
+- responses_window: 160354 to 160418
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7270954555560624
+- worker_max_share: 0.253 to 0.257
+- envoy_cpus_run: 1.012 to 1.044
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## fh / f10
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 32
+- responses_window: 160346 to 160418
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7206323617653678
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.172 to 1.198
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 445
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["cors", "fault", "rbac", "health_check", "header_mutation", "csrf", "grpc_web", "stateful_session", "bandwidth_limit", "grpc_http1_bridge", "router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## fh / f10-off
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 28
+- responses_window: 160338 to 160393
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7241144299122309
+- worker_max_share: 0.252 to 0.259
+- envoy_cpus_run: 1.010 to 1.050
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 445
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["cors (disabled)", "fault (disabled)", "rbac (disabled)", "health_check (disabled)", "header_mutation (disabled)", "csrf (disabled)", "grpc_web (disabled)", "stateful_session (disabled)", "bandwidth_limit (disabled)", "grpc_http1_bridge (disabled)", "router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## fh / idle-off
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 19
+- responses_window: 160346 to 160430
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7261774622867023
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 0.982 to 1.003
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [{"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": ["0s", "0s"], "tracing_sampling": []}
+
+## fh / timers-off-all
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 19
+- responses_window: 160368 to 160438
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx: 0
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7235770473706749
+- worker_max_share: 0.253 to 0.259
+- envoy_cpus_run: 0.985 to 0.999
+- side_services_busy_max: 0
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [{"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": ["0s", "0s", "0s"], "stats_sinks": [], "stream_idle_timeout": ["0s", "0s"], "tracing_sampling": []}
+
+## s / f0
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 20
+- responses_window: 104228 to 104279
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7469993294477161
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.238 to 1.260
+- side_services_busy_max: 0.02169
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## s / f0-A2
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 20
+- responses_window: 104208 to 104268
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.744564513281369
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.238 to 1.266
+- side_services_busy_max: 0.02194
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## s / f10
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 34
+- responses_window: 104233 to 104261
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7510531890154613
+- worker_max_share: 0.252 to 0.254
+- envoy_cpus_run: 1.350 to 1.373
+- side_services_busy_max: 0.02191
+- stats_in_saved_snapshot: 445
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["cors", "fault", "rbac", "health_check", "header_mutation", "csrf", "grpc_web", "stateful_session", "bandwidth_limit", "grpc_http1_bridge", "router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## s / f10-off
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 30
+- responses_window: 104220 to 104284
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.748490377428267
+- worker_max_share: 0.252 to 0.255
+- envoy_cpus_run: 1.238 to 1.261
+- side_services_busy_max: 0.02169
+- stats_in_saved_snapshot: 445
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["cors (disabled)", "fault (disabled)", "rbac (disabled)", "health_check (disabled)", "header_mutation (disabled)", "csrf (disabled)", "grpc_web (disabled)", "stateful_session (disabled)", "bandwidth_limit (disabled)", "grpc_http1_bridge (disabled)", "router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## s / idle-off
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 21
+- responses_window: 104235 to 104263
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7545270836068715
+- worker_max_share: 0.253 to 0.253
+- envoy_cpus_run: 1.214 to 1.231
+- side_services_busy_max: 0.02161
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [{"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": ["0s", "0s"], "tracing_sampling": []}
+
+## s / timers-off-all
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 21
+- responses_window: 104238 to 104276
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: -
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7515311217073821
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.189 to 1.219
+- side_services_busy_max: 0.02174
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [{"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}, {"idle_timeout": "0s"}], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": ["0s", "0s", "0s"], "stats_sinks": [], "stream_idle_timeout": ["0s", "0s"], "tracing_sampling": []}
+

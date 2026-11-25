@@ -1,0 +1,514 @@
+# s4a-otel: per-arm success evidence (current legs: 128; superseded: 0; binaries unchanged at the end: True)
+
+## fh / notrace
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 7
+- responses_window: 160348 to 160428
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.0000
+- sampled_share: 0.00000
+- spans_sent_leg: -
+- collector_export_requests_leg: -
+- spans_accepted_per_completed: -
+- spans_accepted_leg: -
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7255383416533576
+- worker_max_share: 0.252 to 0.255
+- envoy_cpus_run: 1.017 to 1.051
+- side_services_busy_max: 3e-05
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [], "tracer": []}
+
+## fh / patched-0
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 11
+- responses_window: 160341 to 160408
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000 to 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7235469931538953
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.062 to 1.096
+- side_services_busy_max: 0
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## fh / patched-0-guard-off
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 11
+- responses_window: 160366 to 160433
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000 to 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 1
+- client_headroom_min: 0.7230728564598055
+- worker_max_share: 0.250 to 0.254
+- envoy_cpus_run: 1.075 to 1.126
+- side_services_busy_max: 0
+- config dump and admin /runtime: {"admin_runtime": {"entries": {"envoy.reloadable_features.otel_tracer_deferred_span": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.otel_tracer_deferred_span": false}}]}], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## fh / patched-1
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 12
+- responses_window: 160362 to 160429
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.9896 to 0.9903
+- sampled_share: 0.00972 to 0.01037
+- spans_sent_leg: 2322 to 2431
+- collector_export_requests_leg: 475 to 498
+- spans_accepted_per_completed: 0.00967 to 0.01013
+- spans_accepted_leg: 2322 to 2431
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7236304642999117
+- worker_max_share: 0.252 to 0.256
+- envoy_cpus_run: 1.081 to 1.094
+- side_services_busy_max: 0.00042
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{"value": 1}, {"value": 1}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## fh / patched-notrace
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 7
+- responses_window: 160341 to 160433
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.0000
+- sampled_share: 0.00000
+- spans_sent_leg: -
+- collector_export_requests_leg: -
+- spans_accepted_per_completed: -
+- spans_accepted_leg: -
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.719037533765942
+- worker_max_share: 0.252 to 0.254
+- envoy_cpus_run: 1.007 to 1.039
+- side_services_busy_max: 0
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [], "tracer": []}
+
+## fh / stock-0
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 11
+- responses_window: 160332 to 160396
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000 to 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7231184981756473
+- worker_max_share: 0.252 to 0.260
+- envoy_cpus_run: 1.092 to 1.116
+- side_services_busy_max: 0
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## fh / stock-0-A2
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 11
+- responses_window: 160364 to 160413
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7231060565890058
+- worker_max_share: 0.252 to 0.255
+- envoy_cpus_run: 1.098 to 1.123
+- side_services_busy_max: 3e-05
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## fh / stock-1
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 12
+- responses_window: 160339 to 160428
+- client_2xx_per_s: 8000.0 to 8000.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.9896 to 0.9908
+- sampled_share: 0.00916 to 0.01042
+- spans_sent_leg: 2274 to 2492
+- collector_export_requests_leg: 467 to 510
+- spans_accepted_per_completed: 0.00948 to 0.01038
+- spans_accepted_leg: 2274 to 2492
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 0.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7271120090763589
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.105 to 1.135
+- side_services_busy_max: 0.00043
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{"value": 1}, {"value": 1}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / notrace
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 10
+- responses_window: 104224 to 104279
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.0000
+- sampled_share: 0.00000
+- spans_sent_leg: -
+- collector_export_requests_leg: -
+- spans_accepted_per_completed: -
+- spans_accepted_leg: -
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 157.998 to 158.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.754027063981607
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.234 to 1.288
+- side_services_busy_max: 0.02171
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [], "tracer": []}
+
+## s / patched-0
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 14
+- responses_window: 104221 to 104274
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.002
+- runtime_num_keys: 0
+- client_headroom_min: 0.7455082855235443
+- worker_max_share: 0.250 to 0.254
+- envoy_cpus_run: 1.277 to 1.300
+- side_services_busy_max: 0.02144
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / patched-0-guard-off
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 14
+- responses_window: 104236 to 104297
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.000
+- runtime_num_keys: 1
+- client_headroom_min: 0.7531486634391034
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.313 to 1.345
+- side_services_busy_max: 0.02121
+- config dump and admin /runtime: {"admin_runtime": {"entries": {"envoy.reloadable_features.otel_tracer_deferred_span": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.otel_tracer_deferred_span": false}}]}], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / patched-1
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 15
+- responses_window: 104235 to 104269
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.9895 to 0.9904
+- sampled_share: 0.00960 to 0.01048
+- spans_sent_leg: 1546 to 1599
+- collector_export_requests_leg: 319 to 332
+- spans_accepted_per_completed: 0.00991 to 0.01025
+- spans_accepted_leg: 1546 to 1599
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7461012092065428
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.294 to 1.303
+- side_services_busy_max: 0.02165
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{"value": 1}, {"value": 1}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / patched-notrace
+
+- binary_sha256: 88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d
+- binary_path: ~/epl/bins/wave7s4/envoy-otel-dfs
+- binary_version: ec7206bbb33a93a3ccec3a05e092ae25e110dc63/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 10
+- responses_window: 104236 to 104280
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.0000
+- sampled_share: 0.00000
+- spans_sent_leg: -
+- collector_export_requests_leg: -
+- spans_accepted_per_completed: -
+- spans_accepted_leg: -
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 158.000 to 158.002
+- runtime_num_keys: 0
+- client_headroom_min: 0.7545564106030436
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.237 to 1.271
+- side_services_busy_max: 0.02139
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [], "tracer": []}
+
+## s / stock-0
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 14
+- responses_window: 104221 to 104257
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000 to 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7545473769973337
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.311 to 1.340
+- side_services_busy_max: 0.02165
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / stock-0-A2
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 14
+- responses_window: 104236 to 104277
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 1.0000
+- sampled_share: 0.00000
+- spans_sent_leg: 0
+- collector_export_requests_leg: 0
+- spans_accepted_per_completed: 0.00000
+- spans_accepted_leg: 0
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7545240905879939
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.304 to 1.332
+- side_services_busy_max: 0.02114
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{}, {}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+
+## s / stock-1
+
+- binary_sha256: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_path: ~/epl/bin/envoy-1.40.2
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- legs: 8
+- valid: 8
+- evidence_ok: 8
+- evidence_items_per_leg: 15
+- responses_window: 104226 to 104268
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx_envoy: 0
+- non2xx_client: 0
+- envoy_exit_codes: [0]
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- not_traceable_per_req: 0.9896 to 0.9908
+- sampled_share: 0.00918 to 0.01036
+- spans_sent_leg: 1473 to 1600
+- collector_export_requests_leg: 304 to 330
+- spans_accepted_per_completed: 0.00944 to 0.01026
+- spans_accepted_leg: 1473 to 1600
+- spans_refused: 0
+- upstream_tx_bytes_per_req: 241.998 to 242.000
+- runtime_num_keys: 0
+- client_headroom_min: 0.7545523868976571
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.301 to 1.346
+- side_services_busy_max: 0.02187
+- config dump and admin /runtime: {"admin_runtime": {"entries": {}, "layers": []}, "layered_runtime": [], "random_sampling": [{"value": 1}, {"value": 1}], "tracer": ["envoy.tracers.opentelemetry", "envoy.tracers.opentelemetry"]}
+

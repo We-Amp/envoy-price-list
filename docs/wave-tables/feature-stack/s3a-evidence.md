@@ -1,0 +1,230 @@
+# s3a-stack: per-arm success evidence (current legs: 36; superseded: 0)
+
+## sx / bare
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 12
+- responses_window: 104233 to 104286
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 0.00000 to 0.00001
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7489985161679102
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.264 to 1.291
+- side_services_busy_max: 0.02271
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## sx / bare-A2
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 12
+- responses_window: 104240 to 104273
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: -
+- access_log_bytes_per_line: -
+- sampled_share: 0.00000
+- spans_accepted_per_completed: -
+- spans_refused: 0
+- metric_points_accepted: -
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 0.00000
+- compressor_not_compressed_per_req: -
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: -
+- jwt_cache_hit_per_req: -
+- jwt_denied: 0
+- ratelimit_ok_per_req: -
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7530017405811289
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.268 to 1.283
+- side_services_busy_max: 0.02208
+- stats_in_saved_snapshot: 407
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["router"], "jwt_cache": false, "retry_policy": false, "route_timeout": [], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": []}
+
+## sx / lean
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 35
+- responses_window: 104250 to 104320
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: 1.0000
+- access_log_bytes_per_line: 144.0 to 144.0
+- sampled_share: 0.00984 to 0.01090
+- spans_accepted_per_completed: 0.00998 to 0.01077
+- spans_refused: 0
+- metric_points_accepted: 1238 to 1406
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 0.00000
+- compressor_not_compressed_per_req: 1.0000 to 1.0000
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: 1.0000 to 1.0000
+- jwt_cache_hit_per_req: 1.0000 to 1.0000
+- jwt_denied: 0
+- ratelimit_ok_per_req: 1.0000 to 1.0000
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7521696064472103
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.509 to 1.551
+- side_services_busy_max: 0.02292
+- stats_in_saved_snapshot: 586
+- config dump: {"access_log_json": false, "common_http_protocol_options": [], "http_filters": ["jwt_authn", "local_ratelimit", "compressor", "router"], "jwt_cache": true, "retry_policy": true, "route_timeout": ["0.250s", "0.250s"], "stats_sinks": ["envoy.stat_sinks.open_telemetry"], "stream_idle_timeout": [], "tracing_sampling": [1, 1]}
+
+## sx / typical
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 34
+- responses_window: 104249 to 104293
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: 1.0000
+- access_log_bytes_per_line: 366.0 to 366.0
+- sampled_share: 0.00968 to 0.01072
+- spans_accepted_per_completed: 0.00978 to 0.01028
+- spans_refused: 0
+- metric_points_accepted: 0
+- statsd_datagrams_per_req: 3.0101 to 3.0106
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 3.00861 to 3.00904
+- compressor_not_compressed_per_req: 1.0000 to 1.0000
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: 1.0000 to 1.0000
+- jwt_cache_hit_per_req: 1.0000 to 1.0000
+- jwt_denied: 0
+- ratelimit_ok_per_req: 1.0000 to 1.0000
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7541020813365746
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.703 to 1.735
+- side_services_busy_max: 0.0235
+- stats_in_saved_snapshot: 586
+- config dump: {"access_log_json": true, "common_http_protocol_options": [], "http_filters": ["jwt_authn", "local_ratelimit", "compressor", "router"], "jwt_cache": true, "retry_policy": true, "route_timeout": ["0.250s", "0.250s"], "stats_sinks": ["envoy.stat_sinks.statsd"], "stream_idle_timeout": [], "tracing_sampling": [1, 1]}
+
+## sx / typical-A2
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 34
+- responses_window: 104244 to 104280
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: 1.0000
+- access_log_bytes_per_line: 366.0 to 366.0
+- sampled_share: 0.00978 to 0.01051
+- spans_accepted_per_completed: 0.00978 to 0.01032
+- spans_refused: 0
+- metric_points_accepted: 0
+- statsd_datagrams_per_req: 3.0101 to 3.0106
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 3.00862 to 3.00893
+- compressor_not_compressed_per_req: 1.0000 to 1.0000
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: 1.0000 to 1.0000
+- jwt_cache_hit_per_req: 1.0000 to 1.0000
+- jwt_denied: 0
+- ratelimit_ok_per_req: 1.0000 to 1.0000
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7445658805105375
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.708 to 1.736
+- side_services_busy_max: 0.02347
+- stats_in_saved_snapshot: 586
+- config dump: {"access_log_json": true, "common_http_protocol_options": [], "http_filters": ["jwt_authn", "local_ratelimit", "compressor", "router"], "jwt_cache": true, "retry_policy": true, "route_timeout": ["0.250s", "0.250s"], "stats_sinks": ["envoy.stat_sinks.statsd"], "stream_idle_timeout": [], "tracing_sampling": [1, 1]}
+
+## sx / typical-nosink
+
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 33
+- responses_window: 104258 to 104277
+- client_2xx_per_s: 5200.0 to 5200.0
+- non2xx: 0
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- new_upstream_cx_per_req: 0.00000
+- retries: 0
+- access_log_lines_per_completed: 1.0000
+- access_log_bytes_per_line: 366.0 to 366.0
+- sampled_share: 0.00963 to 0.01052
+- spans_accepted_per_completed: 0.00974 to 0.01034
+- spans_refused: 0
+- metric_points_accepted: 0
+- statsd_datagrams_per_req: -
+- statsd_dropped: 0
+- udp_out_per_req_boxwide: 0.00000
+- compressor_not_compressed_per_req: 1.0000
+- compressor_compressed: 0
+- compressor_no_accept_header: 0
+- jwt_allowed_per_req: 1.0000 to 1.0000
+- jwt_cache_hit_per_req: 1.0000 to 1.0000
+- jwt_denied: 0
+- ratelimit_ok_per_req: 1.0000 to 1.0000
+- ratelimit_limited: 0
+- inert_action_counters_sum: 0
+- client_headroom_min: 0.7490720062328906
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.526 to 1.557
+- side_services_busy_max: 0.02329
+- stats_in_saved_snapshot: 586
+- config dump: {"access_log_json": true, "common_http_protocol_options": [], "http_filters": ["jwt_authn", "local_ratelimit", "compressor", "router"], "jwt_cache": true, "retry_policy": true, "route_timeout": ["0.250s", "0.250s"], "stats_sinks": [], "stream_idle_timeout": [], "tracing_sampling": [1, 1]}
+

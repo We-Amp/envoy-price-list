@@ -6,12 +6,15 @@ manifest in this repository.
     python3 tools/fetch-wave-data.py --verify [--tag TAG] [--dest DIR] [STUDY ...]
     python3 tools/fetch-wave-data.py --list
 
-Without STUDY every archive is fetched (about 650 MB unpacked). The archives are the assets of two
-releases: tag waves-2026-11 (waves 1 to 3 and the code-layout work) and tag waves-2026-11b (wave 4,
-HTTP/3); each study's archive is fetched from its own release:
+Without STUDY every archive is fetched (about 2.3 GB unpacked). The archives are the assets of four
+releases: tag waves-2026-11 (waves 1 to 3 and the code-layout work), tag waves-2026-11b (wave 4,
+HTTP/3), tag waves-2026-11c (waves 5 and 6) and tag waves-2026-11d (waves 7 and 8); each study's archive
+is fetched from its own release:
 
     https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11/
     https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11b/
+    https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11c/
+    https://github.com/We-Amp/envoy-price-list/releases/download/waves-2026-11d/
 
 --tag TAG takes only the studies of that release. --from names another base URL for every
 archive, or a directory that already holds the archives. Each archive is

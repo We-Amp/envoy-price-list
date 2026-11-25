@@ -1,0 +1,1016 @@
+# relay-1: per-arm evidence (current legs: 36; superseded: 0; binaries unchanged at the end: True; kernel Linux-6.8.0-151-generic-x86_64-with-glibc2.39)
+
+## relay-1 / p64 / official
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 38
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 160369 to 160431
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.001", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.001"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7400423583752029
+- worker_max_share: 0.252 to 0.255
+- envoy_cpus_run: 0.618 to 0.651
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02398
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [], "tcp_proxy_filters": 3}
+
+## relay-1 / p64 / official-A2
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 38
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 160333 to 160433
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.001", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.001", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7395785825601335
+- worker_max_share: 0.253 to 0.258
+- envoy_cpus_run: 0.631 to 0.658
+- foreign_cpus_on_envoy_cores_max: 0.0002
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02411
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [], "tcp_proxy_filters": 3}
+
+## relay-1 / p64 / patched-off
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160365 to 160432
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.001", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7401406292926143
+- worker_max_share: 0.252 to 0.258
+- envoy_cpus_run: 0.620 to 0.649
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02468
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 3}
+
+## relay-1 / p64 / read-only
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160379 to 160445
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.003", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.001", "origin to Envoy": "226.001 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7371529857907706
+- worker_max_share: 0.251 to 0.257
+- envoy_cpus_run: 0.591 to 0.611
+- foreign_cpus_on_envoy_cores_max: 0.0004
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02434
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 3}
+
+## relay-1 / p64 / write-only
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160377 to 160452
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "225.999 to 226.001", "Envoy to origin": "44.000 to 44.000", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.001"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7386831150020997
+- worker_max_share: 0.251 to 0.256
+- envoy_cpus_run: 0.608 to 0.637
+- foreign_cpus_on_envoy_cores_max: 0.0004
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02424
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 3}
+
+## relay-1 / p64 / both-on
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160363 to 160471
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "225.999 to 226.003", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "225.999 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.736104447972195
+- worker_max_share: 0.252 to 0.258
+- envoy_cpus_run: 0.572 to 0.589
+- foreign_cpus_on_envoy_cores_max: 0.0005
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02402
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 3}
+
+# relay-2: per-arm evidence (current legs: 36; superseded: 0; binaries unchanged at the end: True; kernel Linux-6.8.0-151-generic-x86_64-with-glibc2.39)
+
+## relay-2 / p64 / official
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 38
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 160383 to 160429
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.003", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.001", "origin to Envoy": "226.000 to 226.004"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7381456305423588
+- worker_max_share: 0.252 to 0.258
+- envoy_cpus_run: 0.620 to 0.647
+- foreign_cpus_on_envoy_cores_max: 0.0005
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02455
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [], "tcp_proxy_filters": 3}
+
+## relay-2 / p64 / official-A2
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 38
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 160386 to 160438
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.003", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7420694549821005
+- worker_max_share: 0.252 to 0.256
+- envoy_cpus_run: 0.621 to 0.645
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02429
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [], "tcp_proxy_filters": 3}
+
+## relay-2 / p64 / patched-off
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160369 to 160424
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.001 to 226.001", "Envoy to origin": "44.000 to 44.000", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7366044425353508
+- worker_max_share: 0.252 to 0.256
+- envoy_cpus_run: 0.630 to 0.667
+- foreign_cpus_on_envoy_cores_max: 0.0005
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02431
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 3}
+
+## relay-2 / p64 / read-only
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160377 to 160456
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.001", "Envoy to origin": "44.000 to 44.001", "client to Envoy": "44.000 to 44.001", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7400581123111566
+- worker_max_share: 0.251 to 0.258
+- envoy_cpus_run: 0.588 to 0.617
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02433
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 3}
+
+## relay-2 / p64 / write-only
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160389 to 160430
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.001", "Envoy to origin": "44.000 to 44.000", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.000 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7340914967001128
+- worker_max_share: 0.251 to 0.257
+- envoy_cpus_run: 0.608 to 0.640
+- foreign_cpus_on_envoy_cores_max: 0.0005
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02471
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 3}
+
+## relay-2 / p64 / both-on
+
+- kind: relay
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 39
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 160360 to 160433
+- responses_from: ["origin"]
+- target_rps: [8000]
+- client_2xx_per_s: 8000.0 to 8000.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "226.000 to 226.003", "Envoy to origin": "44.000 to 44.000", "client to Envoy": "44.000 to 44.000", "origin to Envoy": "226.001 to 226.003"}
+- upstream_2xx_per_req: -
+- downstream_2xx_per_req: -
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.downstream_flow_control_paused_reading_total": 0, "tcp.relay.idle_timeout": 0, "tcp.relay.upstream_flush_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0, "tcp.relay.downstream_cx_no_route": 0, "tcp.relay.idle_timeout": 0}
+- tcp_connections_to_origin_end_of_window: 512
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7391200375287992
+- worker_max_share: 0.252 to 0.258
+- envoy_cpus_run: 0.568 to 0.585
+- foreign_cpus_on_envoy_cores_max: 0.0004
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02437
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 1, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 3}
+
+# http-1: per-arm evidence (current legs: 36; superseded: 0; binaries unchanged at the end: True; kernel Linux-6.8.0-151-generic-x86_64-with-glibc2.39)
+
+## http-1 / s / official
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 45
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 104233 to 104274
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.000", "Envoy to origin": "158.000 to 158.002", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4351.000"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 241 to 361
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7530191629934627
+- worker_max_share: 0.251 to 0.253
+- envoy_cpus_run: 1.234 to 1.276
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02145
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [], "tcp_proxy_filters": 1}
+
+## http-1 / s / official-A2
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 45
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 104248 to 104292
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.000", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.961 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 237 to 355
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7545772857137607
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.242 to 1.254
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02187
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [], "tcp_proxy_filters": 1}
+
+## http-1 / s / patched-off
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104233 to 104276
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.002", "client to Envoy": "41.999 to 42.000", "origin to Envoy": "4350.958 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 205 to 374
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.750009004640708
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.253 to 1.271
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02135
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 1}
+
+## http-1 / s / read-only
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104221 to 104274
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.000", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.961 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 232 to 367
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7410423229180552
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.212 to 1.241
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02059
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 1}
+
+## http-1 / s / write-only
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104242 to 104263
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4354.000 to 4354.039", "Envoy to origin": "158.000 to 158.002", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4351.000 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 256 to 335
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.753066250078755
+- worker_max_share: 0.250 to 0.253
+- envoy_cpus_run: 1.229 to 1.260
+- foreign_cpus_on_envoy_cores_max: 0.0002
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02184
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 1}
+
+## http-1 / s / both-on
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104232 to 104250
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4354.000 to 4354.042", "Envoy to origin": "157.998 to 158.002", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.961 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 267 to 322
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7455138999416789
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.215 to 1.233
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02121
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 1}
+
+# http-2: per-arm evidence (current legs: 36; superseded: 0; binaries unchanged at the end: True; kernel Linux-6.8.0-151-generic-x86_64-with-glibc2.39)
+
+## http-2 / s / official
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 45
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 104218 to 104260
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.000", "Envoy to origin": "157.998 to 158.002", "client to Envoy": "41.999 to 42.000", "origin to Envoy": "4350.958 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 229 to 373
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7535427246505092
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.240 to 1.252
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02126
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [], "tcp_proxy_filters": 1}
+
+## http-2 / s / official-A2
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 45
+- binary_sha256_per_leg: ["1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"]
+- binary_pin: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc
+- binary_version: b2d89e0ae53916f28770771fbdd49c5c99c5c5a2/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": -1, \"wr\": -1}"]
+- guards_at_leg_end: ["{\"sr\": -1, \"wr\": -1}"]
+- runtime_num_keys_leg_end: 0
+- responses_window: 104245 to 104295
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.000", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.958 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 229 to 353
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7570217322182393
+- worker_max_share: 0.251 to 0.255
+- envoy_cpus_run: 1.235 to 1.260
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02135
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {}, "layers": []}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [], "tcp_proxy_filters": 1}
+
+## http-2 / s / patched-off
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104223 to 104262
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.000", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.958 to 4351.000"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 188 to 336
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.752061957597979
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.246 to 1.262
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02083
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 1}
+
+## http-2 / s / read-only
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 0}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 0}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104227 to 104264
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "158.000 to 158.002", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4351.000 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 239 to 333
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7540542623429687
+- worker_max_share: 0.251 to 0.254
+- envoy_cpus_run: 1.218 to 1.242
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02101
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "false", "layer_values": ["false"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": false, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 1}
+
+## http-2 / s / write-only
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 0, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 0, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104232 to 104263
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.000", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4351.000 to 4351.042"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 302 to 364
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7570164605652686
+- worker_max_share: 0.251 to 0.252
+- envoy_cpus_run: 1.245 to 1.262
+- foreign_cpus_on_envoy_cores_max: 0.0003
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02179
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "false", "layer_values": ["false"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": false}}]}], "tcp_proxy_filters": 1}
+
+## http-2 / s / both-on
+
+- kind: http
+- legs: 6
+- valid: 6
+- evidence_ok: 6
+- evidence_items_per_leg: 46
+- binary_sha256_per_leg: ["778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416"]
+- binary_pin: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_all_legs_equal_pin: True
+- binary_sha256_at_run_start: 778ae56e14e1d208a23507c0083b63d768b030396bbdea1fc9d80ff58d0e3416
+- binary_version: 1e2aeafad89a347015063107c51127d3b09efdb4/1.40.2/Clean/RELEASE/BoringSSL
+- guards_at_leg_start: ["{\"sr\": 1, \"wr\": 1}"]
+- guards_at_leg_end: ["{\"sr\": 1, \"wr\": 1}"]
+- runtime_num_keys_leg_end: 2
+- responses_window: 104204 to 104267
+- responses_from: ["None"]
+- target_rps: [5200]
+- client_2xx_per_s: 5200.0 to 5200.0
+- open_loop_flag_in_every_leg: True
+- non2xx_envoy: 0
+- non2xx_client: 0
+- client_overflow: 0
+- client_pending_total_max: 16
+- envoy_exit_codes: [0]
+- bytes_per_request: {"Envoy to client": "4353.958 to 4354.042", "Envoy to origin": "157.998 to 158.002", "client to Envoy": "42.000 to 42.000", "origin to Envoy": "4350.958 to 4351.002"}
+- upstream_2xx_per_req: 1.0000 to 1.0000
+- downstream_2xx_per_req: 1.0000
+- window_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_destroy": 0, "cluster.origin.upstream_cx_destroy_local": 0, "cluster.origin.upstream_cx_destroy_local_with_active_rq": 0, "cluster.origin.upstream_cx_destroy_remote": 0, "cluster.origin.upstream_cx_destroy_remote_with_active_rq": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_cx_total": 0, "cluster.origin.upstream_flow_control_backed_up_total": 0, "cluster.origin.upstream_flow_control_paused_reading_total": 0, "cluster.origin.upstream_rq_pending_overflow": 0, "cluster.origin.upstream_rq_retry": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_destroy": 0, "http.ingress_http.downstream_cx_destroy_local": 0, "http.ingress_http.downstream_cx_destroy_remote": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_flow_control_paused_reading_total": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_destroy": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "listener.127.0.0.1_10110.downstream_cx_total": 0}
+- leg_end_counters_summed_over_legs: {"cluster.origin.upstream_cx_connect_fail": 0, "cluster.origin.upstream_cx_connect_timeout": 0, "cluster.origin.upstream_cx_overflow": 0, "cluster.origin.upstream_cx_protocol_error": 0, "cluster.origin.upstream_rq_rx_reset": 0, "cluster.origin.upstream_rq_timeout": 0, "cluster.origin.upstream_rq_tx_reset": 0, "http.ingress_http.downstream_cx_delayed_close_timeout": 0, "http.ingress_http.downstream_cx_protocol_error": 0, "http.ingress_http.downstream_rq_4xx": 0, "http.ingress_http.downstream_rq_5xx": 0, "http.ingress_http.downstream_rq_rx_reset": 0, "http.ingress_http.downstream_rq_timeout": 0, "http.ingress_http.downstream_rq_tx_reset": 0, "listener.127.0.0.1_10110.downstream_cx_overflow": 0, "listener.127.0.0.1_10110.downstream_cx_overload_reject": 0, "server.debug_assertion_failures": 0, "server.envoy_bug_failures": 0}
+- tcp_connections_to_origin_end_of_window: 230 to 347
+- tcp_connections_from_client_end_of_window: 512
+- client_headroom_min: 0.7540799148749909
+- worker_max_share: 0.252 to 0.253
+- envoy_cpus_run: 1.216 to 1.232
+- foreign_cpus_on_envoy_cores_max: 0.0002
+- perf_running_pct_min: 100.0
+- side_services_busy_max: 0.02234
+- window_counters_all_zero: True
+- leg_end_counters_all_zero: True
+- config dump and admin /runtime at the arm's first start: {"admin_runtime_first_start": {"entries": {"envoy.reloadable_features.connection_write_in_current_iteration": {"final_value": "true", "layer_values": ["true"]}, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": {"final_value": "true", "layer_values": ["true"]}}, "layers": ["epl-static"]}, "enable_mptcp": [], "http_connection_managers": 3, "layered_runtime": [{"layers": [{"name": "epl-static", "static_layer": {"envoy.reloadable_features.connection_write_in_current_iteration": true, "envoy.reloadable_features.raw_buffer_socket_stop_on_short_read": true}}]}], "tcp_proxy_filters": 1}
+
