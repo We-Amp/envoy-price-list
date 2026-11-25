@@ -1,0 +1,178 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.01 new connections per request in the window",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "absent": true,
+     "label": "buffer limits at their defaults",
+     "scope": "config",
+     "stat": "per_connection_buffer_limit_bytes"
+    }
+   ],
+   "name": "buf-default",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.01 new connections per request in the window",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 4096,
+     "label": "buffer limit 4096 on the listener and the origin cluster",
+     "scope": "config",
+     "stat": "per_connection_buffer_limit_bytes"
+    }
+   ],
+   "name": "buf-4k",
+   "settings": {
+    "buffer_limit_bytes": 4096
+   },
+   "shapes": [
+    "m"
+   ],
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "evidence": [
+    {
+     "per_request": 1.0,
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "warm upstream pool: at most 0.01 new connections per request in the window",
+     "max": 0.01,
+     "per": "field:responses_raw",
+     "scope": "window",
+     "stat": "cluster.origin.upstream_cx_total"
+    },
+    {
+     "equals": 32768,
+     "label": "buffer limit 32768 on the listener and the origin cluster",
+     "scope": "config",
+     "stat": "per_connection_buffer_limit_bytes"
+    }
+   ],
+   "name": "buf-32k",
+   "settings": {
+    "buffer_limit_bytes": 32768
+   },
+   "shapes": [
+    "l64",
+    "l1m"
+   ],
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "buf-default",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "evidence_mode": "record",
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "bash ~/epl/harness-wave7s2/examples/wave7s2/perf-sys.sh",
+  "window_s": 20
+ },
+ "name": "mech-sys-buf",
+ "order": "fixed",
+ "order_seed": 713,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 16384,
+   "kind": "proxied",
+   "name": "m",
+   "path": "/m",
+   "rps": 5440
+  },
+  {
+   "body_bytes": 65536,
+   "kind": "proxied",
+   "name": "l64",
+   "path": "/l64",
+   "rps": 2000
+  },
+  {
+   "body_bytes": 1048576,
+   "kind": "proxied",
+   "name": "l1m",
+   "path": "/l1m",
+   "rps": 800
+  }
+ ],
+ "smoke": true,
+ "validity": {
+  "require_perf_unmultiplexed": false
+ },
+ "workdir": "~/epl/runs/wave7s2"
+}
