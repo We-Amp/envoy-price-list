@@ -65,7 +65,7 @@ RQ2XX = dict({"stat": "cluster.origin.upstream_rq_2xx"}, **ONE)
 NO_TLS = {"stat": "cluster.origin.ssl.handshake", "scope": "leg", "absent": True, "label": "no TLS to the upstream"}
 
 
-# Plan review, S1 item 2: proof that requests succeeded where Envoy sees no HTTP status, and that the
+# Fixed before the run: proof that requests succeeded where Envoy sees no HTTP status, and that the
 # upstream connections are one per client connection and none comes or goes in the window
 CLIENT_2XX = {"stat": "client_rate_2xx", "scope": "field", "min": 0.99, "max": 1.01, "per": "field:target_rps",
               "label": "client: 2xx responses per second within 1% of the target rate"}
@@ -225,7 +225,7 @@ def s1b_arms():
     return [arm("tcp", {"tcp_proxy": True}, tcp_ev + [no_idle]),
             arm("tcp-A2", {"tcp_proxy": True}, tcp_ev + [no_idle]),
             arm("tcp-noidle", {"tcp_proxy": {"idle_timeout_s": 0}}, tcp_ev + [idle("0s")]),
-            # Plan review, S1 item 1: one upstream connection per client connection, as the tcp arms have
+            # Fixed before the run: one upstream connection per client connection, as the tcp arms have
             arm("http", dict(PPD), [RQ2XX, WARM, absent(RELAY + "*", label="no tcp_proxy stats")] + UPSTREAM_1TO1)]
 
 

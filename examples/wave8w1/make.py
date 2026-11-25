@@ -36,7 +36,7 @@ same on b64k; C3 frag-on vs off on ngx-ch64. Rider family (Holm over 2): R1, R2 
 Pre-registered, no kill line, in no family: T1 frag-on vs off on b1m-h2tls. Floors: 1.0 log points on b64k and
 b1m, 1.5 on ngx-ch64, b1m-h2tls, l64, l1m. Lines and labels: table.py.
 
-The tail add-on (not W8-1; W8-2's open retransmission flag, the design of the W8-2 result review): tail-a-r1 to
+The tail add-on (not W8-1; W8-2's open retransmission flag, as designed after W8-2): tail-a-r1 to
 tail-a-r8 and tail-c-r1 to tail-c-r4, from wave8w2/make.py's arms with Envoy's QUIC statistics on. See tail_check.py.
 """
 

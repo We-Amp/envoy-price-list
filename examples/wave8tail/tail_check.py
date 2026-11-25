@@ -3,7 +3,7 @@
 
     tail_check.py TAIL_DIR [--json OUT]
 
-PART 1 (the QUIC code review's follow-up, section 2; Exploratory): legs of tail-p1-r1..r4 (h3-off, h3-both-on; QUIC
+PART 1 (W8-2's follow-up; Exploratory): legs of tail-p1-r1..r4 (h3-off, h3-both-on; QUIC
   statistics visitor with update_period 0.05 s). Per leg, server retransmitted packets
   (listener.127.0.0.1_10110.quic_stats.cx_tx_packets_retransmitted_total) split in three by the harness's snapshots:
     before = absolute at the window's end (sut_stats_end) minus the window's change (sut_stats_window)

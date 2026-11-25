@@ -1,6 +1,6 @@
 #!/bin/bash
 # The tail add-on after session W8-1 (not part of it; unscored for CPU): the count for W8-2's open flag on
-# server-side QUIC retransmissions, in the design of the W8-2 result review. One detached chain, one login;
+# server-side QUIC retransmissions, as designed after W8-2. One detached chain, one login;
 # start it with box-start.sh tail, only after chain-w1.sh has ended.
 #   part A  tail-a-r1 .. tail-a-r8: h3-official, h3-off, h3-stop-on, h3-both-on on shape s (4 KB over HTTP/3, 2,000
 #           req/s, 16 connections) with Envoy's QUIC statistics on; arm order from two 4x4 Williams squares; odd

@@ -1,5 +1,5 @@
 #!/bin/bash
-# The tail add-on after session W8-3 (requested after W8-3; W8-2's follow-up; configs from tail_make.py, rules in
+# The tail add-on after session W8-3 (W8-2's follow-up; configs from tail_make.py, rules in
 # tail_check.py, fixed before the first leg). One detached chain, one login; start it with box-start.sh, only
 # after the session's own chains have ended. $R/tail-go.txt lists the parts the runner released ("p1" or "p1 p2": Part 2 only when
 # the scored chain did not overrun its budget).

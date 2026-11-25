@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The tail add-on's count (W8-2's open flag: server-side QUIC retransmissions with the UDP stop guard), in the
-design of the W8-2 result review. Unscored for CPU. Everything here is Exploratory unless the rule below says
+"""The tail add-on's count (W8-2's open flag: server-side QUIC retransmissions with the UDP stop guard), as designed
+after W8-2. Unscored for CPU. Everything here is Exploratory unless the rule below says
 "stands out"; nothing is said about CPU.
 
     python3 examples/wave8w1/tail_check.py TAIL_DIR [--json OUT]
@@ -14,7 +14,7 @@ of 16 connections, the 5 s warm-up and the measured run: 32 connection lifetimes
   20 ms or more (the client's percentile table: all requests minus the cumulative count of the last entry under
   20 ms).
 
-THE RULE, FIXED BEFORE THE FIRST LEG (the reviewer's "stands out", made exact):
+THE RULE, FIXED BEFORE THE FIRST LEG ("stands out", made exact):
   Part A  statistic T = sum over rounds of [retransmitted(h3-stop-on) + retransmitted(h3-both-on)
           - retransmitted(h3-official) - retransmitted(h3-off)], packets per leg. Exact permutation test inside
           rounds: in each round the four legs' counts are relabelled in all 6 ways of choosing which two are the
@@ -30,7 +30,7 @@ THE RULE, FIXED BEFORE THE FIRST LEG (the reviewer's "stands out", made exact):
           1,000 requests are printed per arm.
   A validity verdict of the harness does not remove a leg here (the gates are for CPU rows; the quiet shape fails
   the worker-share gate by design); a leg without counters or with a non-zero Envoy exit does.
-By the reviewer's text: if it stands out and does not grow with duration, it must be explained from code before
+Fixed before the run: if it stands out and does not grow with duration, it must be explained from code before
 "worth proposing"; if it grows with duration, or part C shows timer-length latencies, the stop guard is not
 proposed as written. The counts per arm are stated with their number of legs either way."""
 import itertools

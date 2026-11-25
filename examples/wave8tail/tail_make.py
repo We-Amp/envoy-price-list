@@ -9,7 +9,7 @@ chunked guard is FALSE (a decision fixed before data); the two UDP guards are se
 Shape `s` over HTTP/3 (W8-2's: 4 KB proxied from nginx, 2,000 req/s, 16 client connections), W8-2's arms otherwise
 (S2's h3 arm: TLS + QUIC listeners, the client's QUIC socket, its validity gates and evidence; W8-2's error items).
 
-Part 1 (the QUIC code review's follow-up, "retransmissions with the stop guard", section 2): tail-p1-r1..r4, h3-off and
+Part 1 (W8-2's follow-up, "retransmissions with the stop guard"): tail-p1-r1..r4, h3-off and
   h3-both-on, one leg each per config, order alternating by config (r1: off first), 10 s measured runs, 6 s window,
   the 5 s warm-up run as before, Envoy's QUIC statistics visitor ON with update_period 0.05 s (config only), so the
   retransmission counter moves within 50 ms of a probe. Counted from the harness's own snapshots: before the window

@@ -372,7 +372,7 @@ def h3_arm(name, h3):
     a["client"] = {"base_args": list(KA_BASE), "extra_args": list(H3_EXTRA if h3 else H2_EXTRA)}
     a["validity"] = {"max_pending_total": 1024}
     if h3:
-        # as approved for G: 16 keep-alive QUIC connections land on workers at random (no balancer), so the
+        # for G (fixed before the run): 16 keep-alive QUIC connections land on workers at random (no balancer), so the
         # 1.2x / 0.5x worker-share gate is replaced by busiest worker <= 0.50 of worker CPU, no floor
         a["validity"].update(max_worker_share_factor=2.0, min_worker_share_factor=None)
     used, unused = ("http3", "http2") if h3 else ("http2", "http3")
