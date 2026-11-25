@@ -1,0 +1,22 @@
+{
+ "official": {
+  "binary": "~/epl/bin/envoy-1.40.2",
+  "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+  "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+ },
+ "trainer": {
+  "binary": "~/epl/bins/wave7s4b/envoy-pgolto",
+  "source": "wave 2: v1.40.2 + instrumented PGO (pgo-recipe-v1 nine-leg trainer) + ThinLTO",
+  "source_sha256": "d1b4f16e650345957eca97ef690adf149f19ae0ca1d4a1388d6154312270487d"
+ },
+ "tests": {
+  "binary": "~/epl/bins/wave7s4b/envoy-pgolto-tests",
+  "source": "v1.40.2 + instrumented PGO from 12 integration tests and 10 benchmark tests of Envoy's own suite + ThinLTO, the wave 2 options",
+  "source_sha256": "7a47b051a37c4f9db0e2866c0125605e027b9b2c58563630afec046f493b8760"
+ },
+ "tests-it": {
+  "binary": "~/epl/bins/wave7s4b/envoy-pgolto-tests-it",
+  "source": "v1.40.2 + instrumented PGO from the 12 integration tests of Envoy's own suite alone (no benchmark test) + ThinLTO, the wave 2 options",
+  "source_sha256": "000daec46da56764a37475bc73b29b52079cebd17dffc98c83c58a3b80245902"
+ }
+}
