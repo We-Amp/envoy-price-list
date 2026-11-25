@@ -1,0 +1,265 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "build": "official",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "shape": "s96",
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "the OpenTelemetry tracer is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "@type",
+     "where": {
+      "@type": "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
+     }
+    },
+    {
+     "absent": true,
+     "label": "no custom sampler (the path the patch covers)",
+     "scope": "config",
+     "stat": "sampler"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "every request sampled",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol": 0.002
+    },
+    {
+     "label": "spans sent 1.00 per completed request over the leg (within 3%)",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.03
+    },
+    {
+     "label": "spans accepted by the collector 0.97 to 1.01 per completed request",
+     "max": 1.01,
+     "min": 0.97,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer: the guard is at its default",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "absent": true,
+     "label": "the guard key is not set",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.otel_tracer_deferred_span"
+    }
+   ],
+   "name": "stock-100",
+   "settings": {
+    "tracing": {
+     "sampling_pct": 100
+    }
+   },
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bins/wave7s4/envoy-otel-dfs",
+   "build": "dfs",
+   "evidence": [
+    {
+     "label": "upstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "shape": "s96",
+     "stat": "cluster.origin.upstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "downstream 2xx 1.000 per request",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.downstream_rq_2xx",
+     "tol": 0.002
+    },
+    {
+     "label": "the OpenTelemetry tracer is configured",
+     "present": true,
+     "scope": "config",
+     "stat": "@type",
+     "where": {
+      "@type": "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
+     }
+    },
+    {
+     "absent": true,
+     "label": "no custom sampler (the path the patch covers)",
+     "scope": "config",
+     "stat": "sampler"
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_rq_timeout",
+     "tol_abs": 0
+    },
+    {
+     "equals": 0,
+     "scope": "window",
+     "stat": "cluster.otel_collector.upstream_cx_connect_fail",
+     "tol_abs": 0
+    },
+    {
+     "label": "collector refused no span",
+     "max": 0,
+     "scope": "field",
+     "stat": "collector_delta.refused_spans"
+    },
+    {
+     "label": "every request sampled",
+     "per_request": 1.0,
+     "stat": "http.ingress_http.tracing.random_sampling",
+     "tol": 0.002
+    },
+    {
+     "label": "spans sent 1.00 per completed request over the leg (within 3%)",
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "per_request": 1.0,
+     "scope": "leg",
+     "stat": "tracing.opentelemetry.spans_sent",
+     "tol": 0.03
+    },
+    {
+     "label": "spans accepted by the collector 0.97 to 1.01 per completed request",
+     "max": 1.01,
+     "min": 0.97,
+     "per": "leg:http.ingress_http.downstream_rq_completed",
+     "scope": "field",
+     "stat": "collector_delta.accepted_spans"
+    },
+    {
+     "absent": true,
+     "label": "no runtime layer: the guard is at its default",
+     "scope": "config",
+     "stat": "layered_runtime"
+    },
+    {
+     "absent": true,
+     "label": "the guard key is not set",
+     "scope": "config",
+     "stat": "envoy.reloadable_features.otel_tracer_deferred_span"
+    }
+   ],
+   "name": "patched-100",
+   "settings": {
+    "tracing": {
+     "sampling_pct": 100
+    }
+   },
+   "source": "own build of v1.40.2 + the OpenTelemetry deferred-span patch (local commit ec7206bbb33a), release options; the unpatched twin of this build is byte-identical to the official binary",
+   "source_sha256": "88a127e872851947e849ad580bdb6716f1d9cf25b0e0f77036b70a1a601a266d"
+  }
+ ],
+ "base_arm": "stock-100",
+ "client": {
+  "binary": "~/nighthawk-dogfood/bazel-bin/nighthawk_client",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "collector": {
+  "debug_spans": true,
+  "image": "otel/opentelemetry-collector:0.120.0@sha256:1daa4312b48312dbae2d543e67b77e897dd5d9c48e7651d1416cdb417026ad06",
+  "metrics_port": 8888,
+  "port": 4317
+ },
+ "comparisons": "base",
+ "cpus": {
+  "client": "20-31,60-71",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "evidence_mode": "record",
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "stat_filter_extra": "^runtime\\.",
+  "window_s": 20
+ },
+ "name": "ev-export",
+ "order": "fixed",
+ "order_seed": 731,
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s96",
+   "path": "/s",
+   "rps": 96
+  }
+ ],
+ "smoke": true,
+ "workdir": "~/epl/runs/wave7s4"
+}
