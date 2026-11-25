@@ -8,7 +8,7 @@ add-ons. Data: the `http3-receive` archive of the fourth wave release (`python3 
 http3-receive`, see [`docs/wave-studies.md`](../../docs/wave-studies.md)). The archive holds this session's
 records (`wave8w2/`, and the first visit's unscored legs in `visit1/`) and the two tail add-ons:
 `tail-w8-1/` (run after session W8-1: `examples/wave8w1/chain-tail.sh`, `tail_check.py`) and `tail-w8-3/` (run
-after session W8-3: `examples/wave8w3/tail_make.py`, `chain-tail.sh`, `tail_check.py`, with row C4, buffer reuse
+after session W8-3: [`examples/wave8tail`](../wave8tail), with row C4, buffer reuse
 alone).
 
 ## Conditions
@@ -21,8 +21,8 @@ alone).
   `w8-A`, an own build of v1.40.2 with the two UDP receive commits and the chunked-body commits of
   `examples/wave8w1`, each behind a runtime guard (sha256 `46c98673…d3971`; an unpatched twin of the same recipe
   is byte-identical to the official binary). The build is not published; commit 2 (buffer reuse) is public on
-  the We-Amp/envoy fork, branch `candidates/quic-udp-reuse`. The tail of W8-3 ran `w8-B` (`examples/wave8w3`),
-  which carries the same two UDP commits unchanged. Nighthawk 0.3.0; origin `nginx:alpine` pinned by digest.
+  the We-Amp/envoy fork, branch `candidates/quic-udp-reuse`. The tail after W8-3 ran `w8-B` (`examples/wave8tail/bins.json`),
+  which carries the same two UDP commits unchanged; its other guards are false there. Nighthawk 0.3.0; origin `nginx:alpine` pinned by digest.
 - Arms: `h2tls` (official, HTTP/2 over TLS: the anchor), `h3-official`, `h3-official-A2` (the same-build pair),
   `h3-off` (`w8-A`, both UDP guards false: the build control), `h3-stop-on` (commit 1), `h3-both-on` (commits 1
   and 2); `h3-reuse-on` (commit 2 alone) only in the traced smoke here and in the tail's row C4. The chunked guard
@@ -56,7 +56,7 @@ alone).
   - `python3 examples/wave8w2/mech_table.py data/waves/http3-receive/wave8w2` (syscalls, profile, loss);
   - `python3 examples/wave8w2/evidence_summary.py data/waves/http3-receive/wave8w2/s-1 data/waves/http3-receive/wave8w2/s-2`;
   - the tails: `python3 examples/wave8w1/tail_check.py data/waves/http3-receive/tail-w8-1/wave8w1/tail` and
-    `python3 examples/wave8w3/tail_check.py data/waves/http3-receive/tail-w8-3/wave8w3/tail` (C4 is part 2 of the latter).
+    `python3 examples/wave8tail/tail_check.py data/waves/http3-receive/tail-w8-3/wave8w3/tail` (C4 is part 2 of the latter).
 
 ## Results
 
