@@ -55,9 +55,11 @@ and this documentation `85dd1d0` and later.
   filters, route timeouts, ALPN, the QUIC statistics visitor, the runtime read-back) and each session's
   examples in its own. The tail add-on that ran after session W8-3 is published on its own, as
   `examples/wave8tail` (its scripts were in the session's example directory; the configs are byte for byte the
-  ones that ran); session W8-3 itself and the gate visit before it are not in this release. In the examples, references to unpublished planning and review documents, and to who
-  decided a rule, were replaced by what they stand for ("plan", "fixed before the run", "not decided by the
-  table"); the configs are byte for byte the ones that ran (`make.py` regenerates them). Their data is the
+  ones that ran); session W8-3 itself and the gate visit before it are not in this release. In the examples,
+  references to unpublished planning and review documents, and to who decided a rule, were replaced by what
+  they stand for ("plan", "fixed before the run", "not decided by the table"), in the session commits and in
+  `d775885` (comments and docstrings of `examples/wave7s1`, `wave7s2`, `wave8w1` and `wave8tail`); the configs are
+  byte for byte the ones that ran (`make.py` regenerates them). Their data is the
   assets of the fourth release, `waves-2026-11d` (`874739f`).
 
 - **Waves 5 and 6.** Their working branches followed each other (wave 5 H, then the arm64 branches I and J
