@@ -16,6 +16,7 @@ Every wait is bounded by a timeout, so a stuck child can never hang the run.
 """
 
 import gzip
+import hashlib
 import http.client
 import json
 import math
@@ -119,7 +120,9 @@ DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_
                            r"flow_control_)")
 # cumulative values recorded at the end of the window: what TLS negotiated (keep-alive
 # connections handshake before the window) and the gauges of open connections
-END_KEYS_RE = re.compile(r"(ssl\.(versions|ciphers|curves|sigalgs)\.|upstream_cx_active$|downstream_cx_active$)")
+END_KEYS_RE = re.compile(r"(ssl\.(versions|ciphers|curves|sigalgs)\.|upstream_cx_active$|downstream_cx_active$|"
+                         r"^server\.memory_(allocated|heap_size|physical_size)$|"
+                         r"\.quic_stats\.cx_(tx|rx)_packets(_retransmitted)?_total$)")
 
 
 def admin_stats(port, timeout=5.0, extra=None):
@@ -811,7 +814,7 @@ def client_kw(ccfg):
     return {"preexec_fn": _nofile_preexec(int(ccfg["nofile"]))} if ccfg.get("nofile") else {}
 
 
-ARM_CLIENT_KEYS = ("base_args", "extra_args", "multi_target")
+ARM_CLIENT_KEYS = ("base_args", "extra_args", "multi_target", "paths")
 
 
 def arm_client(arm):
@@ -946,6 +949,17 @@ def steal_share(a, b):
     return (b[1] - a[1]) / tot if tot > 0 else 0.0
 
 
+def runtime_values(body, keys):
+    """{alias: 1 | 0 | -1 | -2} from the text of an admin /runtime answer, for {alias: runtime key}: the key's
+    final_value (1 true, 0 false, -1 the key is in no layer, -2 another value)."""
+    ent = json.loads(body).get("entries") or {}
+    out = {}
+    for alias, key in sorted(keys.items()):
+        v = (ent.get(key) or {}).get("final_value")
+        out[alias] = -1 if v is None else {"true": 1, "false": 0}.get(str(v).strip().lower(), -2)
+    return out
+
+
 IDLE_KEEP_RE = re.compile(r"^(server\.|cluster_manager\.|.*watchdog|http\.ingress_http\.|"
                           r"cluster\.(origin|otel_collector)\.|stats\.|runtime\.)")
 EMFILE_RE = re.compile(r"(?i)(too many open files|EMFILE)")
@@ -965,6 +979,7 @@ class RealBackend:
         self.side = []           # SideService objects of the containers this run started
         self.side_expected = []  # names of the containers this run started
         self.collector = None    # origin.Collector, for its span counters
+        self.stream = None       # origin.StreamOrigin, for its own counters
         self.config_dumps = {}   # arm -> parsed /config_dump at its first start
         self.stats_saved = set()
 
@@ -981,6 +996,7 @@ class RealBackend:
             if svc.side is not None:
                 self.side.append(svc.side)
         self.collector = collector
+        self.stream = next((c for n, c in (getattr(origin, "companions", None) or []) if n == "stream_origin"), None)
 
     def _save_config_dump(self, arm, port, timeout=10.0):
         """/config_dump of the arm at its first start, kept gzipped in the run directory."""
@@ -994,6 +1010,24 @@ class RealBackend:
         with gzip.open(os.path.join(d, arm + ".json.gz"), "wt") as f:
             f.write(body)
         self.config_dumps[arm] = json.loads(body)
+        # the admin /runtime of the same start (the layered runtime as this process reads it): best effort,
+        # kept as text beside the config dump
+        try:
+            st, rt = admin_get(port, "/runtime", timeout=timeout)
+            if st == 200:
+                with open(os.path.join(d, arm + ".runtime.json"), "w") as f:
+                    f.write(rt)
+        except (OSError, RuntimeError):
+            pass
+
+    def _leg_runtime(self, port, keys, timeout=10.0):
+        """{alias: 1 | 0 | -1 | -2} for measure.runtime_keys ({alias: runtime key}): the key's final_value as the
+        admin /runtime of this process reads it now (1 true, 0 false, -1 the key is not set in any layer, -2
+        another value). One admin read on the main thread, outside the window."""
+        st, body = admin_get(port, "/runtime", timeout=timeout)
+        if st != 200:
+            raise RuntimeError("admin /runtime returned %d" % st)
+        return runtime_values(body, keys)
 
     def _save_stats(self, arm, port, timeout=10.0):
         """Every stat name and value at the end of the arm's first leg (for freezing evidence names)."""
@@ -1051,6 +1085,7 @@ class RealBackend:
 
     def run_leg(self, arm, shape, rnd, bootstrap_path, leg_id):
         e = self.exp
+        t_leg_wall0 = time.time()
         ecfg, ccfg, mcfg = e["envoy"], e["client"], e["measure"]
         if shape.get("lead_in_s") is not None:
             # a shape may start its window later (a client that ramps its rate up)
@@ -1151,6 +1186,11 @@ class RealBackend:
                 blog = os.path.join(self.run_dir, "logs", leg_id + ".envoy-hop2.log")
                 # the second hop gets the arm's env unless the arm gives it its own (`hop2_env`)
                 env_b = dict(arm["hop2_env"]) if "hop2_env" in arm else env
+                if aenv.get("hop_uds"):
+                    # the hop's Unix socket: a stale file from an earlier leg is removed (Envoy binds anew)
+                    up = _exp.hop_uds_path(self.run_dir)
+                    if os.path.lexists(up):
+                        os.unlink(up)
                 hop_b, belog = self._start_envoy(arm["binary"], bpath_b, e["cpus"]["hop2"], ecfg["workers"],
                                                  e["hop2"]["admin_port"], env_b, arm.get("extra_args", []), blog)
                 m["hop2_pid"] = hop_b.pid
@@ -1173,6 +1213,17 @@ class RealBackend:
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
             self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+            if mcfg.get("runtime_keys"):
+                # the runtime guards as this process reads them, before any client connection exists
+                m["runtime_start"] = self._leg_runtime(ecfg["admin_port"], mcfg["runtime_keys"], max(10.0, adm_t))
+            if mcfg.get("leg_binary_sha256"):
+                # the file this leg's Envoy runs (its /proc exe link was checked at the start), hashed while
+                # Envoy has no connection yet
+                h = hashlib.sha256()
+                with open("/proc/%d/exe" % envoy.pid, "rb") as f:
+                    for blk in iter(lambda: f.read(1 << 20), b""):
+                        h.update(blk)
+                m["binary_sha256"] = h.hexdigest()
             if aenv.get("stats_clusters"):
                 lim = statsrow.parse_limits(statsrow.read("/proc/%d/limits" % envoy.pid))
                 m["nofile_soft"], m["nofile_hard"] = lim if lim else (None, None)
@@ -1196,10 +1247,15 @@ class RealBackend:
             # connections over several loopback destinations): the connection-churn arms
             acl = arm_client(arm)
             mt = acl.get("multi_target", shape.get("multi_target"))
+            # the path the client requests: the arm's own for this shape (`client.paths`: arms that ask
+            # the origin for the same body in different write patterns), else the shape's `client_path`
+            # (a path with a query), else the shape's path
+            cpath = (acl.get("paths") or {}).get(shape["name"]) or shape.get("client_path") or shape["path"]
+            m["client_path"] = cpath
             if mt:
-                url = nighthawk.multi_target_args(scheme, ecfg["listener_port"], shape["path"], mt)
+                url = nighthawk.multi_target_args(scheme, ecfg["listener_port"], cpath, mt)
             else:
-                url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], shape["path"])
+                url = "%s://127.0.0.1:%d%s" % (scheme, ecfg["listener_port"], cpath)
             m["client_targets"] = (mt or {}).get("count", 1)
             cextra = list(shape.get("client_extra_args") or []) + list(acl.get("extra_args") or [])
             if shape.get("request_body_file"):
@@ -1266,6 +1322,7 @@ class RealBackend:
                         lx["t_q0_end"] = time.monotonic()
                     from_origin = mcfg.get("responses_from") == "origin"
                     o0 = origin_requests(e) if from_origin else None
+                    so0 = self.stream.stats() if self.stream else None
                     st0 = sysprobe_steal()
                     settle = float(shape.get("pre_window_settle_s") or 0)
                     if settle:
@@ -1367,6 +1424,11 @@ class RealBackend:
                         m["origin_accepts_window"] = (acc1 - acc0 - 1) if acc0 is not None and acc1 is not None \
                             else None
                     o1 = origin_requests(e) if from_origin else None
+                    if self.stream:
+                        # the stream origin's own counters over the window (read like the stub_status
+                        # count: just outside the perf window, a few ms from the admin snapshots)
+                        from .origin import stream_window
+                        m["stream_origin"] = stream_window(so0, self.stream.stats())
                     st1 = sysprobe_steal()
                     qb1 = admin_stats(e["hop2"]["admin_port"], adm_t, sfx) if hop_b else None
                     # the response count's time base ends with the last count read, before
@@ -1396,7 +1458,10 @@ class RealBackend:
                         ssp = lambda n: os.path.join(self.run_dir, "ss", "%s.%s.txt.gz" % (leg_id, n))  # noqa: E731
                         m["conn_downstream"] = conn_usage("( sport = :%d )" % ecfg["listener_port"], ssp("down"))
                         if shape["kind"] == "proxied":
-                            m["conn_upstream"] = conn_usage("( dport = :%d )" % e["origin"]["port"], ssp("up"))
+                            # the origin server the origin cluster targets (plain: the origin's port)
+                            up_port = e["origin"]["port"] if two_hop or not aenv.get("upstream_port") \
+                                else int(aenv["upstream_port"])
+                            m["conn_upstream"] = conn_usage("( dport = :%d )" % up_port, ssp("up"))
                         if hop_b:
                             # first hop -> second hop: how the second hop's load spreads over connections
                             m["conn_hop2_downstream"] = conn_usage("( sport = :%d )" % e["hop2"]["listener_port"],
@@ -1626,7 +1691,15 @@ class RealBackend:
                 try:
                     m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     m["sut_stats_leg_end_ok"] = True
+                    if mcfg.get("leg_end_histograms"):
+                        # histogram lines (bucket counts) at the end of the leg, as text: the stats snapshot keeps
+                        # integers only
+                        hst, hbody = admin_get(ecfg["admin_port"], "/stats?histogram_buckets=detailed&filter="
+                                               + urllib.parse.quote(mcfg["leg_end_histograms"]), timeout=max(10.0, adm_t))
+                        m["sut_histograms_leg_end"] = hbody.splitlines() if hst == 200 else None
                     self._save_stats(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+                    if mcfg.get("runtime_keys"):
+                        m["runtime_end"] = self._leg_runtime(ecfg["admin_port"], mcfg["runtime_keys"], max(10.0, adm_t))
                     sc = aenv.get("stats_clusters")
                     if sc:
                         # the generated clusters' connect failures and overflows over the leg
@@ -1701,6 +1774,11 @@ class RealBackend:
                 m["collector_delta"] = {"error": coll0.get("error") or c1.get("error")}
             else:
                 m["collector_delta"] = {k: c1.get(k, 0) - coll0.get(k, 0) for k in set(coll0) | set(c1)}
+            if self.collector.cfg.get("debug_spans"):
+                # the spans the collector printed over this leg (collector.debug_spans), kept beside the leg
+                time.sleep(2.0)
+                m["collector_spans_log"] = self.collector.save_log_since(
+                    t_leg_wall0, os.path.join(self.run_dir, "collector", leg_id + ".spans.log"))
         if arm.get("evidence") is not None:
             from . import evidence
             m["evidence"] = evidence.evaluate(m, arm["evidence"], self.config_dumps.get(arm["name"]),

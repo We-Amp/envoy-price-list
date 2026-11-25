@@ -190,8 +190,12 @@ def arm_envoy(exp, arm, run_dir=""):
         e["xds"] = dict(e["xds"], dir=os.path.join(run_dir, "xds", arm["name"]))
     if e.get("two_hop"):
         e["upstream_port"] = exp["hop2"]["listener_port"]
+        if e.get("hop_uds"):
+            e["upstream_pipe"] = hop_uds_path(run_dir)
     else:
         _origin_server_port(exp, e)
+        if e.get("origin_uds"):
+            e["upstream_pipe"] = origin_uds_path(run_dir)
     if e.get("wasm") and e["wasm"].get("file"):
         e["wasm"] = dict(e["wasm"], file=os.path.join(HARNESS_ROOT, e["wasm"]["file"]))
     return e
@@ -221,10 +225,26 @@ def check_wasm(exp):
     return errs
 
 
-def hop2_envoy(exp, arm=None):
+def hop_uds_path(run_dir):
+    """The Unix socket between the hops of a `hop_uds` arm (directory mode 0700, made per run)."""
+    return os.path.join(os.path.abspath(run_dir or "."), "uds", "hop2.sock")
+
+
+def origin_uds_dir(run_dir):
+    return os.path.join(os.path.abspath(run_dir or "."), "origin-uds")
+
+
+def origin_uds_path(run_dir):
+    """The origin's Unix socket as the host sees it (the container sees /uds/origin.sock)."""
+    return os.path.join(origin_uds_dir(run_dir), "origin.sock")
+
+
+def hop2_envoy(exp, arm=None, run_dir=""):
     """The second hop: the experiment's baseline envoy section on the hop2 ports, plus
     the arm's `hop2_settings` (none by default)."""
     over = dict((arm_settings(arm).get("hop2_settings") or {}) if arm else {})
+    if arm and arm_settings(arm).get("hop_uds"):
+        over["listener_pipe"] = hop_uds_path(run_dir)
     for k in ("two_hop", "hop2_settings"):
         if k in over:
             raise ValueError("hop2_settings cannot contain %s" % k)
@@ -239,7 +259,7 @@ def hop2_envoy(exp, arm=None):
 def _origin_server_port(exp, e):
     """Point the origin cluster at the origin server the section names (origin_server h2c / tls)."""
     srv = e.get("origin_server", "plain")
-    if srv in ("h2c", "tls"):
+    if srv in ("h2c", "tls", "stream", "stream_h2"):
         port = exp["origin"].get(srv + "_port")
         if not port:
             raise ValueError("origin_server %s needs origin.%s_port" % (srv, srv))
@@ -324,6 +344,8 @@ def prepare_bootstraps(exp, run_dir, log=lambda m: None, make_certs=True):
             certs = {"certs": {k: {"crt_sha256": "dry-run"} for k in kinds}}
     if uses(exp, "access_log"):
         os.makedirs(os.path.join(run_dir, "alog"), exist_ok=True)
+    if uses(exp, "hop_uds"):
+        os.makedirs(os.path.dirname(hop_uds_path(run_dir)), mode=0o700, exist_ok=True)
     paths, texts = {}, {}
     plain = not any(arm_settings(a) for a in exp["arms"])
     for a in exp["arms"]:
@@ -341,7 +363,7 @@ def prepare_bootstraps(exp, run_dir, log=lambda m: None, make_certs=True):
     for a in exp["arms"]:
         if not arm_settings(a).get("two_hop"):
             continue
-        t = envoy_config.bootstrap_text(exp["shapes"], hop2_envoy(exp, a), exp["origin"]["port"], cert_dir)
+        t = envoy_config.bootstrap_text(exp["shapes"], hop2_envoy(exp, a, run_dir), exp["origin"]["port"], cert_dir)
         p = os.path.join(run_dir, "envoy-bootstrap-hop2-%s.json" % a["name"])
         with open(p, "w") as f:
             f.write(t)
@@ -653,7 +675,10 @@ def validate(exp, allow_short=False, check_rounds=True):
             if not isinstance(acl, dict):
                 errs.append("arm %s: client must be an object" % a.get("name"))
             else:
-                bad = sorted(set(acl) - {"base_args", "extra_args", "multi_target"})
+                bad = sorted(set(acl) - {"base_args", "extra_args", "multi_target", "paths"})
+                if "paths" in acl and not (isinstance(acl["paths"], dict) and all(
+                        k in snames and isinstance(v, str) and v.startswith("/") for k, v in acl["paths"].items())):
+                    errs.append("arm %s: client.paths maps shape names to paths that start with /" % a.get("name"))
                 if bad:
                     errs.append("arm %s: unknown client keys %s" % (a.get("name"), bad))
                 for k in ("base_args", "extra_args"):
@@ -700,6 +725,14 @@ def validate(exp, allow_short=False, check_rounds=True):
                 errs.append("arm %s: audit: %s" % (a.get("name"), e))
     if exp["measure"].get("responses_from") == "origin" and not exp["origin"].get("stub_status"):
         errs.append("measure.responses_from origin needs origin.stub_status")
+    o = exp["origin"]
+    for a in arms:
+        srv = arm_envoy(exp, a).get("origin_server", "plain") if not arm_settings(a).get("two_hop") else "plain"
+        if srv in ("stream", "stream_h2") and not (
+                o.get("mode") == "docker" and o.get("stream_port") and o.get("stream_h2_port")
+                and o.get("stream_binary") and o.get("stream_sha256")):
+            errs.append("arm %s: origin_server %s needs origin.mode docker with stream_port, stream_h2_port, "
+                        "stream_binary and stream_sha256" % (a.get("name"), srv))
     for s in exp.get("shapes", []):
         if s.get("main_cpu") is not None:
             ws = sysprobe.parse_cpuset(s.get("worker_cpus", ""))
