@@ -94,8 +94,10 @@ For the loop daemon, in addition:
 - OpenSSH on the workstation and the box (the daemon is an MCP server on stdio, reached through ssh);
 - an MCP client for the agent;
 - for explore mode only: `nighthawk_service` and `nighthawk_mcp` built from [We-Amp's Nighthawk
-  fork](https://github.com/We-Amp/nighthawk) (its MCP server and the `nighthawk://series` stream), pinned by sha256
-  in the config. Screens use a plain `nighthawk_client`.
+  fork](https://github.com/We-Amp/nighthawk) at tag
+  [`epl-client-2026-11/v2`](https://github.com/We-Amp/nighthawk/tree/epl-client-2026-11/v2) (commit `63d819f`:
+  its MCP server, the `nighthawk://series` stream, the per-worker series and the `start_run` fields), pinned by
+  sha256 in the config. Screens use a plain `nighthawk_client`.
 
 ## The method in one screen
 

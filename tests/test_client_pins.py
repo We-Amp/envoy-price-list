@@ -407,7 +407,7 @@ class PhaseArgsTest(unittest.TestCase):
         self.assertEqual(nighthawk.client_args({"concurrency": 16}, 1600, "u", 25, True)[:8],
                          ["--rps", "100", "--connections", "16", "--concurrency", "16", "--duration", "25"])
 
-    def test_owner_rule_per_phase_at_leg_time(self):
+    def test_divisibility_rule_per_phase_at_leg_time(self):
         with self.assertRaises(ValueError) as cm:
             nighthawk.client_args({"concurrency": 16}, 5201, "u", None, True,
                                   phases=nighthawk.phase_vector(5201, 16, 5, 120))
@@ -557,7 +557,7 @@ class PhaseValidateTest(unittest.TestCase):
         self.assertEqual((c["recipe"], c["lifetime"], c["concurrency"]), ("phases", "window", 16))
         self.assertEqual(experiment.arm_client_cfg(exp, exp["arms"][0]).get("recipe", "plain"), "plain")
 
-    def test_owner_rule_wired_at_plan_time(self):
+    def test_divisibility_rule_wired_at_plan_time(self):
         c = ph_cfg()
         c["shapes"][0]["rps"] = 5208  # divisible by 16 but then by a 12-worker rung
         c["shapes"][0]["client_concurrency"] = 12
