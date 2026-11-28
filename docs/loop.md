@@ -68,7 +68,9 @@ EPL_HOME=~/epl                             # on the box: the daemon's home (the 
 - **Envoy:** admin reads with a tight filter, phase-locked to the windows: exactly W reads inside each window, at
   +0.5 s + j, then gap reads from perf's end. No statsd sink.
 - **Nighthawk:** live snapshots from `nighthawk://series`, in explore mode through `nighthawk_mcp` from the
-  Nighthawk fork's MCP and series changes. The plain `nighthawk_client`, which screens use, has no live output.
+  Nighthawk fork at tag [`epl-client-2026-11/v2`](https://github.com/We-Amp/nighthawk/tree/epl-client-2026-11/v2)
+  (commit `63d819f`: its MCP server, the `nighthawk://series` stream, the per-worker series and the `start_run`
+  fields). The plain `nighthawk_client`, which screens use, has no live output.
 
 ## The stdio route (one TCP login per session)
 
@@ -114,6 +116,8 @@ JSON-RPC stream over its one TCP connection.
    `ProxyCommand=/usr/bin/false` makes the client fail closed when the master is gone: it never falls back to a
    direct login. Write the control path out in full, the same as the master's (`$EPL_CM` is a shell variable,
    and the JSON is not run through a shell; ssh's own `%r`, `%h` and `%p` tokens are fine).
+   For a home other than `~/epl`, set it in the remote command: `"EPL_HOME=/srv/epl exec /srv/epl/loop/run-mcp.sh agentd"`,
+   and change the `~/epl` paths in `agentd.json` (`arms.*.base`, `workdir`) to match.
    - `run-mcp.sh` takes one argument: a config name under `$EPL_HOME/loop/` (`agentd` for
      `$EPL_HOME/loop/agentd.json`) or a path. It reads `EPL_HOME` once (default `~/epl`) and passes it to the daemon
      as `--home`. It refuses (rc 2, nothing on stdout) a config without `housekeeping_cpus`.
@@ -145,7 +149,7 @@ JSON-RPC stream over its one TCP connection.
    - the harness at `$EPL_HOME/loop/harness` (a copy of this repository);
    - `$EPL_HOME/loop/agentd.json`, from `loop/agentd.example.json`;
    - the arms' binaries, the pinned client, and for explore, `nighthawk_service` and `nighthawk_mcp` from the
-     Nighthawk fork.
+     Nighthawk fork at tag `epl-client-2026-11/v2` (commit `63d819f`).
    An arm is a flip-block base config (templates in `examples/flip/`):
    - its `keys` are the only runtime keys a screen may flip. A key may declare its `read_point`: `per_config` is
      refused; `per_connection` needs `flip_extra.cycle_connections`;
