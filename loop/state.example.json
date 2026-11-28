@@ -1,0 +1,35 @@
+{
+  "_note": "An example state file for state.py (the clean proof) and foreign.py (the foreign-activity check). Write one per box. Paths are relative to $HOME. The sha256 values here are placeholders: put the hashes of your own pinned files. accepted_timers lists the timers a stock Ubuntu server runs; a run of one of them is listed as expected, not foreign. Remove any you do not want to accept.",
+  "watch": ["epl"],
+  "pinned": {
+    "dir": "epl/pins/nighthawk-client",
+    "required": true,
+    "files": {
+      "nighthawk_client": {"mode": "0555", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}
+    }
+  },
+  "staged_dir": "epl/bin",
+  "staged": {
+    "envoy-candidate": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "kept": {},
+  "kept_dirs": [],
+  "transient": ["epl/loop"],
+  "accepted_timers": [
+    "apt-daily.timer",
+    "apt-daily-upgrade.timer",
+    "dpkg-db-backup.timer",
+    "e2scrub_all.timer",
+    "fstrim.timer",
+    "fwupd-refresh.timer",
+    "logrotate.timer",
+    "man-db.timer",
+    "motd-news.timer",
+    "sysstat-collect.timer",
+    "sysstat-summary.timer",
+    "systemd-tmpfiles-clean.timer",
+    "update-notifier-download.timer",
+    "update-notifier-motd.timer"
+  ],
+  "own_comms": []
+}

@@ -1,0 +1,55 @@
+{
+ "_note": "epl-agentd on the box. Copy to $EPL_HOME/loop/agentd.json (EPL_HOME defaults to ~/epl) and start it with `run-mcp.sh agentd`. Every arm is a flip-block base config already staged and pinned by sha256 in its own arms[0].source_sha256 (templates in examples/flip/); keys are the only runtime keys a screen may flip on that arm. Add a nighthawk section (see docs/loop.md) only once the Nighthawk fork's nighthawk_service and nighthawk_mcp are staged and pinned. An arm's keys are a list, or {key: {read_point: per_request|per_connection|per_config}}: per_config keys are refused, per_connection keys need flip_extra.cycle_connections (the relay-write guard is read when a connection's file event is built). housekeeping_cpus has no default: set it to CPUs disjoint from the SUT, client and origin CPUs and their SMT siblings; the daemon refuses to start without it. The CPU sets, rates and paths here are the example box's.",
+ "arms": {
+  "otel-dfs": {
+   "base": "~/epl/loop/harness/examples/flip/flip-ctl20a.json",
+   "keys": [
+    "envoy.reloadable_features.otel_tracer_deferred_span"
+   ],
+   "shapes": [
+    "s"
+   ]
+  },
+  "relay-rw": {
+   "base": "~/epl/loop/harness/examples/flip/flip-rw20.json",
+   "flip_extra": {
+    "cycle_connections": true,
+    "rate_tolerance": 0.01,
+    "window_items": "bulk"
+   },
+   "keys": {
+    "envoy.reloadable_features.connection_write_in_current_iteration": {
+     "read_point": "per_connection"
+    }
+   },
+   "shapes": [
+    "bulk"
+   ]
+  }
+ },
+ "housekeeping_cpus": "18-19",
+ "idle_ttl_s": 900,
+ "max_rps": 20000,
+ "min_window_s": 5,
+ "perf_mode": "sleep",
+ "rate_tolerance": 0.005,
+ "session_ttl_s": 14400,
+ "shapes": {
+  "bulk": {
+   "body_bytes": 4194304,
+   "kind": "proxied",
+   "name": "bulk",
+   "path": "/bulk4m",
+   "rps": 128
+  },
+  "s": {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  }
+ },
+ "span_tolerance_ms": 50,
+ "workdir": "~/epl/runs/loop"
+}
