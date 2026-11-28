@@ -45,6 +45,12 @@ EXT_PROC_MODES = {"default": None,
                   "request_headers": {"request_header_mode": "SEND", "response_header_mode": "SKIP"}}
 OTEL = "type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig"
 FILE_LOG = "type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog"
+STDOUT_LOG = "type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog"
+LUA_PER_ROUTE = "type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute"
+# access-log study: a critical line and a warning line from the worker that runs the request
+AL_LUA_CRIT = 'function envoy_on_request(h) h:logCritical("al crit probe") end'
+AL_LUA_WARN = 'function envoy_on_request(h) h:logWarn("al warn probe") end'
+AL_LUA_NOOP = 'function envoy_on_request(h) end'
 STATS_LOG = "type.googleapis.com/envoy.extensions.access_loggers.stats.v3.Config"
 UPSTREAM_HTTP = "type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
 JWT_AUTHN = "type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication"
@@ -107,7 +113,14 @@ SETTINGS = {
     "hpack_table_size": "HTTP/2 HPACK dynamic table size in bytes (http2_protocol_options); unset = default",
     "tracing": "OpenTelemetry tracer over gRPC to the local collector: {sampling_pct: 0..100}",
     "access_log": "file access log: {format: text (Envoy's default format) | json (the same fields)}; the "
-                  "harness sets the path",
+                  "harness sets the path unless `path` (absolute: a dedicated mount, or /dev/null) is given; "
+                  "`extra`: [{format, path}] more file loggers on the same HCM, in order; `stdout`: {format} one "
+                  "envoy.access_loggers.stdout logger (Envoy's stdout); `sink: stdout` makes the stdout logger the "
+                  "only one (no file logger); `runtime_key`: K: every logger gets a runtime_filter on K, "
+                  "percent_sampled default 0 (off), so runtime value 0..100 logs that percent of requests",
+    "al_lua_crit": "access-log study: a Lua filter; per-route scripts call logCritical on GET /crit and logWarn on "
+                   "GET /warn (both direct responses, 200, body ok); every other route has the Lua filter disabled",
+    "memory_allocator_manager": "bootstrap memory_allocator_manager: {bytes_to_release, memory_release_interval_s}",
     "ext_authz": "ext_authz filter against the local allow service in the origin container: true or \"http\" "
                  "(HTTP service, authz_port) | \"grpc\" (gRPC service over h2c, authz_grpc_port)",
     "grpc_client": "the gRPC client of the side-service filters (ext_authz \"grpc\", ext_proc): envoy_grpc "
@@ -136,7 +149,9 @@ SETTINGS = {
                  "provider: {jwks: JWKS JSON text, issuer, audience, cache: false (default, every token "
                  "verified) | true (jwt_cache_config, verified tokens cached)}; the token is forwarded upstream",
     "local_ratelimit": "local rate-limit filter, one token bucket shared by the workers, enabled and enforced "
-                       "on every request: {tokens_per_s} (set far above the test rate, so nothing is rejected)",
+                       "on every request: {tokens_per_s} (set far above the test rate, so nothing is rejected); "
+                       "`filter_enabled_key`: K: filter_enabled is read from runtime key K with default 0% "
+                       "(off; runtime value 100: on), filter_enforced stays 100%",
     "idle_timers_off": "true: the stream idle timeout (HCM stream_idle_timeout, default 5 min) and the downstream "
                        "connection idle timeout (HCM common_http_protocol_options.idle_timeout, default 1 h) "
                        "both set to 0s, which disables them",
@@ -182,6 +197,8 @@ SETTINGS = {
                      "stream origin's HTTP/1.1 port, origin.stream_port) | stream_h2 (its HTTP/2 cleartext port, "
                      "origin.stream_h2_port; with upstream_http2); ignored by the first hop of a two-hop arm",
     "runtime": "a layered_runtime static layer: {key: value} (e.g. envoy.reloadable_features.http2_use_oghttp2)",
+    "runtime_admin_layer": "true: an admin layer (epl-admin) after the static layer, so admin POST /runtime_modify "
+                           "can change a runtime key in the running process (the flip blocks)",
     "grpc_stats": "grpc_stats filter before the router: {stats_for_all_methods: bool}",
     "tcp_proxy": "the listener carries a tcp_proxy network filter to the origin cluster instead of the HTTP "
                  "connection manager (stat_prefix relay; no HTTP stats, routes or HTTP filters): true (the "
@@ -195,6 +212,22 @@ SETTINGS = {
                      "filters are configured and not instantiated on a request)",
     "route_timeout_s": "the route timeout of every proxied route in seconds (0 disables it; unset = Envoy's "
                        "default of 15 s)",
+    # runtime switches for in-process screens, and bootstrap-only settings for a restart screen. Each is opt-in:
+    # unset, the bootstrap is the one before these settings existed, byte for byte
+    "route_switch": "each proxied route is duplicated; the first copy matches only when runtime key K's "
+                    "runtime_fraction says so (default 0%: off; runtime value 100: on) and carries the settings "
+                    "under test, the second is the plain route: {runtime_key: K (envoy.*), response_headers_to_add: "
+                    "[HeaderValueOption], request_headers_to_add: [HeaderValueOption], timeout: \"0s\", "
+                    "retry_policy: {RetryPolicy}, stat_prefix: name, tracing: {random_sampling_pct: 0..100}, "
+                    "typed_per_filter_config_disabled: [HTTP filter names] (each FilterConfig {disabled: true})}",
+    "router_dynamic_stats": "false: the router filter's dynamic_stats off (no per-route/virtual-cluster upstream "
+                            "stats); unset = Envoy's default (true)",
+    "generate_request_id": "false: HCM generate_request_id false (no x-request-id generated); unset = Envoy's "
+                           "default (true)",
+    "suppress_envoy_headers": "true: the router filter's suppress_envoy_headers (no x-envoy-* response or upstream "
+                              "request headers); unset = Envoy's default (false)",
+    "stats_matcher_inclusion": "bootstrap stats_config.stats_matcher.inclusion_list: [{prefix: p} | {exact: name}] "
+                               "(only the matching stats are instantiated; every other stat is a null object)",
     "quic": "a second listener, HTTP/3 over QUIC on UDP at the TCP listener's address and port number, with the "
             "same routes and filters and the listener's `tls` certificate: {gso: true (Envoy's default: the GSO "
             "batch writer when the kernel supports it) | false (the default sendmsg writer), prefer_gro: bool "
@@ -206,6 +239,14 @@ SETTINGS = {
             "listener stays as it is",
 }
 
+ADMIN_LAYER = "epl-admin"
+
+
+def check_admin_loopback(bootstrap_dict):
+    """A writable runtime (an admin layer) only behind an admin listener on 127.0.0.1."""
+    adm = ((bootstrap_dict.get("admin") or {}).get("address") or {}).get("socket_address") or {}
+    if adm.get("address") != "127.0.0.1":
+        raise ValueError("runtime_admin_layer needs the admin address 127.0.0.1, not %r" % adm.get("address"))
 # The oghttp2 switch of v1.40.2 (runtime_features.cc:326, default false)
 OGHTTP2_KEY = "envoy.reloadable_features.http2_use_oghttp2"
 UTLS = "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext"
@@ -332,15 +373,91 @@ def jwt_filter(jw):
 
 
 def local_ratelimit_filter(rl):
+    bad = sorted(set(rl) - {"tokens_per_s", "filter_enabled_key"})
+    if bad:
+        raise ValueError("local_ratelimit: unknown keys %s" % bad)
     n = int(rl["tokens_per_s"])
     if n < 1:
         raise ValueError("local_ratelimit.tokens_per_s must be positive")
     pct = {"numerator": 100, "denominator": "HUNDRED"}
+    enabled = {"runtime_key": "local_rate_limit_enabled", "default_value": pct}
+    if rl.get("filter_enabled_key") is not None:
+        # the filter's enable dial on runtime key K, default 0% (off); runtime 100 turns it on
+        enabled = {"runtime_key": runtime_key_of(rl["filter_enabled_key"], "local_ratelimit.filter_enabled_key"),
+                   "default_value": {"numerator": 0, "denominator": "HUNDRED"}}
     return {"name": "envoy.filters.http.local_ratelimit", "typed_config": {
         "@type": LOCAL_RL, "stat_prefix": "http_local_rate_limiter",
         "token_bucket": {"max_tokens": n, "tokens_per_fill": n, "fill_interval": "1s"},
-        "filter_enabled": {"runtime_key": "local_rate_limit_enabled", "default_value": pct},
+        "filter_enabled": enabled,
         "filter_enforced": {"runtime_key": "local_rate_limit_enforced", "default_value": pct}}}
+
+
+FILTER_CONFIG = "type.googleapis.com/envoy.config.route.v3.FilterConfig"
+ROUTE_SWITCH_KEYS = {"runtime_key", "response_headers_to_add", "request_headers_to_add", "timeout", "retry_policy",
+                     "stat_prefix", "tracing", "typed_per_filter_config_disabled"}
+
+
+def runtime_key_of(k, what):
+    """A runtime switch key: an `envoy.*` runtime key, as flipblock requires of a flipped key."""
+    if not (isinstance(k, str) and k.startswith("envoy.") and " " not in k and len(k) > len("envoy.")):
+        raise ValueError("%s must be a runtime key envoy.* (got %r)" % (what, k))
+    return k
+
+
+def route_switch(routes_, rs, filter_names):
+    """Every proxied route (one with a `route` action) is duplicated. The first copy matches only when
+    runtime key K's runtime_fraction says so (default 0%: off; runtime value 100: on) and carries the settings under
+    test; the second copy is the plain route. Routes without a `route` action are left alone."""
+    if not isinstance(rs, dict) or not rs.get("runtime_key"):
+        raise ValueError("route_switch takes {runtime_key, ...settings}")
+    bad = sorted(set(rs) - ROUTE_SWITCH_KEYS)
+    if bad:
+        raise ValueError("route_switch: unknown keys %s (allowed: %s)" % (bad, sorted(ROUTE_SWITCH_KEYS)))
+    if set(rs) == {"runtime_key"}:
+        raise ValueError("route_switch names no setting to switch")
+    k = runtime_key_of(rs["runtime_key"], "route_switch.runtime_key")
+    out, n = [], 0
+    for r in routes_:
+        if "route" not in r:
+            out.append(r)
+            continue
+        sw = copy.deepcopy(r)
+        sw["match"]["runtime_fraction"] = {"default_value": {"numerator": 0, "denominator": "HUNDRED"},
+                                           "runtime_key": k}
+        for f in ("response_headers_to_add", "request_headers_to_add"):
+            if rs.get(f) is not None:
+                if not isinstance(rs[f], list) or not rs[f]:
+                    raise ValueError("route_switch.%s takes a non-empty list of HeaderValueOption" % f)
+                sw[f] = copy.deepcopy(sw.get(f, [])) + copy.deepcopy(rs[f])
+        if rs.get("timeout") is not None:
+            sw["route"]["timeout"] = str(rs["timeout"])
+        if rs.get("retry_policy") is not None:
+            if not isinstance(rs["retry_policy"], dict):
+                raise ValueError("route_switch.retry_policy takes a RetryPolicy object")
+            sw["route"]["retry_policy"] = copy.deepcopy(rs["retry_policy"])
+        if rs.get("stat_prefix") is not None:
+            sw["stat_prefix"] = str(rs["stat_prefix"])
+        if rs.get("tracing") is not None:
+            tr = rs["tracing"]
+            pct = tr.get("random_sampling_pct") if isinstance(tr, dict) else None
+            if set(tr if isinstance(tr, dict) else {"x"}) != {"random_sampling_pct"} or not (
+                    isinstance(pct, (int, float)) and not isinstance(pct, bool) and 0 <= pct <= 100):
+                raise ValueError("route_switch.tracing takes {random_sampling_pct: 0..100}")
+            # the route's random sampling, in ten-thousandths so 1% and 10% are exact
+            sw["tracing"] = {"random_sampling": {"numerator": int(round(pct * 100)), "denominator": "TEN_THOUSAND"}}
+        if rs.get("typed_per_filter_config_disabled") is not None:
+            names = rs["typed_per_filter_config_disabled"]
+            if not isinstance(names, list) or not names or any(x not in filter_names for x in names):
+                raise ValueError("route_switch.typed_per_filter_config_disabled names HTTP filters of this HCM "
+                                 "(%s), got %r" % (filter_names, names))
+            sw.setdefault("typed_per_filter_config", {})
+            for x in names:
+                sw["typed_per_filter_config"][x] = {"@type": FILTER_CONFIG, "disabled": True}
+        out += [sw, r]
+        n += 1
+    if not n:
+        raise ValueError("route_switch: no proxied route to switch")
+    return out
 
 
 def compressor_filter(c):
@@ -674,6 +791,32 @@ CERT_KINDS = {
 CERT_SAN = {"ecdsa-p256-san": "bench.local", "ecdsa-p256-client": "client.bench.local"}
 
 
+def file_logger(fmt, path):
+    fl = {"@type": FILE_LOG, "path": path}
+    if fmt == "json":
+        fl["log_format"] = {"json_format": dict(JSON_LOG_FIELDS)}
+    elif fmt != "text":
+        raise ValueError("access_log.format must be text or json")
+    return {"name": "envoy.access_loggers.file", "typed_config": fl}
+
+
+def al_lua_crit(hcm):
+    """The access-log study's per-route Lua: /crit and /warn are direct responses whose scripts log at critical and
+    warning level on the worker that runs them; every other route disables the filter."""
+    vh = hcm["route_config"]["virtual_hosts"][0]
+    for r in vh["routes"]:
+        r.setdefault("typed_per_filter_config", {})["envoy.filters.http.lua"] = {"@type": LUA_PER_ROUTE,
+                                                                                 "disabled": True}
+    own = []
+    for path, src in (("/crit", AL_LUA_CRIT), ("/warn", AL_LUA_WARN)):
+        own.append({"match": {"path": path}, "direct_response": {"status": 200, "body": {"inline_string": "ok"}},
+                    "typed_per_filter_config": {"envoy.filters.http.lua": {
+                        "@type": LUA_PER_ROUTE, "source_code": {"inline_string": src}}}})
+    vh["routes"][0:0] = own
+    hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, {"name": "envoy.filters.http.lua", "typed_config": {
+        "@type": LUA, "default_source_code": {"inline_string": AL_LUA_NOOP}}})
+
+
 def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
     """Bootstrap for one arm. envoy_cfg is the experiment's envoy section with the
     arm's settings merged in; `upstream_port` (set by the harness for the first
@@ -722,12 +865,33 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         clusters.append(_static_cluster("otel_collector", envoy_cfg["collector_port"], http2=True))
     al = envoy_cfg.get("access_log")
     if al:
-        fl = {"@type": FILE_LOG, "path": al["path"]}
-        if al.get("format", "text") == "json":
-            fl["log_format"] = {"json_format": dict(JSON_LOG_FIELDS)}
-        elif al.get("format", "text") != "text":
-            raise ValueError("access_log.format must be text or json")
-        hcm["access_log"] = [{"name": "envoy.access_loggers.file", "typed_config": fl}]
+        bad = sorted(set(al) - {"format", "path", "extra", "stdout", "sink", "runtime_key"})
+        if bad:
+            raise ValueError("access_log: unknown keys %s" % bad)
+        if al.get("sink", "file") not in ("file", "stdout"):
+            raise ValueError("access_log.sink must be file or stdout")
+        hcm["access_log"] = []
+        if al.get("sink", "file") == "file":
+            hcm["access_log"].append(file_logger(al.get("format", "text"), al["path"]))
+        for x in al.get("extra") or []:
+            if not isinstance(x, dict) or set(x) - {"format", "path"} or not str(x.get("path", "")).startswith("/"):
+                raise ValueError("access_log.extra takes [{format, path (absolute)}]")
+            hcm["access_log"].append(file_logger(x.get("format", "text"), x["path"]))
+        so = al.get("stdout")
+        if al.get("sink") == "stdout" and so is None:
+            so = {"format": al.get("format", "text")}
+        if so is not None:
+            sl = {"@type": STDOUT_LOG}
+            if so.get("format", "text") == "json":
+                sl["log_format"] = {"json_format": dict(JSON_LOG_FIELDS)}
+            elif so.get("format", "text") != "text":
+                raise ValueError("access_log.stdout.format must be text or json")
+            hcm["access_log"].append({"name": "envoy.access_loggers.stdout", "typed_config": sl})
+        if al.get("runtime_key") is not None:
+            k = runtime_key_of(al["runtime_key"], "access_log.runtime_key")
+            for lg in hcm["access_log"]:
+                lg["filter"] = {"runtime_filter": {"runtime_key": k, "percent_sampled": {
+                    "numerator": 0, "denominator": "HUNDRED"}}}
     if envoy_cfg.get("stats_access_log"):
         hcm.setdefault("access_log", []).append(stats_access_log(envoy_cfg["stats_access_log"]))
     az = envoy_cfg.get("ext_authz")
@@ -764,10 +928,35 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, lua_filter(envoy_cfg["lua"]))
     if envoy_cfg.get("wasm"):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, wasm_filter(envoy_cfg["wasm"]))
+    if envoy_cfg.get("al_lua_crit"):
+        if envoy_cfg["al_lua_crit"] is not True or envoy_cfg.get("lua"):
+            raise ValueError("al_lua_crit must be true and cannot be combined with lua")
+        al_lua_crit(hcm)
     if envoy_cfg.get("compressor"):
         hcm["http_filters"].insert(len(hcm["http_filters"]) - 1, compressor_filter(envoy_cfg["compressor"]))
     if envoy_cfg.get("inert_filters"):
         hcm["http_filters"][-1:-1] = inert_filters(envoy_cfg["inert_filters"])
+    rsw = envoy_cfg.get("route_switch")
+    if rsw is not None:
+        if rsw.get("tracing") is not None and not envoy_cfg.get("tracing"):
+            raise ValueError("route_switch.tracing needs the tracing setting (a tracer on the HCM)")
+        vh = hcm["route_config"]["virtual_hosts"][0]
+        vh["routes"] = route_switch(vh["routes"], rsw, [f["name"] for f in hcm["http_filters"]])
+    rds = envoy_cfg.get("router_dynamic_stats")
+    if rds is not None:
+        if rds is not False:
+            raise ValueError("router_dynamic_stats takes false (unset = Envoy's default, true)")
+        hcm["http_filters"][-1]["typed_config"]["dynamic_stats"] = False
+    sup = envoy_cfg.get("suppress_envoy_headers")
+    if sup is not None:
+        if sup is not True:
+            raise ValueError("suppress_envoy_headers takes true (unset = Envoy's default, false)")
+        hcm["http_filters"][-1]["typed_config"]["suppress_envoy_headers"] = True
+    gri = envoy_cfg.get("generate_request_id")
+    if gri is not None:
+        if gri is not False:
+            raise ValueError("generate_request_id takes false (unset = Envoy's default, true)")
+        hcm["generate_request_id"] = False
     chain = {"filters": [{"name": "envoy.filters.network.http_connection_manager", "typed_config": hcm}]}
     tp = envoy_cfg.get("tcp_proxy")
     if tp:
@@ -871,6 +1060,12 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
                                                  "port_value": int(envoy_cfg["admin_port"])}}},
         "static_resources": {"listeners": [listener], "clusters": clusters},
     }
+    mam = envoy_cfg.get("memory_allocator_manager")
+    if mam is not None:
+        if set(mam) != {"bytes_to_release", "memory_release_interval_s"}:
+            raise ValueError("memory_allocator_manager takes {bytes_to_release, memory_release_interval_s}")
+        out["memory_allocator_manager"] = {"bytes_to_release": str(int(mam["bytes_to_release"])),
+                                           "memory_release_interval": "%gs" % float(mam["memory_release_interval_s"])}
     sc = envoy_cfg.get("stats_clusters")
     if sc:
         clusters.extend(stats_clusters(sc, envoy_cfg.get("upstream_port") or origin_port))
@@ -894,12 +1089,30 @@ def bootstrap(shapes, envoy_cfg, origin_port, cert_dir=None):
             clusters.append(_static_cluster("otel_collector", envoy_cfg["collector_port"], http2=True))
     if envoy_cfg.get("stats_reject_all"):
         out["stats_config"] = {"stats_matcher": {"reject_all": True}}
+    smi = envoy_cfg.get("stats_matcher_inclusion")
+    if smi is not None:
+        if envoy_cfg.get("stats_reject_all"):
+            raise ValueError("stats_matcher_inclusion and stats_reject_all both set the stats matcher")
+        if not isinstance(smi, list) or not smi or not all(
+                isinstance(x, dict) and len(x) == 1 and list(x)[0] in ("prefix", "exact")
+                and isinstance(list(x.values())[0], str) and list(x.values())[0] for x in smi):
+            raise ValueError("stats_matcher_inclusion takes a non-empty list of {prefix: p} or {exact: name}")
+        out["stats_config"] = {"stats_matcher": {"inclusion_list": {"patterns": copy.deepcopy(smi)}}}
     rt = envoy_cfg.get("runtime")
     if rt is not None:
         if not isinstance(rt, dict) or not rt or not all(
                 isinstance(v, (bool, int, float, str)) for v in rt.values()):
             raise ValueError("runtime takes a non-empty {key: bool | number | string}")
         out["layered_runtime"] = {"layers": [{"name": "epl-static", "static_layer": dict(rt)}]}
+    ra = envoy_cfg.get("runtime_admin_layer")
+    if ra is not None:
+        # an admin layer last (it overrides the static layer), so admin POST /runtime_modify can flip a guard
+        # in a running process; only for the arms that ask for it, so every other bootstrap is unchanged
+        if ra is not True:
+            raise ValueError("runtime_admin_layer takes true")
+        check_admin_loopback(out)
+        layers = (out.get("layered_runtime") or {}).get("layers") or []
+        out["layered_runtime"] = {"layers": layers + [{"name": ADMIN_LAYER, "admin_layer": {}}]}
     if envoy_cfg.get("xds_update") and not envoy_cfg.get("xds"):
         raise ValueError("xds_update needs xds")
     if envoy_cfg.get("xds"):

@@ -4,6 +4,8 @@ A leg that fails any gate is INVALID and contributes no number to any
 comparison; its round pair is dropped for that shape and arm.
 """
 
+N1_MARK = "n1"  # epl.nighthawk.N1_MARK (kept here so this module imports nothing)
+
 DEFAULTS = {
     "rate_tolerance": 0.01,      # achieved rate within 1% of target
     "min_client_headroom": 0.25,  # busiest client thread at most 75% busy
@@ -70,6 +72,21 @@ DEFAULTS = {
     "max_side_service_busy": 0.5,
     # Cloud VMs: share of CPU time stolen by the hypervisor over the window (None: not gated)
     "max_steal_share": None,
+    # the client sent at full rate over the whole window: alive at the window's last read, every
+    # worker's own execution ending at least this many seconds after it and its ramp ending before the first
+    # read (client_sending, from the client's output). Legs recorded before this check carry no record and keep
+    # their verdict; a leg marked n1 (epl.nighthawk.N1_MARK) without the record is invalid (fail closed).
+    "require_client_sending": True,
+    "client_sending_margin_s": 1.0,
+    # a client self-check that can fail. All None (off) by default, so earlier configs keep their
+    # verdicts; a plan sets them before data. Sequencer statistics are per client worker over the whole client
+    # run (open loop: a blocked start means the client could not issue a request when the rate limiter allowed
+    # it). The floor gates need the session's zero-load calibration leg (client_calibration); without a good
+    # floor they fail closed. client_perf: a leg measured with measure.client_perf must have its counters.
+    "max_client_sequencer_blocking": None,   # blocked starts, summed over workers (suggested: 0)
+    "max_client_callback_ms": None,          # largest per-worker sequencer.callback maximum
+    "max_client_busy_above_floor": None,     # busiest client thread's busy share minus the floor's
+    "max_client_perf_cpus_above_floor": None,  # client perf CPUs per client worker minus the floor's
 }
 
 
@@ -210,11 +227,80 @@ def verdict(m, cfg=None):
     mb = m.get("envoy_main_busy")
     if c.get("max_main_busy") is not None and mb is not None and mb > c["max_main_busy"]:
         reasons.append("main thread busy %.3f of a core (limit %.2f)" % (mb, c["max_main_busy"]))
+    client_checks(m, c, reasons)
     ev = m.get("evidence")
     if ev is not None and ev.get("gate", True) and not ev.get("ok"):
         f = ev.get("failed") or ["no evidence evaluated"]
         reasons.append("evidence: %s%s" % ("; ".join(f[:4]), " (+%d more)" % (len(f) - 4) if len(f) > 4 else ""))
     return {"valid": not reasons, "reasons": reasons}
+
+
+def client_checks(m, c, reasons):
+    """Client-window gates (only on legs that carry the records, or are marked n1)."""
+    marked = N1_MARK in (m.get("harness_marks") or [])
+    cs = m.get("client_sending")
+    if c.get("require_client_sending", True):
+        if cs is not None and not cs.get("ok"):
+            reasons.append("client not sending through the window: %s" % "; ".join(cs.get("reasons") or ["?"]))
+        elif cs is None and marked:
+            reasons.append("no client-sending record")
+    sq = m.get("client_sequencer") or {}
+    lim = c.get("max_client_sequencer_blocking")
+    if lim is not None:
+        v = sq.get("blocking_count_total")
+        if v is None:
+            reasons.append("no client sequencer.blocking statistic")
+        elif v > lim:
+            reasons.append("client sequencer blocked %d times (limit %d)" % (v, lim))
+    lim = c.get("max_client_callback_ms")
+    if lim is not None:
+        v = sq.get("callback_max_us")
+        if v is None:
+            reasons.append("no client sequencer.callback statistic")
+        elif v > lim * 1000.0:
+            reasons.append("client sequencer.callback max %.1f ms over %.1f ms" % (v / 1000.0, lim))
+    cp = m.get("client_perf")
+    if cp is not None and not cp.get("ok"):
+        reasons.append("client perf counters missing or multiplexed")
+    cph = m.get("client_phases")
+    if cph is not None and not cph.get("ok"):
+        # the planned phases ran, and the window lies inside the measure phase with its lead-in
+        reasons.append("client phases: %s" % "; ".join(cph.get("reasons") or ["?"]))
+    elif cph is None and m.get("client_recipe") == "phases" and not m.get("error"):
+        reasons.append("no client-phases record (recipe phases)")
+    if m.get("client_md5_pin"):
+        # the measured client process ran the pinned binary (md5 and sha256 of its own executed inode, read
+        # after the client ended); fail closed
+        if not m.get("client_exe_ok"):
+            reasons.append("client binary not the pinned one: %s" % (
+                m.get("client_exe_error") or "md5 %s sha256 %s, pinned %s %s" % (
+                    m.get("client_md5"), m.get("client_sha256"), m.get("client_md5_pin"), m.get("client_sha256_pin"))))
+    for key, field, what in (("max_client_busy_above_floor", "client_busy_above_floor", "busiest client thread"),
+                             ("max_client_perf_cpus_above_floor", "client_perf_cpus_above_floor",
+                              "client perf CPUs per worker")):
+        lim = c.get(key)
+        if lim is None:
+            continue
+        v = m.get(field)
+        if v is None and m.get("client_floor_mismatch"):
+            reasons.append("%s above the floor not measured: no matching floor (this leg's client flags differ "
+                           "from every calibration leg's)" % what)
+        elif v is None:
+            reasons.append("%s above the floor not measured (no good calibration leg%s)" % (
+                what, "" if m.get("client_floor_leg") else " in this run"))
+        elif v > lim:
+            reasons.append("%s %.3f above the zero-load floor (limit %.3f)" % (what, v, lim))
+    if any(c.get(k) is not None for k in F1_KEYS):
+        # client-bottleneck checks (epl.clientcheck): per-worker sequencer gates and the busiest client perf interval,
+        # fail closed
+        from .clientcheck import validity_reasons
+        reasons += validity_reasons(m, c)
+
+
+# the client-bottleneck validity keys (epl.clientcheck.VALIDITY_KEYS; named here so this module imports nothing at
+# load): all off unless set, so no earlier leg's verdict changes
+F1_KEYS = ("max_client_worker_sequencer_blocking", "max_client_worker_callback_ms",
+           "max_client_perf_interval_cpus_per_worker", "client_overflow_gate")
 
 
 def _common(m, c, reasons):

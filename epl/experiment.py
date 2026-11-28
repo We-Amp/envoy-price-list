@@ -155,6 +155,9 @@ def load(path, overrides=None):
                 raise ValueError("arm %s has no binary for architecture %s" % (a.get("name"), arch))
             a.update(pick)
         a["binary"] = _expand(a["binary"])
+        if isinstance(a.get("client"), dict) and isinstance(a["client"].get("binary"), str):
+            # an arm's own client binary (pinned by client.md5)
+            a["client"]["binary"] = _expand(a["client"]["binary"])
     exp["client"]["binary"] = _expand(exp["client"]["binary"])
     if isinstance(exp["measure"]["perf"], str):
         exp["measure"]["perf"] = exp["measure"]["perf"].split()
@@ -175,7 +178,8 @@ def arm_envoy(exp, arm, run_dir=""):
     second hop)."""
     e = _merge(exp["envoy"], arm_settings(arm))
     if e.get("access_log"):
-        e["access_log"] = dict(e["access_log"], path=os.path.join(run_dir, "alog", arm["name"] + ".alog"))
+        if not e["access_log"].get("path"):
+            e["access_log"] = dict(e["access_log"], path=os.path.join(run_dir, "alog", arm["name"] + ".alog"))
     if e.get("tracing") or (e.get("stats_sink") or {}).get("kind") == "otlp":
         e["collector_port"] = exp["collector"]["port"]
     if (e.get("stats_sink") or {}).get("kind") in ("statsd", "dog_statsd"):
@@ -457,13 +461,250 @@ def order_period(exp):
     return 2 if o == "abba" else len(exp["arms"]) if o == "latin" else 2 * len(exp["arms"])
 
 
+# Client flags the harness sets itself (rate, workers, lifetime): never in a config's client argument lists,
+# so the divisibility rule and client.lifetime cannot be bypassed.
+HARNESS_CLIENT_FLAGS = ("--rps", "--concurrency", "--duration", "--no-duration")
+
+# The client settings an arm may carry (`client`): `binary` and `md5`, an arm-level client binary pinned by
+# md5, so one run can compare two client builds round by round.
+ARM_CLIENT_KEYS = ("base_args", "extra_args", "multi_target", "paths", "binary", "md5", "sha256", "lifetime",
+                   "recipe", "phases")
+# the client recipe keys an arm may set for itself (over the experiment's `client`), so one run can price the
+# old recipe against the phase recipe and the window lifetime round by round
+ARM_CLIENT_RECIPE_KEYS = ("lifetime", "recipe", "phases")
+CLIENT_RECIPES = ("plain", "phases")
+MD5_RE = re.compile(r"^[0-9a-f]{32}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def arm_client_cfg(exp, arm):
+    """The experiment's client settings with the arm's own lifetime, recipe and phases over them."""
+    c = dict(exp.get("client") or {})
+    acl = arm.get("client") if isinstance(arm.get("client"), dict) else {}
+    for k in ARM_CLIENT_RECIPE_KEYS:
+        if k in acl:
+            c[k] = acl[k]
+    return c
+
+
+def client_recipe(ccfg):
+    """client.recipe: "plain" (default; a separate warm-up process, then the measured client) or "phases"
+    (one client process, a warm phase then a measure phase through Nighthawk's --phases)."""
+    r = ccfg.get("recipe", "plain")
+    if r not in CLIENT_RECIPES:
+        raise ValueError("client.recipe must be one of %s, not %r" % (CLIENT_RECIPES, r))
+    return r
+
+
+def leg_phase_vector(ccfg, shape):
+    """The phase vector a phases leg of `shape` sends: warm then measure at the shape's total rate over its
+    client workers (a rung's client_concurrency, else client.concurrency)."""
+    from .nighthawk import phase_settings, phase_vector
+    p = phase_settings(ccfg)
+    conc = int(shape.get("client_concurrency") or ccfg.get("concurrency", 4))
+    return phase_vector(shape["rps"], conc, p["warm_s"], p["measure_cap_s"])
+
+
+def _is_num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def client_recipe_errors(exp):
+    """The phases recipe, fail closed at plan time, per arm (the experiment's client with the arm's own recipe keys):
+    the recipe and lifetime names; the phases settings; every phase vector the arm would send obeys the divisibility
+    rule (each phase's total divisible by its workers: phase_rate_errors); the measure phase covers the boundary
+    allowance, the lead-in, the window and the sending margin; and what the phase path does not support."""
+    from . import nighthawk
+    errs = []
+    m = exp.get("measure") or {}
+    margin = (exp.get("validity") or {}).get("client_sending_margin_s", 1.0)
+    margin = margin if _is_num(margin) else 1.0
+    for a in exp.get("arms", []):
+        c = arm_client_cfg(exp, a)
+        who = "arm %s" % a.get("name")
+        rec = c.get("recipe", "plain")
+        if rec not in CLIENT_RECIPES:
+            errs.append("%s: client.recipe must be plain or phases" % who)
+            continue
+        if c.get("lifetime", "duration") not in ("duration", "window"):
+            errs.append("%s: client.lifetime must be duration or window" % who)
+            continue
+        ph = c.get("phases")
+        if rec != "phases":
+            if ph is not None:
+                errs.append("%s: client.phases without client.recipe phases" % who)
+            continue
+        if not isinstance(ph, dict) or set(ph) - set(nighthawk.PHASE_KEYS):
+            errs.append("%s: client.phases takes %s" % (who, ", ".join(nighthawk.PHASE_KEYS)))
+            continue
+        p = nighthawk.phase_settings(c)
+        bad = [k for k in ("warm_s", "measure_cap_s") if not (isinstance(p.get(k), int) and not isinstance(
+            p.get(k), bool) and p[k] >= 1)]
+        bad += [k for k in ("boundary_allow_s", "min_lead_in_s") if not (_is_num(p.get(k)) and p[k] >= 0)]
+        if bad:
+            errs.append("%s: client.phases %s: warm_s and measure_cap_s whole seconds >= 1, boundary_allow_s and "
+                        "min_lead_in_s numbers >= 0" % (who, bad))
+            continue
+        if m.get("latency"):
+            errs.append("%s: client.recipe phases is not supported with measure.latency" % who)
+        acl = a.get("client") if isinstance(a.get("client"), dict) else {}
+        args = list(c.get("extra_args") or []) + list(acl.get("extra_args") or []) + list(acl.get("base_args") or [])
+        if any(isinstance(x, str) and "LinearRampingRateLimiterConfig" in x for x in args):
+            errs.append("%s: a ramping rate limiter restarts its ramp in every phase; not with recipe phases" % who)
+        for s in exp.get("shapes", []):
+            if s.get("kind") == "idle" or not arm_in_shape(a, s):
+                continue
+            if s.get("warmup_s") is not None:
+                errs.append("%s, shape %s: a shape warm-up process with recipe phases (the warm phase is the "
+                            "warm-up)" % (who, s.get("name")))
+            if any(isinstance(x, str) and "LinearRampingRateLimiterConfig" in x
+                   for x in (s.get("client_extra_args") or []) + (s.get("client_base_args") or [])):
+                errs.append("%s, shape %s: a ramping rate limiter with recipe phases" % (who, s.get("name")))
+            try:
+                vec = leg_phase_vector(c, s)
+            except (TypeError, ValueError, KeyError) as ex:
+                errs.append("%s, shape %s: %s" % (who, s.get("name"), ex))
+                continue
+            conc = int(s.get("client_concurrency") or c.get("concurrency", 4))
+            errs += ["%s, shape %s: %s" % (who, s.get("name"), x) for x in phase_rate_errors(vec, conc)]
+            li = s.get("lead_in_s", m.get("lead_in_s", 2))
+            need = p["boundary_allow_s"] + li + m.get("window_s", 20) + 1
+            if c.get("lifetime", "duration") == "window":
+                # an upper bound only: the SIGTERM ends it; room for the margin, the slack and the reads
+                need += margin + float(c.get("term_slack_s", 0.5)) + 5
+            if p["measure_cap_s"] < need:
+                errs.append("%s, shape %s: client.phases.measure_cap_s %d must be at least %.1f s (boundary "
+                            "allowance + lead-in + window + %s)" % (
+                                who, s.get("name"), p["measure_cap_s"], need,
+                                "margin + slack + 5 s" if c.get("lifetime") == "window" else "1 s"))
+            if p["min_lead_in_s"] > li:
+                errs.append("%s, shape %s: client.phases.min_lead_in_s above the lead-in" % (who, s.get("name")))
+    return errs
+
+
+def client_pin(exp, arm):
+    """(client binary path, pinned md5 or None) for a leg of `arm`: the arm's own `client.binary` with its
+    `client.md5`, else the experiment's `client.binary` with `client.md5` (None when the experiment pins none)."""
+    acl = arm.get("client") if isinstance(arm.get("client"), dict) else {}
+    if acl.get("binary"):
+        return acl["binary"], acl.get("md5")
+    c = exp.get("client") or {}
+    return c.get("binary"), c.get("md5")
+
+
+def client_pin_sha256(exp, arm):
+    """The pinned sha256 of a leg's client, or None."""
+    acl = arm.get("client") if isinstance(arm.get("client"), dict) else {}
+    if acl.get("binary"):
+        return acl.get("sha256")
+    return (exp.get("client") or {}).get("sha256")
+
+
+def client_pin_errors(exp):
+    """Client pinning, fail closed at plan time: an arm's own client binary needs both its md5 and its sha256,
+    and a hash needs a binary; once any arm names its own client, the experiment's client is pinned by both
+    too, so every leg of the run carries a pin and a floor of one binary can never be applied to a leg of
+    another."""
+    errs = []
+    c = exp.get("client") or {}
+    if c.get("md5") is not None and not (isinstance(c["md5"], str) and MD5_RE.match(c["md5"])):
+        errs.append("client.md5 must be 32 lowercase hex digits")
+    if c.get("sha256") is not None and not (isinstance(c["sha256"], str) and SHA256_RE.match(c["sha256"])):
+        errs.append("client.sha256 must be 64 lowercase hex digits")
+    own = []
+    for a in exp.get("arms", []):
+        acl = a.get("client")
+        if not isinstance(acl, dict):
+            continue
+        b, m, sh = acl.get("binary"), acl.get("md5"), acl.get("sha256")
+        if b is None and m is None and sh is None:
+            continue
+        if not (isinstance(b, str) and b.strip()):
+            errs.append("arm %s: client.md5 without client.binary (or an empty binary)" % a.get("name"))
+            continue
+        if not (isinstance(m, str) and MD5_RE.match(m)):
+            errs.append("arm %s: client.binary needs client.md5 (32 lowercase hex digits): an arm's client is "
+                        "pinned by md5" % a.get("name"))
+        if not (isinstance(sh, str) and SHA256_RE.match(sh)):
+            errs.append("arm %s: client.binary needs client.sha256 (64 lowercase hex digits)"
+                        % a.get("name"))
+        own.append(a.get("name"))
+    if own and not (c.get("md5") and c.get("sha256")):
+        errs.append("arms %s name their own client binary: client.md5 and client.sha256 must pin the experiment's "
+                    "client too" % own)
+    return errs
+
+
+def _client_arg_lists(exp):
+    c = exp.get("client") or {}
+    yield "client.extra_args", c.get("extra_args")
+    yield "client.base_args", c.get("base_args")
+    for s in exp.get("shapes", []):
+        yield "shape %s client_base_args" % s.get("name"), s.get("client_base_args")
+        yield "shape %s client_extra_args" % s.get("name"), s.get("client_extra_args")
+    for a in exp.get("arms", []):
+        ac = a.get("client") or {}
+        if isinstance(ac, dict):
+            yield "arm %s client.base_args" % a.get("name"), ac.get("base_args")
+            yield "arm %s client.extra_args" % a.get("name"), ac.get("extra_args")
+
+
+def client_arg_errors(exp):
+    """Refuse the harness's own client flags and any phase vector (the fork's proto phase path spreads
+    a remainder over the workers, a total-rate option by another name; a phase path needs its own per-phase
+    divisibility rule first) in every client argument list."""
+    errs = []
+    for where, lst in _client_arg_lists(exp):
+        for x in lst or []:
+            if not isinstance(x, str):
+                continue
+            flag = x.split("=", 1)[0]
+            if flag in HARNESS_CLIENT_FLAGS:
+                errs.append("%s: %s is set by the harness (rate per worker, workers, lifetime); remove it"
+                            % (where, flag))
+            if "phases" in x.lower():
+                errs.append("%s: %r: client phases are refused until a phase path checks every phase's rate "
+                            "against that phase's worker count" % (where, x[:60]))
+    return errs
+
+
+def phase_rate_errors(phases, workers):
+    """The per-phase divisibility rule: each phase's requests_per_second must be
+    divisible by that phase's worker count (the phase's own `workers` or `concurrency`, else the run's), checked
+    with per_worker_rps at plan time. The phases recipe wires it: client_recipe_errors runs it on every phase vector a
+    phases arm would send, and client_args refuses the vector again at leg time."""
+    from .nighthawk import phase_rate_errors as _per_phase
+    return _per_phase(phases, workers)
+
+
+def n1_number_errors(exp):
+    """The client-window numbers a plan could set to a no-op."""
+    errs = []
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)  # noqa: E731
+    vs = [("validity", exp.get("validity") or {})]
+    vs += [("shape %s validity" % s.get("name"), s.get("validity") or {}) for s in exp.get("shapes", [])]
+    vs += [("arm %s validity" % a.get("name"), a.get("validity") or {}) for a in exp.get("arms", [])]
+    for where, v in vs:
+        m = v.get("client_sending_margin_s")
+        if m is not None and not (num(m) and m >= 0.25):
+            errs.append("%s.client_sending_margin_s must be a number >= 0.25" % where)
+    c = exp.get("client") or {}
+    if c.get("term_slack_s") is not None and not (num(c["term_slack_s"]) and c["term_slack_s"] >= 0):
+        errs.append("client.term_slack_s must be a number >= 0")
+    if c.get("term_grace_s") is not None and not (num(c["term_grace_s"]) and c["term_grace_s"] > 0):
+        errs.append("client.term_grace_s must be a number > 0")
+    return errs
+
+
 def validate(exp, allow_short=False, check_rounds=True):
     errs = []
     if not exp.get("name") or not re.match(r"^[A-Za-z0-9._-]+$", exp["name"]):
         errs.append("name must be [A-Za-z0-9._-]+")
     arms = exp.get("arms", [])
     names = [a.get("name") for a in arms]
-    if len(arms) < 2:
+    if len(arms) < 2 and not (exp.get("single_arm") is True and len(arms) == 1 and exp.get("smoke")):
+        # a one-arm, one-round, non-scored config (`single_arm: true`, smoke): a timeline leg or a lone
+        # mechanism leg; nothing is compared
         errs.append("need at least 2 arms")
     if len(set(names)) != len(names):
         errs.append("arm names must be unique")
@@ -531,13 +772,70 @@ def validate(exp, allow_short=False, check_rounds=True):
     if any(s["kind"] == "proxied" for s in exp.get("shapes", [])) and exp["origin"]["mode"] == "docker" \
             and "origin" not in sets:
         errs.append("cpus.origin missing for a docker origin")
+    ms = exp.get("measure") or {}
+    if ms.get("client_perf"):
+        # a wrapped measure.perf (more than one word: a wrapper script) must not run the
+        # client's perf stat; name a plain perf binary for it
+        if ms.get("client_perf_bin") is not None and not (isinstance(ms["client_perf_bin"], str)
+                                                         and ms["client_perf_bin"].strip()):
+            errs.append("measure.client_perf_bin must be a perf binary path")
+        elif len(ms.get("perf") or []) > 1 and not ms.get("client_perf_bin"):
+            errs.append("measure.client_perf with a wrapped measure.perf %s needs measure.client_perf_bin "
+                        "(a plain perf binary)" % (ms.get("perf"),))
+    errs += client_arg_errors(exp)
+    errs += n1_number_errors(exp)
+    errs += client_pin_errors(exp)
+    errs += client_recipe_errors(exp)
+    from .clientcheck import config_errors as _f1_errors
+    errs += _f1_errors(exp)  # nothing for a config without the client-check keys
+    if (exp.get("origin") or {}).get("mode") == "envoy_fault":
+        from .faultorigin import config_errors as _f3_errors
+        errs += _f3_errors(exp)  # the faultable origin
+    life = (exp.get("client") or {}).get("lifetime", "duration")
+    if life not in ("duration", "window"):
+        errs.append("client.lifetime must be duration or window")
+    # client.lifetime window: --no-duration and one SIGTERM after the window, so no duration arithmetic. The
+    # client.duration_s arithmetic applies while any plain-recipe arm runs with lifetime duration
+    cfgs = [arm_client_cfg(exp, a) for a in arms] or [exp.get("client") or {}]
+    window_life = not any(c.get("lifetime", "duration") == "duration" and c.get("recipe", "plain") == "plain"
+                          for c in cfgs)
+    if any(c.get("lifetime", "duration") == "window" for c in cfgs) and (exp.get("measure") or {}).get("latency"):
+        errs.append("client.lifetime window is not supported with measure.latency (run L sizes its own client)")
     snames = [s.get("name") for s in exp.get("shapes", [])]
+    cc = exp.get("client_calibration")
+    if exp.get("calibration_only") is not None and (exp["calibration_only"] is not True or cc is None
+                                                    or not exp.get("smoke")):
+        errs.append("calibration_only takes true, with client_calibration, in a smoke config (floor legs only)")
+    if cc is not None:
+        f1 = isinstance(cc, dict) and "per_recipe" in cc  # the floor per client recipe (epl.clientcheck)
+        if not isinstance(cc, dict) or set(cc) - {"shape", "rps_per_worker", "arm"} - ({"per_recipe"} if f1 else set()):
+            errs.append("client_calibration takes shape, rps_per_worker, arm and per_recipe only" if f1 else
+                        "client_calibration takes shape, rps_per_worker and arm only")
+        else:
+            wa = cc.get("arm")
+            if wa is not None and not (
+                    (isinstance(wa, str) and wa in names)
+                    or (isinstance(wa, list) and wa and len(set(wa)) == len(wa)
+                        and all(isinstance(x, str) and x in names for x in wa))):
+                # one floor per client recipe; an arm with its own client binary or flags calibrates itself
+                errs.append("client_calibration.arm must name an arm (or a list of distinct arms)")
+            ok_names = [s.get("name") for s in exp.get("shapes", []) if s.get("kind") != "idle"]
+            want = cc.get("shape")
+            if want is not None and not (
+                    (isinstance(want, str) and want in ok_names)
+                    or (isinstance(want, list) and want and len(set(want)) == len(want)
+                        and all(isinstance(x, str) and x in ok_names for x in want))):
+                errs.append("client_calibration.shape must name a non-idle shape (or a list of distinct ones)")
+            if not isinstance(cc.get("rps_per_worker", 1), int) or cc.get("rps_per_worker", 1) < 1:
+                errs.append("client_calibration.rps_per_worker must be a whole number >= 1")
+            if not any(s.get("kind") != "idle" for s in exp.get("shapes", [])):
+                errs.append("client_calibration needs a non-idle shape")
     if not snames or len(set(snames)) != len(snames):
         errs.append("shapes must be non-empty with unique names")
     for s in exp.get("shapes", []):
         if s.get("kind") not in ("proxied", "direct_headers", "routes", "idle"):
             errs.append("shape %s: kind must be proxied, direct_headers, routes or idle" % s.get("name"))
-        if s.get("pre_window_settle_s") and s.get("kind") != "idle":
+        if s.get("pre_window_settle_s") and s.get("kind") != "idle" and not window_life:
             li = s.get("lead_in_s", exp["measure"]["lead_in_s"])
             if li + float(s["pre_window_settle_s"]) + exp["measure"]["window_s"] + 1 > exp["client"]["duration_s"]:
                 errs.append("shape %s: client duration must exceed lead_in + pre_window_settle + window + 1 s"
@@ -574,8 +872,14 @@ def validate(exp, allow_short=False, check_rounds=True):
                             % s.get("name"))
         if s.get("warmup_s") is not None and not (isinstance(s["warmup_s"], (int, float)) and s["warmup_s"] >= 0):
             errs.append("shape %s: warmup_s must be a number >= 0" % s.get("name"))
-        if int(s.get("rps", 0)) % int(exp["client"]["concurrency"]) != 0:
-            errs.append("shape %s: rps must be divisible by client concurrency" % s.get("name"))
+        if s.get("kind") != "idle":
+            # fail closed at plan/pack time: the shape's own client worker count (a
+            # rung's client_concurrency, else client.concurrency) must divide its planned total rate exactly
+            try:
+                from .nighthawk import per_worker_rps
+                per_worker_rps(s.get("rps"), s.get("client_concurrency") or exp["client"]["concurrency"])
+            except ValueError as ex:
+                errs.append("shape %s: %s" % (s.get("name"), ex))
     for a in arms:
         st = arm_settings(a)
         bad = sorted(k for k in st if k not in envoy_config.SETTINGS and k not in ("codec_type",))
@@ -675,7 +979,7 @@ def validate(exp, allow_short=False, check_rounds=True):
             if not isinstance(acl, dict):
                 errs.append("arm %s: client must be an object" % a.get("name"))
             else:
-                bad = sorted(set(acl) - {"base_args", "extra_args", "multi_target", "paths"})
+                bad = sorted(set(acl) - set(ARM_CLIENT_KEYS))
                 if "paths" in acl and not (isinstance(acl["paths"], dict) and all(
                         k in snames and isinstance(v, str) and v.startswith("/") for k, v in acl["paths"].items())):
                     errs.append("arm %s: client.paths maps shape names to paths that start with /" % a.get("name"))
@@ -700,7 +1004,7 @@ def validate(exp, allow_short=False, check_rounds=True):
         errs.append("primary metric %s needs a two_hop arm" % exp["primary_metric"])
     m = exp["measure"]
     for li in [m["lead_in_s"]] + [sh["lead_in_s"] for sh in exp["shapes"] if sh.get("lead_in_s") is not None]:
-        if li + m["window_s"] + 1 > exp["client"]["duration_s"]:
+        if not window_life and li + m["window_s"] + 1 > exp["client"]["duration_s"]:
             errs.append("client duration must exceed lead_in + window + 1 s")
     names = [a.get("name") for a in arms]
     for p in exp.get("confirmatory") or []:
@@ -996,8 +1300,43 @@ def collect_metadata(exp, bootstrap_text, texts=None):
     md["client"] = dict(sysprobe.file_hashes(nh), path=nh, version=vm.group(1) if vm else vline[-80:],
                         commit=commit, commit_source=csrc,
                         settings={k: v for k, v in exp["client"].items() if k != "binary"})
+    own = [a for a in exp["arms"] if isinstance(a.get("client"), dict) and a["client"].get("binary")]
+    if own:
+        # every arm's own client binary, hashed at the start of the run (and again at its end)
+        md["client_arms"] = {}
+        for a in own:
+            p = a["client"]["binary"]
+            vt = _cmd_out([p, "--version"])
+            vl = ([x for x in vt.splitlines() if x.strip()] or [""])[-1]
+            vmm = re.search(r"version:\s*(\S+)", vl)
+            md["client_arms"][a["name"]] = dict(sysprobe.file_hashes(p), path=p, md5_pin=a["client"].get("md5"),
+                                                sha256_pin=a["client"].get("sha256"),
+                                                version=vmm.group(1) if vmm else vl[-80:])
     md["perf_version"] = _cmd_out(exp["measure"]["perf"] + ["--version"])
     return md
+
+
+def client_md5s_at_end(exp):
+    """{binary path: {md5, sha256}} of every client binary the run pinned, hashed at the end of the run."""
+    paths = {client_pin(exp, a)[0] for a in exp["arms"] if client_pin(exp, a)[1]}
+    out = {}
+    for p in sorted(paths):
+        h = sysprobe.file_hashes(p)
+        out[p] = {"md5": h["md5"], "sha256": h["sha256"]}
+    return out
+
+
+def client_pins_unchanged(exp, at_end):
+    """Every pinned client file still has its pinned md5 (and sha256, when pinned) at the end of the run."""
+    for a in exp["arms"]:
+        path, md5 = client_pin(exp, a)
+        if not md5:
+            continue
+        h = at_end.get(path) or {}
+        sh = client_pin_sha256(exp, a)
+        if h.get("md5") != md5 or (sh and h.get("sha256") != sh):
+            return False
+    return True
 
 
 ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
@@ -1051,6 +1390,18 @@ def check_binaries(exp, md):
         got = md["arms"][a["name"]]["sha256"]
         if want and want != got:
             errs.append("arm %s sha256 %s != source sha256 %s" % (a["name"], got, want))
+    # the pinned client binaries (the experiment's and every arm's own)
+    want = (exp.get("client") or {}).get("md5")
+    if want and (md.get("client") or {}).get("md5") != want:
+        errs.append("client md5 %s != pinned %s" % ((md.get("client") or {}).get("md5"), want))
+    want = (exp.get("client") or {}).get("sha256")
+    if want and (md.get("client") or {}).get("sha256") != want:
+        errs.append("client sha256 %s != pinned %s" % ((md.get("client") or {}).get("sha256"), want))
+    for name, c in sorted((md.get("client_arms") or {}).items()):
+        if c.get("md5") != c.get("md5_pin"):
+            errs.append("arm %s client md5 %s != pinned %s" % (name, c.get("md5"), c.get("md5_pin")))
+        if c.get("sha256_pin") and c.get("sha256") != c.get("sha256_pin"):
+            errs.append("arm %s client sha256 %s != pinned %s" % (name, c.get("sha256"), c.get("sha256_pin")))
     return errs
 
 
@@ -1394,6 +1745,38 @@ def aa_verdict(exp, analysis):
 
 # ---------------------------------------------------------------- run loop
 
+def calibration_shapes(exp):
+    """The zero-load calibration legs' shapes: client_calibration.shape (a name or a list of names; default the
+    first non-idle shape), each at rps_per_worker x its own client workers."""
+    cc = exp["client_calibration"]
+    names = cc.get("shape") or next(s["name"] for s in exp["shapes"] if s.get("kind") != "idle")
+    out = []
+    for name in ([names] if isinstance(names, str) else list(names)):
+        sh = next(s for s in exp["shapes"] if s["name"] == name)
+        conc = int(sh.get("client_concurrency") or exp["client"].get("concurrency", 4))
+        out.append(dict(sh, name=sh["name"] + "-floor", rps=conc * int(cc.get("rps_per_worker", 1))))
+    return out
+
+
+def calibration_shape(exp):
+    """The first calibration shape (one shape named, or the default)."""
+    return calibration_shapes(exp)[0]
+
+
+def calibration_arms(exp):
+    """The arms the zero-load calibration legs run: client_calibration.arm (a name or a list), default the
+    base arm. Each (arm, shape) gives one floor; a floor applies only to legs with the same client signature
+    (client md5 and flags)."""
+    cc = exp["client_calibration"]
+    if cc.get("per_recipe") is True and not cc.get("arm"):
+        # one floor arm per distinct client recipe, chosen by the harness (the first arm of each recipe)
+        from .clientcheck import recipe_arms
+        return recipe_arms(exp)
+    want = cc.get("arm") or exp.get("base_arm", exp["arms"][0]["name"])
+    want = [want] if isinstance(want, str) else list(want)
+    return [next(a for a in exp["arms"] if a["name"] == n) for n in want]
+
+
 def harness_cpus(exp):
     """CPUs for the harness itself: everything online that no configured set or SUT sibling uses."""
     if exp["cpus"].get("harness"):
@@ -1478,6 +1861,35 @@ class Runner:
         legs.append(m)
         self._record(m)
         self.log("%s warm-up (unscored) %s" % (lid, "valid" if m["verdict"]["valid"] else "invalid"))
+
+    def _client_floor(self, legs, bpath):
+        """Zero-load client legs before the first round (`client_calibration`): each calibration arm
+        (client_calibration.arm, default the base arm) on each named shape (default the first non-idle one)
+        at rps_per_worker x its client workers, same flags. Each is
+        recorded with `client_calibration` and `superseded` set, so no comparison, rerun or streak counts it. The
+        floors go to the backend; every later leg records its client load above the floor whose client signature
+        matches its own. Returns the floors."""
+        from .leg import client_floor_record
+        cc = self.exp["client_calibration"]
+        floors = []
+        for base, sh in [(a, s) for a in calibration_arms(self.exp) for s in calibration_shapes(self.exp)]:
+            lid = "r00-%s-%s" % (sh["name"], base["name"])
+            try:
+                m = self.backend.run_leg(base, sh, 0, bpath, lid)
+            except Exception as ex:  # noqa: BLE001 - a failed calibration is a missing floor, never a crash
+                m = {"leg_id": lid, "arm": base["name"], "shape": sh["name"], "round": 0, "target_rps": sh["rps"],
+                     "error": "%s: %s" % (type(ex).__name__, ex), "verdict": {"valid": False, "reasons": [str(ex)]}}
+            m.update(attempt=0, client_calibration=True, superseded=True)
+            legs.append(m)
+            self._record(m)
+            floor = client_floor_record(m, lid)
+            floor["rps_per_worker"] = int(cc.get("rps_per_worker", 1))
+            floors.append(floor)
+            self.log("%s client floor (unscored): %s" % (lid, "busiest thread %.3f, perf CPUs/worker %s" % (
+                floor["thread_busy_max"], floor["perf_cpus_per_worker"]) if floor["ok"]
+                else "FAILED: %s" % floor["why"]))
+        self.backend.client_floor = floors
+        return floors
 
     def _rerun_invalid(self, legs, first, last, bpath):
         """Re-run, at the end of a block, every (round, shape) in it that has an invalid leg:
@@ -1590,7 +2002,10 @@ class Runner:
                     self.backend.attach(origin, collector)
                 if uses(exp, "access_log"):
                     md["access_log_fs"] = sysprobe.fs_of(os.path.join(self.run_dir, "alog"))
-            while True:
+            if exp.get("client_calibration") is not None:
+                md["client_floors"] = self._client_floor(legs, bpath)
+                md["client_floor"] = md["client_floors"][0]
+            while not exp.get("calibration_only"):
                 plan = schedule(exp, done + 1, target)
                 for i, (r, sh, a) in enumerate(plan):
                     if exp.get("warmup_legs") and (i == 0 or plan[i - 1][:2] != (r, sh)):
@@ -1617,6 +2032,9 @@ class Runner:
                     stop_reason = "cap of %d rounds reached; %s" % (exp["rounds_max"], why)
                     break
                 target = min(done + exp["rounds_block"], exp["rounds_max"])
+            if exp.get("calibration_only"):
+                # a chain's floor legs on their own (no scored round)
+                stop_reason = "calibration only"
         except BaseException as e:  # noqa: BLE001 - recorded (a stop signal too), partial results still written
             aborted = "%s: %s" % (type(e).__name__, e)
             self.log("ABORTED: %s" % aborted)
@@ -1631,6 +2049,11 @@ class Runner:
             end = {a["name"]: sysprobe.file_hashes(a["binary"])["md5"] for a in exp["arms"]}
             md["arms_md5_at_end"] = end
             md["arms_md5_unchanged"] = all(end[n] == md["arms"][n]["md5"] for n in end)
+            if any(client_pin(exp, a)[1] for a in exp["arms"]):
+                # every pinned client binary, hashed again at the end
+                cend = client_md5s_at_end(exp)
+                md["client_md5_at_end"] = cend
+                md["client_md5_unchanged"] = client_pins_unchanged(exp, cend)
             if wasm_files(exp):
                 md["wasm_unchanged_at_end"] = not check_wasm(exp)
             cs = md["machine"].get("cpuidle_sut_summary") or {}

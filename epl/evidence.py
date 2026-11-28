@@ -340,13 +340,33 @@ def per_request_value(m, it):
     return v / d
 
 
-def freeze(spec, legs):
+def is_floor(m):
+    """A zero-load client-floor leg (client_calibration; its shape is `<shape>-floor`, leg id
+    r00-<shape>-floor-<arm>): never paired, never scored, never a traffic-equivalence leg."""
+    return bool(m.get("client_calibration")) or str(m.get("shape") or "").endswith("-floor")
+
+
+def is_scored(m):
+    """A scored leg for exclude_floor: round >= 1 and not a floor leg."""
+    try:
+        rnd = int(m.get("round") or 0)
+    except (TypeError, ValueError):
+        rnd = 0
+    return rnd >= 1 and not is_floor(m)
+
+
+def freeze(spec, legs, exclude_floor=False):
     """A copy of the spec with every `ref` item's per_request set from the legs:
     the mean per-request value of the ref arm (or the item's own arm) plus the offset.
     The value is taken per shape: an item without `shape` becomes one frozen item per shape
     the arm's legs ran (a per-request byte count differs between shapes), each with `shape`
     set. An item that is frozen already is kept as it is.
+    exclude_floor: only the scored legs
+    (is_scored: round >= 1, no floor leg) are read, so no item is made for a `<shape>-floor` shape and no floor or
+    round-0 value enters a reference. Off by default.
     Returns (spec, problems)."""
+    if exclude_floor:
+        legs = [m for m in legs if is_scored(m)]
     out, problems = {}, []
     for arm, items in spec.items():
         new = []
@@ -377,10 +397,12 @@ def freeze(spec, legs):
     return out, problems
 
 
-def check_run(spec, run_dir):
+def check_run(spec, run_dir, exclude_floor=False):
     """[(leg_id, arm, evidence record)] for every leg of an arm the spec names, plus a
-    list of problems (arms of the spec with no leg)."""
+    list of problems (arms of the spec with no leg). exclude_floor: only the scored legs (is_scored) are checked."""
     legs = load_legs(run_dir)
+    if exclude_floor:
+        legs = [m for m in legs if is_scored(m)]
     dumps = {}
     rows, problems = [], []
     for arm, items in spec.items():

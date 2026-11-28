@@ -1,0 +1,106 @@
+{
+ "abort_after_invalid": 25,
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "name": "off",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  },
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "name": "off-A2",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "base_arm": "off",
+ "client": {
+  "binary": "~/epl/bin/nighthawk_client",
+  "commit": "3196532",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "md5": "245bf838ee2972c958ef2ed31d8f66de",
+  "sha256": "bd2d2c3d05ba09c6d5f5968851876ab55c93ed546f2a609b043db340408746b3",
+  "warmup_s": 5
+ },
+ "client_calibration": {
+  "per_recipe": true,
+  "shape": "s"
+ },
+ "comparisons": "base",
+ "confirmatory": [
+  [
+   "off-A2",
+   "off"
+  ]
+ ],
+ "cpus": {
+  "client": "20-31,60-71",
+  "harness": "18-19",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "client_perf": true,
+  "client_perf_interval_ms": 1000,
+  "lead_in_s": 2,
+  "leg_binary_sha256": true,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "window_s": 20
+ },
+ "name": "client-checks",
+ "order": "abba",
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 8092,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rerun_invalid": 0,
+ "rounds": 12,
+ "rounds_block": 12,
+ "rounds_max": 12,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  }
+ ],
+ "short_run_note": "client-check template: an A/A pair with every client-bottleneck check on; the thresholds are placeholders",
+ "validity": {
+  "max_client_busy_above_floor": 0.3,
+  "max_client_perf_interval_cpus_per_worker": 0.6,
+  "max_client_sequencer_blocking": 0,
+  "max_client_worker_callback_ms": 5.0,
+  "max_client_worker_sequencer_blocking": 0
+ },
+ "workdir": "~/epl/runs/client-checks"
+}

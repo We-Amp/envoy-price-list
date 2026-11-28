@@ -111,6 +111,44 @@ class SimBackend:
             m["sut_non2xx"] = 2
         # a dry run has no steal time to read; report none, so a steal gate (cloud VMs) passes as on an idle host
         m.setdefault("steal_share", 0.0)
+        if (self.exp.get("validity") or {}).get("max_client_sequencer_blocking") is not None:
+            # a clean client (only when the config gates on it, so earlier dry runs are unchanged)
+            m["client_sequencer"] = {"blocking_count_total": 0, "blocking_max_us": None, "callback_max_us": 900.0}
+        vc = self.exp.get("validity") or {}
+        if vc.get("max_client_worker_sequencer_blocking") is not None or \
+                vc.get("max_client_worker_callback_ms") is not None:
+            # a clean per-worker sequencer record (only when the config gates on it)
+            nw = int(self.exp["client"].get("concurrency", 4))
+            m["client_worker_sequencer"] = {"ok": True, "reasons": [], "workers_seen": nw, "simulated": True}
+        if vc.get("client_overflow_gate") == "per_worker":
+            # a clean per-worker overflow record (only when the config gates on it)
+            nw = int(self.exp["client"].get("concurrency", 4))
+            m["client_worker_overflow"] = {"ok": True, "reasons": [], "workers_seen": nw, "workers_planned": nw,
+                                           "failed_workers": [], "per_worker": {}, "simulated": True}
+        if (self.exp.get("client_calibration") or {}).get("per_recipe") is True:
+            # the floor per client recipe; a dry run's client sends, the busiest thread at 1 - headroom, and the
+            # floor matched by the recipe (as leg.above_floor matches the client signature on the box)
+            from .clientcheck import recipe_key
+            from .leg import above_floor
+            sig = recipe_key(self.exp, arm)
+            m.update(client_sending={"ok": True, "reasons": [], "simulated": True},
+                     client_thread_busy_max=round(1.0 - m["client_headroom"], 4), client_signature=sig)
+            m.update(above_floor(getattr(self, "client_floor", None), m["client_thread_busy_max"], None, sig))
+        if vc.get("max_client_perf_interval_cpus_per_worker") is not None:
+            m["client_perf"] = {"ok": True, "interval_ms": (self.exp.get("measure") or {}).get("client_perf_interval_ms"),
+                                "peak_interval_cpus_per_worker": 0.0, "simulated": True}
+        from .experiment import client_pin
+        pin = client_pin(self.exp, arm)[1]
+        if pin:
+            # the pinned client file, as a leg that ran it records it (fault "client_md5": another file)
+            m.update(client_md5_pin=pin, client_md5=("0" * 32) if fault == "client_md5" else pin,
+                     client_exe_ok=fault != "client_md5")
+            # a pinned config's dry run also records the traffic-equivalence counters, as a leg on the box does (the
+            # traffic check reads them, end to end)
+            conns = int(self.exp["client"].get("concurrency", 4)) * int(self.exp["client"].get("connections_per_worker", 16))
+            m["traffic_window"] = {"client_to_envoy_bytes": int(tgt * 20 * 80), "client_to_envoy_bytes_per_request": 80.0,
+                                   "upstream_tx_bytes_per_request": 164.0, "listener_cx_total": 0}
+            m["traffic_leg"] = {"listener_cx_total": 2 * conns, "client_cx_total": conns}
         if arm.get("evidence") is not None:
             # no counters in a dry run: evidence is recorded as not evaluated, never gated,
             # unless the fault "evidence" asks for a failing item

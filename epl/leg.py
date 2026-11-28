@@ -30,9 +30,11 @@ import urllib.parse
 
 from . import envoy_config
 from . import experiment as _exp
-from . import latency, nighthawk, statsrow, sysprobe, validity, xds
+from . import clientcheck, latency, nighthawk, statsrow, sysprobe, validity, xds
 
 PERF_EVENTS = "instructions:u,cycles:u,cycles:k,instructions:k,task-clock,context-switches,cpu-migrations"
+# the client's own counters over the window (measure.client_perf), user + kernel
+CLIENT_PERF_EVENTS = "task-clock,cycles,instructions,context-switches"
 BASE_EVENT_NAMES = ("instructions:u", "cycles:u", "cycles:k", "instructions:k", "cycles", "task-clock",
                     "context-switches", "cpu-migrations")
 
@@ -53,15 +55,39 @@ def perf_counts_ok(pv):
     return "instructions:u" in pv and (("cycles:u" in pv and "cycles:k" in pv) or "cycles" in pv)
 
 
+def proc_start_ticks(pid):
+    """Field 22 of /proc/<pid>/stat (the start time in clock ticks since boot), or None: with the PID it names one
+    process for the life of the box, so a ledger entry can be verified before anything is signalled."""
+    try:
+        with open("/proc/%d/stat" % pid) as f:
+            return int(f.read().rsplit(")", 1)[1].split()[19])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
 class OwnProcesses:
-    """Registry of child processes this run started. Only these are ever signalled."""
+    """Registry of child processes this run started. Only these are ever signalled. With a ledger path (the
+    `ledger` attribute, else the environment's EPL_PID_LEDGER), every start appends one JSON line (role, pid, start
+    ticks, argv, UTC), so a chain's EXIT trap can verify a PID by its start time before it signals it."""
 
-    def __init__(self):
+    def __init__(self, ledger=None):
         self.procs = {}
+        self.ledger = ledger
 
-    def start(self, args, **kw):
+    def start(self, args, role=None, **kw):
         p = subprocess.Popen(args, start_new_session=True, **kw)
         self.procs[p.pid] = (p, os.path.realpath(args[0]) if os.path.exists(args[0]) else args[0])
+        led = self.ledger or os.environ.get("EPL_PID_LEDGER")
+        if led:
+            try:
+                with open(led, "a") as f:
+                    f.write(json.dumps({"role": role or os.path.basename(str(args[-1] if args[0] == "taskset"
+                                                                             else args[0])),
+                                        "pid": p.pid, "start_ticks": proc_start_ticks(p.pid),
+                                        "argv": [str(a) for a in args[:6]],
+                                        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+            except OSError:
+                pass
         return p
 
     def pids(self):
@@ -81,13 +107,35 @@ class OwnProcesses:
         self.procs.pop(p.pid, None)
         return p.returncode
 
+    def terminate(self, p, grace_s=60.0):
+        """Exactly one SIGTERM to a Popen we created, then wait up to grace_s; its exit code, or None when it
+        had to be killed (a client killed by a second signal prints no output). Never a second SIGTERM. The PID
+        stays registered until stop()."""
+        if p.pid not in self.procs:
+            raise RuntimeError("refusing to signal PID %d: not started by this run" % p.pid)
+        if p.poll() is None:
+            p.send_signal(signal.SIGTERM)
+            try:
+                p.wait(timeout=grace_s)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait(timeout=10.0)
+                return None
+        # the registry entry stays: stop() (the caller's finally) pops it and, the child reaped, sends nothing
+        return p.returncode
+
     def stop_all(self):
+        """Stop every registered child still running; returns the PIDs that were still running."""
+        alive = []
         for pid in list(self.procs):
             p, _ = self.procs[pid]
+            if p.poll() is None:
+                alive.append(pid)
             try:
                 self.stop(p, grace_s=5.0)
             except Exception:  # noqa: BLE001 - best effort at exit
                 pass
+        return sorted(alive)
 
 
 def admin_get(port, path, timeout=5.0):
@@ -109,6 +157,7 @@ STAT_FILTER = (r"^(http\.ingress_http\.|cluster\.(origin|ext_authz|otel_collecto
                r"listener\..*\.(ssl\.(handshake|session_reused|connection_error|no_certificate)|downstream_cx_total|"
                r"downstream_cx_active)$|"
                r"listener\..*\.ssl\.(versions|ciphers|curves|sigalgs)\.|"
+               r"tcp\.[A-Za-z0-9_]+\.downstream_cx_(rx|tx)_bytes_total$|"
                r"tracing\.|access_logs\.|[a-z_]+\.http_local_rate_limit\.|filesystem\.|lua\.|wasm\.)")
 # deltas of these are recorded per leg (counters only; gauges and histograms are skipped)
 DELTA_KEYS_RE = re.compile(r"(ext_authz\.|tracing\.|jwt_authn\.|http_local_rate_limit\.|ssl\.|upstream_rq_retry|upstream_rq_total|upstream_cx_total|"
@@ -407,6 +456,34 @@ def admin_prometheus(port, timeout=5.0):
     return parse_prometheus(body)
 
 
+# the listener's own total, not its per-worker copies (listener.<addr>.worker_<N>.downstream_cx_total: Envoy's
+# ALL_PER_HANDLER_LISTENER_STATS count every connection a second time)
+LISTENER_CX_RE = re.compile(r"^listener\.(?!admin\.)(?!.*\.worker_\d+\.).*\.downstream_cx_total$")
+
+
+def traffic_window(q0, q1):
+    """The window deltas a traffic-equivalence gate reads: the bytes Envoy received from the
+    client and sent back (the HTTP connection manager's downstream_cx_rx/tx_bytes_total, or a tcp_proxy's
+    tcp.<prefix>.downstream_cx_*_bytes_total), the connections Envoy's listener(s) accepted (listener.*.
+    downstream_cx_total, the admin listener excluded), and as the backup the origin cluster's upstream bytes.
+    A source missing from both reads is None, never 0."""
+    def d(keys):
+        keys = [k for k in keys if k in q0 and k in q1]
+        return sum(q1[k] - q0[k] for k in keys) if keys else None
+
+    def pick(suffix):
+        k = "http.ingress_http." + suffix
+        return [k] if k in q1 else sorted(x for x in q1 if x.startswith("tcp.") and x.endswith("." + suffix))
+    out = {"client_to_envoy_bytes": d(pick("downstream_cx_rx_bytes_total")),
+           "envoy_to_client_bytes": d(pick("downstream_cx_tx_bytes_total")),
+           "listener_cx_total": d(sorted(x for x in q1 if LISTENER_CX_RE.match(x))),
+           "upstream_tx_bytes": d(["cluster.origin.upstream_cx_tx_bytes_total"]),
+           "upstream_rx_bytes": d(["cluster.origin.upstream_cx_rx_bytes_total"])}
+    out["source"] = "downstream" if out["client_to_envoy_bytes"] is not None else (
+        "upstream (backup)" if out["upstream_tx_bytes"] is not None else None)
+    return out
+
+
 def _stat_window(q0, q1):
     """Every filtered stat's change over the window, zeros included, so evidence can tell a
     counter that stayed at 0 from one that does not exist (gauges come out as changes too)."""
@@ -588,6 +665,19 @@ def tcmalloc_percpu(port):
     return int(mm.group(1)) if mm else None
 
 
+def alog_may_truncate(path, troot):
+    """Access-log study: the harness opens a log for write only on the fast mount (`measure.
+    alog_truncate_root`); never /dev/null, never a path on any other mount (a file on another mount is never truncated:
+    its mount is re-made instead). Without a root, every earlier experiment's behaviour (the run directory's own
+    file)."""
+    if not path or path == "/dev/null":
+        return False
+    if troot is None:
+        return True
+    root = os.path.realpath(troot).rstrip("/") + "/"
+    return os.path.realpath(path).startswith(root)
+
+
 def _count_lines(path):
     n, size = 0, 0
     with open(path, "rb") as f:
@@ -632,9 +722,11 @@ def rung_of(e, shape):
     Returns {workers, main_cpu, worker_set, sut_set, start_cpus}; without them the
     experiment's envoy.workers and cpus.sut as before."""
     if shape.get("main_cpu") is None:
+        # a shape may name its own SUT set (`sut_cpus`, inside cpus.sut), so shapes of 4, 8 and 16
+        # workers pair within one run, each Envoy on its own CPUs with the main thread among them (as published)
+        sc = shape.get("sut_cpus") or e["cpus"]["sut"]
         return {"workers": int(shape.get("workers") or e["envoy"]["workers"]), "main_cpu": None,
-                "worker_set": None, "sut_set": sysprobe.parse_cpuset(e["cpus"]["sut"]),
-                "start_cpus": e["cpus"]["sut"]}
+                "worker_set": None, "sut_set": sysprobe.parse_cpuset(sc), "start_cpus": sc}
     ws = sysprobe.parse_cpuset(shape["worker_cpus"])
     main = int(shape["main_cpu"])
     return {"workers": int(shape["workers"]), "main_cpu": main, "worker_set": ws, "sut_set": ws | {main},
@@ -809,12 +901,191 @@ def clock_pair():
     return {"monotonic_ns": (a + b) // 2, "time_ns": w, "read_ns": b - a}
 
 
+def client_lifetime(ccfg):
+    """client.lifetime: "duration" (default; a fixed --duration, as in every earlier session) or "window"
+    (--no-duration, ended by one SIGTERM after the window's last read)."""
+    life = ccfg.get("lifetime", "duration")
+    if life not in nighthawk.LIFETIMES:
+        raise ValueError("client.lifetime must be one of %s, not %r" % (nighthawk.LIFETIMES, life))
+    return life
+
+
+def client_sending_margin(vcfg):
+    """Seconds the client must keep sending after the window's last read (validity.client_sending_margin_s)."""
+    v = (vcfg or {}).get("client_sending_margin_s")
+    return float(validity.DEFAULTS["client_sending_margin_s"] if v is None else v)
+
+
+CLIENT_KILLED = "client did not exit within term_grace_s after one SIGTERM; killed, no output"
+
+
+class ClientKilled(RuntimeError):
+    """The window-mode client had to be killed after its one SIGTERM (its output is lost)."""
+
+
+def client_killed(m):
+    """Record a killed window-mode client as a named, not-ok client-sending record; the caller
+    raises the returned exception, so the rest of the leg (the output parse) is skipped."""
+    m["client_sending"] = {"ok": False, "lifetime": "window", "reasons": [CLIENT_KILLED]}
+    m["error"] = CLIENT_KILLED
+    return ClientKilled(CLIENT_KILLED)
+
+
+def client_perf_cmd(mcfg, perf, pid, window_s):
+    """perf stat on the client PID for the window: measure.client_perf_bin (a plain perf binary)
+    when set, else measure.perf; `--timeout MS` with no `--` and no `sleep`, so no window-command wrapper (one that
+    takes over any `stat ... -p PID -- sleep N`) can match it."""
+    base = [mcfg["client_perf_bin"]] if mcfg.get("client_perf_bin") else list(perf)
+    return base + ["stat", "-x", ",", "-e", CLIENT_PERF_EVENTS, "-p", str(pid),
+                   "--timeout", str(int(round(float(window_s) * 1000)))]
+
+
+def client_perf_record(text, window_s, responses, client_workers):
+    """The client's perf stat over the window: CPUs (task-clock), per client worker, per request; ok only when
+    every counter ran unmultiplexed."""
+    pv, run = parse_perf_full(text or "")
+    tc = pv.get("task-clock")
+    ok = tc is not None and "cycles" in pv and all(v >= 99.99 for v in run.values())
+    cpus = tc / 1000.0 / window_s if tc is not None and window_s > 0 else None
+    return {"raw": pv, "running_pct": run, "ok": ok, "cpus": cpus,
+            "cpus_per_worker": cpus / client_workers if cpus is not None and client_workers else None,
+            "cycles_per_req": pv["cycles"] / responses if "cycles" in pv and responses else None,
+            "instructions_per_req": pv["instructions"] / responses if "instructions" in pv and responses else None,
+            "ghz": pv["cycles"] / (tc / 1000.0) / 1e9 if tc and "cycles" in pv else None}
+
+
+RAMP_END_REASON = "a client worker's ramp ended "  # the prefix nighthawk.sending_check gives that item
+RAMP_END_WAIVER_MAX_S = 1.5  # by design: the most a zero-load floor's ramp may end after the first read
+
+
+def client_floor_record(m, leg_id):
+    """The zero-load calibration leg's client floor: the busiest client thread's busy share and the
+    client's perf CPUs per worker, at the same flags and a negligible rate. ok only when the leg ran its client
+    through the window without error, its sequencer never blocked and (if measured) its perf counters are ok."""
+    maxb = m.get("client_thread_busy_max")
+    if maxb is None and m.get("client_headroom") is not None:
+        maxb = 1.0 - m["client_headroom"]
+    cp = m.get("client_perf")
+    why = []
+    if m.get("error"):
+        why.append("error: %s" % m["error"])
+    if maxb is None:
+        why.append("no client thread busy measurement")
+    cs = m.get("client_sending") or {}
+    # By design (set before any scored data): a zero-load floor leg measures client CPU, not Envoy, so the
+    # sending gate's ramp-end item does not apply to it (at 1 req/s per worker the client's start lands about one
+    # request interval later, inside the lead-in). Every other sending item still applies; no record is not ok.
+    # The waiver is bounded: the ramp must have ended no more than
+    # RAMP_END_WAIVER_MAX_S after the window's first read (last_ramp_end_before_window_s >= -1.5)
+    rest = [r for r in cs.get("reasons") or [] if not r.startswith(RAMP_END_REASON)]
+    late = cs.get("last_ramp_end_before_window_s")
+    waived = (not cs.get("ok") and bool(cs.get("reasons")) and not rest and late is not None
+              and -late <= RAMP_END_WAIVER_MAX_S)
+    if not (cs.get("ok") or waived):  # no record is not ok
+        why.append("client not sending through the window (or no record)")
+    blk = (m.get("client_sequencer") or {}).get("blocking_count_total")
+    if blk:
+        why.append("sequencer blocked %d times at zero load" % blk)
+    if cp is not None and not cp.get("ok"):
+        why.append("client perf counters missing or multiplexed")
+    if m.get("client_md5_pin") and not m.get("client_exe_ok"):
+        why.append("client binary not the pinned one (%s)" % (m.get("client_exe_error") or "md5 %s sha256 %s" % (
+            m.get("client_md5"), m.get("client_sha256"))))
+    return {"leg_id": leg_id, "shape": m.get("shape"), "target_rps": m.get("target_rps"), "thread_busy_max": maxb,
+            "client_signature": m.get("client_signature"), "client_md5_pin": m.get("client_md5_pin"),
+            "perf_cpus_per_worker": (cp or {}).get("cpus_per_worker"), "ok": not why, "why": why,
+            "sending_ramp_end_waived": waived}
+
+
+def above_floor(floor, busy_max, client_perf, signature=None):
+    """This leg's client load above the session's calibration floor; {} when no calibration leg ran. `floor` is
+    one floor or a list (one per calibrated shape); the floor used is the one whose client signature (the client
+    arguments without --rps and the target) equals this leg's. No matching floor: the floor gates
+    fail closed by that name."""
+    if floor is None:
+        return {}
+    floors = floor if isinstance(floor, list) else [floor]
+    if not floors:
+        return {}
+    match = [f for f in floors if f.get("client_signature") == signature]
+    if not match:
+        return {"client_floor_leg": None, "client_floor_ok": False, "client_floor_mismatch": True}
+    floor = match[0]
+    out = {"client_floor_leg": floor.get("leg_id"), "client_floor_ok": bool(floor.get("ok"))}
+    if floor.get("ok") and busy_max is not None and floor.get("thread_busy_max") is not None:
+        out["client_busy_above_floor"] = round(busy_max - floor["thread_busy_max"], 4)
+    pw = (client_perf or {}).get("cpus_per_worker")
+    if floor.get("ok") and pw is not None and floor.get("perf_cpus_per_worker") is not None:
+        out["client_perf_cpus_above_floor"] = round(pw - floor["perf_cpus_per_worker"], 4)
+    return out
+
+
 def client_kw(ccfg):
     """Popen keywords for the client: a soft fd limit (client.nofile) for this child only."""
     return {"preexec_fn": _nofile_preexec(int(ccfg["nofile"]))} if ccfg.get("nofile") else {}
 
 
-ARM_CLIENT_KEYS = ("base_args", "extra_args", "multi_target", "paths")
+ARM_CLIENT_KEYS = _exp.ARM_CLIENT_KEYS
+
+
+def exe_identity(pid, pinned_path):
+    """The identity of the file a process runs, without reading it: (st_dev, st_ino) of /proc/<pid>/exe (stat follows
+    the link to the executed inode) against the pinned file's. Used for Envoy in the flip blocks.
+    Fail closed: a stat error gives client_exe_ok False."""
+    out = {"client_pin_path": pinned_path}
+    try:
+        out["client_exe"] = os.path.realpath("/proc/%d/exe" % pid)
+        a = os.stat("/proc/%d/exe" % pid)
+        b = os.stat(pinned_path)
+        out["client_exe_dev_ino"] = [a.st_dev, a.st_ino]
+        out["client_pin_dev_ino"] = [b.st_dev, b.st_ino]
+        out["client_exe_ok"] = (a.st_dev, a.st_ino) == (b.st_dev, b.st_ino)
+    except OSError as ex:
+        out["client_exe_ok"] = False
+        out["client_exe_error"] = str(ex)
+    return out
+
+
+def open_exe(pid):
+    """A read-only descriptor of the file a process runs (/proc/<pid>/exe) and its path. The descriptor keeps the very
+    inode the process executed, so it can be hashed after the process has exited."""
+    path = os.path.realpath("/proc/%d/exe" % pid)
+    return os.open("/proc/%d/exe" % pid, os.O_RDONLY), path
+
+
+def exe_hash_record(fd, exe_path, md5_pin, sha256_pin=None, pinned_path=None):
+    """Client pinning (stronger than an inode compare): the md5 and sha256
+    of the measured client's own executed inode (the descriptor from open_exe, closed here), read AFTER the client
+    ended, outside every timed part of the leg, against the pins. (st_dev, st_ino) against the pinned file is
+    recorded beside it. Fail closed: a read error records no hash and client_exe_ok False."""
+    out = {"client_exe": exe_path, "client_md5_pin": md5_pin, "client_sha256_pin": sha256_pin}
+    try:
+        st = os.fstat(fd)
+        out["client_exe_dev_ino"] = [st.st_dev, st.st_ino]
+        if pinned_path:
+            try:
+                b = os.stat(pinned_path)
+                out["client_pin_dev_ino"] = [b.st_dev, b.st_ino]
+            except OSError:
+                out["client_pin_dev_ino"] = None
+        md5, sha = hashlib.md5(), hashlib.sha256()
+        os.lseek(fd, 0, os.SEEK_SET)
+        while True:
+            blk = os.read(fd, 1 << 20)
+            if not blk:
+                break
+            md5.update(blk)
+            sha.update(blk)
+        out["client_md5"], out["client_sha256"] = md5.hexdigest(), sha.hexdigest()
+        out["client_exe_ok"] = out["client_md5"] == md5_pin and (not sha256_pin or out["client_sha256"] == sha256_pin)
+    except OSError as ex:
+        out.update(client_md5=None, client_sha256=None, client_exe_ok=False, client_exe_error=str(ex))
+    finally:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+    return out
 
 
 def arm_client(arm):
@@ -1049,7 +1320,7 @@ class RealBackend:
         return self.own.pids()
 
     def _start_envoy(self, binary, bootstrap, cpus, workers, admin_port, env, extra, log_path, ready_timeout_s=60,
-                     nofile=None, spec_ctrl=None):
+                     nofile=None, spec_ctrl=None, stdout_path=None):
         """nofile: soft RLIMIT_NOFILE for this child only (set before exec; never a system change).
         spec_ctrl: the arm's per-task speculation control ({"store_bypass": "disable", ...}), applied
         with prctl in the child before exec; Envoy and every thread it starts inherit it."""
@@ -1062,7 +1333,19 @@ class RealBackend:
             pre = sysprobe.spec_ctrl_preexec(spec_ctrl, then=pre)
         if pre:
             kw["preexec_fn"] = pre
-        p = self.own.start(cmd, stdout=elog, stderr=subprocess.STDOUT, env=dict(os.environ, **env), **kw)
+        if stdout_path:
+            # Envoy's stdout on a FIFO whose reader the arm's pre_envoy_cmd started. Opened
+            # non-blocking first, so a missing reader fails the leg (ENXIO) instead of hanging it; Envoy then gets a
+            # blocking descriptor, as a shell redirection would give it.
+            import fcntl
+            fd = os.open(stdout_path, os.O_WRONLY | os.O_NONBLOCK)
+            fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            try:
+                p = self.own.start(cmd, stdout=fd, stderr=elog, env=dict(os.environ, **env), **kw)
+            finally:
+                os.close(fd)
+        else:
+            p = self.own.start(cmd, stdout=elog, stderr=subprocess.STDOUT, env=dict(os.environ, **env), **kw)
         if not wait_ready(admin_port, ready_timeout_s, p):
             raise RuntimeError("envoy (%s) not ready (exit %s)" % (os.path.basename(bootstrap), p.poll()))
         exe = os.path.realpath("/proc/%d/exe" % p.pid)
@@ -1070,8 +1353,8 @@ class RealBackend:
             raise RuntimeError("envoy pid %d runs %s, expected %s" % (p.pid, exe, binary))
         return p, elog
 
-    def _stop_envoy(self, p, elog, log_path):
-        rc = self.own.stop(p)
+    def _stop_envoy(self, p, elog, log_path, grace_s=10.0):
+        rc = self.own.stop(p, grace_s=grace_s)
         elog.close()
         out = {"exit": rc}
         try:
@@ -1083,10 +1366,30 @@ class RealBackend:
             pass
         return out
 
+    def _hook(self, arm, stage, leg_id, m, pid=None):
+        """The arm's `<stage>_cmd` (argv; {run_dir} {leg_id} {arm} {pid} substituted), run to its end
+        with its output kept in run_dir/hooks/. pre_envoy and post_ready fail the leg on a non-zero exit."""
+        argv = arm.get(stage + "_cmd")
+        if not argv:
+            return
+        sub = {"run_dir": self.run_dir, "leg_id": leg_id, "arm": arm["name"], "pid": str(pid or "")}
+        argv = [x.format(**sub) for x in argv]
+        os.makedirs(os.path.join(self.run_dir, "hooks"), exist_ok=True)
+        with open(os.path.join(self.run_dir, "hooks", "%s.%s.log" % (leg_id, stage)), "w") as f:
+            try:
+                rc = subprocess.run(argv, stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                    timeout=float(arm.get("hook_timeout_s", 300))).returncode
+            except subprocess.TimeoutExpired:
+                rc = -1
+        m.setdefault("hooks", {})[stage] = rc
+        if rc != 0 and stage in ("pre_envoy", "post_ready"):
+            raise RuntimeError("%s_cmd exited %s" % (stage, rc))
+
     def run_leg(self, arm, shape, rnd, bootstrap_path, leg_id):
         e = self.exp
         t_leg_wall0 = time.time()
-        ecfg, ccfg, mcfg = e["envoy"], e["client"], e["measure"]
+        # the arm may carry its own client lifetime, recipe and phases
+        ecfg, ccfg, mcfg = e["envoy"], _exp.arm_client_cfg(e, arm), e["measure"]
         if shape.get("lead_in_s") is not None:
             # a shape may start its window later (a client that ramps its rate up)
             mcfg = dict(mcfg, lead_in_s=shape["lead_in_s"])
@@ -1151,6 +1454,9 @@ class RealBackend:
             return m
         if shape["kind"] == "idle":
             return self._run_idle_leg(arm, shape, rnd, bootstrap_path, leg_id, m, aenv, vcfg)
+        # this leg carries the client-sending record and the in-window denominators (validity fails
+        # closed on a marked leg without them; analysis keeps the old denominators for unmarked legs)
+        m["harness_marks"] = [nighthawk.N1_MARK]
         envoy = None
         hop_b = None
         sink = sink_out = sampler = None
@@ -1175,7 +1481,13 @@ class RealBackend:
         coll0 = self.collector.scrape() if self.collector and (
             aenv.get("tracing") or (aenv.get("stats_sink") or {}).get("kind") == "otlp") else None
         alog = (aenv.get("access_log") or {}).get("path")
-        if alog:
+        if (aenv.get("access_log") or {}).get("sink") == "stdout":
+            alog = None
+        troot = mcfg.get("alog_truncate_root")
+
+        def may_truncate(path):
+            return alog_may_truncate(path, troot)
+        if alog and may_truncate(alog):
             with open(alog, "w"):
                 pass  # the harness owns this file; every leg starts it empty
         try:
@@ -1202,10 +1514,12 @@ class RealBackend:
                 xds.write_initial(xst)  # every leg starts from update 0
             # a rung starts Envoy on the main core only (its stats are allocated there, at config
             # load) and moves the workers to their set once they exist
+            self._hook(arm, "pre_envoy", leg_id, m)
             envoy, elog = self._start_envoy(arm["binary"], bootstrap_path, rung["start_cpus"], workers,
                                             ecfg["admin_port"], env, arm.get("extra_args", []), elog_path,
                                             ready_timeout_s=float(shape.get("ready_timeout_s", 60)),
-                                            nofile=nofile_for(aenv, e), spec_ctrl=arm.get("spec_ctrl"))
+                                            nofile=nofile_for(aenv, e), spec_ctrl=arm.get("spec_ctrl"),
+                                            stdout_path=arm.get("stdout_path"))
             m["envoy_pid"] = envoy.pid
             if rung["main_cpu"] is not None:
                 m["rung_pin"] = pin_rung(envoy.pid, rung["main_cpu"], rung["worker_set"], workers,
@@ -1213,6 +1527,25 @@ class RealBackend:
             if not sysprobe.port_open("127.0.0.1", ecfg["listener_port"]):
                 raise RuntimeError("listener port not open after ready")
             self._save_config_dump(arm["name"], ecfg["admin_port"], timeout=max(10.0, adm_t))
+            if mcfg.get("server_info"):
+                # the flush flags and log path as this Envoy reports them, at leg start
+                try:
+                    sst, sbody = admin_get(ecfg["admin_port"], "/server_info", timeout=max(10.0, adm_t))
+                    clo = json.loads(sbody).get("command_line_options", {}) if sst == 200 else {}
+                    fi = str(clo.get("file_flush_interval", ""))
+                    m["server_info_cli"] = {
+                        "file_flush_min_size": int(clo["file_flush_min_size"]) if "file_flush_min_size" in clo else None,
+                        "file_flush_interval_s": float(fi[:-1]) if fi.endswith("s") else None,
+                        "log_path_empty": not clo.get("log_path"), "concurrency": clo.get("concurrency")}
+                    # v1.40.2 leaves file_flush_min_size out of /server_info (options_impl.cc toCommandLineOptions
+                    # sets the interval only), so the size is read from the process's own command line too
+                    with open("/proc/%d/cmdline" % envoy.pid, "rb") as f:
+                        argv = f.read().decode(errors="replace").split("\0")
+                    kb = argv[argv.index("--file-flush-min-size-kb") + 1] if "--file-flush-min-size-kb" in argv else "64"
+                    m["server_info_cli"]["cmdline_flush_min_kb"] = int(kb)
+                except (OSError, ValueError, KeyError) as ex:
+                    m["server_info_cli"] = {"error": str(ex)}
+            self._hook(arm, "post_ready", leg_id, m, pid=envoy.pid)
             if mcfg.get("runtime_keys"):
                 # the runtime guards as this process reads them, before any client connection exists
                 m["runtime_start"] = self._leg_runtime(ecfg["admin_port"], mcfg["runtime_keys"], max(10.0, adm_t))
@@ -1239,7 +1572,7 @@ class RealBackend:
             if rung["main_cpu"] is not None:
                 pin_ok = pin_ok and bool(m["rung_pin"].get("ok"))
             else:
-                pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(e["cpus"]["sut"])
+                pin_ok = pin_ok and sysprobe.parse_cpuset(sut_cpus) == sysprobe.parse_cpuset(rung["start_cpus"])
             ccfg = client_for(ccfg, shape)
             scheme = "https" if aenv.get("tls") else "http"
             # an arm may carry client settings of its own (`client`: base_args replaces the shape's or
@@ -1265,13 +1598,25 @@ class RealBackend:
             # "{cert_dir}" in a client argument names this run's certificate directory (the HTTP/3
             # client's transport socket trusts the listener's certificate there)
             cextra, cbase = sub_cert_dir(cextra, self.run_dir), sub_cert_dir(cbase, self.run_dir)
-            nh = ccfg["binary"]
+            # the arm's own client binary (pinned by md5), else the experiment's
+            nh, cl_pin = _exp.client_pin(e, arm)
+            m["client_binary"] = nh
+            if cl_pin:
+                m["client_md5_pin"] = cl_pin
+            # recipe "phases" runs one client process, a warm phase then a measure phase (--phases); its warm
+            # phase replaces the separate warm-up process
+            pvec = _exp.leg_phase_vector(ccfg, shape) if _exp.client_recipe(ccfg) == "phases" else None
+            pset = nighthawk.phase_settings(ccfg) if pvec else None
             # 4. warm-up (a shape may set its own length: the JIT warm-up check)
             warm_s = shape["warmup_s"] if shape.get("warmup_s") is not None else ccfg.get("warmup_s", 0)
+            if pvec is not None:
+                warm_s = 0
+                m["client_recipe"] = "phases"
+                m["client_phases_planned"] = pvec
             if warm_s > 0:
                 wa = nighthawk.client_args(ccfg, shape["rps"], url, warm_s, False, cextra,
                                              cbase)
-                w = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + wa,
+                w = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + wa,  # the arm's client
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **client_kw(ccfg))
                 try:
                     w.wait(timeout=warm_s + 60)
@@ -1283,6 +1628,19 @@ class RealBackend:
                 lx = self._lat_before(m, aenv, envoy, sink, leg_id, lat, adm_t, shape, workers)
             # 5. measured run
             dur = ccfg["duration_s"]
+            life = client_lifetime(ccfg)
+            m["client_lifetime"] = life
+            if pvec is not None:
+                if lat:
+                    raise ValueError("client.recipe phases is not supported in run L (measure.latency)")
+                # the client ends by itself after both phases (lifetime duration), or by the SIGTERM
+                dur = pset["warm_s"] + pset["measure_cap_s"]
+            if life == "window":
+                if lat:
+                    raise ValueError("client.lifetime window is not supported in run L (measure.latency)")
+                # --no-duration: the run ends with one SIGTERM after the window's last read; with
+                # phases the measure phase's length is only an upper bound (--phases refuses --no-duration)
+                dur = None
             if lat:
                 # the two count reads around the window are served by the main thread: each walks
                 # every stat (timed on this Envoy just now; slower beside the load and on a shared
@@ -1292,13 +1650,36 @@ class RealBackend:
                 m["lat_client_duration_s"] = dur
             nh_json = os.path.join(self.run_dir, "nighthawk", leg_id + ".json")
             ma = nighthawk.client_args(ccfg, shape["rps"], url, dur, True, cextra,
-                                         cbase)
+                                         cbase, phases=pvec)
             m["client_args"] = ma
+            m["client_signature"] = nighthawk.client_signature(ma, url, cl_pin)
+            # with prefetch on one target, a phases leg opens exactly workers x connections (the warm phase's
+            # connections serve the measure phase)
+            cx_expect = int(ccfg.get("concurrency", 1)) * int(ccfg.get("connections_per_worker", 16)) \
+                if pvec is not None and "--prefetch-connections" in ma and not mt else None
             with open(nh_json, "w") as out, open(os.path.join(self.run_dir, "logs", leg_id + ".client.log"), "w") as cerr:
+                # the clock pair converts the client's wall-clock execution start to this monotonic clock
+                cl_clock = clock_pair()
                 cl = self.own.start(["taskset", "-c", e["cpus"]["client"], nh] + ma, stdout=out, stderr=cerr,
                                     **client_kw(ccfg))
+                t_cl_start = time.monotonic()
+                cperf = cperf_err = None
+                cl_exe = None
                 try:
-                    time.sleep(mcfg["lead_in_s"])
+                    # with phases the lead-in is counted from the warm-to-measure boundary (the warm phase,
+                    # plus an allowance for the client's start and the boundary drain); checked from the output
+                    lead_wait = mcfg["lead_in_s"] + (pset["warm_s"] + pset["boundary_allow_s"] if pvec else 0)
+                    if pvec:
+                        m["client_lead_wait_s"] = lead_wait
+                    time.sleep(lead_wait)
+                    if cl_pin:
+                        # a descriptor of the measured client's own /proc/<pid>/exe (taskset has exec'd by
+                        # now); its inode is hashed after the client ended, outside every timed part of the leg
+                        try:
+                            cl_exe = open_exe(cl.pid)
+                        except OSError as ex:
+                            m.update(client_exe_ok=False, client_md5=None,
+                                     client_exe_error="cannot open /proc/%d/exe: %s" % (cl.pid, ex))
                     cl_cpus = sysprobe.cpus_allowed(cl.pid)
                     pin_ok = pin_ok and sysprobe.parse_cpuset(cl_cpus) == sysprobe.parse_cpuset(e["cpus"]["client"])
                     m["client_cpus_allowed"] = cl_cpus
@@ -1363,16 +1744,37 @@ class RealBackend:
                         sampler.start()
                     pb = subprocess.Popen(pcmd(hop_b.pid), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                           text=True) if hop_b else None
+                    if mcfg.get("client_perf"):
+                        # perf stat on the client PID over the same window (its own CPUs: no SUT multiplexing)
+                        # with measure.client_perf_interval_ms, perf stat -I and no --timeout (ended by one
+                        # SIGINT after the window; perf 6.8 refuses --timeout with -I)
+                        # the -I process has no end of its own, so it is ours by the registry
+                        # and the ledger (role perf-client), and its SIGINT is in the finally below
+                        if mcfg.get("client_perf_interval_ms"):
+                            cperf = self.own.start(clientcheck.client_perf_interval_cmd(mcfg, self.perf, cl.pid),
+                                                   role="perf-client", stdout=subprocess.PIPE,
+                                                   stderr=subprocess.PIPE, text=True)
+                        else:
+                            cperf = subprocess.Popen(client_perf_cmd(mcfg, self.perf, cl.pid, mcfg["window_s"]),
+                                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                     tl = None
                     if mcfg.get("burst"):
                         tl = Timeline(mcfg["burst"], self.own, envoy, hop_b, ecfg["admin_port"],
                                       e["hop2"]["admin_port"], t0)
                         tl.start()
+                    cperf_done = False
                     try:
                         pr = subprocess.run(pcmd(envoy.pid), capture_output=True, text=True,
                                             timeout=mcfg["window_s"] + 60)
                         pb_err = pb.communicate(timeout=mcfg["window_s"] + 60)[1] if pb else None
+                        if cperf and mcfg.get("client_perf_interval_ms") and cperf.poll() is None:
+                            cperf.send_signal(signal.SIGINT)  # the window ended; perf prints its last interval
+                        cperf_err = cperf.communicate(timeout=mcfg["window_s"] + 60)[1] if cperf else None
+                        cperf_done = True
                     finally:
+                        if cperf and mcfg.get("client_perf_interval_ms"):
+                            # on every path the -I perf gets its SIGINT and leaves the registry
+                            clientcheck.end_interval_perf(self.own, cperf, cperf_done)
                         if tl:
                             tl.stop_evt.set()
                             tl.join(timeout=30)
@@ -1434,6 +1836,8 @@ class RealBackend:
                     # the response count's time base ends with the last count read, before
                     # anything slow (thread checks, numastat) runs
                     t2 = time.monotonic()
+                    # the client must still be running when the window's last count read ends
+                    m["client_alive_at_t2"] = cl.poll() is None
                     if lat:
                         # the count read must end while the client and the probe still send
                         m["lat_senders_running"] = cl.poll() is None and lx["probe"].poll() is None
@@ -1470,9 +1874,25 @@ class RealBackend:
                         # the probe runs at least 1 s past the window; it then answers what it sent
                         time.sleep(max(0.0, t1 + 1.0 - time.monotonic()))
                         lx["summary"] = statsrow.stop_latprobe(self.own, lx.pop("probe"), lx["summary_path"])
-                    cl.wait(timeout=dur + 120)
+                    if life == "window":
+                        # one SIGTERM, no earlier than t2 + the margin + client.term_slack_s (the client's own
+                        # end then clears the sending check's margin): Nighthawk cancels on the first signal and
+                        # still prints its output; a second signal would kill it without output
+                        time.sleep(max(0.0, t2 + client_sending_margin(vcfg) + float(ccfg.get("term_slack_s", 0.5))
+                                       - time.monotonic()))
+                        m["client_term_after_t2_s"] = round(time.monotonic() - t2, 4)
+                        m["client_exit"] = self.own.terminate(cl, grace_s=float(ccfg.get("term_grace_s", 60)))
+                        if m["client_exit"] is None:
+                            # killed after the grace: no output to parse; a named reason, not a
+                            # JSON decode error
+                            raise client_killed(m)
+                    else:
+                        cl.wait(timeout=dur + 120)
+                        m["client_exit"] = cl.returncode
                 finally:
                     self.own.stop(cl)
+                    if cl_exe is not None:
+                        m.update(exe_hash_record(cl_exe[0], cl_exe[1], cl_pin, _exp.client_pin_sha256(e, arm), nh))
             if lat:
                 self._lat_after(m, aenv, envoy, sink, lat, adm_t, lx)
                 pin_ok = pin_ok and lx["pins_ok"](lx["summary"], sampler)
@@ -1525,6 +1945,11 @@ class RealBackend:
             m["sut_cpu_busy_pct"] = {str(k): round(v, 1)
                                      for k, v in sysprobe.per_cpu_busy_pct(p0, p1, sut_set | sib_set).items()}
             m["envoy_threads"] = sysprobe.threads_summary(e0, e1, t2 - t0)
+            # the access-log flush threads over the window (a marker of access-log work)
+            _fl = [t for t in m["envoy_threads"].values() if t["comm"] == "AccessLogFlush"]
+            m["flush_threads"] = {"n": len(_fl), "busy": round(sum(t["busy"] for t in _fl), 5),
+                                  "vol_cs_per_s": round(sum(t["vol_cs"] or 0 for t in _fl) / (t2 - t0), 3)
+                                  if t2 > t0 else None}
             # per-task speculation control of every Envoy thread, read after the window (evidence for
             # a spec_ctrl arm: every thread mitigated; the default elsewhere)
             m["envoy_speculation"] = sysprobe.speculation_status(envoy.pid)
@@ -1553,7 +1978,18 @@ class RealBackend:
             non2 = sum(_delta(q0, q1, "http.ingress_http.downstream_rq_%s" % c) for c in ("1xx", "3xx", "4xx", "5xx"))
             m["sut_stats_delta"] = _stat_deltas(q0, q1)
             m["sut_stats_window"] = _stat_window(q0, q1)
+            # the traffic-equivalence gate's sources, as window deltas
+            m["traffic_window"] = traffic_window(q0, q1)
+            # the traffic-equivalence gate's per-leg counts: Envoy is new per leg, so a counter at the window's
+            # last read is the leg's count up to the window's end (warm-up, prime and lead-in included; expected
+            # 1,024 connections on `s`, 512 for a phases leg)
+            m["traffic_leg"] = traffic_window({k: 0 for k in q1}, q1)
+            for k in ("client_to_envoy_bytes", "upstream_tx_bytes"):
+                # bytes per in-window 2xx, and the upstream backup
+                v = m["traffic_window"][k]
+                m["traffic_window"][k + "_per_request"] = round(v / resp_raw, 3) if v is not None and resp_raw else None
             m["sut_stats_window_ok"] = True
+            m["fs_gauge_window_end"] = q1.get("filesystem.write_total_buffered", 0)
             if per_thread:
                 pt = parse_perf_per_thread(pr.stderr)
                 m["perf_per_thread"] = pt
@@ -1596,7 +2032,50 @@ class RealBackend:
                 m["hop2_responses_raw"] = _delta(qb0, qb1, "http.ingress_http.downstream_rq_2xx")
             busy = sysprobe.threads_busy(c0, c1, win)
             maxb = max(busy.values()) if busy else None
-            nhp = nighthawk.parse_output(nh_json)
+            # a phases leg's client figures come from its measure phase only
+            nhp = nighthawk.parse_output(nh_json, measure_phase=nighthawk.MEASURE if pvec else None)
+            ramp = nighthawk.ramp_s(ma)
+            mono_wall = (cl_clock["monotonic_ns"] - cl_clock["time_ns"]) / 1e9
+            m["client_sending"] = nighthawk.sending_check(
+                life, nhp["worker_exec"], mono_wall, t_q0, t2, ramp,
+                client_sending_margin(vcfg), m.get("client_alive_at_t2"), exit_code=m.get("client_exit"),
+                graceful_stops=nhp["graceful_stop_requested"], failed_terminations=nhp["failed_terminations"],
+                workers=int(ccfg.get("concurrency", 1)))
+            if pvec is not None:
+                m["client_phases"] = nighthawk.phase_check(
+                    nhp, pvec, int(ccfg.get("concurrency", 1)), nhp["worker_exec"], mono_wall, t_q0,
+                    float(pset["min_lead_in_s"]), cx_expected=cx_expect)
+                m["client_responses_basis"] = nhp.get("responses_basis")
+                m["client_measure_completed"] = nhp.get("measure_completed")
+                if not nhp["workers"]:
+                    # the workers' own results carry no latency in a phase run: the configured count
+                    nhp["workers"] = int(ccfg.get("concurrency", 1))
+            m["client_start_to_t2_s"] = round(t2 - t_cl_start, 4)
+            # the full-rate part's rate (2xx / (execution - ramp / 2)); a rate, never a per-request denominator
+            m["client_rate_2xx_steady"] = nighthawk.steady_rate(nhp["responses_2xx"], nhp["execution_duration_s"],
+                                                                ramp)
+            m["client_execution_s"] = nhp["execution_duration_s"]
+            # the client self-check: sequencer statistics, perf on the client, busy above the floor
+            m["client_sequencer"] = nhp["sequencer"]
+            if mcfg.get("client_perf"):
+                with open(os.path.join(self.run_dir, "perf", leg_id + ".client.csv"), "w") as f:
+                    f.write(cperf_err or "")
+                if mcfg.get("client_perf_interval_ms"):
+                    m["client_perf"] = clientcheck.client_perf_interval_record(
+                        cperf_err, float(mcfg["window_s"]), resp, int(ccfg.get("concurrency", 1)),
+                        mcfg["client_perf_interval_ms"], rc=cperf.returncode if cperf else None)
+                else:
+                    m["client_perf"] = client_perf_record(cperf_err, float(mcfg["window_s"]), resp,
+                                                          int(ccfg.get("concurrency", 1)))
+            if clientcheck.gates_on(vcfg):
+                # each client worker's own sequencer statistics (fail closed: a missing worker or statistic)
+                m["client_worker_sequencer"] = clientcheck.leg_worker_sequencer(nh_json, int(ccfg.get("concurrency", 1)),
+                                                                                vcfg)
+            if clientcheck.overflow_gate_on(vcfg):
+                # every client worker's own pool and pending overflow 0 (fail closed)
+                m["client_worker_overflow"] = clientcheck.leg_worker_overflow(nh_json, int(ccfg.get("concurrency", 1)))
+            m.update(above_floor(getattr(self, "client_floor", None), maxb, m.get("client_perf"),
+                                 m.get("client_signature")))
             if lat:
                 sent, want = nhp["counters"].get("upstream_rq_total"), shape["rps"] * float(dur)
                 m["lat_nh"] = {"open_loop": "--open-loop" in ma, "requests": sent, "expected": want,
@@ -1622,6 +2101,8 @@ class RealBackend:
                 client_queue_to_connect_max_us=nhp["queue_to_connect_max_us"],
                 client_callback_max_us=nhp["callback_max_us"],
             )
+            if m.get("traffic_leg") is not None:
+                m["traffic_leg"]["client_cx_total"] = nhp["cx_total"]  # the per-leg connection count's backup
             if resp > 0 and m["perf_ok"]:
                 iu = pv["instructions:u"]
                 split = "cycles:u" in pv and "cycles:k" in pv
@@ -1681,7 +2162,7 @@ class RealBackend:
                         m["per_req"]["cycles_total_all"] = cyc_all / resp
                         m["per_req"]["cycles_total_per_hop"] = cyc_all / resp / hops
         except Exception as ex:  # noqa: BLE001 - recorded as an invalid leg
-            m["error"] = "%s: %s" % (type(ex).__name__, ex)
+            m["error"] = str(ex) if isinstance(ex, ClientKilled) else "%s: %s" % (type(ex).__name__, ex)
         finally:
             for u in (xpre, xwin):
                 if u is not None:
@@ -1691,6 +2172,7 @@ class RealBackend:
                 try:
                     m["sut_stats_leg_end"] = admin_stats(ecfg["admin_port"], adm_t, sfx)
                     m["sut_stats_leg_end_ok"] = True
+                    # (the traffic-equivalence gate's per-leg counts are traffic_leg, at the window's last read)
                     if mcfg.get("leg_end_histograms"):
                         # histogram lines (bucket counts) at the end of the leg, as text: the stats snapshot keeps
                         # integers only
@@ -1724,7 +2206,7 @@ class RealBackend:
                 except Exception:  # noqa: BLE001 - best effort; the leg is invalid already
                     pass
             if envoy is not None:
-                st = self._stop_envoy(envoy, elog, elog_path)
+                st = self._stop_envoy(envoy, elog, elog_path, grace_s=float(arm.get("stop_grace_s", 10.0)))
                 m["envoy_exit"] = st["exit"]
                 m["envoy_log_deprecated_lines"] = st.get("deprecated_lines")
                 m["envoy_log_bytes"] = st.get("log_bytes")
@@ -1750,7 +2232,7 @@ class RealBackend:
                 m["hop2_exit"] = st["exit"]
                 if st["exit"] not in (0, None) and m.get("envoy_exit") in (0, None):
                     m["envoy_exit"] = st["exit"]
-            if alog and os.path.exists(alog):
+            if alog and alog != "/dev/null" and os.path.exists(alog):
                 # every request should have a line (written by the flush thread, flushed at exit)
                 n, size = _count_lines(alog)
                 m["access_log_lines"], m["access_log_bytes"] = n, size
@@ -1763,8 +2245,18 @@ class RealBackend:
                     sample = f.read(4096)
                 with open(os.path.join(self.run_dir, "alog", leg_id + ".sample"), "wb") as f:
                     f.write(sample)
-                with open(alog, "w"):
-                    pass  # keep the run directory small: sample kept, file emptied
+                if may_truncate(alog):
+                    with open(alog, "w"):
+                        pass  # keep the run directory small: sample kept, file emptied
+            for x in (aenv.get("access_log") or {}).get("extra") or []:
+                # every further file logger, counted after Envoy exits (never truncated here)
+                if os.path.exists(x["path"]):
+                    n, size = _count_lines(x["path"])
+                    m.setdefault("access_log_extra", []).append({"path": x["path"], "lines": n, "bytes": size})
+            try:
+                self._hook(arm, "post_leg", leg_id, m, pid=m.get("envoy_pid"))
+            except Exception as ex:  # noqa: BLE001 - recorded; post_leg never fails a leg by itself
+                m["post_leg_error"] = str(ex)
         if lat:
             # run L: the collector was read at the two quiescent points (_lat_before, _lat_after)
             self._lat_finish(m, aenv, shape, leg_id, lat, lx, rung)
@@ -2290,7 +2782,7 @@ class RealBackend:
                 if th is not None:
                     th.stop_evt.set()
             if envoy is not None:
-                st = self._stop_envoy(envoy, elog, elog_path)
+                st = self._stop_envoy(envoy, elog, elog_path, grace_s=float(arm.get("stop_grace_s", 10.0)))
                 m["envoy_exit"] = st["exit"]
                 try:
                     with open(elog_path) as f:
