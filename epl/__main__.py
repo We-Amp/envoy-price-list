@@ -145,12 +145,36 @@ def cmd_run(args):
         print("A/A self-test: %s" % ("PASS" if res["aa_selftest"]["pass"] else "FAIL"))
 
 
+def cli_rates(exp, shape, text):
+    """The --rps list of calibrate and probe, each checked like a planned rate: divisible by the shape's client workers,
+    before anything starts. ValueError otherwise."""
+    from .nighthawk import per_worker_rps
+    workers = shape.get("client_concurrency") or exp["client"]["concurrency"]
+    out = []
+    for x in str(text).split(","):
+        try:
+            v = float(x)
+        except ValueError:
+            raise ValueError("--rps %r is not a number" % x)
+        per_worker_rps(v, workers)
+        out.append(int(v))
+    return out
+
+
+def check_cli_rates(exp, shape, text):
+    try:
+        return cli_rates(exp, shape, text)
+    except ValueError as ex:
+        sys.exit("--rps refused: %s" % ex)
+
+
 def cmd_calibrate(args):
     exp = _load(args, check_rounds=False)
     arm = [a for a in exp["arms"] if a["name"] == args.arm]
     shape = [s for s in exp["shapes"] if s["name"] == args.shape]
     if not arm or not shape:
         sys.exit("unknown arm or shape")
+    check_cli_rates(exp, shape[0], args.rps)
     run_dir = _run_dir(dict(exp, name=exp["name"] + "-calibrate"), args.out)
     from .leg import RealBackend
     from .origin import Origin
@@ -210,6 +234,7 @@ def cmd_probe(args):
     shape = [s for s in exp["shapes"] if s["name"] == args.shape]
     if not shape:
         sys.exit("unknown shape")
+    check_cli_rates(exp, shape[0], args.rps)
     run_dir = _run_dir(dict(exp, name=exp["name"] + "-probe"), args.out)
     from .leg import RealBackend
     from .origin import Origin
@@ -319,7 +344,7 @@ def cmd_evidence_check(args):
         legs = []
         for d in args.run_dir:
             legs += evidence.load_legs(os.path.expanduser(d))
-        spec, problems = evidence.freeze(spec, legs)
+        spec, problems = evidence.freeze(spec, legs, exclude_floor=args.exclude_floor)
         for p in problems:
             print("FREEZE PROBLEM %s" % p)
         bad += len(problems)
@@ -337,7 +362,11 @@ def cmd_evidence_check(args):
         print("frozen spec written to %s" % args.freeze)
     seen = set()
     for d in args.run_dir:
-        rows, problems = evidence.check_run(spec, os.path.expanduser(d))
+        if args.exclude_floor:
+            for m in evidence.load_legs(os.path.expanduser(d)):
+                if "leg_id" in m and not evidence.is_scored(m):
+                    print("SKIP %-28s not a scored leg (a floor or round-0 leg): recorded, no effect" % m["leg_id"])
+        rows, problems = evidence.check_run(spec, os.path.expanduser(d), exclude_floor=args.exclude_floor)
         for p in problems:
             print("note: %s" % p)
         for lid, arm, ev in rows:
@@ -831,6 +860,9 @@ def main(argv=None):
     p.add_argument("spec")
     p.add_argument("run_dir", nargs="+")
     p.add_argument("--freeze", metavar="OUT", help="resolve ref items from these legs and write the frozen spec")
+    p.add_argument("--exclude-floor", action="store_true",
+                   help="read only the scored legs (round >= 1, no zero-load floor leg) in the freeze and the check; "
+                        "the others are listed as SKIP with no effect")
     p.add_argument("-v", "--verbose", action="store_true")
     p.set_defaults(fn=cmd_evidence_check)
     p = sp.add_parser("request-probe")

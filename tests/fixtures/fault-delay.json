@@ -1,0 +1,118 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "~/epl/bin/envoy-1.40.2",
+   "name": "ev",
+   "source": "https://github.com/envoyproxy/envoy/releases/download/v1.40.2/envoy-1.40.2-linux-x86_64",
+   "source_sha256": "1d64506e25c1844f146162ddb2ece7010fa4e784faddb40a079021491f1f03cc"
+  }
+ ],
+ "client": {
+  "binary": "~/epl/bin/nighthawk_client",
+  "commit": "3196532",
+  "concurrency": 16,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "md5": "245bf838ee2972c958ef2ed31d8f66de",
+  "sha256": "bd2d2c3d05ba09c6d5f5968851876ab55c93ed546f2a609b043db340408746b3",
+  "warmup_s": 5
+ },
+ "cpus": {
+  "client": "20-31,60-71",
+  "flip_tools": "18-19",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "event": {
+  "at_s": [
+   30,
+   95,
+   160
+  ],
+  "fault_effect": {
+   "min_requests": 1000,
+   "z": 5.0
+  },
+  "hold_s": 10,
+  "kind": "origin_fault",
+  "lead_in_s": 2,
+  "max_late_ms": 50,
+  "null": false,
+  "params": {
+   "abort_percent": 0,
+   "abort_status": 503,
+   "delay_ms": 200,
+   "delay_percent": 5
+  },
+  "perf_interval_ms": 1000,
+  "post_s": 20,
+  "pre_s": 20,
+  "recovery": {
+   "basis": "cycles_per_s",
+   "consecutive_bins": 3
+  },
+  "run_s": 205,
+  "warm_s": 5,
+  "worker_sample_s": 0.25
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "2x Xeon E5-2673 v4 (2x20 cores, SMT on), bare metal, fixed 2.3 GHz, turbo off, default idle states; Envoy on 4 cores with their SMT siblings left idle",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "/usr/lib/linux-tools/6.8.0-149-generic/perf",
+  "window_s": 20
+ },
+ "name": "fault-delay",
+ "order": "fixed",
+ "origin": {
+  "admin_port": 9941,
+  "fault": {
+   "abort_percent": 0,
+   "abort_status": 503,
+   "delay_ms": 0,
+   "delay_percent": 0
+  },
+  "image": "envoyproxy/envoy:v1.40.2",
+  "image_id": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "mode": "envoy_fault",
+  "port": 8092,
+  "workers": 4
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 5200
+  }
+ ],
+ "single_arm": true,
+ "smoke": true,
+ "template": true,
+ "template_note": "an event-study template (test fixture); origin.image_id is a placeholder (the origin refuses to start until it is the box image's ID)",
+ "workdir": "~/epl/runs/fault-delay"
+}

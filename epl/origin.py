@@ -3,6 +3,9 @@
 mode "docker":   the harness starts its own nginx container (host network,
                  pinned with --cpuset-cpus), records the container ID docker
                  returned, and stops only that ID.
+mode "envoy_fault": an Envoy with the HTTP fault filter in its own container,
+                 image pinned by ID; its abort and delay shares change live
+                 through its own admin (epl.faultorigin).
 mode "external": something else serves the origin port; the harness only
                  checks it accepts connections (and records that it did not
                  start it).
@@ -67,8 +70,10 @@ class Origin:
             if needs and not sysprobe.port_open("127.0.0.1", port):
                 raise RuntimeError("external origin port %d not accepting connections" % port)
             return self.meta
+        if mode == "envoy_fault":
+            return self._start_envoy_fault(port)
         if mode != "docker":
-            raise ValueError("origin mode must be docker or external")
+            raise ValueError("origin mode must be docker, envoy_fault or external")
         if sysprobe.port_open("127.0.0.1", port):
             raise RuntimeError("origin port %d already in use; refusing to start a second origin" % port)
         od = os.path.join(self.run_dir, "origin")
@@ -179,6 +184,69 @@ class Origin:
         time.sleep(0.5)
         return self.meta
 
+    def _start_envoy_fault(self, port):
+        """The faultable origin (epl.faultorigin): an Envoy with the fault filter in its own container on the origin
+        CPUs, the image checked by its ID, its admin on loopback; the starting fault values must show in its /runtime
+        before it is used (fail closed)."""
+        from . import faultorigin
+        from .experiment import HARNESS_ROOT
+        admin = int(self.cfg["admin_port"])
+        for p in (port, admin):
+            if sysprobe.port_open("127.0.0.1", p):
+                raise RuntimeError("fault origin port %d already in use; refusing to start a second origin" % p)
+        img = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", self.cfg["image"]],
+                             capture_output=True, text=True, timeout=30).stdout.strip()
+        if img != self.cfg["image_id"]:
+            raise RuntimeError("fault origin image %s has ID %r, not the pinned %s (nothing pulled, nothing started)"
+                               % (self.cfg["image"], img, self.cfg["image_id"]))
+        od = os.path.join(self.run_dir, "origin")
+        os.makedirs(od, exist_ok=True)
+        text = faultorigin.bootstrap_text(self.cfg, self.shapes, HARNESS_ROOT)
+        bpath = os.path.join(od, "fault-origin.json")
+        with open(bpath, "w") as f:
+            f.write(text)
+        os.chmod(bpath, 0o644)
+        name = "%s-%d" % (self.cfg.get("name_prefix", "epl-fault-origin"), os.getpid())
+        try:
+            r = subprocess.run(faultorigin.docker_args(self.cfg, self.cpus, name, bpath), capture_output=True,
+                               text=True, timeout=120)
+        except subprocess.TimeoutExpired:
+            # a container created before the timeout: found by its exact name, stopped and removed by that ID
+            q = subprocess.run(["docker", "ps", "-aq", "--no-trunc", "--filter", "name=^%s$" % name],
+                               capture_output=True, text=True, timeout=30).stdout.split()
+            for cid in q[:1]:
+                self.container_id = cid
+                self.stop()
+            raise RuntimeError("docker run (fault origin) timed out%s" % (
+                "; container %s stopped" % q[0][:12] if q else ""))
+        if r.returncode != 0:
+            raise RuntimeError("docker run (fault origin) failed: %s" % r.stderr.strip()[:300])
+        self.container_id = r.stdout.strip()
+        self.log("fault origin container %s (%s) started" % (self.container_id[:12], name))
+        for p in (port, admin):
+            if not sysprobe.wait_port("127.0.0.1", p, 30):
+                self.stop()
+                raise RuntimeError("fault origin did not open port %d" % p)
+        try:
+            self.meta["fault_start"] = faultorigin.set_fault(admin, self.cfg.get("fault"))
+        except (faultorigin.FaultNotApplied, OSError) as ex:
+            self.stop()
+            raise RuntimeError("fault origin: the starting fault values did not take effect: %s" % ex)
+        self.side = side_service("origin", self.container_id, self.cpus, self.log)
+        self.meta.update(image=self.cfg["image"], image_id=img, container_name=name, admin_port=admin,
+                         workers=int(self.cfg.get("workers", 4)), bootstrap_sha256=faultorigin.text_sha256(text),
+                         kind="envoy with the HTTP fault filter")
+        time.sleep(0.5)
+        return self.meta
+
+    def set_fault(self, values):
+        """Change the fault live (origin admin /runtime_modify) and prove it took effect; raises
+        faultorigin.FaultNotApplied otherwise."""
+        from . import faultorigin
+        if self.meta.get("mode") != "envoy_fault":
+            raise faultorigin.FaultNotApplied("origin mode %s has no live fault" % self.meta.get("mode"))
+        return faultorigin.set_fault(int(self.cfg["admin_port"]), values)
+
     def stop(self):
         for _, c in self.companions:
             c.stop()
@@ -187,6 +255,14 @@ class Origin:
             subprocess.run(["docker", "stop", "-t", "5", self.container_id],
                            capture_output=True, text=True, timeout=60)
             self.log("origin container %s stopped" % self.container_id[:12])
+            if self.meta.get("mode") == "envoy_fault":
+                # no --rm: keep the fault origin's log, then remove the container by its ID
+                lg = subprocess.run(["docker", "logs", self.container_id], capture_output=True, text=True, timeout=60)
+                od = os.path.join(self.run_dir, "origin")
+                os.makedirs(od, exist_ok=True)
+                with open(os.path.join(od, "fault-origin.log"), "w") as f:
+                    f.write((lg.stdout or "") + (lg.stderr or ""))
+                subprocess.run(["docker", "rm", self.container_id], capture_output=True, text=True, timeout=60)
             self.container_id = None
             if self.cfg.get("uds"):
                 from .experiment import origin_uds_path
