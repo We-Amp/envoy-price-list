@@ -1,12 +1,68 @@
 # envoy-price-list
 
-A small A/B harness that runs beside [Nighthawk](https://github.com/envoyproxy/nighthawk) and measures what an
-Envoy binary, setting or release costs in CPU per request, measured the same way every time.
+A paired A/B harness that runs beside [Nighthawk](https://github.com/envoyproxy/nighthawk) and measures what an
+Envoy binary, setting, feature or release costs in CPU per request, the same way every time. It also has a loop
+daemon, `epl-agentd`, that lets an agent screen a runtime setting quickly over MCP, with the harness's validity
+gates and no way to publish what it finds.
 
-It is not a fork of Nighthawk. Nighthawk generates the load; this tool decides the order of the runs, pins the
+It is not a fork of Nighthawk. Nighthawk generates the load. This tool decides the order of the runs, pins the
 processes, counts CPU on the Envoy side, throws out runs that were not clean, and does the paired statistics.
 
 Python 3.8+, standard library only. Linux on the bench box (it reads `/proc`, uses `taskset` and `perf`).
+
+The published results (the price list, the release record and the studies) are in `docs/` and in the
+[releases](https://github.com/We-Amp/envoy-price-list/releases), with their raw records.
+
+## What is in this repo
+
+| Part | What it does |
+|---|---|
+| `epl` (`bin/epl`, `epl/`) | the harness: balanced schedules, pinned Envoy and client, perf windows, per-leg validity, paired statistics, Markdown reports |
+| `loop/` | `epl-agentd`, an MCP server on stdio for in-process screens and live exploration on the bench box |
+| `examples/` | the configs and generators of every published run; templates for your own machine |
+| `tools/` | the test services (ext_proc, a streaming origin), the code-layout build scripts, the data fetchers |
+| `data/`, `docs/` | measured records and the rendered tables (CC BY 4.0) |
+
+## The method in brief
+
+- **Paired rounds.** Two or more arms run in rounds, forward and reversed (`abba`, or `rotate` for three or more),
+  with a seeded coin for which half runs first. Position effects cancel.
+- **Stop on precision, not on p-values.** At least 12 rounds, then blocks of 6, until the 95% interval of each
+  primary comparison is at most a target half-width (3% by default), capped at 36.
+- **Every leg is checked.** A leg with a missed rate, client overflow, a busy client, a box that was not idle, or
+  foreign work on the Envoy CPUs or their SMT siblings is invalid and contributes no number.
+- **An A/A floor.** The same binary against itself, in the same rounds, says how small an effect the machine can
+  see. Results below the floor are reported as such.
+- **One label per number.** Every published number says what it is: a measured row, a borderline, a screen, or
+  exploration. Only measured rows go into the price list.
+
+The full method is in [the method section](#the-method-in-one-screen) below.
+
+## Quickstart
+
+Offline, on any OS, nothing to install:
+
+```sh
+git clone https://github.com/We-Amp/envoy-price-list
+cd envoy-price-list
+python3 bin/epl selftest                                     # statistics, gates, schedule, simulated runs
+python3 bin/epl plan examples/pilot-releases.json            # check a config, print the schedule
+python3 bin/epl run examples/aa-selftest.json --dry-run --out /tmp/epl-dry
+python3 -m unittest tests.test_loop                          # the loop daemon against its stand-ins
+```
+
+On a Linux bench box (see Requirements):
+
+```sh
+python3 bin/epl calibrate examples/pilot-releases.json --arm v1.32.13 --shape fh --rps 4000,8000
+python3 bin/epl run examples/pilot-releases.json --detach
+python3 bin/epl report ~/epl/runs/<run>/results.json --floor ~/epl/runs/<aa-run>/results.json
+```
+
+From a workstation, `epl remote <box> run ...` ships the harness and the config over ssh and runs detached there.
+
+The example configs carry the CPU sets, paths and rates of the machine they were run on (2 x 20 cores with SMT;
+CPUs n and n+40 are siblings). Change `cpus` for yours, then `calibrate` to pick rates for your machine.
 
 ## Requirements
 
@@ -32,6 +88,14 @@ On the bench box, in addition:
   pick rates for your machine.
 
 `remote` needs `ssh` and `tar` on both ends.
+
+For the loop daemon, in addition:
+
+- OpenSSH on the workstation and the box (the daemon is an MCP server on stdio, reached through ssh);
+- an MCP client for the agent;
+- for explore mode only: `nighthawk_service` and `nighthawk_mcp` built from [We-Amp's Nighthawk
+  fork](https://github.com/We-Amp/nighthawk) (its MCP server and the `nighthawk://series` stream), pinned by sha256
+  in the config. Screens use a plain `nighthawk_client`.
 
 ## The method in one screen
 
@@ -173,6 +237,12 @@ epl/envoy_config.py     generated Envoy bootstrap (shapes) and origin config
 epl/origin.py           origin: own nginx container (pinned) or an external port
 epl/sim.py              simulated backend for --dry-run
 epl/report.py           Markdown summary
+epl/clientcheck.py      client-bottleneck checks: client perf -I, per-worker sequencer and overflow gates
+epl/events.py           event-study support: scheduler, null events, expected errors, estimands
+epl/workercpu.py        per-worker Envoy CPU from /proc schedstat, aligned to the perf clock
+epl/faultorigin.py      the faultable origin (an Envoy with the HTTP fault filter, changed live)
+loop/                   epl-agentd, the loop daemon (MCP on stdio), its flip-block library and stand-ins
+docs/loop.md            the loop daemon's operator guide
 tests/                  offline tests (statistics, gates, schedule, dry runs)
 tools/                  the studies' data as release assets: fetch-stats-data.py, build-stats-data.py,
                         fetch-wave-data.py, build-wave-data.py; extproc/ (the ext_proc test service);
@@ -244,6 +314,68 @@ python3 bin/epl remote benchbox fetch  epl/runs/pilot-releases-20261113T190000Z 
 
 Paths in a config (binaries, client, workdir) are paths on the machine that runs the experiment. A bare program
 name (`nighthawk_client`, `perf`) is looked up on that machine's PATH.
+
+## The loop daemon (`epl-agentd`)
+
+The harness answers "what does this cost?" with a between-process session that takes hours. Most ideas do not need
+that yet: they need a quick "is there anything here?". `epl-agentd` gives an agent that quick answer, and keeps
+it from being mistaken for the real one.
+
+**What it runs.**
+
+- **Screens.** One runtime key flipped on one staged Envoy arm, at one shape and rate. A screen runs at least 6
+  short Envoy instances. Each instance is one flip block: a fresh Envoy, one continuous client, several
+  counterbalanced off/on window pairs, and one in-instance A/A pair. The interval is taken across instances (the
+  instance is the unit, t with N-1 degrees of freedom). The result shows the per-instance effects, the interval and
+  its minimum detectable effect, the within- and between-instance spread, an instruction-count marker, the A/A
+  check and the validity of every instance.
+- **Explore.** One warm Envoy, runtime flips and live, steerable traffic through `nighthawk_mcp`, with per-second
+  telemetry (perf intervals, phase-locked admin reads, Nighthawk's live series). For steering only.
+
+**How an agent uses it.** The agent's MCP client starts the daemon as its stdio command over ssh:
+
+```json
+{"mcpServers": {"epl-agentd": {"command": "ssh", "args": [
+  "-T", "-o", "BatchMode=yes", "<box>", "exec ~/epl/loop/run-mcp.sh agentd"]}}}
+```
+
+The tools are `screen_start`, `screen_step`, `screen_wait`, `screen_result`, `screen_telemetry`,
+`explore_start`, `runtime_set`, `traffic_start`, `traffic_steer`, `traffic_stop`, `traffic_status`,
+`telemetry_read`, `explore_stop`, `abort`, `session_status` and `cleanproof`. Everything the agent may choose
+(arms, keys, shapes, the rate cap, the CPUs) comes from the operator's config. No tool takes a path, a binary or a
+target.
+
+If the agent's process cannot open a connection to the box itself, start one OpenSSH ControlMaster from a shell
+that can, and give the agent a mux client (`-o ControlPath=... -o ProxyCommand=/usr/bin/false`, so it fails closed
+instead of logging in directly). `loop/route-check.sh` checks that route. [docs/loop.md](docs/loop.md) has the
+operator's guide: staging, the config, the start checks, teardown and the files a session writes.
+
+**What it refuses.**
+
+- No effect figure before a screen is complete, and none ever for an aborted screen.
+- A second screen of the same key, values, shape and rate only as a declared repeat. Every screen of the session is
+  in a register, so the confirmation plan knows the family size. No extending or pooling a screen.
+- No tracers or profilers, no steering during a screen, no paths.
+- It writes only under its own session directory, and every record says "not a published row".
+- It starts only on a clean box: it pins itself to the housekeeping CPUs (which the config must name; there is no
+  default) and refuses to start when those touch the Envoy, client or origin CPUs or their siblings, when a
+  previous daemon is alive, or when a previous session left a process. It tears everything down on EOF, a signal,
+  an error, the session time limit or the idle limit, and records why.
+
+**Its limits.**
+
+- **A screen is not a measurement.** It measures an in-process effect inside short instances. A survivor becomes a
+  candidate record; only a pre-registered between-process session with the harness can turn it into a row. No
+  calibration factor between the two is applied, and in our runs the two can differ.
+- Small effects need many instances. Below roughly the machine's A/A floor, a screen can say "nothing large", not
+  "nothing".
+- Keys read once per configuration cannot be screened this way, and keys read per connection need the connection
+  cycling option. The daemon refuses the first and enforces the second.
+- It is built for one dedicated Linux box with disjoint CPU sets for Envoy, the client, the origin and
+  housekeeping. On a shared or virtualized machine, the idle and foreign-CPU gates will reject most windows.
+- Explore mode needs the Nighthawk fork. Screens do not.
+- The stand-ins in `loop/standin/` exercise the protocol, the gates and the teardown without Envoy; their numbers
+  mean nothing.
 
 ## Config
 
