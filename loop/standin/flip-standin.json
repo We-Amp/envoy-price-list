@@ -1,0 +1,104 @@
+{
+ "adaptive": false,
+ "arms": [
+  {
+   "binary": "standin-envoy",
+   "name": "flip",
+   "settings": {
+    "runtime_admin_layer": true
+   },
+   "source": "the local stand-in (loop/standin/envoy.py): no Envoy binary",
+   "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+ ],
+ "client": {
+  "binary": "standin-client",
+  "concurrency": 2,
+  "connections_per_worker": 32,
+  "duration_s": 25,
+  "extra_args": [
+   "--prefetch-connections",
+   "--max-pending-requests",
+   "1000",
+   "--experimental-h1-connection-reuse-strategy",
+   "lru"
+  ],
+  "idle_strategy": "poll",
+  "warmup_s": 5
+ },
+ "cpus": {
+  "client": "20-31,60-71",
+  "flip_tools": "18-19",
+  "origin": "32-39,72-79",
+  "sut": "0-3"
+ },
+ "envoy": {
+  "admin_port": 9921,
+  "exact_balance": true,
+  "listener_port": 10110,
+  "workers": 4
+ },
+ "flip": {
+  "aa_marker_max": 1110.0,
+  "counterbalanced": true,
+  "cycle_connections": false,
+  "gap_s": 2.0,
+  "gates": {
+   "reference_lp": [
+    -3.77,
+    -2.08
+   ]
+  },
+  "gating": false,
+  "hang_factor": 1.5,
+  "key": "envoy.reloadable_features.otel_tracer_deferred_span",
+  "kind": "control",
+  "lead_in_s": 2,
+  "order": "AB BA BA AB AB BA BA AB",
+  "rate_tolerance": 0.005,
+  "values": {
+   "A": false,
+   "B": true
+  },
+  "warm_s": 5,
+  "window_s": 20
+ },
+ "idle": {
+  "max_busy_pct": 2.0,
+  "max_load1": 8.0,
+  "procs": []
+ },
+ "machine_label": "local stand-in (no box)",
+ "measure": {
+  "lead_in_s": 2,
+  "perf": "perf",
+  "window_s": 20
+ },
+ "name": "flip-standin",
+ "order": "fixed",
+ "origin": {
+  "image": "nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+  "mode": "docker",
+  "port": 1,
+  "stub_status": true,
+  "workers": 8
+ },
+ "primary_metric": "cycles_total",
+ "rounds": 1,
+ "rounds_block": 1,
+ "rounds_max": 1,
+ "shapes": [
+  {
+   "body_bytes": 4096,
+   "kind": "proxied",
+   "name": "s",
+   "path": "/s",
+   "rps": 2000
+  }
+ ],
+ "single_arm": true,
+ "smoke": true,
+ "template": true,
+ "template_note": "the loop's stand-in base: run it through loop/ (instance.py --standin, agentd.py --standin). Its CPU sets are for the stand-ins only: nothing is pinned for real (no taskset), so they need not match this machine",
+ "workdir": "/tmp/epl-loop-standin"
+}
